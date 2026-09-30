@@ -12,7 +12,7 @@
 // row is one `where cost_micro_usd is null` away from being counted on the
 // dashboard.
 
-export const AI_PROVIDERS = ['anthropic', 'openai', 'google'] as const
+export const AI_PROVIDERS = ['anthropic', 'openai', 'google', 'typesafe'] as const
 export type AiProvider = (typeof AI_PROVIDERS)[number]
 
 export const SERVICE_TIERS = ['standard', 'fast', 'batch'] as const
@@ -41,7 +41,15 @@ export const OPENROUTER_SLUGS = {
 	'claude-haiku-4-5-20251001': 'anthropic/claude-haiku-4.5',
 	'gpt-5.4': 'openai/gpt-5.4',
 	'gpt-5.4-mini': 'openai/gpt-5.4-mini',
-	'gemini-3.8-flash': 'google/gemini-3.8-flash'
+	'gemini-3.8-flash': 'google/gemini-3.8-flash',
+	// TypeSafe's Jev decision model (PairSight pair judgments), called on
+	// TypeSafe's own API. PairSight pins `jev-1.13.0`, which is also what a
+	// response reports (verified live 2026-10-01; plain `jev-1.13` is rejected
+	// as unknown). `jev-latest` is the floating alias. OpenRouter's rate for the
+	// same model is the stand-in price until TypeSafe publishes one
+	// (docs/PairSight-V1-Scope.md).
+	'jev-latest': '~typesafe/jev-latest',
+	'jev-1.13.0': 'typesafe/jev-1.13'
 } satisfies Record<string, string>
 
 // The model ids a call site is allowed to ask for. `satisfies` above keeps
@@ -50,6 +58,11 @@ export const OPENROUTER_SLUGS = {
 // into a `pnpm typecheck` failure. The model a provider *reports* is still
 // an open string — that one is caught at runtime, unpriced and loud.
 export type TrackedModel = keyof typeof OPENROUTER_SLUGS
+
+// For a model id read back from storage (e.g. a run's frozen config).
+export function isTrackedModel(model: string): model is TrackedModel {
+	return Object.hasOwn(OPENROUTER_SLUGS, model)
+}
 
 // Indexed through a widened alias rather than a cast: the map's literal keys
 // are what TrackedModel is built from, but a lookup here takes whatever the

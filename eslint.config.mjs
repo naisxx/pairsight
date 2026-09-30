@@ -27,12 +27,15 @@ const AI_SDK_IMPORTS = {
 	group: [
 		'@anthropic-ai/sdk',
 		'@anthropic-ai/sdk/**',
-		'openai',
-		'openai/**',
+		// Leading slash anchors a bare package name. Patterns use gitignore
+		// semantics, so unanchored 'openai' / 'ai' would also match any path
+		// with that segment — including this repo's own src/server/ai/*
+		// wrappers, which feature code is supposed to import.
+		'/openai',
 		'@google/genai',
 		'@google/genai/**',
 		'@google/generative-ai',
-		'ai',
+		'/ai',
 		'@ai-sdk/**'
 	],
 	message:

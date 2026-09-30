@@ -90,8 +90,9 @@ export function costMicroUsd(
 // is absent from the response, prices as NULL, and reads on the dashboard as
 // a real $0.00 — while the model map entry it needed was correct all along.
 // Ask for every modality this repo could call.
+// `decisions` is TypeSafe Jev's output modality (typed answers, not text).
 const OPENROUTER_MODELS_URL =
-	'https://openrouter.ai/api/v1/models?output_modalities=text,embeddings,transcription'
+	'https://openrouter.ai/api/v1/models?output_modalities=text,embeddings,transcription,decisions'
 
 // Rates move on the order of weeks. A day-old rate card is fine; a fetch on
 // every AI call is not.
