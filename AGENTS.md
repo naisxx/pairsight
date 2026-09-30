@@ -48,9 +48,11 @@ of one monolithic instructions file.
 
 - **[Database access](docs/rules/database.md)** — Prisma only, no raw
   SQL clients, no Supabase `.from()`/`.rpc()` for data.
-- **[Migrations](docs/rules/migrations.md)** — CI generates and commits
-  migrations from a schema diff; never hand-write a file under
-  `prisma/schema/migrations/`. One-off SQL that isn't a schema change (a
+- **[Migrations](docs/rules/migrations.md)** — `scripts/generate-migration.mjs`
+  generates migrations from a schema diff (for PairSight: run locally with
+  `pnpm prisma:migrate:generate <name>`, then committed); never hand-write a
+  file under `prisma/schema/migrations/` beyond the documented RLS and
+  destructive-change exceptions, never `prisma db push`. One-off SQL that isn't a schema change (a
   data fix, reference rows, a view) goes in `prisma/run-once.sql`: it runs
   once per database on the next deploy, after the migrations, tracked by
   content hash in the `_run_once_sql` ledger so it never repeats.
@@ -90,7 +92,7 @@ of one monolithic instructions file.
 - **[Secrets](docs/rules/secrets.md)** — credentials live in env vars read
   through `src/lib/env.ts`, never hardcoded or committed; a `check:secrets`
   scanner backstops it at the pre-commit hook and again in CI, over source
-  and over the `.claude-logs/`/`.codex-logs/` transcripts that ship on the
+  and over the `.claude-logs/` transcripts (every agent's) that ship on the
   branch. Redact a secret out of a transcript before logging the session —
   don't lean on the scanner.
 - **[Analytics](docs/rules/analytics.md)** — PostHog through the typed

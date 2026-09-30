@@ -1,27 +1,9 @@
-# 8x web template
+# PairSight
 
-The standardized starting point for every new 8x web project — dashboards,
-marketing sites, brand portals, internal tools. Synthesized from an audit
-of 8x-core, 8x-brands, 8x-marketing, 8x-payout, and the legacy 8x repo:
-every convention here was either already proven in at least one of those
-repos, or is a deliberate fix for a real problem found in one of them (see
-`AGENTS.md`/`docs/rules/` for the specifics and citations).
-
-**This is a living template, not a finished product.** It gets copied, not
-imported — a new project generated from it owns its copy outright and is
-expected to diverge. Improvements that would help every future project
-belong back here; project-specific choices don't.
-
-## What you get out of the box
-
-- A Next.js 16 app that actually builds, lints, typechecks, and passes a
-  real Playwright e2e test — this isn't a scaffold that's never been run.
-- A resolved answer to the org's biggest unsettled debate (how migrations
-  work) instead of another repo doing it a fifth different way.
-- Auth, observability, and i18n wired in and working, not just listed as
-  dependencies.
-- Twelve topic-scoped rule files an AI coding agent (or a new engineer) can
-  actually follow, instead of one CLAUDE.md nobody reads end to end.
+PairSight is a web app with real user accounts, built on the 8x web template
+stack. It runs and is demoed on **localhost**: a local Supabase (in Docker)
+provides auth and Postgres, and there is no hosted Supabase, Vercel project, or
+production deployment.
 
 ## Stack
 
@@ -40,7 +22,7 @@ belong back here; project-specific choices don't.
 ## Project structure
 
 ```
-8x-web-template/
+pairsight/
 ├── .claude/skills/          Claude Code skills — see "Skills" below
 ├── .claude-logs/            tracked (not gitignored) — AI session transcripts ship with the branch
 ├── .github/workflows/       ci.yml, deploy-migrations.yml, claude-code-review.yml
@@ -55,6 +37,7 @@ belong back here; project-specific choices don't.
 │   └── migrations/           CI-generated only, never by hand
 ├── prisma/run-once.sql       one-off SQL, applied once per database on the next deploy
 ├── scripts/                  commit-msg check, migration generator, run-once SQL runner, env-var check, standards check, RLS check
+├── supabase/config.toml      local Supabase (auth + Postgres) for `pnpm supabase start` — Data API off
 ├── src/
 │   ├── app/[locale]/         App Router pages, error.tsx, not-found.tsx, [...rest]/ (404 plumbing)
 │   ├── app/global-error.tsx  root boundary, inline-styled (see docs/rules/error-handling.md)
@@ -71,32 +54,41 @@ belong back here; project-specific choices don't.
 └── .env.example               every variable explained inline
 ```
 
-## Getting a new project from this template
+## Setup (localhost)
 
-Use GitHub's **template repository** feature — `gh repo create <new-name>
---template 8xsocial/8x-web-template`, or the "Use this template" button on
-the repo page. That produces one fresh commit with no connection to this
-repo's history.
-
-Don't fork it (forks are for contributing back via PRs, which will never
-happen between an independent project and this template) and don't just
-`git clone` + repoint `origin` (that drags this template's own scaffolding
-history into the new project forever). Once you have the new repo, run the
-`template-setup` skill — see below.
-
-## Setup
+Prerequisites: Node `>=22.18` (CI runs 22), pnpm 10.6.2 (`corepack enable`),
+Docker Desktop running.
 
 ```bash
-pnpm install                       # also installs the commit-msg git hook + generates the Prisma client
-cp .env.example .env.local         # fill in DATABASE_URL/DIRECT_URL at minimum
-pnpm exec prisma migrate dev       # first migration, local only — see AGENTS.md
+pnpm install              # also installs the git hooks + generates the Prisma client
+pnpm supabase start       # local Supabase in Docker (first run pulls images)
+pnpm supabase status      # prints the local URLs and keys used below
+```
+
+Create two gitignored env files:
+
+- **`.env`** holds only `DATABASE_URL` and `DIRECT_URL`, both set to the
+  `DB_URL` from `pnpm supabase status` (port **54322**, no pooler locally).
+  It's `.env`, not `.env.local`, because the Prisma CLI reads only `.env`.
+  Next.js reads it too, and `db:run-once`/`check:rls` load it with
+  `--env-file-if-exists`.
+- **`.env.local`** is a copy of `.env.example` without the two database
+  lines, with `NEXT_PUBLIC_SUPABASE_URL="http://127.0.0.1:54321"`,
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` = `PUBLISHABLE_KEY`,
+  `SUPABASE_SECRET_KEY` = `SECRET_KEY`, and any `CRON_SECRET`
+  (`openssl rand -hex 32`).
+
+```bash
+pnpm exec prisma migrate deploy   # apply the committed migrations — never `migrate dev`
+pnpm db:run-once                  # apply prisma/run-once.sql if this database hasn't had it
 pnpm dev
 ```
 
-Open http://localhost:3000 — English is served unprefixed, and `/en`
-redirects back to `/`. Sentry,
-PostHog, and Supabase Auth all no-op or fail open locally until you set
-their env vars; nothing else requires them to run.
+Open http://localhost:3000. English is served unprefixed, and `/en`
+redirects back to `/`. Sentry and PostHog do nothing until their keys are
+set, and nothing needs them to run. Supabase Studio is at
+http://127.0.0.1:54323 and caught auth emails at http://127.0.0.1:54324.
+`pnpm supabase stop` shuts the containers down and keeps the data.
 
 ## Environment variables
 
@@ -106,9 +98,8 @@ by `src/lib/env.ts` — a misconfigured deployment fails immediately with a
 clear message instead of an obscure error three requests later. Groups:
 database (Prisma), Supabase Auth, Sentry, PostHog, Slack alerting, i18n,
 cron secret, app URL. `pnpm check:env` fails if any `process.env.X` in `src/` is missing
-from either `.env.example` or the schema. See `docs/CI_CD_SETUP.md` for
-which of these are Vercel-side vs. GitHub Actions-only secrets — they're
-not the same set.
+from either `.env.example` or the schema. Locally the database URLs live in
+`.env` and everything else in `.env.local` — see Setup above.
 
 ## Database & migrations
 
@@ -117,24 +108,36 @@ only thing you hand-edit. **CI writes the migration, you write the
 schema** — never touch a file under `prisma/schema/migrations/` yourself.
 The one SQL file you do hand-write is `prisma/run-once.sql`: a one-off
 change that isn't a schema change (fix a value, insert reference rows,
-replace a view). The next deploy applies it to production once, right after
-the migrations, and a ledger keyed by content hash makes sure it never runs
-again — replace its content for the next one-off. Full workflow, the
+replace a view). CI applies it to a throwaway database on every PR, and
+`pnpm db:run-once` applies it locally; a ledger keyed by content hash makes
+sure it never runs twice on the same database. Replace its content for the next
+one-off.
+
+PairSight generates migrations locally with the same generator CI uses:
+edit the schema, then run `pnpm prisma:migrate:generate:check` (preview) and
+`pnpm prisma:migrate:generate <name>`, which writes the migration and applies
+it to your local database. Commit it with the schema change; CI's
+`migrations` job re-checks it on the PR. Never `prisma db push` or
+`prisma migrate dev`. The only migrations written by hand
+are the documented exceptions: `ENABLE ROW LEVEL SECURITY` for each new table,
+and data-preserving SQL when the generator refuses a destructive change. Full workflow, the
 destructive-change safety net, and why this approach was chosen over the
 org's other migration patterns: `docs/rules/migrations.md`.
 
 ## Auth
 
-Supabase Auth by default for any project with real user accounts —
-already wired (`src/proxy.ts`, `src/lib/supabase/`), nothing to scaffold.
-Auth and session only; Prisma still owns every byte of application data.
-Landing pages with nothing to sign into remove it entirely — exact steps
-in `docs/rules/auth.md`. `template-setup` asks which one applies.
+PairSight has user accounts, so it keeps Supabase Auth. It's already wired up
+in `src/proxy.ts` (session refresh) and `src/lib/supabase/` (auth-only server
+clients). Locally it runs against the Supabase started by
+`pnpm supabase start`. It handles auth and sessions only: Prisma owns every
+byte of application data, and `User.id` is the Supabase auth user's UUID. The
+Data API is off in `supabase/config.toml`, and every table has RLS enabled with
+no policies. See `docs/rules/auth.md` and `docs/rules/authorization.md`.
 
 ## Testing
 
 ```bash
-pnpm test        # node --test over scripts/*.test.mjs — fast, no browser
+pnpm test        # node --test over scripts/*.test.mjs and src/**/*.test.mts — fast, no browser
 pnpm test:e2e     # Playwright — boots the app itself unless E2E_BASE_URL is set
 ```
 
@@ -190,37 +193,31 @@ ready for review at the same time. See `docs/rules/pull-requests.md`.
 
 ## Deployment
 
-Never run a manual production deploy command — CI/CD handles it (see
-`docs/rules/deployment.md`). Before this project's first real PR, read
-`docs/CI_CD_SETUP.md` and set up:
+PairSight runs and is demoed on localhost only. There's no Vercel project, no
+hosted Supabase and no production deployment. Never run a manual deploy
+command (`docs/rules/deployment.md`).
 
-- **GitHub**: access to the org's Claude review workflow and token,
-  `MIGRATIONS_TOKEN`, the
-  `production-database` environment (holding `PRODUCTION_DATABASE_URL`),
-  and branch protection on `main`.
-- **Vercel**: connect the repo, mirror `.env.example` into project env
-  vars per-environment, and decide explicitly between Vercel's default
-  auto-deploy-on-push and the org's tag-gated release pattern (see
-  `docs/rules/deployment.md`) — don't inherit one silently.
+GitHub CI still runs on every PR: gates, e2e, and the migrations job. Since
+migrations are generated locally and committed, that job finds nothing to
+generate and acts as a check (replay, drift, RLS). So no migrations token is
+configured. If a PR ever reaches CI with a schema change but no migration,
+CI would generate and push one using `GITHUB_TOKEN`, and that commit's run
+would wait in `action_required`. Generate it locally instead.
 
-## Before you start replacing things
+There's no production database (`PRODUCTION_DATABASE_URL` is deliberately
+unset), so `deploy-migrations.yml` fails on pushes to `main`. That's
+expected here.
 
-1. Run the `template-setup` skill first — it renames the placeholders
-   above for you and asks the questions that shape what else you'll need.
-2. Read `AGENTS.md`, `DESIGN.md`, and `docs/rules/*.md` — the migration
+## Still to do
+
+1. Read `AGENTS.md`, `DESIGN.md`, and `docs/rules/*.md` — the migration
    workflow, the Server/Client Component rules, and the token conventions
    are not optional style preferences, they're enforced in CI (or, where
    noted, by `local-review`'s manual pass).
-3. Delete `prisma/schema/example.prisma` once you've written real models,
+2. Delete `prisma/schema/example.prisma` once you've written real models,
    and `e2e/smoke.spec.ts` once real e2e coverage exists.
-4. Confirm the auth decision `template-setup` made, and decide on state
-   management beyond the TanStack Query default and whichever
-   i18n/Tailwind-major/Prisma-major open decisions apply to this project.
-5. Set up GitHub and Vercel per the Deployment section above before
-   merging your first PR — without `MIGRATIONS_TOKEN` specifically, the
-   CI-generated migration commit's own run sits in `action_required`
-   waiting for manual approval (the migration still lands, but a green PR
-   can be a false signal until that's set up).
+3. Decide on state management beyond the TanStack Query default, and
+   whichever i18n/Tailwind-major/Prisma-major open decisions apply.
 
 ## Scripts
 
@@ -228,7 +225,7 @@ Never run a manual production deploy command — CI/CD handles it (see
 | ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `pnpm dev` / `build` / `start`             | Standard Next.js                                                                                                                                                                |
 | `pnpm lint` / `typecheck` / `format:check` | CI gates, run before pushing                                                                                                                                                    |
-| `pnpm test`                                | `node --test` over `scripts/*.test.mjs`                                                                                                                                         |
+| `pnpm test`                                | `node --test` over `scripts/*.test.mjs` and `src/**/*.test.mts`                                                                                                                 |
 | `pnpm test:e2e`                            | Playwright — boots the app itself unless `E2E_BASE_URL` is set                                                                                                                  |
 | `pnpm check:env`                           | Fails if a `process.env.X` in `src/` isn't declared in `.env.example` + `src/lib/env.ts`                                                                                        |
 | `pnpm check:standards`                     | Fails if a standard in `docs/STANDARDS.md` is unwired — rules index, commit hook, CI gates, effective lint/tsc config, tracked-file hygiene. `--root <dir>` audits another repo |
@@ -236,3 +233,4 @@ Never run a manual production deploy command — CI/CD handles it (see
 | `pnpm prisma:generate`                     | Regenerate the Prisma client after a schema change                                                                                                                              |
 | `pnpm prisma:migrate:generate:check`       | Dry-run what CI's migration generator would write, without writing it                                                                                                           |
 | `pnpm db:run-once`                         | Apply `prisma/run-once.sql` once to `DIRECT_URL` (else `DATABASE_URL`) — what a deploy does                                                                                     |
+| `pnpm supabase <cmd>`                      | Pinned Supabase CLI via `pnpm dlx` — `start`, `status`, `stop` for the local auth + Postgres stack                                                                              |

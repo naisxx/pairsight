@@ -23,9 +23,12 @@
 import { execFileSync } from 'node:child_process'
 import { createHash } from 'node:crypto'
 import { readFileSync } from 'node:fs'
+import { createRequire } from 'node:module'
+import { pathToFileURL } from 'node:url'
 import { PrismaClient } from '@prisma/client'
 
 const DEFAULT_FILE = 'prisma/run-once.sql'
+const PRISMA_CLI = createRequire(import.meta.url).resolve('prisma/build/index.js')
 const LEDGER_TABLE = '_run_once_sql'
 const SHORT_HASH_LENGTH = 12
 // Prisma's "table does not exist" error: the ledger migration hasn't been
@@ -139,9 +142,12 @@ async function main() {
 
 	console.log(`Applying ${file} (version ${version}) to ${target} ...`)
 	try {
+		// The Prisma CLI's own entry point under the running Node binary, not
+		// `pnpm exec prisma`: on Windows pnpm is a .cmd shim that execFileSync
+		// cannot launch without a shell, and a shell would have to quote the URL.
 		const output = execFileSync(
-			'pnpm',
-			['exec', 'prisma', 'db', 'execute', '--stdin', '--url', url],
+			process.execPath,
+			[PRISMA_CLI, 'db', 'execute', '--stdin', '--url', url],
 			{
 				input: buildScript({ hash, sqlText }),
 				encoding: 'utf-8',
@@ -164,7 +170,7 @@ async function main() {
 	console.log(`Applied ${file} and recorded version ${version} in ${LEDGER_TABLE}.`)
 }
 
-if (import.meta.url === `file://${process.argv[1]}`) {
+if (import.meta.url === pathToFileURL(process.argv[1]).href) {
 	main().catch((error) => {
 		console.error(error)
 		process.exit(1)
