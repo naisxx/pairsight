@@ -27,6 +27,8 @@ Read these before working on product features:
 - [`docs/PairSight-Delivery-Plan.md`](docs/PairSight-Delivery-Plan.md): the
   implementation reference: architecture, data model, screens, milestones
   (M0–M4) and verification.
+- [`docs/PairSight-UX-Plan.md`](docs/PairSight-UX-Plan.md): the UI/UX
+  reference: journey, screens, states, theme tokens and components.
 
 Jev facts there are verified against TypeSafe's docs. Anything marked open
 must be tested against the real API; don't fill the gaps with assumptions.

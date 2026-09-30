@@ -21,6 +21,9 @@ the start, without duplicating any Jev work.
 
 - **Dependencies:** `papaparse` (CSV parsing) and `libphonenumber-js`
   (phone normalization with a country). Install them in M1.
+- **UI:** follow [PairSight-UX-Plan.md](PairSight-UX-Plan.md): shadcn/ui
+  (with Phosphor icons, not lucide), shadcn charts (Recharts), and
+  `next-themes` for Light / Dark / System.
 - **Jev access:** TypeSafe's own API. The key goes in `.env.local` at M1;
   its name is added to `.env.example` and `src/lib/env.ts`.
 - **Jev cost in `ai_usage`:** priced at OpenRouter's rate for
