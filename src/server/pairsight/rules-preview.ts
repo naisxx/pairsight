@@ -1,21 +1,10 @@
 import 'server-only'
 import { db } from '@/server/db/client'
-import { buildBlockedPairs } from './blocking'
+import { buildBlockedPairs, RULE_PRESETS } from './blocking'
 import { getCurrentDataset } from './datasets'
 import { getOwnedEvaluation } from './evaluations'
 import { isIdentityRole, mapRecordFields } from './fields'
 import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
-import type { BlockingField } from './normalize'
-
-// Preset rules the Rules screen offers. `last_name_postcode` is not a default
-// but is useful when names are recorded inconsistently.
-export const RULE_PRESETS = [
-	{ id: 'email', fields: ['email'] },
-	{ id: 'phone', fields: ['phone'] },
-	{ id: 'name', fields: ['name'] },
-	{ id: 'name_postcode', fields: ['name', 'postcode'] },
-	{ id: 'last_name_postcode', fields: ['last_name', 'postcode'] }
-] as const satisfies ReadonlyArray<{ id: string; fields: BlockingField[] }>
 
 // Live statistics for every preset (enabled or not) plus any saved custom
 // rule, so the Rules screen can show what each rule would contribute before

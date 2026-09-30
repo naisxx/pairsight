@@ -4,7 +4,8 @@ import { RulesForm } from '@/components/pairsight/rules/rules-form'
 import { StepHeader } from '@/components/pairsight/step-layout'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
 import { LIMITS } from '@/server/pairsight/limits'
-import { RULE_PRESETS, rulesPreview } from '@/server/pairsight/rules-preview'
+import { RULE_PRESETS } from '@/server/pairsight/blocking'
+import { rulesPreview } from '@/server/pairsight/rules-preview'
 import { loadWorkspace } from '../workspace'
 
 export default async function RulesPage({ params }: { params: Promise<{ id: string }> }) {

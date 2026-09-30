@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildBlockedPairs, PRESET_RULES } from './blocking'
+import { buildBlockedPairs, RULE_PRESETS } from './blocking'
 import { LIMITS } from './limits'
 import { groupPairCount } from './pairs'
 
@@ -54,7 +54,7 @@ test('records missing a value never share a blank bucket', () => {
 	const blanks = Array.from({ length: 10 }, (_, i) => ({ id: `b${i}`, fields: { email: '' } }))
 	const { pairs, stats } = buildBlockedPairs({
 		records: blanks,
-		rules: [PRESET_RULES[0]],
+		rules: [RULE_PRESETS[0]],
 		country: 'US'
 	})
 	assert.equal(pairs.length, 0)
@@ -67,7 +67,7 @@ test('buckets above the warning size are reported with their pair expansion', ()
 		id: `s${i}`,
 		fields: { email: 'a@x.com' }
 	}))
-	const { stats } = buildBlockedPairs({ records: same, rules: [PRESET_RULES[0]], country: 'US' })
+	const { stats } = buildBlockedPairs({ records: same, rules: [RULE_PRESETS[0]], country: 'US' })
 	assert.deepEqual(stats[0].oversizedBuckets, [{ size, pairCount: groupPairCount(size) }])
 	assert.equal(stats[0].largestBucket, size)
 })
