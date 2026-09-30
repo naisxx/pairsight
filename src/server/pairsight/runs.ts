@@ -1,0 +1,93 @@
+import 'server-only'
+import { AppError } from '@/lib/errors/app-error'
+import { db } from '@/server/db/client'
+
+// Run lookup, progress, and the mutations after a run starts (retry, resume,
+// threshold). Starting a run lives in start-run.ts.
+
+export function runNotFound() {
+	return new AppError('That run doesn’t exist, or you don’t have access to it.', {
+		status: 404,
+		code: 'not_found'
+	})
+}
+
+export async function getOwnedRun({ ownerId, runId }: { ownerId: string; runId: string }) {
+	const run = await db.run.findFirst({
+		where: { id: runId, evaluation: { ownerId, kind: 'live' } },
+		include: { evaluation: { select: { id: true, name: true } } }
+	})
+	if (run == null) throw runNotFound()
+	return run
+}
+
+export type RunProgress = {
+	status: 'running' | 'completed' | 'stopped'
+	stopReason: string | null
+	total: number
+	pending: number
+	running: number
+	succeeded: number
+	failed: number
+}
+
+export async function getRunProgress(runId: string): Promise<RunProgress> {
+	const [run, groups] = await Promise.all([
+		db.run.findUniqueOrThrow({ where: { id: runId }, select: { status: true, stopReason: true } }),
+		db.assessment.groupBy({
+			by: ['status'],
+			where: { runPairs: { some: { runId } } },
+			_count: { _all: true }
+		})
+	])
+	const count = (status: string) =>
+		groups.find((group) => group.status === status)?._count._all ?? 0
+	const progress = {
+		status: run.status,
+		stopReason: run.stopReason,
+		pending: count('pending'),
+		running: count('running'),
+		succeeded: count('succeeded'),
+		failed: count('failed')
+	}
+	return {
+		...progress,
+		total: progress.pending + progress.running + progress.succeeded + progress.failed
+	}
+}
+
+export async function retryFailed({ ownerId, runId }: { ownerId: string; runId: string }) {
+	await getOwnedRun({ ownerId, runId })
+	await db.$transaction([
+		db.assessment.updateMany({
+			where: { status: 'failed', runPairs: { some: { runId } } },
+			data: { status: 'pending', attempts: 0, errorCode: null }
+		}),
+		db.run.update({
+			where: { id: runId },
+			data: { status: 'running', stopReason: null, completedAt: null }
+		})
+	])
+}
+
+// After a configuration stop (for example, the key was added or fixed).
+export async function resumeRun({ ownerId, runId }: { ownerId: string; runId: string }) {
+	await getOwnedRun({ ownerId, runId })
+	await db.run.update({ where: { id: runId }, data: { status: 'running', stopReason: null } })
+}
+
+export async function updateRunThreshold({
+	ownerId,
+	runId,
+	threshold
+}: {
+	ownerId: string
+	runId: string
+	threshold: number
+}) {
+	const run = await getOwnedRun({ ownerId, runId })
+	await db.$transaction([
+		db.run.update({ where: { id: runId }, data: { threshold } }),
+		db.evaluation.update({ where: { id: run.evaluationId }, data: { threshold } })
+	])
+}
