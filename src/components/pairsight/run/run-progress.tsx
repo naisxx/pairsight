@@ -3,7 +3,7 @@
 import { useTranslations } from 'next-intl'
 import { AlertIcon, SpinnerIcon, SuccessIcon } from '@/components/ui/icons'
 import { Progress } from '@/components/ui/progress'
-import type { RunProgress as Progress_ } from '@/server/pairsight/runs'
+import type { RunProgress as RunProgressData } from '@/server/pairsight/runs'
 import { RunActions } from './run-actions'
 import { useRunLoop } from './use-run-loop'
 
@@ -16,7 +16,7 @@ export function RunProgress({
 }: {
 	runId: string
 	resultsHref: string
-	initial: Progress_
+	initial: RunProgressData
 }) {
 	const t = useTranslations('Run')
 	const { progress, hasTransientError, retryFailed, resume, isActing } = useRunLoop({
