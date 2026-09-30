@@ -25,7 +25,7 @@ export function ErrorPage({
 				<p className="text-text-muted text-sm">{description}</p>
 				{action}
 				{digest && (
-					<p className="text-text-faint text-xs">
+					<p className="text-text-muted text-xs">
 						Reference: <code>{digest}</code>
 					</p>
 				)}
@@ -39,4 +39,4 @@ export function ErrorPage({
 // state on these pages (see docs/rules/code-style.md, cva is for 2+
 // variants).
 export const errorPageActionClassName =
-	'rounded-md bg-accent px-4 py-2 text-sm font-medium text-accent-ink transition-colors hover:bg-accent-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent'
+	'rounded-md bg-action px-4 py-2 text-sm font-medium text-action-ink transition-colors hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'

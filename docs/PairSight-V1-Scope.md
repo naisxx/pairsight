@@ -174,7 +174,8 @@ references.
 - If a response carries no documented score, record the pair as `failed`
   and never invent one.
 - **One pair per request,** so a failure only affects that pair.
-- Don't assume determinism. Store each assessment with the model id and
+- Jev is not deterministic (verified: about ±0.01 between runs). Store
+  each assessment with the model id and
   version Jev reports, and when it ran.
 
 ## Personal data
@@ -212,12 +213,28 @@ references.
 - **Dependencies approved (2026-09-30):** `libphonenumber-js` for phone
   normalization and `papaparse` for CSV parsing.
 
+## Verified live (pnpm jev:check, 2026-10-01)
+
+- **Model:** `jev-1.13.0` is accepted and reported back, so the app pins it
+  (`JEV_MODEL`). Plain `jev-1.13` is rejected as unknown (HTTP 400), and
+  `jev-latest` currently resolves to `jev-1.13.0`.
+- **Response:** `{ model, answers: { <id>: { type: "noul", noul } }, usage:
+{ input_tokens, output_tokens } }`, as documented. There's no request id.
+- **Speed and limits:** about 300–450 ms per call. Four concurrent calls
+  returned 200 with no 429s; the exact rate limit is still unknown.
+- **Not deterministic:** the same pair scored 0.91, 0.90 and 0.91, and
+  other pairs moved by about ±0.01 between runs. Store the score from each
+  assessment; never assume a re-run reproduces it exactly.
+- **Default threshold 0.5, low-confidence band ±0.1 (kept).** On the
+  fictional pairs, likely-different people scored 0.01–0.11 and likely-same
+  people 0.76–0.98, so 0.5 sits in a wide gap. The band is far wider than
+  the run-to-run noise.
+- **Cost:** about 510 input tokens per pair, about $0.00002 at the stand-in
+  rate, so a 5,000-pair run costs about $0.10.
+
 ## Still open
 
-1. **Model version:** the TypeSafe API documents only `jev-latest`. Check
-   whether a pinned version is accepted. Either way, record the model id
-   each response reports, because a model change means a new run.
-2. **Rate limits, request size limits and determinism** aren't documented.
-   Measure them in the integration test.
-3. **Low-confidence band and default threshold:** set them after the
-   fictional-pair test.
+1. **Rate limit:** not documented, and not hit at concurrency 4. The
+   engine retries 429 with backoff if it appears.
+2. **Request size limits:** not documented. Not a concern for one pair per
+   request.

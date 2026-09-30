@@ -80,6 +80,15 @@ const googleResponse = z.object({
 	})
 })
 
+// TypeSafe System One (Jev). Documented response: `{ model, answers, usage:
+// { input_tokens, output_tokens } }`; no cache figures. `id` isn't documented
+// on the direct API but is kept when present, for disputes.
+const typesafeResponse = z.object({
+	id: z.string().optional(),
+	model: z.string().optional(),
+	usage: z.object({ input_tokens: count, output_tokens: count })
+})
+
 // Never let a negative fall through: a provider changing its accounting mid-
 // flight should show up as an odd-looking zero, not as a credit.
 function nonNegative(value: number): number {
@@ -146,6 +155,22 @@ const EXTRACTORS: Record<AiProvider, UsageExtractor> = {
 				outputTokens: usage.candidatesTokenCount + usage.thoughtsTokenCount,
 				cacheWriteTokens: 0,
 				cacheReadTokens: cached
+			}
+		}
+	},
+	typesafe: (response) => {
+		const parsed = typesafeResponse.safeParse(response)
+		if (!parsed.success) return undefined
+		const { id, model, usage } = parsed.data
+		return {
+			model,
+			requestId: id,
+			status: 'ok',
+			tokens: {
+				inputTokens: usage.input_tokens,
+				outputTokens: usage.output_tokens,
+				cacheWriteTokens: 0,
+				cacheReadTokens: 0
 			}
 		}
 	}

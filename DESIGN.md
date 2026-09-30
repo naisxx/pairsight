@@ -1,23 +1,15 @@
-# Design system — starter, not a brand
+# PairSight design system
 
-This is a **skeleton**, not a finished visual identity. It exists so a new
-project starts from real conventions instead of an empty `globals.css` and
-ad hoc Tailwind classes — not to pre-decide what this specific product
-should look like. Replace the token _values_ freely; keep the token
-_structure_ (semantic names, categories, where things live) unless you have
-a specific reason not to, since `docs/rules/code-style.md` and the
-`cn()`/`cva` conventions below assume it.
+PairSight's brand palette (coral `#E45742`, with `#972828`, `#EB7F31` and
+`#FCAD38`) on warm neutral surfaces, in light and dark. The full UI/UX
+reference — journey, screens, states, and every token value with its measured
+contrast — is [docs/PairSight-UX-Plan.md](docs/PairSight-UX-Plan.md) (§6 for
+tokens). This file keeps the conventions every component follows.
 
-**Once this project has a real visual direction** (a mockup, a Figma file,
-or a hand-designed comp), don't keep hand-maintaining this file — the org's
-`impeccable` tooling (see the `impeccable` skill family) derives a proper
-`DESIGN.md` from a finished build, including a token JSON sidecar. 8x-brands'
-`DESIGN.md` is the real example of that output: a fully-specified identity
-with named colors, a type scale, and per-component tokens, extracted from
-its mockup. This file is the "day one, nothing built yet" starting point;
-that's the "day 200, ship it" end state. (Checked: legacy `8x` does not
-have an equivalent file — if you're thinking of a past setup there, this
-is likely the pattern you're remembering from `8x-brands` instead.)
+**Contrast is tested, not assumed.** `scripts/check-contrast.test.mjs` (part
+of `pnpm test`) reads the values out of `globals.css` and asserts WCAG AA for
+every text/surface pairing and 3:1 for control edges and chart marks, in both
+themes. Change a token and that test tells you whether it still passes.
 
 ## 1. Tokens live in `src/app/globals.css`'s `@theme` block
 
@@ -34,31 +26,32 @@ custom properties. Two categories:
 
 ## 2. Name tokens by role, not by value
 
-`--accent`, not `--blue-500`. A rename should never cascade through every
-component that uses it. This template ships a neutral starter set:
+`--action`, not `--coral-500`. A rename should never cascade through every
+component that uses it. Values for both themes live in `globals.css`; the
+measured contrast for each is in the UX plan §6.
 
-| Token                                      | Starter value (light)    | Role                                                            |
-| ------------------------------------------ | ------------------------ | --------------------------------------------------------------- |
-| `--bg`                                     | near-white               | page background                                                 |
-| `--surface`                                | white                    | card/panel background, one step off `--bg`                      |
-| `--surface-hover`                          | light gray               | hover state for interactive surfaces                            |
-| `--border`                                 | light gray, low contrast | default hairline border                                         |
-| `--border-strong`                          | medium gray              | hover/focus-adjacent border                                     |
-| `--text`                                   | near-black               | primary text                                                    |
-| `--text-muted`                             | mid gray                 | secondary text                                                  |
-| `--text-faint`                             | light-mid gray           | placeholder/tertiary text                                       |
-| `--accent`                                 | blue                     | primary interactive color — links, primary buttons, focus rings |
-| `--accent-hover`                           | darker blue              | accent hover state                                              |
-| `--accent-ink`                             | white                    | text/icon color placed on top of an `--accent` surface          |
-| `--success` / `--warning` / `--danger`     | green / amber / red      | status-only, never used decoratively                            |
-| `--radius-sm` / `--radius` / `--radius-lg` | 6px / 10px / 16px        | never hardcode a `border-radius` outside these                  |
+| Token                                                                             | Role                                                                                                               |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| `--bg`                                                                            | Page background                                                                                                    |
+| `--surface` / `--surface-elevated` / `--surface-muted`                            | Cards and tables / menus and dialogs / table headers and sunken areas                                              |
+| `--surface-hover`                                                                 | Hover state for rows and interactive surfaces                                                                      |
+| `--border`                                                                        | Decorative hairlines only — too faint for a control edge                                                           |
+| `--border-input`                                                                  | Form controls and any essential boundary (≥ 3:1 on every surface)                                                  |
+| `--text` / `--text-muted`                                                         | Primary / secondary text (muted also covers placeholders; there is no fainter text token)                          |
+| `--action` / `--action-hover` / `--action-ink`                                    | The primary action: brand coral in both themes, always with dark ink (white on coral fails AA)                     |
+| `--accent` / `--accent-ink`                                                       | Subtle brand selection (current step, selected tile) / links and active text                                       |
+| `--ring`                                                                          | Keyboard focus                                                                                                     |
+| `--success` / `--warning` / `--danger` / `--info` (+ `-subtle`)                   | Status only, never decoration; always with an icon or label. Danger's hue is kept 25° from the brand               |
+| `--cat-both` / `--cat-pairsight` / `--cat-vendor` / `--cat-neither` (+ `-subtle`) | The four comparison categories. They mean **agreement, not correctness**, so they never use brand or status colors |
+| `--brand-deep` / `--brand-orange` / `--brand-amber`                               | Decorative brand only (wordmark, landing). Never status or data                                                    |
 
-Every token above has a dark-mode pair, swapped automatically via
-`prefers-color-scheme` — see `globals.css`. If this project wants a
-user-facing toggle instead of (or in addition to) following the OS
-preference, switch the dark block's selector from
-`@media (prefers-color-scheme: dark)` to `.dark &` / `:root.dark` and add a
-small class-toggling script; don't rebuild the token set to do it.
+shadcn/ui's variable names (`--background`, `--primary`, `--muted`, …) are
+aliases of these in `globals.css`, so copied shadcn components work unmodified.
+Change values in the PairSight tokens, never in the aliases.
+
+Themes are class-based: `next-themes` sets `.dark` on `<html>` from the
+Light / Dark / System menu (`src/components/pairsight/theme-menu.tsx`), with no
+flash on load. Use `dark:` variants only for things tokens can't express.
 
 ## 3. Component conventions
 

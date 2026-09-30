@@ -13,6 +13,11 @@ const nextConfig: NextConfig = {
 	// silent perf regression in prod.
 	reactCompiler: {
 		panicThreshold: 'all_errors'
+	},
+	// PairSight CSV uploads are sent to server actions as text: up to 1 MB of
+	// file (src/server/pairsight/limits.ts) plus the rest of the payload.
+	experimental: {
+		serverActions: { bodySizeLimit: '2mb' }
 	}
 }
 

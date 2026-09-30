@@ -1,0 +1,205 @@
+// PairSight (docs/PairSight-Delivery-Plan.md, "Data model"). Every table is
+// user-scoped through its evaluation, so each create migration is followed by
+// an ENABLE ROW LEVEL SECURITY migration (no policy, no FORCE) —
+// docs/rules/auth.md. Authorization itself lives in the action layer: every
+// query goes through src/server/pairsight/store.ts, scoped to the owner.
+//
+// ownerId is a PLAIN @db.Uuid (User.id = the Supabase auth uuid) with no
+// @relation, the same choice as FeatureFlagOverride.userId: a relation would
+// force a back-relation onto User in another schema file. It is null only for
+// the prepared demo evaluation.
+
+enum EvaluationKind {
+	live
+	demo
+}
+
+enum RunOrigin {
+	live
+	prepared
+}
+
+enum RunStatus {
+	running
+	completed
+	// A configuration problem (missing or rejected Jev key) that no retry
+	// can fix; the run keeps its assessments and can resume once fixed.
+	stopped
+}
+
+enum AssessmentStatus {
+	pending
+	running
+	succeeded
+	failed
+}
+
+enum VendorExportFormat {
+	pair
+	group
+}
+
+model Evaluation {
+	id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	ownerId           String?         @db.Uuid
+	name              String
+	kind              EvaluationKind  @default(live)
+	// Draft configuration; each run freezes a copy of it.
+	identitySame      String
+	identityDifferent String
+	countryCode       String          @default("US")
+	// Identity roles sent to Jev (src/server/pairsight/fields.ts).
+	jevFields         String[]
+	// BlockingRule[] (src/server/pairsight/blocking.ts).
+	blockingRules     Json
+	threshold         Float           @default(0.5)
+	createdAt         DateTime        @default(now()) @db.Timestamptz(6)
+	updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
+	datasets          SourceDataset[]
+	vendorExports     VendorExport[]
+	runs              Run[]
+
+	@@index([ownerId, updatedAt])
+	@@map("evaluations")
+}
+
+// Immutable: replacing the source file creates a new dataset, so earlier runs
+// and their assessments keep pointing at exactly the records they judged.
+model SourceDataset {
+	id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	evaluationId    String         @db.Uuid
+	evaluation      Evaluation     @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+	fileName        String
+	rowCount        Int
+	referenceColumn String
+	// { [header]: FieldRole }
+	columnRoles     Json
+	createdAt       DateTime       @default(now()) @db.Timestamptz(6)
+	records         SourceRecord[]
+	vendorExports   VendorExport[]
+	runs            Run[]
+	assessments     Assessment[]
+
+	@@index([evaluationId, createdAt])
+	@@map("source_datasets")
+}
+
+model SourceRecord {
+	id        String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	datasetId String        @db.Uuid
+	dataset   SourceDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+	reference String
+	rowNumber Int
+	// Original cell values keyed by header — shown as-is in pair inspection.
+	values    Json
+
+	@@unique([datasetId, reference])
+	@@map("source_records")
+}
+
+model VendorExport {
+	id                  String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	evaluationId        String             @db.Uuid
+	evaluation          Evaluation         @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+	datasetId           String             @db.Uuid
+	dataset             SourceDataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+	name                String
+	format              VendorExportFormat
+	fileName            String
+	// { columnA, columnB } for the pair format.
+	mapping             Json
+	// The user confirmed this export lists every match the vendor made
+	// (an omitted pair then means "not matched").
+	confirmedCompleteAt DateTime           @db.Timestamptz(6)
+	pairCount           Int
+	createdAt           DateTime           @default(now()) @db.Timestamptz(6)
+	matches             VendorMatch[]
+
+	@@index([evaluationId])
+	@@map("vendor_exports")
+}
+
+// One vendor-matched pair, record ids in canonical order (recordAId < recordBId).
+model VendorMatch {
+	exportId  String       @db.Uuid
+	export    VendorExport @relation(fields: [exportId], references: [id], onDelete: Cascade)
+	recordAId String       @db.Uuid
+	recordBId String       @db.Uuid
+
+	@@id([exportId, recordAId, recordBId])
+	@@map("vendor_matches")
+}
+
+model Run {
+	id                String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	evaluationId      String        @db.Uuid
+	evaluation        Evaluation    @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+	datasetId         String        @db.Uuid
+	dataset           SourceDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+	number            Int
+	origin            RunOrigin     @default(live)
+	status            RunStatus     @default(running)
+	stopReason        String?
+	// Frozen snapshot of the configuration this run was evaluated with.
+	identitySame      String
+	identityDifferent String
+	countryCode       String
+	jevFields         String[]
+	blockingRules     Json
+	exportIds         String[]
+	judgmentKey       String
+	jevModel          String
+	// Editable after the run: changing it only re-decides from saved scores.
+	threshold         Float
+	pairCount         Int
+	createdAt         DateTime      @default(now()) @db.Timestamptz(6)
+	completedAt       DateTime?     @db.Timestamptz(6)
+	pairs             RunPair[]
+
+	@@unique([evaluationId, number])
+	@@map("runs")
+}
+
+model RunPair {
+	id                 String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	runId              String     @db.Uuid
+	run                Run        @relation(fields: [runId], references: [id], onDelete: Cascade)
+	recordAId          String     @db.Uuid
+	recordBId          String     @db.Uuid
+	// Blocking rules that produced the pair; empty = added only because a
+	// vendor matched it.
+	ruleIds            String[]
+	matchedByExportIds String[]
+	assessmentId       String     @db.Uuid
+	assessment         Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+	@@unique([runId, recordAId, recordBId])
+	@@index([assessmentId])
+	@@map("run_pairs")
+}
+
+// One Jev judgment of one pair under one judgment configuration, shared by
+// every run (and every vendor) that needs it.
+model Assessment {
+	id            String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	datasetId     String           @db.Uuid
+	dataset       SourceDataset    @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+	recordAId     String           @db.Uuid
+	recordBId     String           @db.Uuid
+	judgmentKey   String
+	origin        RunOrigin        @default(live)
+	status        AssessmentStatus @default(pending)
+	score         Float?
+	modelReported String?
+	requestId     String?
+	attempts      Int              @default(0)
+	errorCode     String?
+	claimedAt     DateTime?        @db.Timestamptz(6)
+	completedAt   DateTime?        @db.Timestamptz(6)
+	createdAt     DateTime         @default(now()) @db.Timestamptz(6)
+	runPairs      RunPair[]
+
+	@@unique([datasetId, recordAId, recordBId, judgmentKey])
+	@@index([datasetId, status])
+	@@map("assessments")
+}

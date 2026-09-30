@@ -1,12 +1,7 @@
 import { cn } from '@/lib/cn'
 
 export function Card({ className, ...props }: React.ComponentProps<'div'>) {
-	return (
-		<div
-			className={cn('border-border bg-surface rounded-lg border shadow-sm', className)}
-			{...props}
-		/>
-	)
+	return <div className={cn('border-border bg-surface rounded-lg border', className)} {...props} />
 }
 
 export function CardHeader({ className, ...props }: React.ComponentProps<'div'>) {

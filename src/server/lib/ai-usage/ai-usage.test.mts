@@ -170,6 +170,25 @@ test('google thinking tokens are billed as output, so they land in the output co
 	assert.equal(extracted?.tokens.outputTokens, 4500)
 })
 
+test('typesafe reports no cache, so input is billed as reported and the served model is priced', () => {
+	// Shape verified live against System One (pnpm jev:check, 2026-10-01).
+	const extracted = extractUsage('typesafe', {
+		model: 'jev-1.13.0',
+		answers: { same_individual: { type: 'noul', noul: 0.93 } },
+		usage: { input_tokens: 472, output_tokens: 23 }
+	})
+	assert.equal(extracted?.status, 'ok')
+	assert.equal(extracted?.model, 'jev-1.13.0')
+	assert.deepEqual(extracted?.tokens, {
+		inputTokens: 472,
+		outputTokens: 23,
+		cacheWriteTokens: 0,
+		cacheReadTokens: 0
+	})
+	assert.equal(openRouterSlug('jev-1.13.0'), 'typesafe/jev-1.13')
+	assert.equal(extractUsage('typesafe', { answers: {} }), undefined)
+})
+
 test('a refusal is recorded as a refusal, not as a plain success', () => {
 	const anthropic = extractUsage('anthropic', {
 		stop_reason: 'refusal',

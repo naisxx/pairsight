@@ -13,10 +13,10 @@ const badgeVariants = cva(
 		variants: {
 			variant: {
 				default: 'border-transparent bg-accent text-accent-ink',
-				secondary: 'border-transparent bg-surface-hover text-text',
-				success: 'border-transparent bg-success/15 text-success',
-				warning: 'border-transparent bg-warning/15 text-warning',
-				danger: 'border-transparent bg-danger/15 text-danger',
+				secondary: 'border-transparent bg-surface-muted text-text',
+				success: 'border-transparent bg-success-subtle text-success',
+				warning: 'border-transparent bg-warning-subtle text-warning',
+				danger: 'border-transparent bg-danger-subtle text-danger',
 				outline: 'border-border text-text'
 			}
 		},

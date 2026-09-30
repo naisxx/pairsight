@@ -1,0 +1,5 @@
+left_id,right_id,match_score
+R01,R02,0.97
+R04,R05,0.91
+R08,R09,0.88
+R10,R11,0.62

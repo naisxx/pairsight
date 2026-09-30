@@ -41,6 +41,13 @@ const envSchema = z.object({
 
 	NEXT_PUBLIC_DEFAULT_LOCALE: z.string().default('en'),
 
+	// TypeSafe's Jev API (PairSight pair judgments). Optional so the app and
+	// the prepared demo boot without it; starting a live run without a key is
+	// reported to the user as a configuration error. The base URL is only
+	// overridden by the e2e suite, which points it at a local stub.
+	TYPESAFE_API_KEY: z.string().optional(),
+	TYPESAFE_API_BASE_URL: z.string().url().default('https://api.typesafe.ai/v1'),
+
 	// Required by cron routes only; an unset secret must not break unrelated pages.
 	CRON_SECRET: z.string().optional(),
 

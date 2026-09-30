@@ -1,0 +1,25 @@
+record_id,first_name,last_name,email,phone,date_of_birth,address,city,postcode
+R01,Jane,Smith,jane.smith@example.com,(415) 555-0101,1990-04-12,12 Oak St,San Francisco,94110
+R02,JANE,SMITH,Jane.Smith@Example.com,415-555-0101,1990-04-12,12 Oak Street,San Francisco,94110
+R03,Jane,Smyth,jane.smith@example.com,,1990-04-12,12 Oak St,San Francisco,94110
+R04,Tom,Brennan,tom.brennan@example.com,(312) 555-0144,1978-09-03,88 Lake Ave,Chicago,60614
+R05,Tim,Brennan,tim.b@example.net,(312) 555-0144,2005-06-21,88 Lake Ave,Chicago,60614
+R06,Maria,Garcia,maria.garcia@example.com,(213) 555-0188,1985-02-17,400 Pine St,Los Angeles,90012
+R07,Maria,Garcia,mgarcia85@example.org,(213) 555-0199,1962-11-30,17 Elm Rd,Los Angeles,90012
+R08,David,Okafor,d.okafor@example.com,(646) 555-0123,1981-07-08,5 River Rd,New York,10001
+R09,David,Okafor,david.okafor@example.net,(206) 555-0177,1981-07-08,900 Cedar Ave,Seattle,98101
+R10,Alan,Park,alan.park@example.com,(503) 555-0110,1970-01-01,31 Burnside St,Portland,97201
+R11,Nina,Patel,nina.patel@example.com,(702) 555-0133,1992-03-14,700 Desert Way,Las Vegas,89101
+R12,Bob,Chen,bob.chen@example.com,(617) 555-0155,,22 Beacon St,Boston,02108
+R13,Robert,Chen,robert.chen@example.com,(617) 555-0155,1988-05-05,22 Beacon St,Boston,02108
+R14,Priya,Nair,,(404) 555-0166,1987-12-02,3 Peach Ln,Atlanta,30303
+R15,Samuel,Adeyemi,samuel.adeyemi@example.com,,1975-08-19,60 Main St,Houston,77002
+R16,Chloe,Martin,,,1996-10-10,14 Aspen Ct,Denver,80202
+R17,Lucas,Silva,lucas.silva@example.com,(305) 555-0191,1983-04-27,9 Ocean Dr,Miami,33101
+R18,Emma,Johansson,emma.j@example.com,(612) 555-0112,1991-01-30,210 Lake St,Minneapolis,55401
+R19,Omar,Haddad,,(313) 555-0148,1979-06-15,45 Grand Blvd,Detroit,48201
+R20,Grace,Kim,grace.kim@example.com,(215) 555-0137,1994-09-09,1 Market St,Philadelphia,19103
+R21,Henry,Walsh,henry.walsh@example.com,,1968-03-03,8 Tremont St,Boston,02109
+R22,Sofia,Rossi,,,1999-07-21,77 Palm Ave,Phoenix,85004
+R23,Daniel,Cohen,daniel.cohen@example.com,(512) 555-0129,1986-11-11,500 Congress Ave,Austin,78701
+R24,Aisha,Bello,aisha.bello@example.com,(919) 555-0174,1993-02-14,12 Fayetteville St,Raleigh,27601
