@@ -98,6 +98,15 @@ set, and nothing needs them to run. Supabase Studio is at
 http://127.0.0.1:54323 and caught auth emails at http://127.0.0.1:54324.
 `pnpm supabase stop` shuts the containers down and keeps the data.
 
+**Jev (TypeSafe).** Live evaluations need `TYPESAFE_API_KEY` in `.env.local`;
+without it, a run stops with a clear configuration error. With the key set,
+`pnpm jev:check` runs a small live check on fictional pairs (response shape,
+pinned model, latency, repeatability, 429s) and records each call in
+`ai_usage`. To develop without a key, run `pnpm jev:stub` and start the app
+with `TYPESAFE_API_BASE_URL=http://127.0.0.1:4010/v1` and any
+`TYPESAFE_API_KEY`. The stub is a deterministic toy, not Jev, and reports
+its model as `jev-stub`. Use fictional or anonymized records only.
+
 ## Environment variables
 
 Every variable the app reads is documented inline in `.env.example` (what
@@ -147,7 +156,12 @@ no policies. See `docs/rules/auth.md` and `docs/rules/authorization.md`.
 ```bash
 pnpm test        # node --test over scripts/*.test.mjs and src/**/*.test.mts — fast, no browser
 pnpm test:e2e     # Playwright — boots the app itself unless E2E_BASE_URL is set
+E2E_PAIRSIGHT=1 pnpm test:e2e   # + the PairSight flow specs (needs local Supabase; starts the Jev stub)
 ```
+
+The PairSight specs (`e2e/pairsight.spec.ts`) run against `pnpm jev:stub`, a
+local stand-in for TypeSafe's API, so they need no key. CI's e2e job has no
+database, so it skips them.
 
 The `e2e-review` skill runs the e2e suite and reviews failures against
 their actual trace/screenshot rather than guessing from the error message.
