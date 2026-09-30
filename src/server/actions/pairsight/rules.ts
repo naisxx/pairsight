@@ -13,7 +13,7 @@ import {
 import { updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import { previewRuleStats } from '@/server/pairsight/rules-preview'
 import { MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
-import { idSchema } from './shared'
+import { idSchema, revalidateEvaluationPages } from './shared'
 
 export const saveRulesAction = validatedAction({
 	input: z.object({
@@ -34,6 +34,7 @@ export const saveRulesAction = validatedAction({
 			jevFields,
 			blockingRules
 		})
+		revalidateEvaluationPages()
 		return { saved: true }
 	}
 })

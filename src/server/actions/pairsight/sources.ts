@@ -13,7 +13,13 @@ import { duplicateRoles } from '@/server/pairsight/fields'
 import { LIMITS } from '@/server/pairsight/limits'
 import { columnRolesSchema } from '@/server/pairsight/schemas'
 import { saveSourceDataset } from '@/server/pairsight/datasets'
-import { fileNameSchema, fileTextSchema, idSchema, previewCsv } from './shared'
+import {
+	fileNameSchema,
+	fileTextSchema,
+	idSchema,
+	previewCsv,
+	revalidateEvaluationPages
+} from './shared'
 
 export const previewSourceCsv = validatedAction({
 	input: z.object({ text: fileTextSchema }),
@@ -74,6 +80,7 @@ export const saveSourceAction = validatedAction({
 			columnRoles: roles,
 			records: validation.records
 		})
+		revalidateEvaluationPages()
 		return { ok: true, rowCount: validation.records.length }
 	}
 })

@@ -7,7 +7,7 @@ import { advanceRun } from '@/server/pairsight/run-engine'
 import { resumeRun, retryFailed, updateRunThreshold } from '@/server/pairsight/runs'
 import { startRun } from '@/server/pairsight/start-run'
 import { thresholdSchema } from '@/server/pairsight/schemas'
-import { goTo, idSchema } from './shared'
+import { goTo, idSchema, revalidateEvaluationPages } from './shared'
 
 export const startRunAction = validatedAction({
 	input: z.object({ evaluationId: idSchema }),
@@ -49,6 +49,7 @@ export const updateThresholdAction = validatedAction({
 	handler: async ({ runId, threshold }) => {
 		const user = await requireUser()
 		await updateRunThreshold({ ownerId: user.id, runId, threshold })
+		revalidateEvaluationPages()
 		return { threshold }
 	}
 })
