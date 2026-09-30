@@ -22,7 +22,7 @@ export function UnsavedCountryNotice({
 			role="status"
 			className="border-warning/40 bg-warning-subtle flex flex-wrap items-center gap-x-3 gap-y-2 rounded-lg border px-3 py-2"
 		>
-			<p className="text-text flex flex-1 items-start gap-2 text-sm">
+			<p className="text-text type-body flex flex-1 items-start gap-2">
 				<AlertIcon className="text-warning mt-0.5 shrink-0" />
 				{t('countryUnsaved', { country: savedCountry })}
 			</p>

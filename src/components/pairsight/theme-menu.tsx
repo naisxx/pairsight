@@ -34,7 +34,7 @@ export function ThemeMenu() {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-40">
-				<DropdownMenuLabel className="text-text-muted text-xs">{t('label')}</DropdownMenuLabel>
+				<DropdownMenuLabel className="text-text-muted type-meta">{t('label')}</DropdownMenuLabel>
 				<DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
 					{THEMES.map((value) => (
 						<DropdownMenuRadioItem key={value} value={value} className="gap-2">

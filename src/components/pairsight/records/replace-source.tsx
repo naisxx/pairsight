@@ -27,7 +27,7 @@ export function ReplaceSource({
 	}
 	return (
 		<div className="mt-5 flex flex-col gap-4">
-			<p className="bg-warning-subtle text-warning flex items-start gap-2 rounded px-3 py-2 text-sm">
+			<p className="bg-warning-subtle text-warning type-body flex items-start gap-2 rounded px-3 py-2">
 				<AlertIcon className="mt-0.5 shrink-0" />
 				{t('replaceWarning')}
 			</p>

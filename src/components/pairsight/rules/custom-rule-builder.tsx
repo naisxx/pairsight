@@ -87,11 +87,9 @@ export function CustomRuleBuilder({
 
 	return (
 		<details className="border-border rounded-lg border p-4">
-			<summary className="text-text cursor-pointer text-sm font-semibold">
-				{t('customTitle')}
-			</summary>
+			<summary className="text-text type-subheading cursor-pointer">{t('customTitle')}</summary>
 			<div className="mt-3 flex flex-col gap-3">
-				<p className="text-text-muted text-xs">{t('customDescription')}</p>
+				<p className="text-text-muted type-meta">{t('customDescription')}</p>
 				<div className="grid gap-2 sm:grid-cols-3">
 					{slots.map((slot, index) => (
 						<Select
@@ -118,14 +116,14 @@ export function CustomRuleBuilder({
 					))}
 				</div>
 				{duplicate != null ? (
-					<p className="text-text-muted text-xs">{t('customDuplicate')}</p>
+					<p className="text-text-muted type-meta">{t('customDuplicate')}</p>
 				) : preview.isFetching ? (
-					<p className="text-text-muted flex items-center gap-1.5 text-xs">
+					<p className="text-text-muted type-meta flex items-center gap-1.5">
 						<SpinnerIcon size={12} />
 						{t('customCounting')}
 					</p>
 				) : preview.isError ? (
-					<p role="alert" className="text-danger text-xs">
+					<p role="alert" className="text-danger type-meta">
 						{preview.error.message}
 					</p>
 				) : preview.data != null ? (
@@ -133,7 +131,7 @@ export function CustomRuleBuilder({
 				) : null}
 				<div className="flex items-center justify-end gap-3">
 					{isFull && (
-						<p className="text-text-muted mr-auto text-xs">
+						<p className="text-text-muted type-meta mr-auto">
 							{t('customLimit', { max: MAX_CUSTOM_RULES })}
 						</p>
 					)}

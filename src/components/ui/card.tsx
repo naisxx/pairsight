@@ -9,11 +9,11 @@ export function CardHeader({ className, ...props }: React.ComponentProps<'div'>)
 }
 
 export function CardTitle({ className, ...props }: React.ComponentProps<'h3'>) {
-	return <h3 className={cn('text-text text-lg font-semibold', className)} {...props} />
+	return <h3 className={cn('text-text type-heading', className)} {...props} />
 }
 
 export function CardDescription({ className, ...props }: React.ComponentProps<'p'>) {
-	return <p className={cn('text-text-muted text-sm', className)} {...props} />
+	return <p className={cn('text-text-muted type-body', className)} {...props} />
 }
 
 export function CardContent({ className, ...props }: React.ComponentProps<'div'>) {

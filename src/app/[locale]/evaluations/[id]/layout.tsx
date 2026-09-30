@@ -24,7 +24,7 @@ export default async function WorkspaceLayout({
 				<aside className="flex flex-col gap-3 lg:sticky lg:top-20 lg:w-56 lg:shrink-0 lg:self-start">
 					<nav
 						aria-label="Breadcrumb"
-						className="text-text-muted flex min-w-0 items-center gap-1 text-sm"
+						className="text-text-muted type-body flex min-w-0 items-center gap-1"
 					>
 						<Link href="/evaluations" className="hover:text-text shrink-0">
 							{t('evaluations')}

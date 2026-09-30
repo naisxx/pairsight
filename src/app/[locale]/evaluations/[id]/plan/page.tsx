@@ -30,7 +30,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 				)}
 				<div className="flex flex-col gap-6">
 					<Section title={t('jevReceivesTitle')}>
-						<p className="text-text text-sm">
+						<p className="text-text type-body">
 							{t('jevReceives', {
 								fields:
 									plan.config != null
@@ -39,7 +39,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 							})}
 						</p>
 						{counts != null && (
-							<p className="text-text-muted mt-3 text-xs">
+							<p className="text-text-muted type-meta mt-3">
 								{t('cost', {
 									cost: format.number(estimateCostUsd(counts.toEvaluate), {
 										style: 'currency',
@@ -49,7 +49,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 								})}
 							</p>
 						)}
-						<p className="text-text-muted mt-2 flex items-center gap-1.5 text-xs">
+						<p className="text-text-muted type-meta mt-2 flex items-center gap-1.5">
 							<InfoIcon />
 							{t('fictionalOnly')}
 						</p>

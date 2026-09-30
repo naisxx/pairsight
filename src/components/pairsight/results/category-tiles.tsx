@@ -57,26 +57,22 @@ export function CategoryTiles({
 							!DISAGREEMENTS.has(category) && category !== 'incomplete' && 'opacity-90'
 						)}
 					>
-						<span className="text-text flex items-center gap-2 text-sm font-medium">
+						<span className="text-text type-subheading flex items-center gap-2">
 							<CategoryDot category={category} />
 							{tCat(category)}
 						</span>
 						<span className="flex items-baseline gap-2">
 							<span
 								className={cn(
-									'text-text font-semibold tabular-nums',
-									DISAGREEMENTS.has(category) ? 'text-3xl' : 'text-2xl'
+									'text-text type-metric',
+									!DISAGREEMENTS.has(category) && 'text-2xl leading-8'
 								)}
 							>
 								{format.number(count)}
 							</span>
-							{share != null && (
-								<span className="text-text-muted text-sm tabular-nums">{share}%</span>
-							)}
+							{share != null && <span className="text-text-muted type-label">{share}%</span>}
 						</span>
-						<span className="text-text-muted text-xs leading-snug">
-							{tCat(`${category}Meaning`)}
-						</span>
+						<span className="text-text-muted type-meta">{tCat(`${category}Meaning`)}</span>
 					</Link>
 				)
 			})}

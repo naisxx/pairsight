@@ -14,8 +14,8 @@ export function PairOrigin({
 	const t = useTranslations('Pair')
 	return (
 		<section className="border-border bg-surface rounded-lg border p-4">
-			<h2 className="text-text mb-2 text-sm font-semibold">{t('originTitle')}</h2>
-			<p className="text-text text-sm">
+			<h2 className="text-text type-subheading mb-2">{t('originTitle')}</h2>
+			<p className="text-text type-body">
 				{ruleLabels.length > 0
 					? t('originRules', { rules: ruleLabels.join('; ') })
 					: t('originVendor', { vendors: matchingVendors.join(', ') || '—' })}
@@ -34,10 +34,10 @@ export function VendorDecisions({
 	if (vendors.length < 2) return null
 	return (
 		<section className="border-border bg-surface rounded-lg border p-4">
-			<h2 className="text-text mb-2 text-sm font-semibold">{t('vendorsTitle')}</h2>
+			<h2 className="text-text type-subheading mb-2">{t('vendorsTitle')}</h2>
 			<ul className="flex flex-col gap-2">
 				{vendors.map((vendor) => (
-					<li key={vendor.id} className="flex items-center justify-between gap-2 text-sm">
+					<li key={vendor.id} className="type-body flex items-center justify-between gap-2">
 						<span className="text-text">{vendor.name}</span>
 						<CategoryBadge category={vendor.category} />
 					</li>

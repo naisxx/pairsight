@@ -19,7 +19,7 @@ export function StartRunButton({
 	return (
 		<>
 			{error != null && (
-				<p role="alert" className="text-danger mr-auto flex items-center gap-1.5 text-sm">
+				<p role="alert" className="text-danger type-body mr-auto flex items-center gap-1.5">
 					<AlertIcon />
 					{error}
 				</p>

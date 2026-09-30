@@ -57,13 +57,13 @@ export function PairsTable({
 							</TableCell>
 							{[row.recordA, row.recordB].map((record) => (
 								<TableCell key={record.id} className="max-w-56">
-									<span className="text-text block truncate text-sm">{record.label}</span>
-									<span className="text-text-muted block truncate font-mono text-xs">
+									<span className="text-text type-label block truncate">{record.label}</span>
+									<span className="text-text-muted type-data-sm block truncate">
 										{record.reference}
 									</span>
 								</TableCell>
 							))}
-							<TableCell className="text-sm">
+							<TableCell className="type-body">
 								{row.isVendorMatch ? (
 									<span className="text-text font-medium">{t('matched')}</span>
 								) : (
@@ -75,7 +75,7 @@ export function PairsTable({
 									<span className="flex items-center gap-2">
 										<ScoreBar score={row.score} threshold={threshold} />
 										{row.isLowConfidence && (
-											<span className="text-warning text-xs whitespace-nowrap">
+											<span className="text-warning type-meta whitespace-nowrap">
 												{t('lowConfidence')}
 											</span>
 										)}
@@ -84,7 +84,7 @@ export function PairsTable({
 									<StatusChip status={row.status} errorCode={row.errorCode} />
 								) : null}
 							</TableCell>
-							<TableCell className="text-text-muted max-w-48 truncate text-xs">
+							<TableCell className="text-text-muted type-meta max-w-48 truncate">
 								{row.ruleIds.length === 0
 									? t('addedByVendor')
 									: t('rules', {

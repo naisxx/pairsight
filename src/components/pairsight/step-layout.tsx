@@ -15,10 +15,10 @@ export function StepHeader({
 	return (
 		<div className="mb-6 flex flex-col gap-1">
 			<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-				<h1 className="text-text text-2xl font-semibold">{title}</h1>
+				<h1 className="text-text type-title">{title}</h1>
 				{children}
 			</div>
-			<p className="text-text-muted max-w-3xl text-sm">{description}</p>
+			<p className="text-text-muted type-body max-w-3xl">{description}</p>
 		</div>
 	)
 }
@@ -39,7 +39,7 @@ export function ActionBar({
 				className
 			)}
 		>
-			{hint != null && <p className="text-text-muted mr-auto text-sm">{hint}</p>}
+			{hint != null && <p className="text-text-muted type-body mr-auto">{hint}</p>}
 			{children}
 		</div>
 	)
@@ -58,8 +58,8 @@ export function Section({
 }) {
 	return (
 		<section className={cn('border-border bg-surface rounded-lg border p-5', className)}>
-			<h2 className="text-text text-base font-semibold">{title}</h2>
-			{description != null && <p className="text-text-muted mt-1 text-sm">{description}</p>}
+			<h2 className="text-text type-heading">{title}</h2>
+			{description != null && <p className="text-text-muted type-body mt-1">{description}</p>}
 			<div className="mt-4">{children}</div>
 		</section>
 	)

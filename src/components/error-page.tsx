@@ -21,11 +21,11 @@ export function ErrorPage({
 	return (
 		<div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
 			<div className="border-border bg-surface flex max-w-md flex-col items-center gap-4 rounded-lg border p-8 shadow-sm">
-				<h1 className="text-text text-lg font-semibold">{title}</h1>
-				<p className="text-text-muted text-sm">{description}</p>
+				<h1 className="text-text type-heading">{title}</h1>
+				<p className="text-text-muted type-body">{description}</p>
 				{action}
 				{digest && (
-					<p className="text-text-muted text-xs">
+					<p className="text-text-muted type-data-sm">
 						Reference: <code>{digest}</code>
 					</p>
 				)}
@@ -39,4 +39,4 @@ export function ErrorPage({
 // state on these pages (see docs/rules/code-style.md, cva is for 2+
 // variants).
 export const errorPageActionClassName =
-	'rounded-md bg-action px-4 py-2 text-sm font-medium text-action-ink transition-colors hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'
+	'rounded-md bg-action px-4 py-2 type-label text-action-ink transition-colors hover:bg-action-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-ring'

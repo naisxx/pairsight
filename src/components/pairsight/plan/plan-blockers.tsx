@@ -33,11 +33,11 @@ export async function PlanBlockers({
 	)
 	return (
 		<div role="alert" className="border-danger/40 bg-danger-subtle rounded-lg border p-4">
-			<p className="text-danger flex items-center gap-2 text-sm font-semibold">
+			<p className="text-danger type-subheading flex items-center gap-2">
 				<AlertIcon />
 				{t('blockerTitle')}
 			</p>
-			<ul className="text-text mt-2 ml-6 list-disc space-y-1 text-sm">
+			<ul className="text-text type-body mt-2 ml-6 list-disc space-y-1">
 				{blockers.map((blocker) => (
 					<li key={blocker}>
 						{blocker === 'too_many_pairs'
@@ -48,8 +48,8 @@ export async function PlanBlockers({
 			</ul>
 			{isOverCap && contributors.length > 0 && (
 				<div className="mt-4 flex flex-col gap-2">
-					<p className="text-text text-sm font-semibold">{t('causesTitle')}</p>
-					<ul className="text-text flex flex-col gap-1 text-sm tabular-nums">
+					<p className="text-text type-subheading">{t('causesTitle')}</p>
+					<ul className="text-text type-body flex flex-col gap-1">
 						{contributors.map((item) => (
 							<li key={item.kind === 'rule' ? item.ruleId : 'vendors'}>
 								{item.kind === 'rule'
@@ -62,8 +62,8 @@ export async function PlanBlockers({
 							</li>
 						))}
 					</ul>
-					<p className="text-text-muted text-xs">{t('causesNote')}</p>
-					<div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+					<p className="text-text-muted type-meta">{t('causesNote')}</p>
+					<div className="type-label flex flex-wrap gap-x-4 gap-y-1">
 						<Link
 							href={`/evaluations/${evaluationId}/rules`}
 							className="text-accent-ink font-medium hover:underline"

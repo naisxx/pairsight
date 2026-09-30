@@ -30,7 +30,7 @@ export function AccountMenu({ email }: { email: string }) {
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">
-				<DropdownMenuLabel className="text-text-muted truncate text-xs font-normal">
+				<DropdownMenuLabel className="text-text-muted type-meta truncate">
 					{email}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />

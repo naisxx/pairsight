@@ -55,10 +55,10 @@ export function IdentitySection({
 					value={country}
 					onChange={(event) => onCountryChange(event.target.value.toUpperCase().slice(0, 2))}
 					maxLength={2}
-					className="w-20 font-mono uppercase"
+					className="type-data w-20 uppercase"
 					aria-describedby={`${id}-country-hint`}
 				/>
-				<p id={`${id}-country-hint`} className="text-text-muted text-xs">
+				<p id={`${id}-country-hint`} className="text-text-muted type-meta">
 					{t('countryHint')}
 				</p>
 			</div>

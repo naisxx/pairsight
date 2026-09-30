@@ -74,7 +74,53 @@ flash on load. Use `dark:` variants only for things tokens can't express.
 - Respect `prefers-reduced-motion` for any animation beyond a simple
   opacity/color transition.
 
-## 4. Accessibility baseline
+## 4. Typography
+
+Two typefaces, both loaded through `next/font` (no dependency) in
+`src/app/[locale]/layout.tsx`:
+
+- **Poppins** (400 / 500 / 600) is the interface: headings, labels, prose,
+  buttons, badges.
+- **JetBrains Mono** is the data voice: anything the user reads _exactly_
+  rather than skims.
+
+Components use the named roles in `globals.css`, never raw `text-sm` /
+`text-xs`, so a heading or a label looks the same on every screen. Colour
+stays a separate class (`text-text`, `text-text-muted`, …).
+
+| Role              | Spec                              | Use                                                                         |
+| ----------------- | --------------------------------- | --------------------------------------------------------------------------- |
+| `type-display`    | Poppins 36 / 44, 600 (48 on `sm`) | Landing hero only                                                           |
+| `type-title`      | Poppins 24 / 32, 600              | Page titles (`StepHeader`, the evaluations list)                            |
+| `type-heading`    | Poppins 16 / 24, 600              | Section and card titles, dialog titles, the pair verdict                    |
+| `type-subheading` | Poppins 14 / 20, 600              | Headings inside a card: rule names, panel titles, notice titles, tile names |
+| `type-body`       | Poppins 14 / 22, 400              | Prose, notices, table cells, inputs                                         |
+| `type-label`      | Poppins 14 / 20, 500              | Form labels, nav, tabs, record names, text links                            |
+| `type-meta`       | Poppins 12 / 18, 400              | Hints, captions, relative times, chips                                      |
+| `type-overline`   | Poppins 11 / 16, 600, uppercase   | Table column headers                                                        |
+| `type-metric`     | Poppins 28 / 36, 600              | The count on a category tile                                                |
+| `type-data`       | JetBrains Mono 13 / 20            | Raw record values, numbers in a column, the threshold input                 |
+| `type-data-sm`    | JetBrains Mono 12 / 18            | Record references, file names, CSV headers, rule keys and stats             |
+| `type-kbd`        | JetBrains Mono 11, key cap        | Keyboard shortcuts                                                          |
+
+**Where the mono goes, and why:**
+
+- **Data values:** record references, raw values in pair detail (so `Smith`
+  vs `Smyth` is compared character by character), CSV headers and sample rows
+  in the column mapping, file names.
+- **Numbers that align or move:** Poppins' digits are proportional (a `1` is
+  half the width of a `0`) and it has no tabular figures, so `tabular-nums`
+  does nothing. Scores, plan counts, rule stats and live run counters use the
+  mono roles; otherwise columns misalign and counters jitter as they tick.
+  Numbers inside a sentence ("Run 2 · 8 pairs") stay in Poppins.
+- **Rule keys:** each blocking rule shows the field ids it matches on
+  (`name` + `postcode`) under its friendly title — the title is the label, the
+  key is the definition.
+- **Keyboard hints:** `J` `K` `Esc` as key caps.
+
+Never use the mono for headings, buttons, category names or prose.
+
+## 5. Accessibility baseline
 
 - Text-on-`--bg`/`--surface` must hit at least WCAG AA contrast (4.5:1 for
   body text, 3:1 for large text). Check this when you change a token value,

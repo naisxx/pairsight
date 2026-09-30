@@ -22,10 +22,10 @@ export default async function VendorsPage({ params }: { params: Promise<{ id: st
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
 			{dataset == null ? (
-				<p className="text-text-muted text-sm">
+				<p className="text-text-muted type-body">
 					<Link
 						href={`/evaluations/${id}/records`}
-						className="text-accent-ink font-medium hover:underline"
+						className="text-accent-ink type-label hover:underline"
 					>
 						{t('needRecords')}
 					</Link>
@@ -36,12 +36,12 @@ export default async function VendorsPage({ params }: { params: Promise<{ id: st
 						<ul className="border-border bg-surface divide-border divide-y rounded-lg border">
 							{vendorExports.map((vendorExport) => (
 								<li key={vendorExport.id} className="flex items-center gap-3 px-4 py-3">
-									<span className="text-text font-medium">{vendorExport.name}</span>
-									<span className="text-text-muted flex min-w-0 items-center gap-1 truncate text-sm">
+									<span className="text-text type-label">{vendorExport.name}</span>
+									<span className="text-text-muted type-data-sm flex min-w-0 items-center gap-1 truncate">
 										<FileIcon />
 										{vendorExport.fileName}
 									</span>
-									<span className="text-text-muted ml-auto text-sm tabular-nums">
+									<span className="text-text-muted type-body ml-auto">
 										{t('added', { count: vendorExport.pairCount })}
 									</span>
 									<RemoveVendorButton exportId={vendorExport.id} name={vendorExport.name} />
@@ -57,7 +57,9 @@ export default async function VendorsPage({ params }: { params: Promise<{ id: st
 							/>
 						</Section>
 					) : (
-						<p className="text-text-muted text-sm">{t('maxVendors', { max: LIMITS.maxVendors })}</p>
+						<p className="text-text-muted type-body">
+							{t('maxVendors', { max: LIMITS.maxVendors })}
+						</p>
 					)}
 					{vendorExports.length > 0 && (
 						<ActionBar>

@@ -31,24 +31,18 @@ export async function PlanBreakdown({
 			<dl className="divide-border divide-y">
 				{rows.map(({ label, value, isEmphasis }) => (
 					<div key={label} className="flex items-baseline justify-between gap-4 py-2.5">
-						<dt
-							className={isEmphasis ? 'text-text text-sm font-semibold' : 'text-text-muted text-sm'}
-						>
+						<dt className={isEmphasis ? 'text-text type-subheading' : 'text-text-muted type-body'}>
 							{label}
 						</dt>
 						<dd
-							className={
-								isEmphasis
-									? 'text-text text-base font-semibold tabular-nums'
-									: 'text-text text-sm tabular-nums'
-							}
+							className={isEmphasis ? 'text-text type-data font-semibold' : 'text-text type-data'}
 						>
 							{number(value)}
 						</dd>
 					</div>
 				))}
 			</dl>
-			<p className="text-text-muted mt-3 text-xs">
+			<p className="text-text-muted type-meta mt-3">
 				{t('reduction', { percent: reduction, all: number(counts.allPossiblePairs) })} ·{' '}
 				{t('limit', { limit: number(maxPairsPerRun) })}
 			</p>

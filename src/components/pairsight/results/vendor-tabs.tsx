@@ -23,7 +23,7 @@ export function VendorTabs({
 					href={{ pathname: `${base}/results`, query: toQuery({ vendor: vendor.id }) }}
 					aria-current={vendor.id === vendorId ? 'page' : undefined}
 					className={cn(
-						'-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors',
+						'type-label -mb-px border-b-2 px-3 py-2 transition-colors',
 						vendor.id === vendorId
 							? 'border-action text-text'
 							: 'text-text-muted hover:text-text border-transparent'

@@ -180,6 +180,7 @@
 		"saveAndRecount": "Save and recount",
 		"ruleOverCap": "This rule alone creates {pairs, number} pairs; one run allows {limit, number}.",
 		"customHint": "Custom rule: every field must match",
+		"ruleKey": "Matches on",
 		"removeRule": "Remove {rule}",
 		"customTitle": "Add a custom rule",
 		"customDescription": "Pick up to three fields. Records become a candidate pair only when all of them match after normalization.",
@@ -330,7 +331,7 @@
 		"originRules": "Found by rules: {rules}",
 		"originVendor": "Added because {vendors} matched it (outside your rules)",
 		"vendorsTitle": "Vendor decisions",
-		"keyboardHint": "J / K for next and previous, Esc to go back"
+		"keyboardHint": "<key>J</key> <key>K</key> next and previous · <key>Esc</key> back to results"
 	},
 	"Errors": {
 		"generic": "Something went wrong. Try again."

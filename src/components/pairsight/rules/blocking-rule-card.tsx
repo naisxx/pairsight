@@ -31,7 +31,7 @@ export function RuleStatsLine({ stat, limits }: { stat: RuleStats; limits: RuleL
 	const t = useTranslations('Rules')
 	return (
 		<>
-			<p className="text-text-muted text-xs tabular-nums">
+			<p className="text-text-muted type-data-sm">
 				{stat.bucketCount === 0
 					? t('statsNone')
 					: t('stats', {
@@ -42,7 +42,7 @@ export function RuleStatsLine({ stat, limits }: { stat: RuleStats; limits: RuleL
 				{stat.recordsWithoutKey > 0 && ` · ${t('withoutValue', { count: stat.recordsWithoutKey })}`}
 			</p>
 			{stat.pairCount > limits.maxPairsPerRun && (
-				<p className="text-danger flex items-start gap-1.5 text-xs">
+				<p className="text-danger type-meta flex items-start gap-1.5">
 					<AlertIcon size={14} className="mt-px shrink-0" />
 					{t('ruleOverCap', { pairs: stat.pairCount, limit: limits.maxPairsPerRun })}
 				</p>
@@ -51,13 +51,31 @@ export function RuleStatsLine({ stat, limits }: { stat: RuleStats; limits: RuleL
 				stat.oversizedBuckets.map((bucket) => (
 					<p
 						key={`${bucket.size}-${bucket.pairCount}`}
-						className="text-warning flex items-start gap-1.5 text-xs"
+						className="text-warning type-meta flex items-start gap-1.5"
 					>
 						<AlertIcon size={14} className="mt-px shrink-0" />
 						{t('bucketWarning', { size: bucket.size, pairs: bucket.pairCount })}
 					</p>
 				))}
 		</>
+	)
+}
+
+// The rule's key: the field ids it matches on, in the data voice, so the
+// friendly title above reads as a label and this as the definition.
+function RuleKey({ fields }: { fields: readonly BlockingField[] }) {
+	const t = useTranslations('Rules')
+	return (
+		<p className="flex flex-wrap items-center gap-1" aria-label={t('ruleKey')}>
+			{fields.map((field, index) => (
+				<span key={field} className="flex items-center gap-1">
+					{index > 0 && <span className="text-text-muted type-data-sm">+</span>}
+					<code className="border-border bg-surface-muted text-text type-data-sm rounded border px-1.5">
+						{field}
+					</code>
+				</span>
+			))}
+		</p>
 	)
 }
 
@@ -94,8 +112,8 @@ export function BlockingRuleCard({
 		>
 			<div className="flex items-start justify-between gap-3">
 				<span className="flex flex-col gap-0.5">
-					<span className="text-text text-sm font-semibold">{title}</span>
-					<span className="text-text-muted text-xs">
+					<span className="text-text type-subheading">{title}</span>
+					<span className="text-text-muted type-meta">
 						{copy != null ? t(copy.hint) : t('customHint')}
 					</span>
 				</span>
@@ -117,8 +135,9 @@ export function BlockingRuleCard({
 					/>
 				)}
 			</div>
+			<RuleKey fields={rule.fields} />
 			{missing != null ? (
-				<p className="text-text-muted text-xs">
+				<p className="text-text-muted type-meta">
 					{t('ruleUnavailable', { field: tRoles(missing) })}
 				</p>
 			) : stat != null ? (

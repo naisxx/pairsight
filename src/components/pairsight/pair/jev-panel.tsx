@@ -28,15 +28,15 @@ export function JevPanel({
 	const format = useFormatter()
 	return (
 		<section className="border-border bg-surface rounded-lg border p-4">
-			<h2 className="text-text mb-3 text-sm font-semibold">{t('jevTitle')}</h2>
+			<h2 className="text-text type-subheading mb-3">{t('jevTitle')}</h2>
 			{status === 'succeeded' && score != null ? (
 				<div className="flex flex-col gap-2">
 					<ScoreBar score={score} threshold={threshold} size="lg" />
-					<p className="text-text-muted text-xs tabular-nums">
+					<p className="text-text-muted type-meta">
 						{t('thresholdMarker', { threshold: threshold.toFixed(2) })}
 					</p>
-					<p className="text-text text-sm">{t('decision', { decision })}</p>
-					<p className="text-text-muted text-xs">
+					<p className="text-text type-body">{t('decision', { decision })}</p>
+					<p className="text-text-muted type-meta">
 						{t('model', {
 							model: modelReported ?? fallbackModel,
 							date:
@@ -45,7 +45,7 @@ export function JevPanel({
 									: '—'
 						})}
 					</p>
-					<p className="text-text-muted flex items-center gap-1.5 text-xs">
+					<p className="text-text-muted type-meta flex items-center gap-1.5">
 						<InfoIcon />
 						{t('aiNote')}
 					</p>
@@ -53,7 +53,7 @@ export function JevPanel({
 			) : status === 'failed' ? (
 				<div className="flex flex-col gap-2">
 					<StatusChip status="failed" errorCode={errorCode} />
-					<p className="text-text flex items-start gap-1.5 text-sm">
+					<p className="text-text type-body flex items-start gap-1.5">
 						<AlertIcon className="text-danger mt-0.5 shrink-0" />
 						{t('failedJudgment', { reason: errorCode ?? 'unknown' })}
 					</p>
@@ -61,7 +61,7 @@ export function JevPanel({
 			) : (
 				<div className="flex flex-col gap-2">
 					<StatusChip status={status === 'running' ? 'running' : 'pending'} />
-					<p className="text-text-muted text-sm">{t('pendingJudgment')}</p>
+					<p className="text-text-muted type-body">{t('pendingJudgment')}</p>
 				</div>
 			)}
 		</section>

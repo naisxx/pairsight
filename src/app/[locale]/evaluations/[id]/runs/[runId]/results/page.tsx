@@ -44,7 +44,7 @@ export default async function ResultsPage({
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('agreementNote')}>
-				<span className="text-text-muted text-sm tabular-nums">
+				<span className="text-text-muted type-body">
 					{t('runMeta', {
 						number: run.number,
 						date: format.dateTime(run.createdAt, { dateStyle: 'medium' }),
@@ -60,7 +60,7 @@ export default async function ResultsPage({
 				<ResultsFilters base={base} filters={filters} />
 				<ThresholdControl runId={run.id} threshold={run.threshold} />
 			</div>
-			<p className="text-text-muted mt-4 mb-2 text-sm tabular-nums" aria-live="polite">
+			<p className="text-text-muted type-body mt-4 mb-2" aria-live="polite">
 				{t('matching', { count: results.matching })}
 			</p>
 			{results.rows.length === 0 ? (

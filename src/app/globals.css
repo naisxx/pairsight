@@ -9,7 +9,7 @@
    that needs to change with color scheme) live directly in @theme. The font
    variables are set by next/font in src/app/[locale]/layout.tsx. */
 @theme {
-	--font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-sans: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 	--radius-sm: 6px;
 	--radius: 10px;
@@ -193,6 +193,92 @@
 	--color-chart-5: var(--chart-5);
 }
 
+/* The type scale (DESIGN.md §4). Components use these roles, never raw
+   text-sm/text-xs, so a heading or a label looks the same on every screen.
+   Colour stays separate (text-text, text-text-muted, …).
+
+   Two voices: Poppins for the interface, JetBrains Mono for data the user
+   reads exactly — record references, raw values, scores, counts, rule keys.
+   Poppins' digits are proportional (a 1 is half the width of a 0) and it has
+   no tabular figures, so numbers that sit in columns or change live use the
+   mono roles; otherwise they misalign and jitter. */
+@utility type-display {
+	font-size: 2.25rem;
+	line-height: 2.75rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+@utility type-title {
+	font-size: 1.5rem;
+	line-height: 2rem;
+	font-weight: 600;
+	letter-spacing: -0.015em;
+}
+@utility type-heading {
+	font-size: 1rem;
+	line-height: 1.5rem;
+	font-weight: 600;
+	letter-spacing: -0.005em;
+}
+@utility type-subheading {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 600;
+}
+@utility type-body {
+	font-size: 0.875rem;
+	line-height: 1.375rem;
+	font-weight: 400;
+}
+@utility type-label {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 500;
+}
+@utility type-meta {
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	font-weight: 400;
+}
+@utility type-overline {
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+@utility type-metric {
+	font-size: 1.75rem;
+	line-height: 2.25rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+@utility type-data {
+	font-family: var(--font-mono);
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	font-weight: 400;
+	font-variant-ligatures: none;
+}
+@utility type-data-sm {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	font-weight: 400;
+	font-variant-ligatures: none;
+}
+@utility type-kbd {
+	font-family: var(--font-mono);
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	font-weight: 500;
+	padding: 0.0625rem 0.375rem;
+	border: 1px solid var(--border-input);
+	border-bottom-width: 2px;
+	border-radius: 0.25rem;
+	background: var(--surface-muted);
+}
+
 @layer base {
 	* {
 		border-color: var(--border);
@@ -202,7 +288,6 @@
 		background-color: var(--bg);
 		color: var(--text);
 		font-family: var(--font-sans);
-		font-feature-settings: 'cv11', 'ss01';
 		-webkit-font-smoothing: antialiased;
 	}
 

@@ -19,7 +19,7 @@ export default async function RulesPage({ params }: { params: Promise<{ id: stri
 				<StepHeader title={t('title')} description={t('description')} />
 				<Link
 					href={`/evaluations/${id}/records`}
-					className="text-accent-ink text-sm font-medium hover:underline"
+					className="text-accent-ink type-label hover:underline"
 				>
 					{t('needRecords')}
 				</Link>

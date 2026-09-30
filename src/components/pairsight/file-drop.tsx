@@ -46,8 +46,8 @@ export function FileDrop({
 			) : (
 				<UploadIcon size={22} className="text-text-muted" />
 			)}
-			<span className="text-text text-sm font-medium">{isBusy ? busyLabel : label}</span>
-			<span className="text-text-muted text-xs">{hint}</span>
+			<span className="text-text type-label">{isBusy ? busyLabel : label}</span>
+			<span className="text-text-muted type-meta">{hint}</span>
 			<input
 				id={id}
 				type="file"

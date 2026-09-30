@@ -55,7 +55,7 @@ export function CategoryBadge({ category }: { category: ResultCategory }) {
 	return (
 		<span
 			className={cn(
-				'inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap',
+				'type-meta inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium whitespace-nowrap',
 				CATEGORY_STYLES[category].badge
 			)}
 		>
@@ -76,7 +76,7 @@ export function StatusChip({
 	return (
 		<span
 			className={cn(
-				'inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-xs font-medium whitespace-nowrap',
+				'type-meta inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium whitespace-nowrap',
 				status === 'failed' ? 'bg-danger-subtle text-danger' : 'bg-surface-muted text-text-muted'
 			)}
 			title={errorCode ?? undefined}
@@ -88,7 +88,7 @@ export function StatusChip({
 			) : null}
 			{t(status)}
 			{status === 'failed' && errorCode != null && (
-				<span className="font-mono opacity-80">· {errorCode}</span>
+				<span className="type-data-sm opacity-80">· {errorCode}</span>
 			)}
 		</span>
 	)
@@ -129,8 +129,8 @@ export function ScoreBar({
 			</span>
 			<span
 				className={cn(
-					'text-text font-mono tabular-nums',
-					size === 'lg' ? 'text-base font-semibold' : 'text-xs'
+					'text-text',
+					size === 'lg' ? 'type-data text-base leading-6 font-semibold' : 'type-data-sm'
 				)}
 			>
 				{score.toFixed(2)}

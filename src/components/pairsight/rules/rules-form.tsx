@@ -206,7 +206,7 @@ export function RulesForm({
 			{error != null && (
 				<p
 					role="alert"
-					className="bg-danger-subtle text-danger flex items-center gap-2 rounded px-3 py-2 text-sm"
+					className="bg-danger-subtle text-danger type-body flex items-center gap-2 rounded px-3 py-2"
 				>
 					<AlertIcon />
 					{error}

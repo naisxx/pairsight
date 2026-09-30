@@ -41,7 +41,7 @@ export function StepperRail({ steps }: { steps: Step[] }) {
 						<>
 							<span
 								className={cn(
-									'flex size-6 shrink-0 items-center justify-center rounded-full border text-xs font-semibold tabular-nums',
+									'type-data-sm flex size-6 shrink-0 items-center justify-center rounded-full border font-medium',
 									isCurrent
 										? 'border-action bg-action text-action-ink'
 										: step.state === 'complete'
@@ -64,7 +64,7 @@ export function StepperRail({ steps }: { steps: Step[] }) {
 						<li key={step.key} className="shrink-0">
 							{step.state === 'locked' && !isCurrent ? (
 								<span
-									className="text-text-muted flex cursor-not-allowed items-center gap-2.5 rounded px-2.5 py-2 text-sm opacity-70"
+									className="text-text-muted type-label flex cursor-not-allowed items-center gap-2.5 rounded px-2.5 py-2 opacity-70"
 									title={t('locked')}
 									aria-disabled="true"
 								>
@@ -76,7 +76,7 @@ export function StepperRail({ steps }: { steps: Step[] }) {
 									href={step.href}
 									aria-current={isCurrent ? 'step' : undefined}
 									className={cn(
-										'focus-visible:outline-ring flex items-center gap-2.5 rounded px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2',
+										'focus-visible:outline-ring type-label flex items-center gap-2.5 rounded px-2.5 py-2 transition-colors focus-visible:outline-2',
 										isCurrent
 											? 'bg-selected text-text shadow-[inset_3px_0_0_var(--action)]'
 											: 'text-text-muted hover:bg-surface-hover hover:text-text'

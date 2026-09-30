@@ -22,7 +22,7 @@ export function JevFieldsSection({
 		<Section title={t('jevFieldsTitle')} description={t('jevFieldsDescription')}>
 			<div className="flex flex-wrap gap-x-6 gap-y-3">
 				{mappedRoles.map((role) => (
-					<label key={role} className="text-text flex items-center gap-2 text-sm">
+					<label key={role} className="text-text type-body flex items-center gap-2">
 						<Checkbox
 							checked={selected.has(role)}
 							onCheckedChange={(checked) => onToggle(role, checked === true)}

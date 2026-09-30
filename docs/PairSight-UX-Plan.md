@@ -316,11 +316,13 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
 ## 7. Typography, spacing, motion, responsiveness, keyboard
 
 - **Type:**
-  - Inter through `next/font` (no dependency), with `tabular-nums` for every
-    number. JetBrains Mono through `next/font` for record references and raw
-    values in inspection.
-  - Scale: 12 (meta) / 14 (body, table) / 16 (lead) / 20 (section) /
-    24 (page title). Weights 400/500/600.
+  - Poppins (400/500/600) for the interface and JetBrains Mono for data —
+    record references, raw values, scores, counts, rule keys, keyboard hints.
+    Poppins has proportional digits and no tabular figures, so numbers that
+    align or change live use the mono. Adopted 2026-10-01, replacing Inter.
+  - Named roles, not raw sizes: display 36 / title 24 / heading 16 /
+    subheading 14 / body 14 / label 14 / meta 12 / overline 11, plus the two
+    mono data roles. The full table is `DESIGN.md` §4.
 - **Spacing:** Tailwind's 4 px scale. 16 px card padding, 24 px section gaps, a
   1,280 px max content width (1,440 px for Results).
 - **Motion:** 120–160 ms color and opacity transitions, a 200 ms popover or sheet
