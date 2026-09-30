@@ -232,53 +232,75 @@ bar.
 
 ## 6. Theme tokens (contrast checked)
 
+Adopted 2026-09-30. This merges `docs/PairSight-Color-System.md` (the base:
+warm neutrals, the exact brand coral on primary actions in both themes, and
+dark-mode surface layering) with the pieces it didn't define: input borders,
+tinted status backgrounds, and the comparison-category colors. Every value
+below was measured against the surfaces it actually sits on (WCAG 2.1: text
+≥ 4.5, control edges and chart marks ≥ 3).
+
 - **Theme switching:** class-based (`.dark` on `<html>`) through
-  **`next-themes`** (approved 2026-09-30), with a Light / Dark / System menu,
-  preference persisted, and no flash on load. The current
-  `prefers-color-scheme` block moves under `.dark`, following the path
-  `DESIGN.md` already describes.
-- **Naming:** the repo's semantic names remain the source of truth. shadcn's
-  variable names (`--background`, `--primary`, …) become aliases of them, so
-  copied shadcn components work unmodified.
-- **Neutrals** are zinc-like and slightly warm, to sit with the brand.
+  **`next-themes`**, with a Light / Dark / System menu, preference persisted,
+  and no flash on load.
+- **Naming:** the repo's semantic names stay the source of truth. shadcn's
+  variable names (`--background`, `--primary`, `--accent`, `--ring`, …) are
+  aliases of them, so copied shadcn components work unmodified.
 
-| Token                   | Light                                | Dark                  | Use and measured contrast                                                                                                                |
-| ----------------------- | ------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `--bg`                  | `#FAFAF9`                            | `#111113`             | Page                                                                                                                                     |
-| `--surface`             | `#FFFFFF`                            | `#18181B`             | Cards, tables                                                                                                                            |
-| `--surface-sunken`      | `#F4F4F5`                            | `#141416`             | Table header, code                                                                                                                       |
-| `--surface-hover`       | `#F1F1F2`                            | `#222226`             | Row hover                                                                                                                                |
-| `--border`              | `#E4E4E7`                            | `#2A2A2F`             | Decorative hairlines                                                                                                                     |
-| `--border-input`        | `#8A9099`                            | `#6E747E`             | Form controls: 3.22 / 3.76                                                                                                               |
-| `--text`                | `#18181B`                            | `#F4F4F5`             | 17.7 / 16.1                                                                                                                              |
-| `--text-muted`          | `#5F6570`                            | `#A1A7B3`             | 5.86 / 7.33                                                                                                                              |
-| `--text-faint`          | `#6E747F`                            | `#858B95`             | 4.70 / 5.17 (the old `#7B818C` failed at 3.92)                                                                                           |
-| `--action`              | `#C9432F`                            | `#E45742`             | Primary fill. White text 4.85 / dark ink 5.02. (`#E45742` with white is only 3.66, so light mode uses the darker shade of the same hue.) |
-| `--action-hover`        | `#B23A28`                            | `#F07A67`             | 5.95 with white / ink                                                                                                                    |
-| `--action-ink`          | `#FFFFFF`                            | `#1C1210`             | Text on action                                                                                                                           |
-| `--brand-text`          | `#B23A28`                            | `#F07A67`             | Links, active nav. 5.27 / 6.22 on brand-subtle                                                                                           |
-| `--brand-subtle`        | `#FDEEEA`                            | `#2B1714`             | Selected row, active step, selected tile                                                                                                 |
-| `--focus-ring`          | `#C9432F`                            | `#F07A67`             | 4.85 / 6.48                                                                                                                              |
-| `--danger` / `-subtle`  | `#C0264E` / `#FCEEF1`                | `#F2708A` / `#2A1519` | Hue 345°, vs the brand's 8°. 5.14 / 6.12                                                                                                 |
-| `--warning` / `-subtle` | `#8A5A00` / `#FDF4E3`                | `#E8B24A` / `#2A2110` | 5.43 / 8.23                                                                                                                              |
-| `--success` / `-subtle` | `#1B7A4A` / `#E9F6EF`                | `#4CC38A` / `#11251B` | 4.81 / 7.27                                                                                                                              |
-| `--info`                | `#2F5FB3`                            | `#7FA6E8`             | Neutral notices                                                                                                                          |
-| `--cat-both`            | `#3F5E9E`                            | `#8AA4DB`             | Both matched (quiet)                                                                                                                     |
-| `--cat-pairsight`       | `#6841B0`                            | `#B39AF0`             | PairSight only                                                                                                                           |
-| `--cat-vendor`          | `#0C6B75`                            | `#4FC1C9`             | Vendor only                                                                                                                              |
-| `--cat-neither`         | `#5E6570`                            | `#A1A7B3`             | Neither matched (quiet)                                                                                                                  |
-| `--cat-incomplete`      | the text-faint color, dashed outline | same                  | Pending or failed                                                                                                                        |
+| Token                         | Light                                | Dark                  | Use and measured contrast                                                        |
+| ----------------------------- | ------------------------------------ | --------------------- | -------------------------------------------------------------------------------- |
+| `--bg`                        | `#FAF8F7`                            | `#171413`             | Page                                                                             |
+| `--surface`                   | `#FFFFFF`                            | `#211D1B`             | Cards, sidebar, tables                                                           |
+| `--surface-elevated`          | `#FFFFFF`                            | `#2B2522`             | Menus, dialogs, popovers                                                         |
+| `--surface-muted`             | `#F2ECE9`                            | `#302925`             | Table headers, sunken areas                                                      |
+| `--border`                    | `#DED4CF`                            | `#50433C`             | Decorative hairlines only (1.5–1.8: not for controls)                            |
+| `--border-input`              | `#8C7B71`                            | `#857469`             | Form controls and other essential edges: ≥ 3.46 / ≥ 3.20 on every surface        |
+| `--text`                      | `#241C18`                            | `#FAF5F2`             | 15.8 / 16.9                                                                      |
+| `--text-muted`                | `#705E55`                            | `#C2AEA3`             | Secondary text and placeholders: ≥ 5.25 / ≥ 6.72 on every surface                |
+| `--action`                    | `#E45742`                            | `#E45742`             | Primary action. The exact brand coral in both themes.                            |
+| `--action-ink`                | `#241C18`                            | `#241C18`             | Text on action: 4.58 (dark text, never white: white on coral is 3.66)            |
+| `--action-hover`              | `#EA6855`                            | `#EA6855`             | 5.27 with action-ink                                                             |
+| `--accent`                    | `#FCEAE6`                            | `#3B2520`             | Selected nav, row, step or tile, always paired with a border, indicator or label |
+| `--accent-ink`                | `#B83B2A`                            | `#F48977`             | Links and active text: 4.88 / 5.91 on accent, 5.68 / 6.92 on surface             |
+| `--ring`                      | `#B83B2A`                            | `#F48977`             | Keyboard focus: ≥ 5.36 / ≥ 6.92                                                  |
+| `--success` / `-subtle`       | `#237A52` / `#E8F5EE`                | `#76D6A2` / `#1B2D23` | 5.28 on surface; 4.71 / 8.24 on subtle                                           |
+| `--warning` / `-subtle`       | `#946000` / `#FBF1DE`                | `#F3C56B` / `#33291A` | 5.34 on surface; 4.77 / 8.83 on subtle                                           |
+| `--danger` / `-subtle`        | `#B8254F` / `#FCEDF1`                | `#FF8FAE` / `#3A1F27` | Hue 343°, 25° from the brand's 8°. 6.15 / 7.79 on surface; 5.42 / 6.97 on subtle |
+| `--info` / `-subtle`          | `#2864B4` / `#E9F0FA`                | `#91BCFF` / `#1E2635` | 5.88 / 8.63 on surface; 5.13 / 7.83 on subtle                                    |
+| `--cat-both` / `-subtle`      | `#3F5E9E` / `#EDF1F9`                | `#8AA4DB` / `#222838` | Both matched (quiet). 6.35 / 6.70 marks; 5.61 / 5.89 labels                      |
+| `--cat-pairsight` / `-subtle` | `#6841B0` / `#F1ECFA`                | `#B39AF0` / `#2A2338` | PairSight only. 7.07 / 7.00; 6.10 / 6.30                                         |
+| `--cat-vendor` / `-subtle`    | `#0C6B75` / `#E5F3F4`                | `#4FC1C9` / `#172E30` | Vendor only. 6.22 / 7.80; 5.47 / 6.67                                            |
+| `--cat-neither` / `-subtle`   | `#6B625D` / `#F2ECE9`                | `#A89A92` / `#302925` | Neither matched (quiet, warm gray). 5.95 / 6.13; 5.08 / 5.24                     |
+| `--cat-incomplete`            | `--text-muted` with a dashed outline | same                  | Pending or failed                                                                |
 
-- **Category backgrounds:** each category has a `-subtle` background. All
-  measured 5.2–7.1 for label text in both themes.
-- **Brand boundaries:**
-  - `#972828`, `#EB7F31` and `#FCAD38` are **decorative brand only** (the
-    wordmark and landing illustration). They never appear in status or data
-    UI, which keeps them apart from warning, error and success.
-  - Errors are never shown as a filled red button beside the brand-filled
-    primary. Destructive confirmations use an outline danger style.
-- **Radius and elevation:** keep the existing 6/10/16 px radii. Popovers and
-  dialogs use one soft shadow; cards use borders, not shadows.
+- **What changed from the source documents:**
+  - **Error hue:** error moves from `#B42338` / `#FF91A1` (hue 351°, only 16°
+    from the brand) to `#B8254F` / `#FF8FAE` (343°), so error never reads as
+    brand. Contrast rises too.
+  - **Input border:** added, because neither `--border` value can serve as a
+    control edge.
+  - **Faint text:** dropped. No warm faint gray reaches 4.5 on the muted
+    surface, so muted text covers secondary text and placeholders.
+  - **Status and category colors:** tinted backgrounds and the four
+    comparison-category colors are added; the brand palette alone can't carry
+    them.
+- **Supporting brand colors:**
+  - `#972828`, `#EB7F31` and `#FCAD38` are for the wordmark, the landing page,
+    and non-data emphasis.
+  - They are **not used for comparison categories or status**.
+  - `#FCAD38` (hue 36°) is too close to warning (39°) to mark selected chart
+    points; selection uses `--ring` / `--accent-ink`.
+  - `#EB7F31` can be a secondary chart series only in charts with no warning
+    meaning nearby.
+- **Selection:** the accent background is never the only cue. It's paired with
+  a left indicator bar, an outline or a label.
+- **Destructive actions:** confirmations use an outline danger style, never a
+  filled red next to the coral primary.
+- **Radius and elevation:** keep the existing 6/10/16 px radii. Elevated
+  surfaces use `--surface-elevated` plus one soft shadow; cards use borders.
+- **Derived states** are set once in the tokens, not per component:
+  - disabled: 50% opacity with no hover
+  - active: the hover color plus a 1 px inset
+  - All must still meet their contrast target against the surface they sit on.
 
 ## 7. Typography, spacing, motion, responsiveness, keyboard
 
@@ -384,7 +406,7 @@ bar.
 - **Default threshold:** set after the M1 test. The UI shows whatever the run
   stores.
 - **Wordmark (decided):** a text wordmark, "PairSight" in 600 weight with a
-  small `--action` pair glyph. It's swapped when a real logo arrives.
+  small `--action` coral pair glyph. It's swapped when a real logo arrives.
 - **Export, human review, metrics, multiple vendors:** placements are planned,
   but the controls stay hidden until each is built (Next, per the delivery
   plan).
