@@ -1,0 +1,4 @@
+# Check text files out with LF on every platform. The repo, Prettier and CI
+# (Linux) are all LF; without this, Git for Windows' default core.autocrlf=true
+# checks files out as CRLF and `pnpm format:check` flags every file.
+* text=auto eol=lf

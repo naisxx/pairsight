@@ -10,9 +10,15 @@ This file holds the two things that genuinely are Claude-Code-specific.
 
 ## Session logs
 
+Always commit `.claude-logs/` with your changes.
+
 `.claude-logs/` is tracked, not gitignored — the transcript for the session
 that produced a change belongs on the branch that ships it. Stage it
-immediately before every `git push`, separately from the code commit.
+immediately before every `git push`, separately from the code commit. It is
+written by the `UserPromptSubmit`/`Stop` hooks running
+`~/.claude/extract-log.py` (8x's agent-session-logs setup, installed per
+machine) — prompts and final responses only. It is the one log directory for
+every agent; don't create `.codex-logs/` or another per-agent one.
 
 ## Skills
 

@@ -90,7 +90,7 @@ of one monolithic instructions file.
 - **[Secrets](docs/rules/secrets.md)** — credentials live in env vars read
   through `src/lib/env.ts`, never hardcoded or committed; a `check:secrets`
   scanner backstops it at the pre-commit hook and again in CI, over source
-  and over the `.claude-logs/`/`.codex-logs/` transcripts that ship on the
+  and over the `.claude-logs/` transcripts (every agent's) that ship on the
   branch. Redact a secret out of a transcript before logging the session —
   don't lean on the scanner.
 - **[Analytics](docs/rules/analytics.md)** — PostHog through the typed
