@@ -113,10 +113,12 @@ replace a view). CI applies it to a throwaway database on every PR, and
 sure it never runs twice on the same database. Replace its content for the next
 one-off.
 
-Locally that means: edit the schema, run `pnpm prisma:generate` and the gates,
-push the branch, and pull the migration CI commits back before running
-`pnpm exec prisma migrate deploy` against your local database. Never
-`prisma db push` or `prisma migrate dev`. The only migrations written by hand
+PairSight generates migrations locally with the same generator CI uses:
+edit the schema, then run `pnpm prisma:migrate:generate:check` (preview) and
+`pnpm prisma:migrate:generate <name>`, which writes the migration and applies
+it to your local database. Commit it with the schema change; CI's
+`migrations` job re-checks it on the PR. Never `prisma db push` or
+`prisma migrate dev`. The only migrations written by hand
 are the documented exceptions: `ENABLE ROW LEVEL SECURITY` for each new table,
 and data-preserving SQL when the generator refuses a destructive change. Full workflow, the
 destructive-change safety net, and why this approach was chosen over the
@@ -195,15 +197,16 @@ PairSight runs and is demoed on localhost only. There's no Vercel project, no
 hosted Supabase and no production deployment. Never run a manual deploy
 command (`docs/rules/deployment.md`).
 
-GitHub CI still runs on every PR: it runs the gates, e2e, and the migrations
-job that writes this project's migrations. To make that trustworthy, set up
-the migrations token described in `docs/CI_CD_SETUP.md`: the GitHub App
-(`MIGRATIONS_APP_ID` variable + `MIGRATIONS_APP_PRIVATE_KEY` secret) or a
-`MIGRATIONS_TOKEN` secret. Without it, the CI-generated migration commit's
-own run waits in `action_required` for manual approval.
-`deploy-migrations.yml` targets a production database this project doesn't
-have, so it fails on pushes to `main` until `PRODUCTION_DATABASE_URL`
-exists; that's expected here.
+GitHub CI still runs on every PR: gates, e2e, and the migrations job. Since
+migrations are generated locally and committed, that job finds nothing to
+generate and acts as a check (replay, drift, RLS). So no migrations token is
+configured. If a PR ever reaches CI with a schema change but no migration,
+CI would generate and push one using `GITHUB_TOKEN`, and that commit's run
+would wait in `action_required`. Generate it locally instead.
+
+There's no production database (`PRODUCTION_DATABASE_URL` is deliberately
+unset), so `deploy-migrations.yml` fails on pushes to `main`. That's
+expected here.
 
 ## Still to do
 
