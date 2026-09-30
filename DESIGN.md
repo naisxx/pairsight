@@ -1,7 +1,8 @@
 # PairSight design system
 
-PairSight's brand palette (coral `#E45742`, with `#972828`, `#EB7F31` and
-`#FCAD38`) on warm neutral surfaces, in light and dark. The full UI/UX
+PairSight's "Coral × Slate" palette: brand coral (with `#972828`, `#EB7F31`
+and `#FCAD38` for decoration) on cool slate neutral surfaces, in light and
+dark. The full UI/UX
 reference — journey, screens, states, and every token value with its measured
 contrast — is [docs/PairSight-UX-Plan.md](docs/PairSight-UX-Plan.md) (§6 for
 tokens). This file keeps the conventions every component follows.
@@ -34,12 +35,15 @@ measured contrast for each is in the UX plan §6.
 | --------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
 | `--bg`                                                                            | Page background                                                                                                    |
 | `--surface` / `--surface-elevated` / `--surface-muted`                            | Cards and tables / menus and dialogs / table headers and sunken areas                                              |
-| `--surface-hover`                                                                 | Hover state for rows and interactive surfaces                                                                      |
+| `--surface-hover`                                                                 | Hover state for rows, menu items and interactive surfaces                                                          |
+| `--selected`                                                                      | Selected row, current step, enabled rule — always with a coral edge or outline, never a brand tint                 |
+| `--ghost`                                                                         | Ghost button at rest                                                                                               |
+| `--diff` / `--diff-ink`                                                           | A changed value in pair detail and its ≠ marker (a difference, not a warning)                                      |
 | `--border`                                                                        | Decorative hairlines only — too faint for a control edge                                                           |
 | `--border-input`                                                                  | Form controls and any essential boundary (≥ 3:1 on every surface)                                                  |
 | `--text` / `--text-muted`                                                         | Primary / secondary text (muted also covers placeholders; there is no fainter text token)                          |
-| `--action` / `--action-hover` / `--action-ink`                                    | The primary action: brand coral in both themes, always with dark ink (white on coral fails AA)                     |
-| `--accent` / `--accent-ink`                                                       | Subtle brand selection (current step, selected tile) / links and active text                                       |
+| `--action` / `--action-hover` / `--action-ink`                                    | The primary action: deeper coral with white ink in light, brighter coral with near-black ink in dark               |
+| `--accent` / `--accent-ink`                                                       | Small brand chips only (never a large area: coral over dark slate turns maroon) / links and active text            |
 | `--ring`                                                                          | Keyboard focus                                                                                                     |
 | `--success` / `--warning` / `--danger` / `--info` (+ `-subtle`)                   | Status only, never decoration; always with an icon or label. Danger's hue is kept 25° from the brand               |
 | `--cat-both` / `--cat-pairsight` / `--cat-vendor` / `--cat-neither` (+ `-subtle`) | The four comparison categories. They mean **agreement, not correctness**, so they never use brand or status colors |

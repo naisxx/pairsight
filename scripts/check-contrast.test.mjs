@@ -37,7 +37,15 @@ function ratio(a, b) {
 	return (hi + 0.05) / (lo + 0.05)
 }
 
-const SURFACES = ['bg', 'surface', 'surface-elevated', 'surface-muted', 'surface-hover']
+const SURFACES = [
+	'bg',
+	'surface',
+	'surface-elevated',
+	'surface-muted',
+	'surface-hover',
+	'selected',
+	'ghost'
+]
 const STATUSES = ['success', 'warning', 'danger', 'info']
 const CATEGORIES = ['cat-both', 'cat-pairsight', 'cat-vendor', 'cat-neither']
 
@@ -49,6 +57,9 @@ const pairs = [
 	['text', 'accent', TEXT],
 	['accent-ink', 'surface', TEXT],
 	['action', 'bg', NON_TEXT],
+	['text', 'diff', TEXT],
+	['diff-ink', 'diff', NON_TEXT],
+	['diff-ink', 'surface', NON_TEXT],
 	...SURFACES.map((bg) => ['ring', bg, NON_TEXT]),
 	...SURFACES.map((bg) => ['border-input', bg, NON_TEXT]),
 	...STATUSES.flatMap((s) => [
@@ -74,6 +85,27 @@ for (const [theme, values] of Object.entries(themes)) {
 	})
 }
 
-test('white text on the brand coral fails, which is why action-ink is dark', () => {
-	assert.ok(ratio('#ffffff', light.action) < TEXT)
-})
+// The dark theme once read as "night mode" because every neutral was warm
+// brown. Neutrals and the selection/diff tints stay cool (blue ≥ red), so a
+// future tweak can't slide the palette back to sepia unnoticed.
+const NEUTRALS = [
+	'bg',
+	'surface',
+	'surface-elevated',
+	'surface-muted',
+	'surface-hover',
+	'selected',
+	'ghost',
+	'diff',
+	'border'
+]
+
+for (const [theme, values] of Object.entries(themes)) {
+	test(`${theme} theme keeps neutral surfaces cool, never warm`, () => {
+		const warm = NEUTRALS.filter((name) => {
+			const hex = values[name]
+			return parseInt(hex.slice(5, 7), 16) < parseInt(hex.slice(1, 3), 16)
+		})
+		assert.deepEqual(warm, [])
+	})
+}

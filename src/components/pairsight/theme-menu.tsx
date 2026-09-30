@@ -23,7 +23,12 @@ export function ThemeMenu() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" aria-label={t('label')} className="w-9 px-0">
+				<Button
+					variant="ghost"
+					size="sm"
+					aria-label={t('label')}
+					className="w-9 bg-transparent px-0"
+				>
 					<SunIcon size={18} className="dark:hidden" />
 					<MoonIcon size={18} className="hidden dark:block" />
 				</Button>

@@ -45,7 +45,7 @@ export function StepperRail({ steps }: { steps: Step[] }) {
 									isCurrent
 										? 'border-action bg-action text-action-ink'
 										: step.state === 'complete'
-											? 'border-accent-ink/40 bg-accent text-accent-ink'
+											? 'border-accent-ink/50 text-accent-ink'
 											: 'border-border-input text-text-muted'
 								)}
 							>
@@ -78,7 +78,7 @@ export function StepperRail({ steps }: { steps: Step[] }) {
 									className={cn(
 										'focus-visible:outline-ring flex items-center gap-2.5 rounded px-2.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2',
 										isCurrent
-											? 'bg-accent text-text shadow-[inset_3px_0_0_var(--action)]'
+											? 'bg-selected text-text shadow-[inset_3px_0_0_var(--action)]'
 											: 'text-text-muted hover:bg-surface-hover hover:text-text'
 									)}
 								>

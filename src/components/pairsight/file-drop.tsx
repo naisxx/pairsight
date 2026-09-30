@@ -37,7 +37,7 @@ export function FileDrop({
 			}}
 			className={cn(
 				'border-border-input bg-surface hover:bg-surface-hover focus-within:outline-ring flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-10 text-center transition-colors focus-within:outline-2',
-				isOver && 'border-action bg-accent',
+				isOver && 'border-action bg-selected',
 				isBusy && 'pointer-events-none opacity-70'
 			)}
 		>

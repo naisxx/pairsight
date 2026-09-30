@@ -61,7 +61,7 @@ export function FieldCompareTable({
 										key={index}
 										className={cn(
 											'text-text text-sm break-words whitespace-normal',
-											isDifferent && 'bg-accent/40'
+											isDifferent && 'bg-diff font-medium'
 										)}
 									>
 										{value === '' ? <span className="text-text-muted italic">—</span> : value}
@@ -71,7 +71,7 @@ export function FieldCompareTable({
 									<span
 										className={cn(
 											'inline-flex items-center gap-1.5 text-xs',
-											field.comparison === 'same' ? 'text-text-muted' : 'text-text font-medium'
+											field.comparison === 'same' ? 'text-text-muted' : 'text-diff-ink font-medium'
 										)}
 									>
 										<Icon size={14} />

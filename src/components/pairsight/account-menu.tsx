@@ -20,7 +20,12 @@ export function AccountMenu({ email }: { email: string }) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" aria-label={t('account')} className="w-9 px-0">
+				<Button
+					variant="ghost"
+					size="sm"
+					aria-label={t('account')}
+					className="w-9 bg-transparent px-0"
+				>
 					<UserIcon size={18} />
 				</Button>
 			</DropdownMenuTrigger>

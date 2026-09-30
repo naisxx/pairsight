@@ -16,80 +16,90 @@
 	--radius-lg: 16px;
 }
 
-/* The PairSight palette (docs/PairSight-UX-Plan.md §6). Every text/background
-   and control-edge pair is contrast-checked in both themes by
-   scripts/check-contrast.test.mjs — change a value here and that test tells
-   you whether it still passes. Brand coral is the primary action in both
-   themes, always with dark ink (white on coral fails AA). */
+/* The PairSight palette, "Coral × Slate" (docs/PairSight-UX-Plan.md §6):
+   brand coral on cool slate neutrals. Every text/background and control-edge
+   pair is contrast-checked in both themes by scripts/check-contrast.test.mjs —
+   change a value here and that test tells you whether it still passes.
+   Large areas are never tinted with the brand (coral over dark slate turns
+   maroon): selection uses --selected plus a coral edge, changed values use
+   --diff, and --accent is for small chips only. */
 :root {
-	--bg: #faf8f7;
+	--bg: #f6f7f9;
 	--surface: #ffffff;
 	--surface-elevated: #ffffff;
-	--surface-muted: #f2ece9;
-	--surface-hover: #f7f1ee;
-	--border: #ded4cf;
-	--border-input: #8c7b71;
-	--text: #241c18;
-	--text-muted: #705e55;
-	--action: #e45742;
-	--action-hover: #ea6855;
-	--action-ink: #241c18;
-	--accent: #fceae6;
-	--accent-ink: #b83b2a;
-	--ring: #b83b2a;
-	--success: #237a52;
-	--success-subtle: #e8f5ee;
-	--warning: #946000;
-	--warning-subtle: #fbf1de;
-	--danger: #b8254f;
-	--danger-subtle: #fcedf1;
-	--info: #2864b4;
-	--info-subtle: #e9f0fa;
-	--cat-both: #3f5e9e;
-	--cat-both-subtle: #edf1f9;
-	--cat-pairsight: #6841b0;
-	--cat-pairsight-subtle: #f1ecfa;
-	--cat-vendor: #0c6b75;
-	--cat-vendor-subtle: #e5f3f4;
-	--cat-neither: #6b625d;
-	--cat-neither-subtle: #f2ece9;
+	--surface-muted: #eef1f4;
+	--surface-hover: #f1f4f7;
+	--selected: #e6edf6;
+	--ghost: #eff2f6;
+	--diff: #e4edfb;
+	--diff-ink: #1d5fb8;
+	--border: #dde2e9;
+	--border-input: #7d8898;
+	--text: #0f1720;
+	--text-muted: #4e5a6a;
+	--action: #c93a22;
+	--action-hover: #ae2f19;
+	--action-ink: #ffffff;
+	--accent: #fdece8;
+	--accent-ink: #b3321c;
+	--ring: #c93a22;
+	--success: #14773a;
+	--success-subtle: #e8f6ee;
+	--warning: #8a5a00;
+	--warning-subtle: #fcf3de;
+	--danger: #be1d4b;
+	--danger-subtle: #fcebf0;
+	--info: #1d5fb8;
+	--info-subtle: #e8f0fb;
+	--cat-both: #2f55a8;
+	--cat-both-subtle: #eaf0fb;
+	--cat-pairsight: #6a3fc0;
+	--cat-pairsight-subtle: #f1ecfb;
+	--cat-vendor: #0b6e68;
+	--cat-vendor-subtle: #e3f4f2;
+	--cat-neither: #56606e;
+	--cat-neither-subtle: #eef1f4;
 	--brand-deep: #972828;
 	--brand-orange: #eb7f31;
 	--brand-amber: #fcad38;
 }
 
 .dark {
-	--bg: #171413;
-	--surface: #211d1b;
-	--surface-elevated: #2b2522;
-	--surface-muted: #302925;
-	--surface-hover: #282220;
-	--border: #50433c;
-	--border-input: #857469;
-	--text: #faf5f2;
-	--text-muted: #c2aea3;
-	--action: #e45742;
-	--action-hover: #ea6855;
-	--action-ink: #241c18;
-	--accent: #3b2520;
-	--accent-ink: #f48977;
-	--ring: #f48977;
-	--success: #76d6a2;
-	--success-subtle: #1b2d23;
-	--warning: #f3c56b;
-	--warning-subtle: #33291a;
-	--danger: #ff8fae;
-	--danger-subtle: #3a1f27;
-	--info: #91bcff;
-	--info-subtle: #1e2635;
-	--cat-both: #8aa4db;
-	--cat-both-subtle: #222838;
-	--cat-pairsight: #b39af0;
-	--cat-pairsight-subtle: #2a2338;
-	--cat-vendor: #4fc1c9;
-	--cat-vendor-subtle: #172e30;
-	--cat-neither: #a89a92;
-	--cat-neither-subtle: #302925;
+	--bg: #0b0f14;
+	--surface: #121821;
+	--surface-elevated: #18202b;
+	--surface-muted: #0e131a;
+	--surface-hover: #19212c;
+	--selected: #1e2b3f;
+	--ghost: #151c26;
+	--diff: #1d2c47;
+	--diff-ink: #8fb6ff;
+	--border: #263140;
+	--border-input: #6b788b;
+	--text: #e8edf3;
+	--text-muted: #a3aebc;
+	--action: #ff6a4d;
+	--action-hover: #ff8469;
+	--action-ink: #1a0b07;
+	--accent: #2a1a24;
+	--accent-ink: #ff8f79;
+	--ring: #ff8f79;
+	--success: #4ade9a;
+	--success-subtle: #10271d;
+	--warning: #f7c04f;
+	--warning-subtle: #2a2210;
+	--danger: #ff6f94;
+	--danger-subtle: #2e1520;
+	--info: #6aaeff;
+	--info-subtle: #12213a;
+	--cat-both: #86a8ff;
+	--cat-both-subtle: #18223a;
+	--cat-pairsight: #be9cff;
+	--cat-pairsight-subtle: #221a38;
+	--cat-vendor: #3dd9c5;
+	--cat-vendor-subtle: #0f2a28;
+	--cat-neither: #9aa6b6;
+	--cat-neither-subtle: #1b2230;
 	color-scheme: dark;
 }
 
@@ -126,6 +136,10 @@
 	--color-surface-elevated: var(--surface-elevated);
 	--color-surface-muted: var(--surface-muted);
 	--color-surface-hover: var(--surface-hover);
+	--color-selected: var(--selected);
+	--color-ghost: var(--ghost);
+	--color-diff: var(--diff);
+	--color-diff-ink: var(--diff-ink);
 	--color-border: var(--border);
 	--color-border-input: var(--border-input);
 	--color-text: var(--text);

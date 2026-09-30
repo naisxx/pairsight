@@ -89,7 +89,7 @@ export function BlockingRuleCard({
 		<li
 			className={cn(
 				'flex flex-col gap-2 rounded-lg border p-4 transition-colors',
-				isOn ? 'border-action/50 bg-accent/40' : 'border-border'
+				isOn ? 'border-action/50 bg-selected' : 'border-border'
 			)}
 		>
 			<div className="flex items-start justify-between gap-3">
