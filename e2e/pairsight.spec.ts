@@ -78,6 +78,7 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 		await page.getByRole('link', { name: 'View results' }).click()
+		await page.waitForURL('**/results')
 
 		for (const name of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
 			await expect(tile(page, name)).toContainText('2')
@@ -90,6 +91,7 @@ test.describe('PairSight vertical slice', () => {
 		await tile(page, 'Vendor only').click()
 		await expect(page.getByText('2 pairs')).toBeVisible()
 		await page.locator('tbody tr a').first().click()
+		await page.waitForURL('**/pairs/**')
 		await expect(
 			page.getByRole('heading', { name: /Vendor A: match · PairSight: no match/ })
 		).toBeVisible()
