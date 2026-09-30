@@ -1,76 +1,209 @@
 @import 'tailwindcss';
+@import 'tw-animate-css';
+
+/* Dark mode is class-based (next-themes sets `.dark` on <html>) so the
+   Light / Dark / System menu can override the OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* Tailwind v4 is CSS-first — no tailwind.config.js. Static tokens (nothing
-   that needs to change with color scheme) live directly in @theme, which
-   both declares them as real CSS variables and generates the matching
-   Tailwind utilities (e.g. --radius-lg below gives you `rounded-lg`). */
+   that needs to change with color scheme) live directly in @theme. The font
+   variables are set by next/font in src/app/[locale]/layout.tsx. */
 @theme {
-	--font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 	--radius-sm: 6px;
 	--radius: 10px;
 	--radius-lg: 16px;
 }
 
-/* Color tokens DO need to change with color scheme, so they're declared on
-   :root (swappable at runtime) and re-exposed to Tailwind via `@theme
-   inline` below — `inline` tells Tailwind to reference these variables
-   live rather than inlining today's computed value at build time. See
-   DESIGN.md for the full token table and naming rationale. */
+/* The PairSight palette (docs/PairSight-UX-Plan.md §6). Every text/background
+   and control-edge pair is contrast-checked in both themes by
+   scripts/check-contrast.test.mjs — change a value here and that test tells
+   you whether it still passes. Brand coral is the primary action in both
+   themes, always with dark ink (white on coral fails AA). */
 :root {
-	--bg: #fafafa;
+	--bg: #faf8f7;
 	--surface: #ffffff;
-	--surface-hover: #f0f1f3;
-	--border: #e5e7eb;
-	--border-strong: #cbd2db;
-	--text: #16181d;
-	--text-muted: #5b6472;
-	--text-faint: #8891a0;
-	--accent: #2454b8;
-	--accent-hover: #1c4292;
-	--accent-ink: #ffffff;
-	--success: #1a7f4b;
-	--warning: #a5580a;
-	--danger: #b3261e;
+	--surface-elevated: #ffffff;
+	--surface-muted: #f2ece9;
+	--surface-hover: #f7f1ee;
+	--border: #ded4cf;
+	--border-input: #8c7b71;
+	--text: #241c18;
+	--text-muted: #705e55;
+	--action: #e45742;
+	--action-hover: #ea6855;
+	--action-ink: #241c18;
+	--accent: #fceae6;
+	--accent-ink: #b83b2a;
+	--ring: #b83b2a;
+	--success: #237a52;
+	--success-subtle: #e8f5ee;
+	--warning: #946000;
+	--warning-subtle: #fbf1de;
+	--danger: #b8254f;
+	--danger-subtle: #fcedf1;
+	--info: #2864b4;
+	--info-subtle: #e9f0fa;
+	--cat-both: #3f5e9e;
+	--cat-both-subtle: #edf1f9;
+	--cat-pairsight: #6841b0;
+	--cat-pairsight-subtle: #f1ecfa;
+	--cat-vendor: #0c6b75;
+	--cat-vendor-subtle: #e5f3f4;
+	--cat-neither: #6b625d;
+	--cat-neither-subtle: #f2ece9;
+	--brand-deep: #972828;
+	--brand-orange: #eb7f31;
+	--brand-amber: #fcad38;
 }
 
-@media (prefers-color-scheme: dark) {
-	:root {
-		--bg: #101215;
-		--surface: #17191d;
-		--surface-hover: #202329;
-		--border: #2a2d33;
-		--border-strong: #3a3e46;
-		--text: #f2f3f5;
-		--text-muted: #a6adba;
-		--text-faint: #767d8a;
-		--accent: #5b8fe0;
-		--accent-hover: #7ba3e6;
-		--accent-ink: #0b1220;
-		--success: #35c37f;
-		--warning: #e2a03f;
-		--danger: #e5675f;
-	}
+.dark {
+	--bg: #171413;
+	--surface: #211d1b;
+	--surface-elevated: #2b2522;
+	--surface-muted: #302925;
+	--surface-hover: #282220;
+	--border: #50433c;
+	--border-input: #857469;
+	--text: #faf5f2;
+	--text-muted: #c2aea3;
+	--action: #e45742;
+	--action-hover: #ea6855;
+	--action-ink: #241c18;
+	--accent: #3b2520;
+	--accent-ink: #f48977;
+	--ring: #f48977;
+	--success: #76d6a2;
+	--success-subtle: #1b2d23;
+	--warning: #f3c56b;
+	--warning-subtle: #33291a;
+	--danger: #ff8fae;
+	--danger-subtle: #3a1f27;
+	--info: #91bcff;
+	--info-subtle: #1e2635;
+	--cat-both: #8aa4db;
+	--cat-both-subtle: #222838;
+	--cat-pairsight: #b39af0;
+	--cat-pairsight-subtle: #2a2338;
+	--cat-vendor: #4fc1c9;
+	--cat-vendor-subtle: #172e30;
+	--cat-neither: #a89a92;
+	--cat-neither-subtle: #302925;
+	color-scheme: dark;
+}
+
+/* shadcn/ui's variable names, aliased to the tokens above so copied
+   components work unmodified. The PairSight names stay the source of truth —
+   change a value above, never here. */
+:root,
+.dark {
+	--background: var(--bg);
+	--foreground: var(--text);
+	--card: var(--surface);
+	--card-foreground: var(--text);
+	--popover: var(--surface-elevated);
+	--popover-foreground: var(--text);
+	--primary: var(--action);
+	--primary-foreground: var(--action-ink);
+	--secondary: var(--surface-muted);
+	--secondary-foreground: var(--text);
+	--muted: var(--surface-muted);
+	--muted-foreground: var(--text-muted);
+	--accent-foreground: var(--accent-ink);
+	--destructive: var(--danger);
+	--input: var(--border-input);
+	--chart-1: var(--cat-both);
+	--chart-2: var(--cat-pairsight);
+	--chart-3: var(--cat-vendor);
+	--chart-4: var(--cat-neither);
+	--chart-5: var(--brand-orange);
 }
 
 @theme inline {
 	--color-bg: var(--bg);
 	--color-surface: var(--surface);
+	--color-surface-elevated: var(--surface-elevated);
+	--color-surface-muted: var(--surface-muted);
 	--color-surface-hover: var(--surface-hover);
 	--color-border: var(--border);
-	--color-border-strong: var(--border-strong);
+	--color-border-input: var(--border-input);
 	--color-text: var(--text);
 	--color-text-muted: var(--text-muted);
-	--color-text-faint: var(--text-faint);
+	--color-action: var(--action);
+	--color-action-hover: var(--action-hover);
+	--color-action-ink: var(--action-ink);
 	--color-accent: var(--accent);
-	--color-accent-hover: var(--accent-hover);
 	--color-accent-ink: var(--accent-ink);
+	--color-ring: var(--ring);
 	--color-success: var(--success);
+	--color-success-subtle: var(--success-subtle);
 	--color-warning: var(--warning);
+	--color-warning-subtle: var(--warning-subtle);
 	--color-danger: var(--danger);
+	--color-danger-subtle: var(--danger-subtle);
+	--color-info: var(--info);
+	--color-info-subtle: var(--info-subtle);
+	--color-cat-both: var(--cat-both);
+	--color-cat-both-subtle: var(--cat-both-subtle);
+	--color-cat-pairsight: var(--cat-pairsight);
+	--color-cat-pairsight-subtle: var(--cat-pairsight-subtle);
+	--color-cat-vendor: var(--cat-vendor);
+	--color-cat-vendor-subtle: var(--cat-vendor-subtle);
+	--color-cat-neither: var(--cat-neither);
+	--color-cat-neither-subtle: var(--cat-neither-subtle);
+	--color-brand-deep: var(--brand-deep);
+	--color-brand-orange: var(--brand-orange);
+	--color-brand-amber: var(--brand-amber);
+
+	/* shadcn aliases */
+	--color-background: var(--background);
+	--color-foreground: var(--foreground);
+	--color-card: var(--card);
+	--color-card-foreground: var(--card-foreground);
+	--color-popover: var(--popover);
+	--color-popover-foreground: var(--popover-foreground);
+	--color-primary: var(--primary);
+	--color-primary-foreground: var(--primary-foreground);
+	--color-secondary: var(--secondary);
+	--color-secondary-foreground: var(--secondary-foreground);
+	--color-muted: var(--muted);
+	--color-muted-foreground: var(--muted-foreground);
+	--color-accent-foreground: var(--accent-foreground);
+	--color-destructive: var(--destructive);
+	--color-input: var(--input);
+	--color-chart-1: var(--chart-1);
+	--color-chart-2: var(--chart-2);
+	--color-chart-3: var(--chart-3);
+	--color-chart-4: var(--chart-4);
+	--color-chart-5: var(--chart-5);
 }
 
-body {
-	background-color: var(--bg);
-	color: var(--text);
-	font-family: var(--font-sans);
+@layer base {
+	* {
+		border-color: var(--border);
+	}
+
+	body {
+		background-color: var(--bg);
+		color: var(--text);
+		font-family: var(--font-sans);
+		font-feature-settings: 'cv11', 'ss01';
+		-webkit-font-smoothing: antialiased;
+	}
+
+	:focus-visible {
+		outline-color: var(--ring);
+	}
+
+	@media (prefers-reduced-motion: reduce) {
+		*,
+		*::before,
+		*::after {
+			animation-duration: 0.01ms !important;
+			animation-iteration-count: 1 !important;
+			transition-duration: 0.01ms !important;
+			scroll-behavior: auto !important;
+		}
+	}
 }

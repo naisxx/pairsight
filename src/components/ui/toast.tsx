@@ -27,8 +27,8 @@ const toastVariants = cva(
 	{
 		variants: {
 			variant: {
-				default: 'border-border bg-surface text-text',
-				destructive: 'border-danger bg-surface text-text'
+				default: 'border-border bg-surface-elevated text-text',
+				destructive: 'border-danger bg-surface-elevated text-text'
 			}
 		},
 		defaultVariants: { variant: 'default' }
@@ -72,8 +72,8 @@ export function ToastClose({
 		<ToastPrimitives.Close
 			aria-label="Dismiss"
 			className={cn(
-				'text-text-faint hover:text-text shrink-0 rounded',
-				'focus-visible:outline-accent focus-visible:outline focus-visible:outline-2',
+				'text-text-muted hover:text-text shrink-0 rounded',
+				'focus-visible:outline-ring focus-visible:outline focus-visible:outline-2',
 				className
 			)}
 			{...props}
