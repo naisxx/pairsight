@@ -176,6 +176,8 @@
 		"statsNone": "No shared values",
 		"bucketWarning": "A group of {size, number} records creates {pairs, number} pairs. This only affects workload, not accuracy.",
 		"withoutValue": "{count} without a value",
+		"countryUnsaved": "Unsaved change: the counts below still read phone numbers as {country}. Save to recount them with the new country.",
+		"saveAndRecount": "Save and recount",
 		"ruleOverCap": "This rule alone creates {pairs, number} pairs; one run allows {limit, number}.",
 		"customHint": "Custom rule: every field must match",
 		"removeRule": "Remove {rule}",
@@ -332,5 +334,11 @@
 	},
 	"Errors": {
 		"generic": "Something went wrong. Try again."
+	},
+	"Unsaved": {
+		"title": "Leave without saving?",
+		"description": "Your changes to the identity definition, Jev fields or blocking rules haven’t been saved. If you leave now, they’ll be lost.",
+		"leave": "Leave without saving",
+		"stay": "Stay on this page"
 	}
 }
