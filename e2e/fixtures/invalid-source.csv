@@ -1,0 +1,4 @@
+record_id,first_name,last_name,email
+R1,Ann,Lee,ann@example.com
+R1,Bo,Kim,bo@example.com
+,Cy,Ray,cy@example.com
