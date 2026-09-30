@@ -4,12 +4,15 @@ import { z } from 'zod'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import {
+	blockingFieldSchema,
 	blockingRulesSchema,
 	countryCodeSchema,
 	identityDefinitionSchema,
 	identityRoleSchema
 } from '@/server/pairsight/schemas'
 import { updateEvaluationConfig } from '@/server/pairsight/evaluations'
+import { previewRuleStats } from '@/server/pairsight/rules-preview'
+import { MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
 import { idSchema } from './shared'
 
 export const saveRulesAction = validatedAction({
@@ -32,5 +35,18 @@ export const saveRulesAction = validatedAction({
 			blockingRules
 		})
 		return { saved: true }
+	}
+})
+
+// Live stats for a custom rule while it's being built, before it's saved.
+export const previewRuleAction = validatedAction({
+	input: z.object({
+		evaluationId: idSchema,
+		fields: z.array(blockingFieldSchema).min(1).max(MAX_RULE_FIELDS),
+		countryCode: countryCodeSchema
+	}),
+	handler: async ({ evaluationId, fields, countryCode }) => {
+		const user = await requireUser()
+		return previewRuleStats({ ownerId: user.id, evaluationId, fields, country: countryCode })
 	}
 })
