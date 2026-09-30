@@ -5,6 +5,14 @@ stack. It runs and is demoed on **localhost**: a local Supabase (in Docker)
 provides auth and Postgres, and there is no hosted Supabase, Vercel project, or
 production deployment.
 
+PairSight helps teams compare entity-resolution vendors: it uses Jev to judge
+record pairs and shows where each vendor agrees or disagrees. See
+[`docs/PairSight-Product-Overview.md`](docs/PairSight-Product-Overview.md) for
+the product and [`docs/PairSight-V1-Scope.md`](docs/PairSight-V1-Scope.md) for
+the v1 scope, domain rules and open questions.
+[`docs/PairSight-Delivery-Plan.md`](docs/PairSight-Delivery-Plan.md) is the
+implementation reference.
+
 ## Stack
 
 | Layer           | Choice                                                        | Note                                                                                                                                                                               |

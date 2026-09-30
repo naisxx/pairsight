@@ -15,6 +15,24 @@ particular:
 - Turbopack is the default bundler for both `next dev` and `next build` —
   don't add webpack config assuming it's the active bundler.
 
+## Product: PairSight
+
+Read these before working on product features:
+
+- [`docs/PairSight-Product-Overview.md`](docs/PairSight-Product-Overview.md):
+  what PairSight is, the user journey, and what the scores mean.
+- [`docs/PairSight-V1-Scope.md`](docs/PairSight-V1-Scope.md): the confirmed
+  v1 scope, the pair and category rules, the PairSight/Jev split, and the
+  open questions.
+- [`docs/PairSight-Delivery-Plan.md`](docs/PairSight-Delivery-Plan.md): the
+  implementation reference: architecture, data model, screens, milestones
+  (M0–M4) and verification.
+- [`docs/PairSight-UX-Plan.md`](docs/PairSight-UX-Plan.md): the UI/UX
+  reference: journey, screens, states, theme tokens and components.
+
+Jev facts there are verified against TypeSafe's docs. Anything marked open
+must be tested against the real API; don't fill the gaps with assumptions.
+
 ## React and Next.js performance
 
 - Treat performance as a correctness requirement for every React and Next.js
