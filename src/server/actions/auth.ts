@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server'
 import { redirect } from '@/i18n/routing'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { AppError } from '@/lib/errors/app-error'
+import { credentialsSchema } from '@/lib/auth/credentials'
 import { validatedAction } from '@/server/actions/validated-action'
 import { provisionUser } from '@/server/auth/provision-user'
 
@@ -12,14 +13,7 @@ import { provisionUser } from '@/server/auth/provision-user'
 // "Sign-in"). Auth only — the User row is provisioned here, and every other
 // byte of data goes through Prisma.
 
-const MIN_PASSWORD_LENGTH = 8
 const DEFAULT_AFTER_SIGN_IN = '/evaluations'
-
-const credentials = z.object({
-	email: z.string().trim().email(),
-	password: z.string().min(MIN_PASSWORD_LENGTH),
-	next: z.string().optional()
-})
 
 // Only same-site paths: `next` comes from the URL, so anything else would be
 // an open redirect.
@@ -35,7 +29,7 @@ async function goTo(href: string): Promise<never> {
 }
 
 export const signIn = validatedAction({
-	input: credentials,
+	input: credentialsSchema,
 	handler: async ({ email, password, next }) => {
 		const supabase = await createServerSupabaseClient()
 		const { data, error } = await supabase.auth.signInWithPassword({ email, password })
@@ -51,7 +45,7 @@ export const signIn = validatedAction({
 })
 
 export const signUp = validatedAction({
-	input: credentials,
+	input: credentialsSchema,
 	handler: async ({ email, password, next }) => {
 		const supabase = await createServerSupabaseClient()
 		const { data, error } = await supabase.auth.signUp({ email, password })

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { AlertIcon, SpinnerIcon } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { credentialsSchema, MIN_PASSWORD_LENGTH } from '@/lib/auth/credentials'
 import { signIn, signUp } from '@/server/actions/auth'
 
 export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: string }) {
@@ -25,14 +26,11 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 			password: String(formData.get('password') ?? ''),
 			next
 		}
+		if (!credentialsSchema.safeParse(input).success)
+			return setError(t('invalidInput', { min: MIN_PASSWORD_LENGTH }))
 		startTransition(async () => {
 			const result = await (isSignIn ? signIn(input) : signUp(input))
-			if (!result.ok)
-				setError(
-					result.status === 400 && result.error === 'Invalid request'
-						? t('invalidInput')
-						: result.error
-				)
+			if (!result.ok) setError(result.error)
 			else if (result.data != null && 'needsConfirmation' in result.data) setNotice(t('checkEmail'))
 		})
 	}
@@ -57,7 +55,7 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 					name="password"
 					type="password"
 					autoComplete={isSignIn ? 'current-password' : 'new-password'}
-					minLength={8}
+					minLength={MIN_PASSWORD_LENGTH}
 					required
 					aria-describedby={isSignIn ? undefined : `${id}-hint`}
 				/>

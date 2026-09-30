@@ -39,7 +39,7 @@
 		"haveAccount": "Already have an account?",
 		"toSignUp": "Create an account",
 		"toSignIn": "Sign in",
-		"invalidInput": "Enter a valid email and a password of at least 8 characters.",
+		"invalidInput": "Enter a valid email and a password of at least {min} characters.",
 		"checkEmail": "Check your email to confirm your account, then sign in."
 	},
 	"Evaluations": {
