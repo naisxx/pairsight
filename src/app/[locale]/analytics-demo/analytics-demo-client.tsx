@@ -108,7 +108,7 @@ export function AnalyticsDemoClient() {
 					{PLATFORMS.map((platform) => (
 						<Button
 							key={platform}
-							variant={platforms.includes(platform) ? 'primary' : 'outline'}
+							variant={platforms.includes(platform) ? 'primary' : 'secondary'}
 							size="sm"
 							onClick={() => togglePlatform(platform)}
 						>

@@ -3,7 +3,7 @@
 import { z } from 'zod'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
-import { advanceRun } from '@/server/pairsight/run-engine'
+import { advanceRun, retryPair } from '@/server/pairsight/run-engine'
 import { resumeRun, retryFailed, updateRunThreshold } from '@/server/pairsight/runs'
 import { startRun } from '@/server/pairsight/start-run'
 import { thresholdSchema } from '@/server/pairsight/schemas'
@@ -32,6 +32,16 @@ export const retryFailedAction = validatedAction({
 		const user = await requireUser()
 		await retryFailed({ ownerId: user.id, runId })
 		return { retried: true }
+	}
+})
+
+export const retryPairAction = validatedAction({
+	input: z.object({ runId: idSchema, pairId: idSchema }),
+	handler: async ({ runId, pairId }) => {
+		const user = await requireUser()
+		const status = await retryPair({ ownerId: user.id, runId, pairId })
+		revalidateEvaluationPages()
+		return { status }
 	}
 })
 

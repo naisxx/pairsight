@@ -63,3 +63,13 @@ export async function recordIdsByReference(datasetId: string): Promise<Map<strin
 	})
 	return new Map(records.map((record) => [record.reference, record.id]))
 }
+
+// A saved dataset's first rows in file order, for showing it back.
+export async function getDatasetPreview(datasetId: string, take: number) {
+	return db.sourceRecord.findMany({
+		where: { datasetId },
+		orderBy: { rowNumber: 'asc' },
+		take,
+		select: { rowNumber: true, values: true }
+	})
+}

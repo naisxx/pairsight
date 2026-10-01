@@ -57,6 +57,7 @@ model Evaluation {
 	updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
 	datasets          SourceDataset[]
 	vendorExports     VendorExport[]
+	vendorDrafts      VendorDraft[]
 	runs              Run[]
 
 	@@index([ownerId, updatedAt])
@@ -77,6 +78,7 @@ model SourceDataset {
 	createdAt       DateTime       @default(now()) @db.Timestamptz(6)
 	records         SourceRecord[]
 	vendorExports   VendorExport[]
+	vendorDrafts    VendorDraft[]
 	runs            Run[]
 	assessments     Assessment[]
 
@@ -106,17 +108,45 @@ model VendorExport {
 	name                String
 	format              VendorExportFormat
 	fileName            String
-	// { columnA, columnB } for the pair format.
+	// { columnA, columnB } for the pair format; { groupColumn,
+	// referenceColumn } for the group format.
 	mapping             Json
 	// The user confirmed this export lists every match the vendor made
 	// (an omitted pair then means "not matched").
 	confirmedCompleteAt DateTime           @db.Timestamptz(6)
 	pairCount           Int
+	// VendorFileStats (src/server/pairsight/vendors.ts): rows read, groups,
+	// duplicates and self-pairs skipped. Null for exports added before it.
+	stats               Json?
 	createdAt           DateTime           @default(now()) @db.Timestamptz(6)
 	matches             VendorMatch[]
 
 	@@index([evaluationId])
 	@@map("vendor_exports")
+}
+
+// A vendor still being set up: named, maybe with a checked file, not yet
+// confirmed complete. Kept apart from VendorExport so plans, runs and results,
+// which read only exports, never see a half-finished vendor. Confirming it
+// creates the export (with its matches) and deletes the draft.
+model VendorDraft {
+	id           String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	evaluationId String              @db.Uuid
+	evaluation   Evaluation          @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+	datasetId    String              @db.Uuid
+	dataset      SourceDataset       @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+	name         String
+	// The rest is set together once a file passes the checks.
+	format       VendorExportFormat?
+	fileName     String?
+	mapping      Json?
+	// CanonicalPair[] of record ids, waiting for the completeness confirmation.
+	pairs        Json?
+	stats        Json?
+	createdAt    DateTime            @default(now()) @db.Timestamptz(6)
+
+	@@index([evaluationId])
+	@@map("vendor_drafts")
 }
 
 // One vendor-matched pair, record ids in canonical order (recordAId < recordBId).
@@ -151,6 +181,9 @@ model Run {
 	jevModel          String
 	// Editable after the run: changing it only re-decides from saved scores.
 	threshold         Float
+	// The threshold the run started with, kept when `threshold` changes. Null
+	// for runs started before it was recorded (their original is unknown).
+	initialThreshold  Float?
 	pairCount         Int
 	createdAt         DateTime      @default(now()) @db.Timestamptz(6)
 	completedAt       DateTime?     @db.Timestamptz(6)

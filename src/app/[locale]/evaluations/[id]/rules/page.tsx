@@ -1,28 +1,33 @@
-import { getTranslations } from 'next-intl/server'
-import { NeedRecords } from '@/components/pairsight/empty/need-records'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { notFound } from 'next/navigation'
+import { ruleLabel } from '@/components/pairsight/rule-label'
 import { RulesForm } from '@/components/pairsight/rules/rules-form'
 import { StepHeader } from '@/components/pairsight/step-layout'
-import { parseIdentityRoles } from '@/server/pairsight/schemas'
+import { countryOptions } from '@/server/pairsight/countries'
 import { LIMITS } from '@/server/pairsight/limits'
+import { computePlan } from '@/server/pairsight/plan'
 import { rulesPreview } from '@/server/pairsight/rules-preview'
+import { parseIdentityRoles } from '@/server/pairsight/schemas'
 import { loadWorkspace } from '../workspace'
 
 export default async function RulesPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params
-	const [{ user, workspace }, t] = await Promise.all([
-		loadWorkspace(id, `/evaluations/${id}/rules`),
-		getTranslations('Rules')
+	const [{ user, workspace }, t, tRoles, locale] = await Promise.all([
+		loadWorkspace(id, `/evaluations/${id}/rules`, 'rules'),
+		getTranslations('Rules'),
+		getTranslations('Roles'),
+		getLocale()
 	])
-	if (workspace.dataset == null) {
-		return (
-			<>
-				<StepHeader title={t('title')} description={t('description')} />
-				<NeedRecords evaluationId={id} />
-			</>
-		)
-	}
-	const preview = await rulesPreview({ ownerId: user.id, evaluationId: id })
+	// Unreachable: without records the stage is locked and loadWorkspace redirects.
+	if (workspace.dataset == null) notFound()
+	const [preview, plan] = await Promise.all([
+		rulesPreview({ ownerId: user.id, evaluationId: id }),
+		computePlan({ ownerId: user.id, evaluationId: id })
+	])
 	const { evaluation } = preview
+	// The summary follows what's saved: the plan's counts and the saved rules.
+	const savedStats = ('ruleStats' in plan ? plan.ruleStats : undefined) ?? []
+	const counts = 'counts' in plan ? plan.counts : null
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
@@ -38,6 +43,30 @@ export default async function RulesPage({ params }: { params: Promise<{ id: stri
 				rules={preview.rules}
 				mappedRoles={preview.mappedRoles}
 				stats={preview.stats}
+				summary={{
+					fromRules: counts?.blockedPairs ?? 0,
+					vendorOnly: counts?.addedByVendorOnly ?? 0,
+					total: counts?.uniquePairs ?? 0,
+					limit: LIMITS.maxPairsPerRun,
+					raw: savedStats.reduce((sum, stat) => sum + stat.pairCount, 0),
+					largest: Math.max(0, ...savedStats.map((stat) => stat.largestBucket)),
+					oversized: savedStats.flatMap((stat) =>
+						stat.largestBucket <= LIMITS.bucketWarningSize
+							? []
+							: [
+									{
+										rule: ruleLabel({
+											ruleId: stat.ruleId,
+											rules: plan.rules,
+											tRules: t,
+											tRoles
+										}),
+										size: stat.largestBucket
+									}
+								]
+					)
+				}}
+				countries={countryOptions(locale)}
 				limits={{
 					bucketWarningSize: LIMITS.bucketWarningSize,
 					maxPairsPerRun: LIMITS.maxPairsPerRun

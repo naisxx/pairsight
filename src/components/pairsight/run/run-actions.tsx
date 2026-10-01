@@ -3,60 +3,62 @@
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { ArrowRightIcon, InfoIcon, RetryIcon, SpinnerIcon } from '@/components/ui/icons'
+import { ArrowRightIcon, PlayIcon, SpinnerIcon } from '@/components/ui/icons'
 import type { RunProgress } from '@/server/pairsight/runs'
 import { ActionBar } from '../step-layout'
 
-// The run's action bar: resume after a configuration stop, retry failed pairs
-// once complete, and the stage's primary action, View results.
+const ICON_SIZE = 15
+
+// The run's action bar: Back to the plan, Resume when pairs are left
+// waiting, and the stage's primary action, View results, once it's complete.
+// Retry failed lives in the run card, next to why the pairs failed.
 export function RunActions({
 	progress,
 	resultsHref,
+	backHref,
 	isActing,
-	onRetryFailed,
 	onResume
 }: {
 	progress: RunProgress
 	resultsHref: string
+	backHref: string
 	isActing: boolean
-	onRetryFailed: () => void
 	onResume: () => void
 }) {
 	const t = useTranslations('Run')
 	const isComplete = progress.status === 'completed'
+	// Stopped for configuration, or completed while a later run (which shares
+	// its judgments) put some of its failed pairs back in the queue.
+	const canResume =
+		progress.status === 'stopped' || (isComplete && progress.pending + progress.running > 0)
 	return (
-		<ActionBar
-			hint={
-				progress.status === 'running' ? (
-					<span className="flex items-center gap-1.5">
-						<InfoIcon />
-						{t('keepOpen')}
-					</span>
-				) : undefined
-			}
-		>
-			{progress.status === 'stopped' && (
-				<Button variant="outline" onClick={onResume} disabled={isActing}>
-					{isActing ? <SpinnerIcon /> : <RetryIcon />}
-					{t('resume')}
-				</Button>
-			)}
-			{isComplete && progress.failed > 0 && (
-				<Button variant="outline" onClick={onRetryFailed} disabled={isActing}>
-					{isActing ? <SpinnerIcon /> : <RetryIcon />}
-					{isActing ? t('retrying') : t('retryFailed')}
-				</Button>
-			)}
-			<Button asChild disabled={!isComplete}>
-				<Link
-					href={resultsHref}
-					aria-disabled={!isComplete}
-					className={isComplete ? undefined : 'pointer-events-none opacity-50'}
+		<ActionBar back={{ href: backHref, label: t('back') }}>
+			{canResume && (
+				<Button
+					variant={isComplete ? 'secondary' : 'primary'}
+					onClick={onResume}
+					disabled={isActing}
 				>
-					{t('viewResults')}
-					<ArrowRightIcon />
-				</Link>
-			</Button>
+					{t('resume')}
+					{isActing ? (
+						<SpinnerIcon size={ICON_SIZE} />
+					) : (
+						<PlayIcon size={ICON_SIZE} variant="solid" />
+					)}
+				</Button>
+			)}
+			{(isComplete || !canResume) && (
+				<Button asChild disabled={!isComplete}>
+					<Link
+						href={resultsHref}
+						aria-disabled={!isComplete}
+						className={isComplete ? undefined : 'pointer-events-none opacity-50'}
+					>
+						{t('viewResults')}
+						<ArrowRightIcon size={ICON_SIZE} />
+					</Link>
+				</Button>
+			)}
 		</ActionBar>
 	)
 }

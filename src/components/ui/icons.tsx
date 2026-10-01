@@ -21,6 +21,8 @@ import {
 	ArrowClockwise,
 	ArrowLeft,
 	ArrowRight,
+	ArrowsClockwise,
+	ArrowsLeftRight,
 	ArrowSquareOut,
 	Buildings,
 	Calendar,
@@ -29,6 +31,7 @@ import {
 	CaretRight,
 	CaretUp,
 	CaretUpDown,
+	ChartBar,
 	Check,
 	CheckCircle,
 	Circle,
@@ -41,8 +44,12 @@ import {
 	DotsThreeVertical,
 	DownloadSimple,
 	Equals,
+	Eye,
+	EyeSlash,
 	FileCsv,
 	FileText,
+	FlowArrow,
+	FolderOpen,
 	FunnelSimple,
 	FunnelX,
 	Gear,
@@ -50,28 +57,42 @@ import {
 	IdentificationCard,
 	Info,
 	Intersect,
+	Lightbulb,
 	List,
 	ListChecks,
 	Lock,
 	MagnifyingGlass,
 	Minus,
+	MinusCircle,
 	Moon,
 	NotEquals,
 	PaperPlaneTilt,
+	Pause,
 	PencilSimple,
 	Play,
-	Plus,
 	Plugs,
+	Plus,
+	Question,
+	Robot,
+	ShieldCheck,
 	SidebarSimple,
 	SignOut,
+	Sliders,
+	Sparkle,
 	SquaresFour,
+	Storefront,
 	Sun,
+	Table,
 	Trash,
 	UploadSimple,
 	User,
+	UserCheck,
+	Users,
 	Warning,
+	WarningCircle,
 	WarningOctagon,
-	X
+	X,
+	XCircle
 } from '@phosphor-icons/react/ssr'
 import type { Icon } from '@phosphor-icons/react'
 import { cn } from '@/lib/cn'
@@ -87,15 +108,18 @@ export type IconProps = {
 	size?: number
 	className?: string
 	// How the glyph is drawn, in provider-neutral terms: `line` everywhere by
-	// default, `solid` for active and selected states, `duotone` for the large
-	// icons in empty states and tiles (its second layer takes `--icon-accent`,
-	// see globals.css). A provider without duotone can map it to `line`.
+	// default, `bold` for small marks that must read at 10–11px (checks,
+	// locks, ≠), and `solid` for active and selected states.
 	variant?: IconVariant
 }
 
-export type IconVariant = 'line' | 'duotone' | 'solid'
+export type IconVariant = 'line' | 'bold' | 'solid'
 
-const PROVIDER_WEIGHT = { line: 'regular', duotone: 'duotone', solid: 'fill' } as const
+const PROVIDER_WEIGHT = {
+	line: 'regular',
+	bold: 'bold',
+	solid: 'fill'
+} as const
 
 const DEFAULT_SIZE = 16
 
@@ -198,3 +222,24 @@ export const NotFoundIcon = (props: IconProps) => <Glyph source={Compass} {...pr
 export const SendIcon = (props: IconProps) => <Glyph source={PaperPlaneTilt} {...props} />
 export const VendorIcon = (props: IconProps) => <Glyph source={Buildings} {...props} />
 export const WaitingIcon = (props: IconProps) => <Glyph source={HourglassMedium} {...props} />
+export const AiIcon = (props: IconProps) => <Glyph source={Robot} {...props} />
+export const ChartIcon = (props: IconProps) => <Glyph source={ChartBar} {...props} />
+export const DifferentPeopleIcon = (props: IconProps) => <Glyph source={Users} {...props} />
+export const FailedIcon = (props: IconProps) => <Glyph source={XCircle} {...props} />
+export const FlowIcon = (props: IconProps) => <Glyph source={FlowArrow} {...props} />
+export const FolderIcon = (props: IconProps) => <Glyph source={FolderOpen} {...props} />
+export const HideIcon = (props: IconProps) => <Glyph source={EyeSlash} {...props} />
+export const InsightIcon = (props: IconProps) => <Glyph source={Lightbulb} {...props} />
+export const NotMatchedIcon = (props: IconProps) => <Glyph source={MinusCircle} {...props} />
+export const PauseIcon = (props: IconProps) => <Glyph source={Pause} {...props} />
+export const QuestionIcon = (props: IconProps) => <Glyph source={Question} {...props} />
+export const RefreshIcon = (props: IconProps) => <Glyph source={ArrowsClockwise} {...props} />
+export const SamePersonIcon = (props: IconProps) => <Glyph source={UserCheck} {...props} />
+export const ShieldIcon = (props: IconProps) => <Glyph source={ShieldCheck} {...props} />
+export const ShowIcon = (props: IconProps) => <Glyph source={Eye} {...props} />
+export const SlidersIcon = (props: IconProps) => <Glyph source={Sliders} {...props} />
+export const SparkleIcon = (props: IconProps) => <Glyph source={Sparkle} {...props} />
+export const StoreIcon = (props: IconProps) => <Glyph source={Storefront} {...props} />
+export const SwapIcon = (props: IconProps) => <Glyph source={ArrowsLeftRight} {...props} />
+export const TableIcon = (props: IconProps) => <Glyph source={Table} {...props} />
+export const WarningCircleIcon = (props: IconProps) => <Glyph source={WarningCircle} {...props} />

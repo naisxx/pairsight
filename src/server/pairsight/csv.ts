@@ -95,3 +95,30 @@ export function validateSourceRecords({
 		isValid: referenceIndex !== -1 && missing.length === 0 && duplicates.length === 0
 	}
 }
+
+// How each column would do as the record reference, plus how many of its
+// values are blank, so the mapping screen can check a choice as it's made
+// without sending the file again. Lists stop at `maxListed`; the counts don't.
+export type ColumnCheck = {
+	blank: number
+	missing: number[]
+	duplicates: Array<{ reference: string; rows: number[] }>
+	duplicateCount: number
+}
+
+export function checkColumns(table: CsvTable, maxListed: number): Record<string, ColumnCheck> {
+	return Object.fromEntries(
+		table.headers.map((header) => {
+			const { issues } = validateSourceRecords({ table, referenceColumn: header })
+			return [
+				header,
+				{
+					blank: issues.missing.length,
+					missing: issues.missing.slice(0, maxListed),
+					duplicates: issues.duplicates.slice(0, maxListed),
+					duplicateCount: issues.duplicates.length
+				}
+			]
+		})
+	)
+}

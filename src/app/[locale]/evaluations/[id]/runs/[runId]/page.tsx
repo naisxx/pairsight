@@ -21,7 +21,10 @@ export default async function RunPage({
 			<RunProgress
 				runId={run.id}
 				resultsHref={`/evaluations/${id}/runs/${run.id}/results`}
+				backHref={`/evaluations/${id}/plan`}
 				initial={progress}
+				startedAt={run.createdAt}
+				completedAt={run.completedAt}
 			/>
 		</>
 	)

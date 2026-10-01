@@ -1,74 +1,91 @@
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
-import { AlertIcon } from '@/components/ui/icons'
+import { ArrowRightIcon, WarningCircleIcon } from '@/components/ui/icons'
 import type { PlanBlocker, PlanContributor } from '@/server/pairsight/plan'
 import { ruleLabel } from '../rule-label'
+import { TurnOffRuleButton } from './turn-off-rule-button'
 
-// Why the run can't start. An over-cap plan also says where its pairs come
-// from, largest first, and links to the two fixes: narrow the rules or
-// shrink the input.
+const ICON_SIZE = 17
+const LINK_ICON_SIZE = 13
+
+// Why the run can't start. Over the pair limit, it lists where the pairs come
+// from, largest first, each rule with a Turn off; vendor-matched pairs always
+// stay in. Any other blocker is listed as what to fix.
 export async function PlanBlockers({
 	evaluationId,
 	blockers,
 	contributors,
+	rules,
 	uniquePairs,
 	maxPairsPerRun
 }: {
 	evaluationId: string
 	blockers: readonly PlanBlocker[]
 	contributors: readonly PlanContributor[]
+	rules: Array<{ id: string; fields: string[] }>
 	uniquePairs: number
 	maxPairsPerRun: number
 }) {
-	const [t, tRules, tRoles, format] = await Promise.all([
+	const [t, tRules, tRoles] = await Promise.all([
 		getTranslations('Plan'),
 		getTranslations('Rules'),
-		getTranslations('Roles'),
-		getFormatter()
+		getTranslations('Roles')
 	])
-	const number = (value: number) => format.number(value)
-	const isOverCap = blockers.includes('too_many_pairs')
-	const rules = contributors.flatMap((item) =>
-		item.kind === 'rule' ? [{ id: item.ruleId, fields: [...item.fields] }] : []
-	)
+	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
+	const isOver = blockers.includes('too_many_pairs')
+	const others = blockers.filter((blocker) => blocker !== 'too_many_pairs')
 	return (
-		<div role="alert" className="border-danger/40 bg-danger-subtle rounded-lg border p-4">
-			<p className="text-danger type-subheading flex items-center gap-2">
-				<AlertIcon />
-				{t('blockerTitle')}
-			</p>
-			<ul className="text-text type-body mt-2 ml-6 list-disc space-y-1">
-				{blockers.map((blocker) => (
-					<li key={blocker}>
-						{blocker === 'too_many_pairs'
-							? t('too_many_pairs', { count: number(uniquePairs), limit: number(maxPairsPerRun) })
-							: t(blocker)}
-					</li>
-				))}
-			</ul>
-			{isOverCap && contributors.length > 0 && (
-				<div className="mt-4 flex flex-col gap-2">
-					<p className="text-text type-subheading">{t('causesTitle')}</p>
-					<ul className="text-text type-body flex flex-col gap-1">
-						{contributors.map((item) => (
-							<li key={item.kind === 'rule' ? item.ruleId : 'vendors'}>
-								{item.kind === 'rule'
-									? t('causeRule', {
-											rule: ruleLabel({ ruleId: item.ruleId, rules, tRules, tRoles }),
-											pairs: number(item.pairCount),
-											largest: number(item.largestBucket)
-										})
-									: t('causeVendors', { pairs: number(item.pairCount) })}
-							</li>
-						))}
+		<div className="space-y-4">
+			{isOver && (
+				<section role="alert" className="border-danger bg-danger-subtle rounded-md border p-4">
+					<h2 className="text-danger flex items-center gap-2 text-sm font-semibold">
+						<WarningCircleIcon size={ICON_SIZE} />
+						{t('overTitle', { total: uniquePairs, limit: maxPairsPerRun })}
+					</h2>
+					<p className="type-ui text-text mt-1">
+						{t('overDescription', { count: uniquePairs - maxPairsPerRun })}
+					</p>
+					<ul className="divide-border border-border bg-surface mt-3 divide-y overflow-hidden rounded-sm border">
+						{contributors.map((item) =>
+							item.kind === 'rule' ? (
+								<li
+									key={item.ruleId}
+									className="type-ui flex flex-wrap items-center gap-3 px-3 py-2"
+								>
+									<span className="font-medium">
+										{ruleLabel({ ruleId: item.ruleId, rules, tRules, tRoles })}
+									</span>
+									<span className="text-text-muted">
+										{t.rich('overRule', {
+											pairs: item.pairCount,
+											largest: item.largestBucket,
+											n: mono
+										})}
+									</span>
+									<TurnOffRuleButton
+										evaluationId={evaluationId}
+										ruleId={item.ruleId}
+										label={ruleLabel({ ruleId: item.ruleId, rules, tRules, tRoles })}
+									/>
+								</li>
+							) : (
+								<li key="vendors" className="type-ui flex flex-wrap items-center gap-3 px-3 py-2">
+									<span className="font-medium">{t('overVendors')}</span>
+									<span className="text-text-muted">
+										{t.rich('overVendorsNote', { pairs: item.pairCount, n: mono })}
+									</span>
+								</li>
+							)
+						)}
 					</ul>
-					<p className="text-text-muted type-meta">{t('causesNote')}</p>
-					<div className="type-label flex flex-wrap gap-x-4 gap-y-1">
+					<p className="text-text-muted mt-2 text-xs">{t('overNote')}</p>
+					<div className="type-ui mt-3 flex flex-wrap gap-x-4 gap-y-1">
 						<Link
 							href={`/evaluations/${evaluationId}/rules`}
-							className="text-accent-ink font-medium hover:underline"
+							className="text-accent-ink inline-flex items-center gap-1 font-medium hover:underline"
 						>
-							{t('fixRules')}
+							{t('editRules')}
+							<ArrowRightIcon size={LINK_ICON_SIZE} />
 						</Link>
 						<Link
 							href={`/evaluations/${evaluationId}/records`}
@@ -77,7 +94,20 @@ export async function PlanBlockers({
 							{t('fixRecords')}
 						</Link>
 					</div>
-				</div>
+				</section>
+			)}
+			{others.length > 0 && (
+				<section role="alert" className="border-danger bg-danger-subtle rounded-md border p-4">
+					<h2 className="text-danger flex items-center gap-2 text-sm font-semibold">
+						<WarningCircleIcon size={ICON_SIZE} />
+						{t('blockerTitle')}
+					</h2>
+					<ul className="type-ui text-text mt-2 ml-6 list-disc space-y-1">
+						{others.map((blocker) => (
+							<li key={blocker}>{t(blocker)}</li>
+						))}
+					</ul>
+				</section>
 			)}
 		</div>
 	)

@@ -6,3 +6,6 @@ export const FILE_NAME_MAX_LENGTH = 255
 export const SEARCH_MAX_LENGTH = 100
 // A two-letter country code, as typed (the server uppercases it).
 export const COUNTRY_CODE_PATTERN = /^[A-Za-z]{2}$/
+
+// Rows per page in the results table; the first is the default.
+export const PAGE_SIZES = [50, 25, 15] as const

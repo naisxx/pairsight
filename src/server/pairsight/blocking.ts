@@ -28,12 +28,17 @@ export type RuleStats = {
 	largestBucket: number
 	recordsWithoutKey: number
 	oversizedBuckets: Array<{ size: number; pairCount: number }>
+	// One normalized key, field by field, to show what the rule compares on:
+	// a shared bucket's if there is one. Null when no record has a key.
+	sampleKey: string[] | null
 }
 
 export type BlockingResult = {
 	pairs: Array<CanonicalPair & { ruleIds: string[] }>
 	stats: RuleStats[]
 }
+
+const KEY_SEPARATOR = '\u0000'
 
 function blockingKey({
 	record,
@@ -50,7 +55,7 @@ function blockingKey({
 		if (value == null) return null
 		parts.push(value)
 	}
-	return parts.join('\u0000')
+	return parts.join(KEY_SEPARATOR)
 }
 
 export function buildBlockedPairs({
@@ -75,6 +80,10 @@ export function buildBlockedPairs({
 			buckets.set(key, [...(buckets.get(key) ?? []), record.id])
 		}
 		const shared = [...buckets.values()].filter((members) => members.length > 1)
+		const sample =
+			[...buckets.entries()].find(([, members]) => members.length > 1)?.[0] ??
+			[...buckets.keys()][0] ??
+			null
 		let pairCount = 0
 		for (const members of shared) {
 			members.forEach((first, index) => {
@@ -97,7 +106,8 @@ export function buildBlockedPairs({
 			recordsWithoutKey,
 			oversizedBuckets: shared
 				.filter((members) => members.length > LIMITS.bucketWarningSize)
-				.map((members) => ({ size: members.length, pairCount: groupPairCount(members.length) }))
+				.map((members) => ({ size: members.length, pairCount: groupPairCount(members.length) })),
+			sampleKey: sample == null ? null : sample.split(KEY_SEPARATOR)
 		}
 	})
 	return { pairs: [...pairs.values()], stats }

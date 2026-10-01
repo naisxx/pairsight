@@ -14,6 +14,8 @@ export type FieldComparison = {
 	a: string
 	b: string
 	comparison: Comparison
+	// Same after normalizing, but written differently ("+44 7700…" / "07700…").
+	isFormatOnly: boolean
 }
 
 export function compareFields({
@@ -42,7 +44,8 @@ export function compareFields({
 					: normalize(a) === normalize(b)
 						? 'same'
 						: 'different'
-		return [{ role, header, a, b, comparison }]
+		const isFormatOnly = comparison === 'same' && a.trim() !== b.trim()
+		return [{ role, header, a, b, comparison, isFormatOnly }]
 	})
 	const otherHeaders = Object.keys(valuesA).filter(
 		(header) => !fields.some((field) => field.header === header)

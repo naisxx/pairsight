@@ -14,7 +14,7 @@ export function ToastViewport({
 	return (
 		<ToastPrimitives.Viewport
 			className={cn(
-				'fixed right-0 bottom-0 z-50 flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-sm',
+				'fixed right-0 bottom-0 z-[70] flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-[calc(356px+3rem)] sm:p-6',
 				className
 			)}
 			{...props}
@@ -23,12 +23,12 @@ export function ToastViewport({
 }
 
 const toastVariants = cva(
-	'pointer-events-auto relative flex w-full items-start justify-between gap-3 rounded-lg border p-4 shadow-sm transition-opacity data-[state=closed]:opacity-0',
+	'type-ui bg-surface-elevated text-text shadow-elevated data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-2 pointer-events-auto relative flex w-full items-start justify-between gap-3 rounded-[8px] border p-4 transition-opacity duration-200 data-[state=closed]:opacity-0',
 	{
 		variants: {
 			variant: {
-				default: 'border-border bg-surface-elevated text-text',
-				destructive: 'border-danger bg-surface-elevated text-text'
+				default: 'border-border',
+				destructive: 'border-danger'
 			}
 		},
 		defaultVariants: { variant: 'default' }
@@ -47,19 +47,14 @@ export function ToastTitle({
 	className,
 	...props
 }: React.ComponentProps<typeof ToastPrimitives.Title>) {
-	return <ToastPrimitives.Title className={cn('text-text type-subheading', className)} {...props} />
+	return <ToastPrimitives.Title className={cn('text-text font-medium', className)} {...props} />
 }
 
 export function ToastDescription({
 	className,
 	...props
 }: React.ComponentProps<typeof ToastPrimitives.Description>) {
-	return (
-		<ToastPrimitives.Description
-			className={cn('text-text-muted type-body', className)}
-			{...props}
-		/>
-	)
+	return <ToastPrimitives.Description className={cn('text-text-muted', className)} {...props} />
 }
 
 export function ToastClose({
@@ -69,11 +64,7 @@ export function ToastClose({
 	return (
 		<ToastPrimitives.Close
 			aria-label="Dismiss"
-			className={cn(
-				'text-text-muted hover:text-text shrink-0 rounded',
-				'focus-visible:outline-ring focus-visible:outline focus-visible:outline-2',
-				className
-			)}
+			className={cn('text-text-muted hover:text-text shrink-0 rounded-sm', className)}
 			{...props}
 		>
 			{/* Decorative: the button already carries aria-label="Dismiss". */}

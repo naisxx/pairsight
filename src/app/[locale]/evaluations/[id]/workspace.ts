@@ -1,13 +1,17 @@
 import 'server-only'
 import { notFound } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { redirect } from '@/i18n/routing'
 import { isUuid } from '@/server/pairsight/schemas'
-import type {
-	PipelineData,
-	PipelineStage,
-	StageKey,
-	StageState
-} from '@/components/pairsight/shell/pipeline-types'
+import type { PipelineData, PipelineStage } from '@/components/pairsight/shell/pipeline-types'
+import {
+	evaluationStatus,
+	stageHref,
+	stageStates,
+	type StageAccess,
+	type StageInput,
+	type StageKey
+} from '@/lib/pairsight/stages'
 import { AppError } from '@/lib/errors/app-error'
 import { requireUserOrRedirect } from '@/server/auth/session'
 import { parseBlockingRules } from '@/server/pairsight/json'
@@ -22,60 +26,80 @@ type Workspace = Awaited<ReturnType<typeof getWorkspace>>
 export type Step = {
 	key: StageKey
 	href: string
-	state: 'complete' | 'available' | 'locked'
+	state: StageAccess
 	alsoMatches?: string[]
 }
 
-export async function loadWorkspace(id: string, path: string) {
+// `stage` gates the page the way the pipeline does: a locked stage can't be
+// opened by its URL either, it redirects to where the evaluation is up to.
+export async function loadWorkspace(id: string, path: string, stage?: StageKey) {
 	if (!isUuid(id)) notFound()
 	const user = await requireUserOrRedirect(path)
+	const workspace = await getOwnedWorkspace(user.id, id)
+	if (stage != null) {
+		const steps = workspaceSteps(id, workspace)
+		if (steps.find((step) => step.key === stage)?.state === 'locked') {
+			const locale = await getLocale()
+			redirect({ href: landingHref(id, steps), locale })
+		}
+	}
+	return { user, workspace }
+}
+
+async function getOwnedWorkspace(ownerId: string, evaluationId: string) {
 	try {
-		return { user, workspace: await getWorkspace({ ownerId: user.id, evaluationId: id }) }
+		return await getWorkspace({ ownerId, evaluationId })
 	} catch (error) {
 		if (error instanceof AppError && error.status === 404) notFound()
 		throw error
 	}
 }
 
+// Where opening the evaluation lands: its latest results once a run exists,
+// else the first step that still needs work (docs/PairSight-UX-Plan.md §3).
+export function landingHref(id: string, steps: Step[]): string {
+	const results = steps.find((step) => step.key === 'results')
+	const target =
+		results != null && results.state !== 'locked'
+			? results
+			: (steps.find((step) => step.state === 'available') ?? steps[0])
+	return target?.href ?? `/evaluations/${id}/records`
+}
+
+// A stage's own page when it's open, else the landing. For /run and
+// /results, which only redirect: the real pages live under a run.
+export function stageOrLandingHref(id: string, steps: Step[], key: StageKey): string {
+	const step = steps.find((candidate) => candidate.key === key)
+	return step == null || step.state === 'locked' ? landingHref(id, steps) : step.href
+}
+
+function stageInput(workspace: Workspace): StageInput {
+	const latestRun = workspace.runs[0]
+	return {
+		hasRecords: workspace.dataset != null,
+		hasVendors: workspace.vendorExports.length > 0,
+		hasUnfinishedVendors: workspace.vendorDraftCount > 0,
+		latestRun: latestRun == null ? null : { id: latestRun.id, status: latestRun.status }
+	}
+}
+
 export function workspaceSteps(id: string, workspace: Workspace): Step[] {
 	const base = `/evaluations/${id}`
-	const hasRecords = workspace.dataset != null
-	const hasVendors = workspace.vendorExports.length > 0
-	const latestRun = workspace.runs[0]
-	return [
-		{ key: 'records', href: `${base}/records`, state: hasRecords ? 'complete' : 'available' },
-		{
-			key: 'vendors',
-			href: `${base}/vendors`,
-			state: !hasRecords ? 'locked' : hasVendors ? 'complete' : 'available'
-		},
-		{
-			key: 'rules',
-			href: `${base}/rules`,
-			state: !hasRecords ? 'locked' : hasVendors ? 'complete' : 'available'
-		},
-		{
-			key: 'plan',
-			href: `${base}/plan`,
-			state: hasRecords && hasVendors ? (latestRun ? 'complete' : 'available') : 'locked'
-		},
-		{
-			key: 'run',
-			href: latestRun == null ? `${base}/run` : `${base}/runs/${latestRun.id}`,
-			alsoMatches: workspace.runs.map((run) => `${base}/runs/${run.id}`),
-			state:
-				latestRun == null ? 'locked' : latestRun.status === 'completed' ? 'complete' : 'available'
-		},
-		{
-			key: 'results',
-			href: latestRun == null ? `${base}/results` : `${base}/runs/${latestRun.id}/results`,
-			state: latestRun == null ? 'locked' : 'available',
-			alsoMatches: workspace.runs.flatMap((run) => [
-				`${base}/runs/${run.id}/results`,
-				`${base}/runs/${run.id}/pairs`
-			])
-		}
-	]
+	const latestRunId = workspace.runs[0]?.id ?? null
+	// Every run's pages belong to Run, and its results and pairs to Results.
+	const alsoMatches: Partial<Record<StageKey, string[]>> = {
+		run: workspace.runs.map((run) => `${base}/runs/${run.id}`),
+		results: workspace.runs.flatMap((run) => [
+			`${base}/runs/${run.id}/results`,
+			`${base}/runs/${run.id}/pairs`
+		])
+	}
+	return stageStates(stageInput(workspace)).map((stage) => ({
+		key: stage.key,
+		href: stageHref(id, stage.key, latestRunId),
+		state: stage.access,
+		alsoMatches: alsoMatches[stage.key]
+	}))
 }
 
 // The pipeline: each stage's state and what it has produced so far, plus a
@@ -84,16 +108,9 @@ export function workspaceSteps(id: string, workspace: Workspace): Step[] {
 export async function workspacePipeline(id: string, workspace: Workspace): Promise<PipelineData> {
 	const t = await getTranslations('Pipeline')
 	const latestRun = workspace.runs[0]
-	const isRunning = latestRun?.status === 'running'
+	const input = stageInput(workspace)
 	const steps = workspaceSteps(id, workspace)
-	// Results are "available" as soon as a run exists, but only done once it
-	// has completed.
-	const isDone = (step: Step) =>
-		step.state === 'complete' || (step.key === 'results' && latestRun?.status === 'completed')
-	// The first reachable stage that isn't finished is where the work is.
-	const activeKey = isRunning
-		? 'run'
-		: steps.find((step) => step.state === 'available' && !isDone(step))?.key
+	const states = new Map(stageStates(input).map((stage) => [stage.key, stage.state]))
 
 	const vendorPairs = workspace.vendorExports.reduce((sum, vendor) => sum + vendor.pairCount, 0)
 	const rulesOn = parseBlockingRules(workspace.evaluation.blockingRules).length
@@ -104,7 +121,9 @@ export async function workspacePipeline(id: string, workspace: Workspace): Promi
 				: t('records', { count: workspace.dataset.rowCount }),
 		vendors:
 			workspace.vendorExports.length === 0
-				? t('vendorsEmpty')
+				? workspace.vendorDraftCount > 0
+					? t('vendorsInProgress', { count: workspace.vendorDraftCount })
+					: t('vendorsEmpty')
 				: t('vendors', { count: workspace.vendorExports.length, pairs: vendorPairs }),
 		rules: t('rules', { count: rulesOn }),
 		plan: latestRun == null ? t('planReady') : t('plan', { pairs: latestRun.pairCount }),
@@ -124,34 +143,26 @@ export async function workspacePipeline(id: string, workspace: Workspace): Promi
 					: t('resultsPending', { number: latestRun.number })
 	}
 
-	const stages: PipelineStage[] = steps.map((step) => {
-		const state: StageState =
-			step.state === 'locked'
-				? 'locked'
-				: isDone(step) && !(step.key === 'run' && isRunning)
-					? 'done'
-					: step.key === activeKey
-						? 'active'
-						: 'next'
-		return {
-			key: step.key,
-			href: step.href,
-			alsoMatches: step.alsoMatches,
-			state,
-			isRunning: step.key === 'run' && isRunning,
-			detail: step.state === 'locked' ? t('locked') : details[step.key]
-		}
-	})
+	// What a locked stage is waiting for: records unlock vendors and rules,
+	// records plus a vendor unlock the plan, and a started run unlocks the rest.
+	const lockedReasons: Partial<Record<StageKey, string>> = {
+		vendors: t('lockedNeedsRecords'),
+		rules: t('lockedNeedsRecords'),
+		plan: t('lockedNeedsRecordsAndVendor'),
+		run: t('lockedNeedsPlan'),
+		results: t('lockedNeedsRun')
+	}
 
-	const done = stages.filter((stage) => stage.state === 'done').length
-	const status: PipelineData['status'] =
-		latestRun == null
-			? { tone: 'action', label: t('statusSetup', { done, total: stages.length }) }
-			: latestRun.status === 'running'
-				? { tone: 'action', label: t('statusRunning', { number: latestRun.number }) }
-				: latestRun.status === 'stopped'
-					? { tone: 'danger', label: t('statusStopped', { number: latestRun.number }) }
-					: { tone: 'success', label: t('statusComplete', { number: latestRun.number }) }
+	const stages: PipelineStage[] = steps.map((step) => ({
+		key: step.key,
+		href: step.href,
+		alsoMatches: step.alsoMatches,
+		state: states.get(step.key) ?? 'locked',
+		isRunning: step.key === 'run' && latestRun?.status === 'running',
+		detail: step.state === 'locked' ? t('locked') : details[step.key],
+		reason: step.state === 'locked' ? lockedReasons[step.key] : undefined
+	}))
+	const status = evaluationStatus(input)
 
 	return { evaluationName: workspace.evaluation.name, stages, status }
 }

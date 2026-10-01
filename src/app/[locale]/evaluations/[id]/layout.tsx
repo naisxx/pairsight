@@ -18,6 +18,7 @@ export default async function WorkspaceLayout({
 	return (
 		<AppShell
 			email={user.email}
+			name={user.name}
 			pipeline={pipeline}
 			crumbs={[
 				{ label: t('evaluations'), href: '/evaluations' },

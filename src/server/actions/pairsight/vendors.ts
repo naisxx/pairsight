@@ -1,109 +1,176 @@
 'use server'
 
 import { z } from 'zod'
-import { AppError } from '@/lib/errors/app-error'
 import { NAME_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import { parseCsv, type CsvParseError } from '@/server/pairsight/csv'
-import { LIMITS } from '@/server/pairsight/limits'
-import { getCurrentDataset, recordIdsByReference } from '@/server/pairsight/datasets'
-import { getOwnedEvaluation } from '@/server/pairsight/evaluations'
-import { deleteVendorExport, saveVendorExport } from '@/server/pairsight/vendor-exports'
-import { parseVendorPairs, type VendorPairParse } from '@/server/pairsight/vendors'
+import { recordIdsByReference } from '@/server/pairsight/datasets'
+import { LIMITS, MAX_LISTED_ISSUES } from '@/server/pairsight/limits'
+import { vendorColumnsSchema } from '@/server/pairsight/schemas'
 import {
-	fileNameSchema,
-	fileTextSchema,
-	idSchema,
-	previewCsv,
-	revalidateEvaluationPages
-} from './shared'
+	clearDraftFile,
+	confirmVendorDraft,
+	createVendorDraft,
+	deleteVendor,
+	draftDatasetId,
+	renameVendor,
+	setDraftFile
+} from '@/server/pairsight/vendor-exports'
+import {
+	detectVendorColumns,
+	parseVendorFile,
+	type VendorColumns,
+	type VendorDetection,
+	type VendorFileStats
+} from '@/server/pairsight/vendors'
+import { fileNameSchema, fileTextSchema, idSchema, revalidateEvaluationPages } from './shared'
 
-export const previewVendorCsv = validatedAction({
-	input: z.object({ text: fileTextSchema }),
-	handler: async ({ text }) => {
-		await requireUser()
-		// Vendor exports list matches, not records: the row cap is the pair cap.
-		return previewCsv(text, LIMITS.maxPairsPerRun)
+const vendorKindSchema = z.enum(['draft', 'export'])
+const vendorNameSchema = z.string().trim().min(1).max(NAME_MAX_LENGTH)
+
+export const createVendorDraftAction = validatedAction({
+	input: z.object({ evaluationId: idSchema }),
+	handler: async ({ evaluationId }) => {
+		const user = await requireUser()
+		const draft = await createVendorDraft({ ownerId: user.id, evaluationId })
+		revalidateEvaluationPages()
+		return draft
 	}
 })
 
-export type SaveVendorResult =
-	| { ok: true; pairCount: number; selfPairRows: number; duplicateRows: number }
-	| { ok: false; parseError: CsvParseError }
-	| { ok: false; issues: Omit<VendorPairParse, 'pairs'> }
-
-export const saveVendorAction = validatedAction({
-	input: z.object({
-		evaluationId: idSchema,
-		name: z.string().trim().min(1).max(NAME_MAX_LENGTH),
-		fileName: fileNameSchema,
-		text: fileTextSchema,
-		columnA: z.string().min(1),
-		columnB: z.string().min(1),
-		// The user confirmed the export lists every match the vendor made.
-		confirmedComplete: z.literal(true)
-	}),
-	handler: async ({
-		evaluationId,
-		name,
-		fileName,
-		text,
-		columnA,
-		columnB
-	}): Promise<SaveVendorResult> => {
+export const renameVendorAction = validatedAction({
+	input: z.object({ kind: vendorKindSchema, id: idSchema, name: vendorNameSchema }),
+	handler: async ({ kind, id, name }) => {
 		const user = await requireUser()
-		await getOwnedEvaluation({ ownerId: user.id, id: evaluationId })
-		const dataset = await getCurrentDataset(evaluationId)
-		if (dataset == null) {
-			throw new AppError('Upload the source records before adding vendor results.', {
-				code: 'no_dataset'
-			})
-		}
-		const parsed = parseCsv(text, LIMITS.maxPairsPerRun)
-		if (!parsed.ok) return { ok: false, parseError: parsed.error }
-		const result = parseVendorPairs({
-			table: parsed.table,
-			columnA,
-			columnB,
-			recordIdByReference: await recordIdsByReference(dataset.id)
-		})
-		if (!result.isValid) {
-			return {
-				ok: false,
-				issues: {
-					unknownReferences: result.unknownReferences,
-					missingReferenceRows: result.missingReferenceRows,
-					selfPairRows: result.selfPairRows,
-					duplicateRows: result.duplicateRows,
-					isValid: false
-				}
-			}
-		}
-		await saveVendorExport({
-			ownerId: user.id,
-			evaluationId,
-			name,
-			fileName,
-			mapping: { columnA, columnB },
-			pairs: result.pairs
-		})
+		await renameVendor({ ownerId: user.id, kind, id, name })
 		revalidateEvaluationPages()
-		return {
-			ok: true,
-			pairCount: result.pairs.length,
-			selfPairRows: result.selfPairRows.length,
-			duplicateRows: result.duplicateRows.length
-		}
+		return { renamed: true }
 	}
 })
 
 export const deleteVendorAction = validatedAction({
-	input: z.object({ exportId: idSchema }),
-	handler: async ({ exportId }) => {
+	input: z.object({ kind: vendorKindSchema, id: idSchema }),
+	handler: async ({ kind, id }) => {
 		const user = await requireUser()
-		await deleteVendorExport({ ownerId: user.id, exportId })
+		await deleteVendor({ ownerId: user.id, kind, id })
 		revalidateEvaluationPages()
 		return { deleted: true }
+	}
+})
+
+export type VendorFileCheck =
+	| { ok: false; parseError: CsvParseError }
+	| {
+			ok: true
+			headers: string[]
+			// The columns used: detected, or the ones the user chose.
+			columns: VendorColumns | null
+			// Why the columns couldn't be worked out, when they couldn't.
+			detection: Extract<VendorDetection, { columns: null }> | null
+			stats: VendorFileStats | null
+			issues: {
+				unknownReferences: Array<{ row: number; reference: string }>
+				unknownCount: number
+				missingReferenceRows: number[]
+				missingCount: number
+				tooManyPairs: boolean
+			} | null
+			// The file passed and is now the draft's file.
+			saved: boolean
+	  }
+
+// Reads a vendor file against the source records: works out the format and
+// columns (unless the user chose them), checks every reference, and keeps the
+// file on the draft only if it passes.
+export const checkVendorFileAction = validatedAction({
+	input: z.object({
+		draftId: idSchema,
+		fileName: fileNameSchema,
+		text: fileTextSchema,
+		columns: vendorColumnsSchema.optional()
+	}),
+	handler: async ({ draftId, fileName, text, columns: chosen }): Promise<VendorFileCheck> => {
+		const user = await requireUser()
+		const datasetId = await draftDatasetId(user.id, draftId)
+		const parsed = parseCsv(text, LIMITS.maxPairsPerRun)
+		if (!parsed.ok) {
+			await clearDraftFile({ ownerId: user.id, draftId })
+			revalidateEvaluationPages()
+			return { ok: false, parseError: parsed.error }
+		}
+		const { table } = parsed
+		const recordIdByReference = await recordIdsByReference(datasetId)
+		const columnsExist = (columns: VendorColumns) =>
+			(columns.format === 'pair'
+				? [columns.columnA, columns.columnB]
+				: [columns.groupColumn, columns.referenceColumn]
+			).every((header) => table.headers.includes(header))
+		const detected =
+			chosen != null && columnsExist(chosen)
+				? { columns: chosen }
+				: detectVendorColumns({ table, references: new Set(recordIdByReference.keys()) })
+		const base = { ok: true as const, headers: table.headers }
+
+		if (detected.columns == null) {
+			await clearDraftFile({ ownerId: user.id, draftId })
+			revalidateEvaluationPages()
+			return {
+				...base,
+				columns: null,
+				detection: detected,
+				stats: null,
+				issues: null,
+				saved: false
+			}
+		}
+		const columns = detected.columns
+		const result = parseVendorFile({
+			table,
+			columns,
+			recordIdByReference,
+			maxPairs: LIMITS.maxPairsPerRun
+		})
+		if (result.isValid) {
+			await setDraftFile({
+				ownerId: user.id,
+				draftId,
+				fileName,
+				columns,
+				pairs: result.pairs,
+				stats: result.stats
+			})
+		} else {
+			await clearDraftFile({ ownerId: user.id, draftId })
+		}
+		revalidateEvaluationPages()
+		return {
+			...base,
+			columns,
+			detection: null,
+			stats: result.stats,
+			issues: result.isValid
+				? null
+				: {
+						unknownReferences: result.unknownReferences.slice(0, MAX_LISTED_ISSUES),
+						unknownCount: result.unknownReferences.length,
+						missingReferenceRows: result.missingReferenceRows.slice(0, MAX_LISTED_ISSUES),
+						missingCount: result.missingReferenceRows.length,
+						tooManyPairs: result.tooManyPairs
+					},
+			saved: result.isValid
+		}
+	}
+})
+
+// "This file lists every match the vendor made": the draft becomes a vendor
+// the plan and runs use.
+export const confirmVendorAction = validatedAction({
+	input: z.object({ draftId: idSchema }),
+	handler: async ({ draftId }) => {
+		const user = await requireUser()
+		const vendorExport = await confirmVendorDraft({ ownerId: user.id, draftId })
+		revalidateEvaluationPages()
+		return vendorExport
 	}
 })

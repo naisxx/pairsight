@@ -1,43 +1,45 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useEffect, useEffectEvent, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
+import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { AlertIcon, ArrowRightIcon, FilterIcon, SpinnerIcon } from '@/components/ui/icons'
-import { BLOCKING_FIELDS, isCustomRuleId } from '@/lib/pairsight/custom-rules'
+import { ArrowRightIcon, InfoIcon, SpinnerIcon, SuccessIcon } from '@/components/ui/icons'
+import type { SelectOption } from '@/components/ui/select'
+import { BLOCKING_FIELDS, isCustomRuleId, MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { saveRulesAction } from '@/server/actions/pairsight/rules'
 import type { RuleStats } from '@/server/pairsight/blocking'
 import type { IdentityRole } from '@/server/pairsight/fields'
-import type { BlockingField } from '@/server/pairsight/normalize'
-import { ActionBar, Section } from '../step-layout'
-import { UnsavedChangesDialog } from '../unsaved-changes-dialog'
-import { useUnsavedChangesGuard } from '../use-unsaved-changes-guard'
-import { BlockingRuleCard, missingField, type RuleLimits } from './blocking-rule-card'
-import { CustomRuleBuilder } from './custom-rule-builder'
+import { ACTION_HINT_ID, ActionBar } from '../step-layout'
+import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
-import { JevFieldsSection } from './jev-fields-section'
-import { UnsavedCountryNotice } from './unsaved-country-notice'
+import { missingField, type Rule, type RuleLimits } from './rule-fields'
+import { RulesSummary, type RulesSummaryData } from './rules-summary'
 
-type Rule = { id: string; fields: BlockingField[] }
+// A change is saved once typing pauses this long.
+const AUTOSAVE_DELAY_MS = 700
+const ICON_SIZE = 15
 
-// A comparable snapshot of what "Review plan" would save, so the form is
-// dirty exactly when saving would change something.
-function configSnapshot(config: {
+type Draft = {
 	same: string
 	different: string
 	country: string
-	jevFields: Iterable<string>
-	enabledRuleIds: Iterable<string>
-	customRuleIds: Iterable<string>
-}): string {
+	jevFields: ReadonlySet<IdentityRole>
+	enabled: ReadonlySet<string>
+	composites: Rule[]
+}
+
+// A comparable form of what would be saved, so the form is "unsaved"
+// exactly when saving would change something. Only presets that can run count:
+// one switched on for a column that isn't mapped is never saved.
+function snapshot(draft: Draft, presets: Rule[]): string {
 	return JSON.stringify([
-		config.same.trim(),
-		config.different.trim(),
-		config.country.trim().toUpperCase(),
-		[...config.jevFields].sort(),
-		[...config.enabledRuleIds].sort(),
-		[...config.customRuleIds].sort()
+		draft.same.trim(),
+		draft.different.trim(),
+		draft.country,
+		[...draft.jevFields].sort(),
+		presets.filter((rule) => draft.enabled.has(rule.id)).map((rule) => rule.id),
+		draft.composites.map((rule) => rule.id).sort()
 	])
 }
 
@@ -48,13 +50,18 @@ function toggled<T>(set: ReadonlySet<T>, value: T, isOn: boolean): Set<T> {
 	return next
 }
 
-// The Rules step: owns the draft configuration and saves it on "Review plan".
+// The Rules step. Every change saves itself (when valid) a moment after it's
+// made, and the page then recounts the rules and the summary from what was
+// saved; runs keep their own copy of the settings, so this never changes a
+// past result.
 export function RulesForm({
 	evaluationId,
 	initial,
 	rules,
 	mappedRoles,
 	stats,
+	summary,
+	countries,
 	limits
 }: {
 	evaluationId: string
@@ -68,158 +75,193 @@ export function RulesForm({
 	rules: Rule[]
 	mappedRoles: IdentityRole[]
 	stats: RuleStats[]
+	summary: RulesSummaryData
+	countries: SelectOption[]
 	limits: RuleLimits
 }) {
 	const t = useTranslations('Rules')
 	const router = useRouter()
 	const mapped = new Set(mappedRoles)
-	const [same, setSame] = useState(initial.identitySame)
-	const [different, setDifferent] = useState(initial.identityDifferent)
-	const [country, setCountry] = useState(initial.countryCode)
-	const [jevFields, setJevFields] = useState(
-		new Set(initial.jevFields.filter((field) => mapped.has(field)))
-	)
-	const [enabled, setEnabled] = useState(new Set(initial.enabledRuleIds))
-	const [customRules, setCustomRules] = useState(() =>
-		rules.filter((rule) => isCustomRuleId(rule.id))
-	)
-	// Stats for custom rules added in this session, until a save makes the
-	// server count them (server stats win, so a recount replaces these).
+	const presets = rules.filter((rule) => !isCustomRuleId(rule.id))
+	const runnablePresets = presets.filter((rule) => missingField(rule.fields, mapped) == null)
+	const saved: Draft = {
+		same: initial.identitySame,
+		different: initial.identityDifferent,
+		country: initial.countryCode,
+		jevFields: new Set(initial.jevFields.filter((field) => mapped.has(field))),
+		enabled: new Set(initial.enabledRuleIds),
+		composites: rules.filter((rule) => isCustomRuleId(rule.id))
+	}
+	const [draft, setDraft] = useState<Draft>(saved)
+	// Stats for composites added or edited here, until the server counts
+	// them after the save (server stats win).
 	const [addedStats, setAddedStats] = useState<Record<string, RuleStats>>({})
-	const allRules = [...rules.filter((rule) => !isCustomRuleId(rule.id)), ...customRules]
-	const availableFields = BLOCKING_FIELDS.filter((field) => missingField([field], mapped) == null)
 	const [error, setError] = useState<string | null>(null)
 	const [isSaving, startSaving] = useTransition()
 
-	const isDirty =
-		configSnapshot({
-			same,
-			different,
-			country,
-			jevFields,
-			enabledRuleIds: allRules.filter((rule) => enabled.has(rule.id)).map((rule) => rule.id),
-			customRuleIds: customRules.map((rule) => rule.id)
-		}) !==
-		configSnapshot({
-			same: initial.identitySame,
-			different: initial.identityDifferent,
-			country: initial.countryCode,
-			jevFields: initial.jevFields.filter((field) => mapped.has(field)),
-			enabledRuleIds: initial.enabledRuleIds,
-			customRuleIds: rules.filter((rule) => isCustomRuleId(rule.id)).map((rule) => rule.id)
-		})
-	const guard = useUnsavedChangesGuard(isDirty)
+	const isDirty = snapshot(draft, runnablePresets) !== snapshot(saved, runnablePresets)
+	const invalidReason =
+		draft.same.trim() === ''
+			? t('blockedSame')
+			: draft.different.trim() === ''
+				? t('blockedDifferent')
+				: draft.jevFields.size < MIN_JEV_FIELDS
+					? t('blockedFields')
+					: null
+	const allRules = [...presets, ...draft.composites]
+	const payload = {
+		evaluationId,
+		identity: { same: draft.same, different: draft.different },
+		countryCode: draft.country,
+		jevFields: [...draft.jevFields],
+		// Presets that are on and runnable, plus every composite.
+		blockingRules: allRules.filter(
+			(rule) =>
+				isCustomRuleId(rule.id) ||
+				(draft.enabled.has(rule.id) && missingField(rule.fields, mapped) == null)
+		)
+	}
+	const isPending = isSaving || (isDirty && invalidReason == null)
 
-	// Only phone keys depend on the country, so the notice only matters when
-	// a phone column is mapped.
-	const isCountryUnsaved =
-		mapped.has('phone') && country.trim().toUpperCase() !== initial.countryCode.toUpperCase()
-
-	// Saves the draft, then either moves on to the plan or stays and
-	// re-renders, so the server recounts the presets with what was saved.
-	function save(then: 'plan' | 'recount') {
-		setError(null)
+	function save() {
 		startSaving(async () => {
-			const result = await saveRulesAction({
-				evaluationId,
-				identity: { same, different },
-				countryCode: country,
-				jevFields: [...jevFields],
-				blockingRules: allRules.filter((rule) => enabled.has(rule.id))
-			})
-			if (!result.ok) return setError(result.error)
-			if (then === 'recount') return router.refresh()
-			const planPath = `/evaluations/${evaluationId}/plan`
-			if (guard.beginLeave().shouldReplace) router.replace(planPath)
-			else router.push(planPath)
+			const result = await saveRulesAction(payload)
+			if (!result.ok) {
+				setError(result.error)
+				return
+			}
+			setError(null)
+			router.refresh()
 		})
 	}
 
-	function addCustomRule(rule: Rule, stat: RuleStats) {
-		setCustomRules((current) => [...current, rule])
-		setAddedStats((current) => ({ ...current, [rule.id]: stat }))
-		setEnabled((current) => toggled(current, rule.id, true))
-	}
+	const saveSoon = useEffectEvent(() => save())
+	const draftKey = snapshot(draft, runnablePresets)
+	const canSave = isDirty && invalidReason == null
+	useEffect(() => {
+		if (!canSave) return
+		const timer = setTimeout(saveSoon, AUTOSAVE_DELAY_MS)
+		return () => clearTimeout(timer)
+	}, [draftKey, canSave])
 
-	function removeCustomRule(ruleId: string) {
-		setCustomRules((current) => current.filter((rule) => rule.id !== ruleId))
-		setEnabled((current) => toggled(current, ruleId, false))
-	}
+	// Leaving mid-pause still saves the last change.
+	const saveOnLeave = useEffectEvent(() => {
+		if (canSave) void saveRulesAction(payload)
+	})
+	useEffect(() => () => saveOnLeave(), [])
+
+	const blockedReason =
+		invalidReason ??
+		(summary.total > summary.limit
+			? t('blockedOver', { limit: summary.limit, total: summary.total })
+			: isPending
+				? t('blockedSaving')
+				: null)
 
 	return (
-		<div className="flex flex-1 flex-col gap-6">
-			<IdentitySection
-				same={same}
-				different={different}
-				country={country}
-				onSameChange={setSame}
-				onDifferentChange={setDifferent}
-				onCountryChange={setCountry}
-			/>
-			<JevFieldsSection
-				mappedRoles={mappedRoles}
-				selected={jevFields}
-				onToggle={(role, isOn) => setJevFields((current) => toggled(current, role, isOn))}
-			/>
-			<Section title={t('blockingTitle')} description={t('blockingDescription')} icon={FilterIcon}>
-				{isCountryUnsaved && (
-					<div className="mb-3">
-						<UnsavedCountryNotice
-							savedCountry={initial.countryCode}
-							isSaving={isSaving}
-							onSave={() => save('recount')}
-						/>
-					</div>
-				)}
-				<ul className="grid gap-3 md:grid-cols-2">
-					{allRules.map((rule) => {
-						const missing = missingField(rule.fields, mapped)
-						const isCustom = isCustomRuleId(rule.id)
-						return (
-							<BlockingRuleCard
-								key={rule.id}
-								rule={rule}
-								missing={missing}
-								stat={
-									stats.find((candidate) => candidate.ruleId === rule.id) ?? addedStats[rule.id]
-								}
-								isOn={enabled.has(rule.id) && missing == null}
-								limits={limits}
-								onToggle={(isOn) => setEnabled((current) => toggled(current, rule.id, isOn))}
-								onRemove={isCustom ? () => removeCustomRule(rule.id) : undefined}
-							/>
-						)
-					})}
-				</ul>
-				<div className="mt-3">
-					<CustomRuleBuilder
+		<>
+			<div className="grid gap-4 lg:grid-cols-12">
+				<div className="space-y-4 lg:col-span-8">
+					<IdentitySection
+						same={draft.same}
+						different={draft.different}
+						country={draft.country}
+						countries={countries}
+						mappedRoles={mappedRoles}
+						jevFields={draft.jevFields}
+						onChange={({ field, ...text }) =>
+							setDraft((current) => ({
+								...current,
+								...text,
+								jevFields:
+									field == null
+										? current.jevFields
+										: toggled(current.jevFields, field.role, field.isOn)
+							}))
+						}
+					/>
+					<CandidateRules
 						evaluationId={evaluationId}
-						country={country}
-						availableFields={availableFields}
+						country={draft.country}
 						rules={allRules}
-						customCount={customRules.length}
+						enabled={draft.enabled}
+						stats={(ruleId) =>
+							stats.find((candidate) => candidate.ruleId === ruleId) ?? addedStats[ruleId]
+						}
+						mapped={mapped}
+						availableFields={BLOCKING_FIELDS.filter(
+							(field) => missingField([field], mapped) == null
+						)}
 						limits={limits}
-						onAdd={addCustomRule}
+						onToggle={(ruleId, isOn) =>
+							setDraft((current) => ({
+								...current,
+								enabled: toggled(current.enabled, ruleId, isOn)
+							}))
+						}
+						onSaveComposite={(rule, stat, replacing) => {
+							setAddedStats((current) => ({ ...current, [rule.id]: stat }))
+							setDraft((current) => ({
+								...current,
+								composites:
+									replacing == null
+										? [...current.composites, rule]
+										: current.composites.map((existing) =>
+												existing.id === replacing ? rule : existing
+											)
+							}))
+						}}
+						onDeleteComposite={(ruleId) =>
+							setDraft((current) => ({
+								...current,
+								composites: current.composites.filter((rule) => rule.id !== ruleId)
+							}))
+						}
 					/>
 				</div>
-			</Section>
-			{error != null && (
-				<p
-					role="alert"
-					className="bg-danger-subtle text-danger type-body flex items-center gap-2 rounded px-3 py-2"
-				>
-					<AlertIcon />
-					{error}
-				</p>
-			)}
-			<UnsavedChangesDialog isOpen={guard.isConfirming} onStay={guard.stay} onLeave={guard.leave} />
-			<ActionBar>
-				<Button onClick={() => save('plan')} disabled={isSaving || jevFields.size === 0}>
-					{isSaving ? <SpinnerIcon /> : null}
-					{isSaving ? t('saving') : t('continue')}
-					{!isSaving && <ArrowRightIcon />}
-				</Button>
+				<div className="lg:col-span-4">
+					<RulesSummary summary={summary} isUpdating={isPending} />
+				</div>
+			</div>
+
+			<ActionBar
+				back={{ href: `/evaluations/${evaluationId}/vendors`, label: t('back') }}
+				hint={
+					error != null ? (
+						<span role="alert" className="text-danger">
+							{t('statusFailed', { error })}
+						</span>
+					) : blockedReason != null ? (
+						<>
+							{isPending && invalidReason == null ? (
+								<SpinnerIcon size={ICON_SIZE} className="shrink-0" />
+							) : (
+								<InfoIcon size={ICON_SIZE} className="shrink-0" />
+							)}
+							<span>{blockedReason}</span>
+						</>
+					) : (
+						<>
+							<SuccessIcon size={ICON_SIZE} className="shrink-0" />
+							<span>{t('statusSaved')}</span>
+						</>
+					)
+				}
+			>
+				{blockedReason == null && error == null ? (
+					<Button asChild>
+						<Link href={`/evaluations/${evaluationId}/plan`}>
+							{t('continue')}
+							<ArrowRightIcon size={ICON_SIZE} />
+						</Link>
+					</Button>
+				) : (
+					<Button disabled aria-describedby={ACTION_HINT_ID}>
+						{t('continue')}
+						<ArrowRightIcon size={ICON_SIZE} />
+					</Button>
+				)}
 			</ActionBar>
-		</div>
+		</>
 	)
 }

@@ -5,6 +5,8 @@ import { redirect } from '@/i18n/routing'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { AppError } from '@/lib/errors/app-error'
 import { env } from '@/lib/env'
+import { safeNext } from '@/lib/auth/safe-next'
+import { db } from '@/server/db/client'
 
 // The signed-in person for this request. `id` is the Supabase auth uuid,
 // which is also User.id (docs/rules/auth.md). The session is read once per
@@ -34,10 +36,36 @@ export async function requireUser(): Promise<SessionUser> {
 	return user
 }
 
-// Page twin of requireUser: sends a signed-out visitor to sign-in and back.
-export async function requireUserOrRedirect(returnTo: string): Promise<SessionUser> {
+// The signed-in person with the name they gave at onboarding.
+export type AppUser = SessionUser & { name: string }
+
+// The saved full name, read once per request; null until onboarding.
+export const getProfileName = cache(async (userId: string): Promise<string | null> => {
+	const profile = await db.user.findUnique({ where: { id: userId }, select: { name: true } })
+	return profile?.name ?? null
+})
+
+// Page twin of requireUser: sends a signed-out visitor to sign-in, and a
+// signed-in one who hasn't told us their name to onboarding, then back.
+export async function requireUserOrRedirect(returnTo: string): Promise<AppUser> {
 	const user = await getSessionUser()
-	if (user != null) return user
 	const locale = await getLocale()
-	return redirect({ href: { pathname: '/sign-in', query: { next: returnTo } }, locale })
+	if (user == null) {
+		return redirect({ href: { pathname: '/sign-in', query: { next: returnTo } }, locale })
+	}
+	const name = await getProfileName(user.id)
+	if (name == null) {
+		return redirect({ href: { pathname: '/welcome', query: { next: returnTo } }, locale })
+	}
+	return { ...user, name }
+}
+
+// For signed-out pages (the landing page, sign-in, sign-up): someone already
+// signed in goes on to where they were headed, by default their evaluations.
+// "/" is never a signed-in destination.
+export async function redirectIfSignedIn(next?: string): Promise<void> {
+	const user = await getSessionUser()
+	if (user == null) return
+	const locale = await getLocale()
+	redirect({ href: safeNext(next), locale })
 }

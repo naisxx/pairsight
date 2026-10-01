@@ -1,16 +1,19 @@
 # Components
 
 `src/components/ui/` is a small foundation, not a full suite — `Button`,
-`Input`, `Label`, `Textarea`, `Card`, `Badge`, and the toast system
-(`Toast`/`Toaster`/`toast()`). Add to it as the project needs more (Dialog,
-Select, Tabs, ...); don't pre-build a component nobody's using yet.
+`Input`, `Label`, `Textarea`, `Card`, `Chip`, and the toast system
+(`Toast`/`Toaster`/`toast()`), plus what PairSight's screens use: `Panel`,
+`Dialog`, `Select`/`OptionSelect`, `Segmented`, `Checkbox`, `Switch`,
+`DropdownMenu`, `Popover`, `Tooltip`/`Tip`, `Kbd`, `Skeleton`, `Reveal` and
+`AnimatedNumber`. Add to it as the project needs more; don't pre-build a
+component nobody's using yet, and remove one when its last user goes.
 
 ## The convention every one of these follows
 
 - **Design tokens only** — `bg-accent`, `text-text-muted`, `border-border`,
   `rounded-lg`, never a hardcoded hex/pixel value. See `DESIGN.md`.
 - **`cva` for anything with more than two visual states** (`Button`'s
-  `variant`/`size`, `Badge`'s `variant`) — see `docs/rules/code-style.md`.
+  `variant`/`size`) — see `docs/rules/code-style.md`.
   A component with only one visual shape (`Input`, `Textarea`) skips `cva`
   entirely; don't add a variant system nobody's asked for yet.
 - **`cn()`** (`src/lib/cn.ts`) merges the base classes with a caller-supplied
@@ -28,7 +31,7 @@ Select, Tabs, ...); don't pre-build a component nobody's using yet.
   it. If you're writing a new primitive and reach for `forwardRef`, stop —
   that's the pre-React-19 pattern your training data defaults to.
 - **Server Components by default** — `Button`, `Input`, `Textarea`, `Card`,
-  `Badge` have no `'use client'` directive and don't need one; only
+  `Chip`, `Panel` have no `'use client'` directive and don't need one; only
   `Label` and the toast system do, because Radix's own implementation for
   those specific primitives requires client-side interactivity. Don't add
   `'use client'` to a new primitive unless it actually uses a hook, an

@@ -4,56 +4,72 @@ import { Button } from '@/components/ui/button'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
 import type { ResultFilters } from '@/server/pairsight/results'
+import { PageSizeSelect } from './page-size-select'
 import { toQuery } from './query'
 
+// The table's footer: which rows are showing, rows per page, and paging.
 export function Pagination({
 	base,
 	filters,
 	page,
-	pageCount
+	pageCount,
+	pageSize,
+	total
 }: {
 	base: string
 	filters: ResultFilters
 	page: number
 	pageCount: number
+	pageSize: number
+	total: number
 }) {
 	const t = useTranslations('Results')
-	if (pageCount < 2) return null
-	const pageLink = (target: number, isDisabled: boolean, children: React.ReactNode) => (
-		<Button asChild variant="outline" size="sm">
+	if (total === 0) return null
+	const first = (page - 1) * pageSize + 1
+	const last = Math.min(total, page * pageSize)
+	const pageLink = (target: number, isDisabled: boolean, label: string, icon: React.ReactNode) => (
+		<Button asChild variant="secondary" size="icon">
 			<Link
 				href={{ pathname: `${base}/results`, query: toQuery(filters, { page: target }) }}
+				aria-label={label}
 				aria-disabled={isDisabled}
 				className={cn(isDisabled && 'pointer-events-none opacity-50')}
 			>
-				{children}
+				{icon}
 			</Link>
 		</Button>
 	)
 	return (
 		<nav
-			className="mt-4 flex items-center justify-end gap-2"
-			aria-label={t('page', { page, pages: pageCount })}
+			aria-label={t('pagination')}
+			className="border-border bg-surface type-ui flex flex-wrap items-center justify-between gap-3 rounded-b-md border px-3 py-2"
 		>
-			<span className="text-text-muted type-body mr-2">
-				{t('page', { page, pages: pageCount })}
-			</span>
-			{pageLink(
-				Math.max(1, page - 1),
-				page <= 1,
-				<>
-					<ChevronLeftIcon />
-					{t('previous')}
-				</>
-			)}
-			{pageLink(
-				Math.min(pageCount, page + 1),
-				page >= pageCount,
-				<>
-					{t('next')}
-					<ChevronRightIcon />
-				</>
-			)}
+			<p className="text-text-muted">
+				{t.rich('showingRows', {
+					first,
+					last,
+					total,
+					n: (chunks) => <span className="text-text font-mono">{chunks}</span>
+				})}
+			</p>
+			<div className="flex items-center gap-2">
+				<PageSizeSelect pageSize={pageSize} />
+				{pageLink(
+					Math.max(1, page - 1),
+					page <= 1,
+					t('previousPage'),
+					<ChevronLeftIcon size={14} />
+				)}
+				<span className="text-text-muted font-mono">
+					{page}/{pageCount}
+				</span>
+				{pageLink(
+					Math.min(pageCount, page + 1),
+					page >= pageCount,
+					t('nextPage'),
+					<ChevronRightIcon size={14} />
+				)}
+			</div>
 		</nav>
 	)
 }

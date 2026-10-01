@@ -52,3 +52,24 @@ export function parseIdentityRoles(fields: string[]): Array<z.infer<typeof ident
 export function isUuid(value: string): boolean {
 	return z.string().uuid().safeParse(value).success
 }
+
+// A vendor file's columns: two references per row, or a group and a reference.
+const columnNameSchema = z.string().min(1)
+export const vendorColumnsSchema = z.discriminatedUnion('format', [
+	z.object({ format: z.literal('pair'), columnA: columnNameSchema, columnB: columnNameSchema }),
+	z.object({
+		format: z.literal('group'),
+		groupColumn: columnNameSchema,
+		referenceColumn: columnNameSchema
+	})
+])
+
+export const vendorFileStatsSchema = z.object({
+	rows: z.number().int(),
+	pairs: z.number().int(),
+	groups: z.number().int().nullable(),
+	duplicates: z.number().int(),
+	selfPairs: z.number().int()
+})
+
+export const canonicalPairsSchema = z.array(z.object({ a: z.string(), b: z.string() }))

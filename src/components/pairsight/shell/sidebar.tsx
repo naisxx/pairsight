@@ -2,75 +2,142 @@
 
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
-import { GridIcon } from '@/components/ui/icons'
+import { Button } from '@/components/ui/button'
+import { CloseIcon, FolderIcon, SidebarIcon } from '@/components/ui/icons'
+import { Tip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
-import { Wordmark } from '../wordmark'
+import { LogoGlyph, Wordmark } from '../wordmark'
 import { Pipeline } from './pipeline'
 import type { PipelineData } from './pipeline-types'
-import { useShell } from './shell-frame'
+import { useShell, useSidebarMode } from './shell-frame'
 import { SidebarAccountMenu, SidebarThemeMenu } from './sidebar-menus'
-import { SidebarTip } from './sidebar-tip'
 
-// The full-height sidebar: brand, sections, the current evaluation's
-// pipeline, then theme and account pinned to the bottom. Only the middle
-// scrolls.
-export function Sidebar({ email, pipeline }: { email: string; pipeline?: PipelineData }) {
+const NAV_ICON_SIZE = 17
+
+// The sidebar (docs/PairSight-UX-Plan.md §3): the brand and its collapse
+// control, the sections, the current evaluation's pipeline, then theme and
+// account pinned to the bottom. Only the middle scrolls.
+export function Sidebar({
+	email,
+	name,
+	pipeline
+}: {
+	email: string
+	name: string
+	pipeline?: PipelineData
+}) {
 	const t = useTranslations('Shell')
 	const pathname = usePathname()
-	const { closeMobile } = useShell()
+	const { toggleCollapsed, closeMobile } = useShell()
+	const { isCollapsed, isMobile } = useSidebarMode()
 	const isEvaluationsHome = pathname === '/evaluations'
 
-	// Following a link inside the drawer closes it (phones only; harmless elsewhere).
-	function onNavigate(event: React.MouseEvent) {
-		if (event.target instanceof Element && event.target.closest('a')) closeMobile()
-	}
-
 	return (
-		<aside
-			id="sidebar"
-			aria-label={t('mainNavigation')}
-			className="shell-sidebar border-border bg-surface flex flex-col overflow-hidden border-r"
-			onClick={onNavigate}
-		>
-			<div className="border-border flex h-14 shrink-0 items-center border-b pl-[1.375rem]">
-				<Link
-					href="/evaluations"
-					aria-label="PairSight"
-					className="focus-visible:outline-ring rounded focus-visible:outline-2 focus-visible:outline-offset-4"
-				>
-					<Wordmark labelClassName="shell-fade" className="text-base" />
-				</Link>
-			</div>
-
-			<div className="shell-scroll flex-1 overflow-x-hidden overflow-y-auto px-2.5 py-3">
-				<nav aria-label={t('sections')} className="flex flex-col gap-0.5 pb-3">
-					<SidebarTip label={t('evaluations')}>
-						<Link
-							href="/evaluations"
-							aria-current={isEvaluationsHome ? 'page' : undefined}
-							className={cn(
-								'type-label focus-visible:outline-ring flex h-9 items-center gap-3 overflow-hidden rounded px-4 whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2',
-								isEvaluationsHome
-									? 'bg-selected text-text shadow-[inset_3px_0_0_var(--action)]'
-									: 'text-text-muted hover:bg-surface-hover hover:text-text'
-							)}
+		<div className="flex h-full flex-col">
+			<div
+				className={cn(
+					'border-border flex h-12 shrink-0 items-center border-b',
+					isCollapsed ? 'justify-center px-0' : 'justify-between px-3'
+				)}
+			>
+				{isCollapsed ? (
+					<Tip content={t('expandSidebar')} side="right">
+						<Button
+							variant="quiet"
+							size="icon"
+							onClick={toggleCollapsed}
+							aria-label={t('expandSidebar')}
+							className="group"
 						>
-							<GridIcon variant={isEvaluationsHome ? 'solid' : 'line'} className="shrink-0" />
-							<span className="shell-fade">{t('evaluations')}</span>
+							<LogoGlyph className="group-hover:hidden" />
+							<SidebarIcon size={NAV_ICON_SIZE} className="hidden group-hover:block" />
+						</Button>
+					</Tip>
+				) : (
+					<>
+						<Link href="/evaluations" aria-label={t('home')} className="rounded-sm p-1">
+							<Wordmark />
 						</Link>
-					</SidebarTip>
-				</nav>
-				{pipeline != null && (
-					<div className="border-border border-t pt-3">
-						<Pipeline data={pipeline} />
-					</div>
+						{isMobile ? (
+							<Button
+								variant="quiet"
+								size="icon-sm"
+								onClick={closeMobile}
+								aria-label={t('closeNavigation')}
+							>
+								<CloseIcon />
+							</Button>
+						) : (
+							<Tip content={t('collapseSidebar')} side="right">
+								<Button
+									variant="quiet"
+									size="icon-sm"
+									onClick={toggleCollapsed}
+									aria-label={t('collapseSidebar')}
+								>
+									<SidebarIcon />
+								</Button>
+							</Tip>
+						)}
+					</>
 				)}
 			</div>
 
-			<div className="border-border flex shrink-0 flex-col gap-0.5 border-t px-2.5 py-2">
+			<nav
+				aria-label={t('mainNavigation')}
+				className={cn('flex-1 overflow-y-auto py-3', isCollapsed ? 'px-2' : 'px-2.5')}
+			>
+				<ul className="flex flex-col gap-0.5">
+					<li>
+						<Tip content={t('evaluations')} side="right" disabled={!isCollapsed}>
+							<Link
+								href="/evaluations"
+								aria-current={isEvaluationsHome ? 'page' : undefined}
+								aria-label={isCollapsed ? t('evaluations') : undefined}
+								className={cn(
+									'type-ui flex h-8 items-center gap-2.5 rounded-sm transition-colors duration-150',
+									isCollapsed ? 'justify-center' : 'px-2',
+									isEvaluationsHome
+										? 'bg-selected text-text font-medium shadow-[inset_2px_0_0_var(--action)]'
+										: 'text-text-muted hover:bg-surface-hover hover:text-text'
+								)}
+							>
+								<FolderIcon size={NAV_ICON_SIZE} />
+								{!isCollapsed && t('evaluations')}
+							</Link>
+						</Tip>
+					</li>
+				</ul>
+
+				{pipeline != null && (
+					<div className="mt-6">
+						{isCollapsed ? (
+							<div aria-hidden className="bg-border mx-auto h-px w-6" />
+						) : (
+							<div className="px-2">
+								<p className="text-text-muted type-caption font-medium">{t('currentEvaluation')}</p>
+								<p
+									className="text-text type-ui mt-0.5 truncate font-medium"
+									title={pipeline.evaluationName}
+								>
+									{pipeline.evaluationName}
+								</p>
+							</div>
+						)}
+						<Pipeline data={pipeline} />
+					</div>
+				)}
+			</nav>
+
+			<div
+				className={cn(
+					'border-border flex shrink-0 flex-col gap-0.5 border-t py-2',
+					isCollapsed ? 'items-center px-1' : 'px-2.5'
+				)}
+			>
 				<SidebarThemeMenu />
-				<SidebarAccountMenu email={email} />
+				<SidebarAccountMenu email={email} name={name} />
 			</div>
-		</aside>
+		</div>
 	)
 }

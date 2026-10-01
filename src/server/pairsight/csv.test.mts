@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseCsv, validateSourceRecords } from './csv'
+import { checkColumns, parseCsv, validateSourceRecords } from './csv'
 import { suggestReferenceColumn, suggestRole } from './fields'
 import { LIMITS } from './limits'
 
@@ -62,4 +62,20 @@ test('field suggestions come from header names', () => {
 	assert.equal(suggestRole('ZIP'), 'postcode')
 	assert.equal(suggestRole('loyalty_tier'), 'other')
 	assert.equal(suggestReferenceColumn(['name', 'record_id']), 'record_id')
+})
+
+test('checkColumns rates every column as a reference, capping the lists but not the counts', () => {
+	const parsed = parseCsv('ref,name\nR1,Ann\nR1,\n,Bo\nR2,Bo\nR3,Bo\n')
+	assert.ok(parsed.ok)
+	const checks = checkColumns(parsed.table, 1)
+	assert.deepEqual(checks.ref, {
+		blank: 1,
+		missing: [4],
+		duplicates: [{ reference: 'R1', rows: [2, 3] }],
+		duplicateCount: 1
+	})
+	assert.equal(checks.name?.blank, 1)
+	assert.deepEqual(checks.name?.missing, [3])
+	assert.deepEqual(checks.name?.duplicates, [{ reference: 'Bo', rows: [4, 5, 6] }])
+	assert.equal(checks.name?.duplicateCount, 1)
 })

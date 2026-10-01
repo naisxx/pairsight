@@ -18,6 +18,11 @@ const nextConfig: NextConfig = {
 	// file (src/server/pairsight/limits.ts) plus the rest of the payload.
 	experimental: {
 		serverActions: { bodySizeLimit: '2mb' }
+	},
+	// Messages are read from disk at request time (src/i18n/request.ts), not
+	// imported, so the build's file trace must be told to ship them.
+	outputFileTracingIncludes: {
+		'/**': ['./messages/**/*.json']
 	}
 }
 

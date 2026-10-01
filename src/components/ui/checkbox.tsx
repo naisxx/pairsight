@@ -5,21 +5,20 @@ import { cn } from '@/lib/cn'
 import { CheckIcon } from '@/components/ui/icons'
 import { Checkbox as CheckboxPrimitive } from 'radix-ui'
 
+const CHECK_SIZE = 11
+
 function Checkbox({ className, ...props }: React.ComponentProps<typeof CheckboxPrimitive.Root>) {
 	return (
 		<CheckboxPrimitive.Root
 			data-slot="checkbox"
 			className={cn(
-				'peer border-input focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:border-destructive aria-invalid:ring-destructive/20 data-[state=checked]:border-primary data-[state=checked]:bg-primary data-[state=checked]:text-primary-foreground dark:bg-input/30 dark:aria-invalid:ring-destructive/40 dark:data-[state=checked]:bg-primary size-4 shrink-0 rounded-[4px] border shadow-xs transition-shadow outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50',
+				'peer border-border-input bg-surface text-action-ink data-[state=checked]:border-action data-[state=checked]:bg-action aria-invalid:border-danger flex size-4 shrink-0 items-center justify-center rounded-[4px] border transition-[background-color,border-color] duration-150 ease-out disabled:cursor-not-allowed disabled:opacity-50',
 				className
 			)}
 			{...props}
 		>
-			<CheckboxPrimitive.Indicator
-				data-slot="checkbox-indicator"
-				className="grid place-content-center text-current transition-none"
-			>
-				<CheckIcon className="size-3.5" />
+			<CheckboxPrimitive.Indicator data-slot="checkbox-indicator">
+				<CheckIcon size={CHECK_SIZE} variant="bold" />
 			</CheckboxPrimitive.Indicator>
 		</CheckboxPrimitive.Root>
 	)

@@ -5,6 +5,8 @@ import type { BlockingField } from '@/server/pairsight/normalize'
 // without pulling in the blocking engine (and libphonenumber with it).
 
 export const MAX_RULE_FIELDS = 3
+// Fields Jev must be sent: one alone can't tell two people apart.
+export const MIN_JEV_FIELDS = 2
 export const MAX_CUSTOM_RULES = 5
 
 // Every field a rule can key on, in the order a custom rule's fields are

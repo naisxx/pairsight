@@ -86,11 +86,30 @@ test('the list puts disagreements first and filters by category, source, confide
 	)
 })
 
+test('the status filter splits judged pairs from incomplete ones', () => {
+	assert.deepEqual(
+		applyFilters(rows, { status: 'evaluated' }).map((row) => row.id),
+		['p2', 'p3', 'p1']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { status: 'incomplete' }).map((row) => row.id),
+		['p4']
+	)
+})
+
+// Ignored filters come back as undefined keys; drop them to compare.
+const defined = (filters: object) =>
+	Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined))
+
 test('invalid URL filters are ignored, and an unknown vendor falls back to the first', () => {
-	assert.deepEqual(parseResultFilters({ category: 'nonsense' }), {})
-	assert.deepEqual(parseResultFilters({ category: 'vendor_only', page: '2' }), {
+	assert.deepEqual(defined(parseResultFilters({ category: 'nonsense' })), {})
+	assert.deepEqual(defined(parseResultFilters({ category: 'vendor_only', page: '2' })), {
 		category: 'vendor_only',
 		page: 2
+	})
+	// A GET form submits an "All" select as an empty value; the other filters survive it.
+	assert.deepEqual(defined(parseResultFilters({ q: 'jane', source: '', status: '' })), {
+		q: 'jane'
 	})
 	assert.equal(pickVendorId([{ id: 'v1' }, { id: 'v2' }], 'v2'), 'v2')
 	assert.equal(pickVendorId([{ id: 'v1' }, { id: 'v2' }], 'missing'), 'v1')
@@ -98,4 +117,40 @@ test('invalid URL filters are ignored, and an unknown vendor falls back to the f
 		{ reference: 'R9' },
 		{ reference: 'R10' }
 	])
+})
+
+test('disagreements, score sides, ranges and the band filter on PairSight decisions', () => {
+	assert.deepEqual(
+		applyFilters(rows, { category: 'disagreements' }).map((row) => row.id),
+		['p2', 'p3']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'above' }).map((row) => row.id),
+		['p2', 'p1']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'below' }).map((row) => row.id),
+		['p3']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'near' }).map((row) => row.id),
+		['p2']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'r:0.9-1.0' }).map((row) => row.id),
+		['p1']
+	)
+	// An unparseable score filter is ignored, like any other bad URL param.
+	assert.equal(defined(parseResultFilters({ score: 'r:2-3' })).score, undefined)
+})
+
+test('sorting by score keeps unscored pairs last in either direction', () => {
+	assert.deepEqual(
+		applyFilters(rows, { sort: 'score-asc' }).map((row) => row.id),
+		['p3', 'p2', 'p1', 'p4']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { sort: 'score-desc' }).map((row) => row.id),
+		['p1', 'p2', 'p3', 'p4']
+	)
 })

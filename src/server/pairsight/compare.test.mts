@@ -38,6 +38,8 @@ test('fields compare after normalization, and missing values are distinguished',
 			['date_of_birth', 'bothMissing']
 		]
 	)
+	// The emails match only once case is normalized: written differently.
+	assert.equal(fields.find((field) => field.role === 'email')?.isFormatOnly, true)
 	// Unmapped columns are kept for "All columns", never compared.
 	assert.deepEqual(otherHeaders, ['notes'])
 })

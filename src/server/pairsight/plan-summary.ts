@@ -1,4 +1,5 @@
 import type { BlockingRule, RuleStats } from './blocking'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { LIMITS } from './limits'
 import { groupPairCount, pairKey, type ComparisonPair } from './pairs'
 
@@ -71,7 +72,7 @@ export function summarizePlan({
 
 	const blockers: PlanBlocker[] = []
 	if (vendorCount === 0) blockers.push('no_vendors')
-	if (jevFieldCount === 0) blockers.push('no_jev_fields')
+	if (jevFieldCount < MIN_JEV_FIELDS) blockers.push('no_jev_fields')
 	if (comparison.length === 0) blockers.push('no_pairs')
 	if (comparison.length > LIMITS.maxPairsPerRun) blockers.push('too_many_pairs')
 

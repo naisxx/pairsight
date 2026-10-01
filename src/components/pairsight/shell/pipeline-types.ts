@@ -2,11 +2,9 @@
 // the workspace (src/app/[locale]/evaluations/[id]/workspace.ts) and passed
 // to client components as plain data.
 
-export type StageKey = 'records' | 'vendors' | 'rules' | 'plan' | 'run' | 'results'
+import type { EvaluationStatus, StageKey, StageState } from '@/lib/pairsight/stages'
 
-// done: finished · active: the next thing to do (or the run in progress)
-// next: reachable, not yet the focus · locked: needs an earlier stage first
-export type StageState = 'done' | 'active' | 'next' | 'locked'
+export type { EvaluationStatus, StageKey, StageState }
 
 export type PipelineStage = {
 	key: StageKey
@@ -15,16 +13,16 @@ export type PipelineStage = {
 	isRunning?: boolean
 	// What the stage has produced so far, e.g. "24 records" or "Run 2 · running".
 	detail: string
+	// For a locked stage: what it's waiting for ("Upload the source records first").
+	reason?: string
 	// Other paths that belong to this stage (a pair page is part of Results).
 	alsoMatches?: string[]
 }
 
-export type PipelineTone = 'action' | 'success' | 'danger'
-
 export type PipelineData = {
 	evaluationName: string
 	stages: PipelineStage[]
-	status: { tone: PipelineTone; label: string }
+	status: EvaluationStatus
 }
 
 export type Crumb = { label: string; href?: string }

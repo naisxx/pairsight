@@ -6,16 +6,18 @@ import { SIDEBAR_COOKIE } from './sidebar-cookie'
 import { TopBar } from './top-bar'
 
 // The signed-in app's frame (docs/PairSight-UX-Plan.md §3): a full-height
-// sidebar with the evaluation pipeline, a top bar with the breadcrumb, and
-// the page. The remembered sidebar width comes from a cookie, so the first
+// sidebar with the evaluation pipeline, a top bar with the breadcrumb and
+// the evaluation's status, and the page. The remembered sidebar width comes from a cookie, so the first
 // paint is already the right width.
 export async function AppShell({
 	email,
+	name,
 	crumbs,
 	pipeline,
 	children
 }: {
 	email: string
+	name: string
 	crumbs: Crumb[]
 	pipeline?: PipelineData
 	children: React.ReactNode
@@ -24,8 +26,8 @@ export async function AppShell({
 	return (
 		<ShellFrame
 			initialCollapsed={cookieStore.get(SIDEBAR_COOKIE)?.value === 'collapsed'}
-			sidebar={<Sidebar email={email} pipeline={pipeline} />}
-			topBar={<TopBar crumbs={crumbs} stages={pipeline?.stages} />}
+			sidebar={<Sidebar email={email} name={name} pipeline={pipeline} />}
+			topBar={<TopBar crumbs={crumbs} pipeline={pipeline} />}
 		>
 			{children}
 		</ShellFrame>

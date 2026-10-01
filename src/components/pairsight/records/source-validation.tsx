@@ -1,0 +1,106 @@
+import { useTranslations } from 'next-intl'
+import { InfoIcon, SuccessIcon, WarningCircleIcon } from '@/components/ui/icons'
+import type { ColumnCheck } from '@/server/pairsight/csv'
+
+const LISTED = 6
+const ICON_SIZE = 16
+const NOTE_ICON_SIZE = 15
+
+// Problems with the chosen reference column, as they'll block saving: each
+// missing or repeated reference with its rows. Fixing happens in the file;
+// this only says where to look.
+export function SourceValidation({
+	check,
+	rowCount,
+	blanks
+}: {
+	// The chosen reference column's check; undefined while none is chosen.
+	check: ColumnCheck | undefined
+	rowCount: number
+	blanks: Array<{ field: string; count: number }>
+}) {
+	const t = useTranslations('Records')
+	const mono = (chunks: React.ReactNode) => <span className="font-mono">{chunks}</span>
+	const problemCount = check == null ? 0 : check.blank + check.duplicateCount
+	const items =
+		check == null
+			? []
+			: [
+					...check.missing.map((row) => ({ key: `m${row}`, rows: [row], reference: null })),
+					...check.duplicates.map((duplicate) => ({
+						key: `d${duplicate.reference}`,
+						rows: duplicate.rows,
+						reference: duplicate.reference
+					}))
+				].sort((a, b) => (a.rows[0] ?? 0) - (b.rows[0] ?? 0))
+
+	return (
+		<section
+			aria-labelledby="validation-title"
+			className="border-border bg-surface rounded-md border"
+		>
+			<header className="px-4 py-3">
+				<h2 id="validation-title" className="text-sm font-semibold">
+					{t('validationTitle')}
+				</h2>
+			</header>
+			<div className="space-y-3 px-4 pb-4">
+				{check == null ? (
+					<div className="bg-danger-subtle text-danger type-ui flex gap-2 rounded-sm p-3">
+						<WarningCircleIcon size={ICON_SIZE} className="mt-0.5 shrink-0" />
+						<p>{t('noReference')}</p>
+					</div>
+				) : problemCount === 0 ? (
+					<div className="bg-success-subtle text-success type-ui flex gap-2 rounded-sm p-3">
+						<SuccessIcon size={ICON_SIZE} variant="solid" className="mt-0.5 shrink-0" />
+						<p>{t.rich('allGood', { count: rowCount, n: mono })}</p>
+					</div>
+				) : (
+					<div>
+						<div
+							role="alert"
+							className="bg-danger-subtle text-danger type-ui flex gap-2 rounded-sm p-3"
+						>
+							<WarningCircleIcon size={ICON_SIZE} className="mt-0.5 shrink-0" />
+							<p>{t.rich('problems', { count: problemCount, n: mono })}</p>
+						</div>
+						<ul className="divide-border border-border mt-2 divide-y rounded-sm border">
+							{items.slice(0, LISTED).map((item) => (
+								<li key={item.key} className="type-ui px-3 py-2.5">
+									<span className="text-text-muted font-mono">
+										{item.rows.length === 1
+											? t('rowLabel', { row: item.rows[0] ?? 0 })
+											: t('rowsLabel', { rows: item.rows.join(', ') })}
+									</span>
+									<span className="text-text-muted mx-1.5">·</span>
+									<span className="font-medium">
+										{item.reference == null ? t('missingRef') : t('duplicateRef')}
+									</span>
+									{item.reference != null && (
+										<span className="ml-1 font-mono">{item.reference}</span>
+									)}
+								</li>
+							))}
+						</ul>
+						{problemCount > LISTED && (
+							<p className="text-text-muted mt-2 text-xs">
+								{t('moreProblems', { count: problemCount - LISTED })}
+							</p>
+						)}
+					</div>
+				)}
+
+				{blanks.length > 0 && (
+					<div className="text-text-muted flex gap-2 text-xs">
+						<InfoIcon size={NOTE_ICON_SIZE} className="mt-0.5 shrink-0" />
+						<p>
+							{t('blanksNote', {
+								fields: blanks.map((blank) => `${blank.field}: ${blank.count}`).join(', ')
+							})}
+						</p>
+					</div>
+				)}
+			</div>
+		</section>
+	)
+}
