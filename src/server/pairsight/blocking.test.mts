@@ -71,3 +71,17 @@ test('buckets above the warning size are reported with their pair expansion', ()
 	assert.deepEqual(stats[0].oversizedBuckets, [{ size, pairCount: groupPairCount(size) }])
 	assert.equal(stats[0].largestBucket, size)
 })
+
+test('each rule shows a sample key, from a shared bucket when there is one', () => {
+	const { stats } = buildBlockedPairs({
+		records: people,
+		rules: [
+			{ id: 'last_postcode', fields: ['last_name', 'postcode'] },
+			{ id: 'first', fields: ['first_name'] }
+		],
+		country: 'US'
+	})
+	// r1 and r3 share "smith" + "10001"; r1's own key isn't shared by first name.
+	assert.deepEqual(stats[0]?.sampleKey, ['smith', '10001'])
+	assert.equal(stats[1]?.sampleKey?.length, 1)
+})
