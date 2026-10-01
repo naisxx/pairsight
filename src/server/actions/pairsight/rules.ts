@@ -12,7 +12,7 @@ import {
 } from '@/server/pairsight/schemas'
 import { updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import { previewRuleStats } from '@/server/pairsight/rules-preview'
-import { MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
+import { MAX_RULE_FIELDS, MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { idSchema, revalidateEvaluationPages } from './shared'
 
 export const saveRulesAction = validatedAction({
@@ -20,7 +20,8 @@ export const saveRulesAction = validatedAction({
 		evaluationId: idSchema,
 		identity: identityDefinitionSchema,
 		countryCode: countryCodeSchema,
-		jevFields: z.array(identityRoleSchema).min(1),
+		// One field alone gives Jev too little to tell two people apart.
+		jevFields: z.array(identityRoleSchema).min(MIN_JEV_FIELDS),
 		blockingRules: blockingRulesSchema
 	}),
 	handler: async ({ evaluationId, identity, countryCode, jevFields, blockingRules }) => {

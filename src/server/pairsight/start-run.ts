@@ -15,7 +15,7 @@ const RUN_TRANSACTION_TIMEOUT_MS = 30_000
 const BLOCKER_MESSAGES: Record<PlanBlocker, string> = {
 	no_dataset: 'Upload the source records first.',
 	no_vendors: 'Add at least one vendor’s results first.',
-	no_jev_fields: 'Map at least one identity field for Jev to compare.',
+	no_jev_fields: 'Choose at least two identity fields for Jev to compare.',
 	no_pairs: 'There are no pairs to evaluate. Turn on a blocking rule or add vendor results.',
 	too_many_pairs:
 		'This plan has more pairs than one run allows. Turn off a broad rule or reduce the input.'

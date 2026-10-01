@@ -74,6 +74,21 @@ test('blockers: each missing piece is reported, not just the first', () => {
 	assert.deepEqual(blockers, ['no_vendors', 'no_jev_fields', 'no_pairs'])
 })
 
+test('one field for Jev is not enough to run', () => {
+	const { blockers } = summarizePlan({
+		recordCount: 3,
+		rules: [],
+		ruleStats: [],
+		blockedPairCount: 0,
+		comparison: [pair('a', 'b', [])],
+		vendorPairs: [],
+		reusableKeys: new Set(),
+		vendorCount: 1,
+		jevFieldCount: 1
+	})
+	assert.deepEqual(blockers, ['no_jev_fields'])
+})
+
 test('over the cap: blocked, with the biggest source of pairs named first', () => {
 	const over = LIMITS.maxPairsPerRun + 1
 	const comparison = Array.from({ length: over }, (_, index) =>
@@ -88,7 +103,7 @@ test('over the cap: blocked, with the biggest source of pairs named first', () =
 		vendorPairs: [],
 		reusableKeys: new Set(),
 		vendorCount: 1,
-		jevFieldCount: 1
+		jevFieldCount: 2
 	})
 	assert.deepEqual(blockers, ['too_many_pairs'])
 	// A rule with no pairs isn't a cause, so it isn't listed.
@@ -117,7 +132,7 @@ test('exactly at the cap is allowed', () => {
 		vendorPairs: [],
 		reusableKeys: new Set(),
 		vendorCount: 1,
-		jevFieldCount: 1
+		jevFieldCount: 2
 	})
 	assert.deepEqual(blockers, [])
 })
