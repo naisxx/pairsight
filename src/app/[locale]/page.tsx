@@ -21,18 +21,16 @@ export default async function HomePage() {
 						aria-hidden
 						className="from-brand-deep via-action to-brand-amber h-1 w-24 rounded-full bg-linear-to-r"
 					/>
-					<h1 className="text-text text-4xl font-semibold tracking-tight sm:text-5xl">
-						{t('tagline')}
-					</h1>
-					<p className="text-text-muted max-w-2xl text-lg leading-relaxed">{t('description')}</p>
+					<h1 className="text-text type-display sm:text-5xl sm:leading-[3.5rem]">{t('tagline')}</h1>
+					<p className="text-text-muted max-w-2xl text-lg leading-8">{t('description')}</p>
 				</div>
 				<ol className="grid gap-3 sm:grid-cols-3">
 					{steps.map((step, index) => (
 						<li key={step} className="border-border bg-surface flex gap-3 rounded-lg border p-4">
-							<span className="bg-accent text-accent-ink flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums">
+							<span className="bg-accent text-accent-ink type-data-sm flex size-6 shrink-0 items-center justify-center rounded-full font-medium">
 								{index + 1}
 							</span>
-							<span className="text-text text-sm">{step}</span>
+							<span className="text-text type-body">{step}</span>
 						</li>
 					))}
 				</ol>

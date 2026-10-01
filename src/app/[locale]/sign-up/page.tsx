@@ -18,7 +18,7 @@ export default async function SignUpPage({
 			>
 				<Card className="w-full max-w-sm">
 					<CardHeader>
-						<h1 className="text-text text-lg font-semibold">{t('signUpTitle')}</h1>
+						<h1 className="text-text type-heading">{t('signUpTitle')}</h1>
 						<CardDescription>{t('signUpDescription')}</CardDescription>
 					</CardHeader>
 					<CardContent>

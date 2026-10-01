@@ -78,6 +78,7 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 		await page.getByRole('link', { name: 'View results' }).click()
+		await page.waitForURL('**/results')
 
 		for (const name of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
 			await expect(tile(page, name)).toContainText('2')
@@ -90,6 +91,7 @@ test.describe('PairSight vertical slice', () => {
 		await tile(page, 'Vendor only').click()
 		await expect(page.getByText('2 pairs')).toBeVisible()
 		await page.locator('tbody tr a').first().click()
+		await page.waitForURL('**/pairs/**')
 		await expect(
 			page.getByRole('heading', { name: /Vendor A: match · PairSight: no match/ })
 		).toBeVisible()
@@ -100,6 +102,15 @@ test.describe('PairSight vertical slice', () => {
 		await page.keyboard.press('Escape')
 		await page.waitForURL(/\/results\?/)
 		await expect(page).toHaveURL(/category=vendor_only/)
+
+		// Filters that match nothing: the empty state says so and clears them.
+		await page.goto(`${page.url()}&q=no-such-record`)
+		const noMatches = page.getByRole('status').filter({ hasText: 'No pairs match these filters' })
+		await expect(noMatches).toBeVisible()
+		await noMatches.getByRole('link', { name: 'Clear filters' }).click()
+		// Clearing keeps the selected vendor, nothing else.
+		await page.waitForURL(/\/results(\?vendor=[^&]+)?$/)
+		await expect(page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })).toHaveText('8 pairs')
 	})
 
 	test('changing the threshold re-decides from saved scores; a new run reuses every assessment', async ({
@@ -165,6 +176,204 @@ test.describe('PairSight vertical slice', () => {
 			page.getByText(/1 reference isn’t in the source records: Row 2: “R99”/)
 		).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Continue to rules' })).toHaveCount(0)
+	})
+
+	test('an over-cap plan is blocked with its cause, and a custom rule brings it under', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Over the cap')
+		await uploadRecords(page, 'over-cap-source.csv')
+		await expect(page.getByText('over-cap-source.csv · 105 records')).toBeVisible()
+		await addVendor(page, 'over-cap-vendor.csv')
+		await expect(page.getByText(/Added 1 pair/)).toBeVisible()
+
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.waitForURL('**/rules')
+		await expect(page.getByText('This rule alone creates 5,460 pairs').first()).toBeVisible()
+		await page.getByRole('button', { name: 'Review plan' }).click()
+		await page.waitForURL('**/plan')
+		await expect(page.getByText('This plan has 5,460 pairs; one run allows 5,000.')).toBeVisible()
+		await expect(
+			page.getByText('Same name and postcode: 5,460 pairs (largest group: 105 records)')
+		).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Start evaluation' })).toBeDisabled()
+
+		await page.getByRole('link', { name: 'Turn off or narrow a rule' }).click()
+		await page.waitForURL('**/rules')
+		await page.getByRole('switch', { name: 'Same name and postcode' }).click()
+		await page.getByText('Add a custom rule').click()
+		await page.getByRole('combobox', { name: 'Field 1' }).click()
+		await page.getByRole('option', { name: 'Email' }).click()
+		await expect(page.getByText('A rule with these fields already exists.')).toBeVisible()
+		await page.getByRole('combobox', { name: 'Field 2' }).click()
+		await page.getByRole('option', { name: 'Postcode' }).click()
+		await expect(page.getByRole('button', { name: 'Add rule' })).toBeEnabled()
+		await page.getByRole('button', { name: 'Add rule' }).click()
+		await expect(page.getByText('Email + Postcode')).toBeVisible()
+
+		await page.getByRole('button', { name: 'Review plan' }).click()
+		await page.waitForURL('**/plan')
+		await expect(page.locator('dl')).toContainText('Unique pairs to compare1')
+		await expect(page.getByRole('button', { name: 'Start evaluation' })).toBeEnabled()
+
+		// The custom rule was saved with the rest of the configuration.
+		await page.goto(page.url().replace(/\/plan$/, '/rules'))
+		await expect(page.getByText('Email + Postcode')).toBeVisible()
+	})
+
+	test('an unsaved country change is flagged, and saving recounts the presets in place', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Country change')
+		await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.waitForURL('**/rules')
+		const phoneCard = page.locator('li').filter({ hasText: 'Same phone' })
+		const before = await phoneCard.innerText()
+		await expect(page.getByText(/Unsaved change/)).toHaveCount(0)
+
+		await page.getByLabel('Country for phone numbers').fill('GB')
+		await expect(
+			page.getByText(/Unsaved change: the counts below still read phone numbers as US/)
+		).toBeVisible()
+		await page.getByLabel('Country for phone numbers').fill('us')
+		await expect(page.getByText(/Unsaved change/)).toHaveCount(0)
+
+		await page.getByLabel('Country for phone numbers').fill('GB')
+		await page.getByRole('button', { name: 'Save and recount' }).click()
+		await expect(page.getByText(/Unsaved change/)).toHaveCount(0)
+		await expect(page).toHaveURL(/\/rules$/)
+		// US numbers don't parse as British ones, so the phone rule's counts change.
+		await expect(phoneCard).not.toHaveText(before)
+		await page.reload()
+		await expect(page.getByLabel('Country for phone numbers')).toHaveValue('GB')
+	})
+
+	test('unsaved rule changes are guarded on links, back and unload; saved ones are not', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Unsaved changes')
+		await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.waitForURL('**/rules')
+		// Stages are links in the sidebar's pipeline, named "<stage>, <detail>".
+		const stepLink = (name: string) =>
+			page
+				.getByRole('region', { name: 'Pipeline' })
+				.getByRole('link', { name: new RegExp(`^${name},`) })
+		const dialog = page.getByRole('alertdialog', { name: 'Leave without saving?' })
+
+		// Clean: links just navigate.
+		await stepLink('Vendors').click()
+		await page.waitForURL('**/vendors')
+		await expect(dialog).toHaveCount(0)
+		await stepLink('Rules').click()
+		await page.waitForURL('**/rules')
+
+		// A link while dirty asks; Stay keeps the edit.
+		const nameRule = page.getByRole('switch', { name: 'Same name', exact: true })
+		await nameRule.click()
+		await stepLink('Vendors').click()
+		await expect(dialog).toBeVisible()
+		await dialog.getByRole('button', { name: 'Stay on this page' }).click()
+		await expect(dialog).toHaveCount(0)
+		await expect(page).toHaveURL(/\/rules$/)
+		await expect(nameRule).toBeChecked()
+
+		// Back while dirty asks too, and stays until the user chooses to leave.
+		await page.goBack()
+		await expect(dialog).toBeVisible()
+		await expect(page).toHaveURL(/\/rules$/)
+		await dialog.getByRole('button', { name: 'Stay on this page' }).click()
+		await expect(nameRule).toBeChecked()
+
+		// Closing the tab (or reloading) gets the browser's own prompt;
+		// dismissing it keeps the page and the edit.
+		const unloadPrompt = page.waitForEvent('dialog')
+		await page.close({ runBeforeUnload: true })
+		const prompt = await unloadPrompt
+		expect(prompt.type()).toBe('beforeunload')
+		await prompt.dismiss()
+		expect(page.isClosed()).toBe(false)
+		await expect(nameRule).toBeChecked()
+
+		// Leave discards the edit.
+		await stepLink('Vendors').click()
+		await dialog.getByRole('button', { name: 'Leave without saving' }).click()
+		await page.waitForURL('**/vendors')
+		await stepLink('Rules').click()
+		await page.waitForURL('**/rules')
+		await expect(nameRule).not.toBeChecked()
+
+		// Saving is not leaving: no dialog, and Back returns to the rules in one step.
+		await nameRule.click()
+		await page.getByRole('button', { name: 'Review plan' }).click()
+		await page.waitForURL('**/plan')
+		await expect(dialog).toHaveCount(0)
+		await page.goBack()
+		await page.waitForURL('**/rules')
+		await expect(nameRule).toBeChecked()
+	})
+
+	test('empty states: no evaluations yet, and later steps ask for records first', async ({
+		page
+	}) => {
+		await signUp(page)
+		await expect(page.getByRole('heading', { name: 'No evaluations yet' })).toBeVisible()
+
+		await createEvaluation(page, 'Empty states')
+		const records = page.url()
+		for (const step of ['vendors', 'rules']) {
+			await page.goto(records.replace(/\/records$/, `/${step}`))
+			await expect(
+				page.getByRole('heading', { name: 'Upload the source records first' })
+			).toBeVisible()
+		}
+		await page.getByRole('link', { name: 'Go to records' }).click()
+		await page.waitForURL('**/records')
+		await expect(page.getByText('Add your source records')).toBeVisible()
+	})
+
+	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
+		await signUp(page)
+		await createEvaluation(page, 'Shell')
+		const pipeline = page.getByRole('region', { name: 'Pipeline' })
+		await expect(pipeline.getByRole('link', { name: /^Records, upload a CSV/ })).toBeVisible()
+
+		await uploadRecords(page, 'demo-source.csv')
+		await expect(page.getByText('demo-source.csv · 24 records')).toBeVisible()
+		await expect(pipeline.getByRole('link', { name: /^Records, 24 records/ })).toBeVisible()
+		await expect(pipeline.getByRole('link', { name: /^Vendors, add vendor matches/ })).toBeVisible()
+		await expect(pipeline.getByText('Setup · 1 of 6 stages')).toBeVisible()
+
+		const shell = page.locator('.app-shell')
+		await expect(shell).toHaveAttribute('data-collapsed', 'false')
+		await page.getByRole('button', { name: 'Collapse sidebar' }).click()
+		await expect(shell).toHaveAttribute('data-collapsed', 'true')
+		// The width is remembered, and the server renders it on the first paint.
+		await page.reload()
+		await expect(shell).toHaveAttribute('data-collapsed', 'true')
+		await page.keyboard.press('[')
+		await expect(shell).toHaveAttribute('data-collapsed', 'false')
+		await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible()
+
+		// On phones the same toggle opens a drawer, and says so. (The scrim
+		// behind the drawer is also a "Close navigation" button.)
+		await page.setViewportSize({ width: 390, height: 844 })
+		const toggle = page.locator('button[aria-controls="sidebar"]')
+		await expect(toggle).toHaveAccessibleName('Open navigation')
+		await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+		await toggle.click()
+		await expect(shell).toHaveAttribute('data-mobile-open', 'true')
+		await expect(toggle).toHaveAccessibleName('Close navigation')
+		await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+		await page.keyboard.press('Escape')
+		await expect(shell).toHaveAttribute('data-mobile-open', 'false')
 	})
 
 	test('an evaluation is invisible to another user', async ({ browser }) => {

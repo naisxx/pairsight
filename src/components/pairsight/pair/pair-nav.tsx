@@ -42,9 +42,7 @@ export function PairNav({
 				</Link>
 			</Button>
 			{position != null && (
-				<span className="text-text-muted text-sm tabular-nums">
-					{t('position', { position, total })}
-				</span>
+				<span className="text-text-muted type-body">{t('position', { position, total })}</span>
 			)}
 			<div className="ml-auto flex gap-2">
 				{step(previousHref, t('previous'), <ChevronLeftIcon />)}

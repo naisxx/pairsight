@@ -77,7 +77,7 @@ export default async function PairPage({
 				isVendorMatch={row.isVendorMatch}
 				pairsightDecision={pairsightDecision}
 			/>
-			<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+			<div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
 				<div className="flex flex-col gap-4">
 					<FieldCompareTable
 						fields={fields}
@@ -106,7 +106,11 @@ export default async function PairPage({
 							.map((vendor) => vendor.name)}
 					/>
 					<VendorDecisions vendors={detail.vendors} />
-					<p className="text-text-muted text-xs">{t('keyboardHint')}</p>
+					<p className="text-text-muted type-meta flex flex-wrap items-center gap-1">
+						{t.rich('keyboardHint', {
+							key: (chunks) => <kbd className="type-kbd text-text">{chunks}</kbd>
+						})}
+					</p>
 				</aside>
 			</div>
 		</>

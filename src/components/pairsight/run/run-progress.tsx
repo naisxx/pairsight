@@ -33,20 +33,18 @@ export function RunProgress({
 	]
 
 	return (
-		<div className="flex flex-col gap-6">
+		<div className="flex flex-1 flex-col gap-6">
 			<div className="border-border bg-surface flex flex-col gap-4 rounded-lg border p-5">
 				<div className="flex items-baseline justify-between gap-4">
-					<p className="text-text text-sm font-medium tabular-nums">
-						{t('progress', { done, total: progress.total })}
-					</p>
-					<p className="text-text-muted text-sm tabular-nums">{percent}%</p>
+					<p className="text-text type-label">{t('progress', { done, total: progress.total })}</p>
+					<p className="text-text-muted type-data">{percent}%</p>
 				</div>
 				<Progress value={percent} aria-label={t('progress', { done, total: progress.total })} />
 				<dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 					{counts.map(([label, value]) => (
 						<div key={label} className="bg-surface-muted rounded px-3 py-2">
-							<dt className="text-text-muted text-xs">{label}</dt>
-							<dd className="text-text text-lg font-semibold tabular-nums">{value}</dd>
+							<dt className="text-text-muted type-meta">{label}</dt>
+							<dd className="text-text type-data text-lg leading-7 font-semibold">{value}</dd>
 						</div>
 					))}
 				</dl>
@@ -54,13 +52,13 @@ export function RunProgress({
 
 			<div aria-live="polite">
 				{progress.status === 'running' && (
-					<p className="text-text-muted flex items-center gap-2 text-sm">
+					<p className="text-text-muted type-body flex items-center gap-2">
 						{hasTransientError ? <AlertIcon className="text-warning" /> : <SpinnerIcon />}
 						{hasTransientError ? t('errorUnknown') : t('keepOpen')}
 					</p>
 				)}
 				{progress.status === 'completed' && (
-					<p className="text-text flex items-start gap-2 text-sm">
+					<p className="text-text type-body flex items-start gap-2">
 						<SuccessIcon className="text-success mt-0.5 shrink-0" />
 						{progress.failed > 0
 							? t('completeWithFailures', { count: progress.failed })
@@ -71,11 +69,11 @@ export function RunProgress({
 
 			{progress.status === 'stopped' && (
 				<div role="alert" className="border-danger/40 bg-danger-subtle rounded-lg border p-4">
-					<p className="text-danger flex items-center gap-2 text-sm font-semibold">
+					<p className="text-danger type-subheading flex items-center gap-2">
 						<AlertIcon />
 						{t('stoppedTitle')}
 					</p>
-					<p className="text-text mt-1 text-sm">
+					<p className="text-text type-body mt-1">
 						{progress.stopReason === 'invalid_key' ? t('invalid_key') : t('missing_key')}
 					</p>
 				</div>

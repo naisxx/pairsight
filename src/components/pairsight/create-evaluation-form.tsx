@@ -40,7 +40,7 @@ export function CreateEvaluationForm() {
 				{isPending ? t('creating') : t('create')}
 			</Button>
 			{error != null && (
-				<p role="alert" className="text-danger flex items-center gap-1.5 text-sm sm:basis-full">
+				<p role="alert" className="text-danger type-body flex items-center gap-1.5 sm:basis-full">
 					<AlertIcon />
 					{error}
 				</p>

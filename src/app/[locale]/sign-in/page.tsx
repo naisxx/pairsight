@@ -18,7 +18,7 @@ export default async function SignInPage({
 			>
 				<Card className="w-full max-w-sm">
 					<CardHeader>
-						<h1 className="text-text text-lg font-semibold">{t('signInTitle')}</h1>
+						<h1 className="text-text type-heading">{t('signInTitle')}</h1>
 						<CardDescription>{t('signInDescription')}</CardDescription>
 					</CardHeader>
 					<CardContent>

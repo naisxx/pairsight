@@ -1,10 +1,10 @@
 import 'server-only'
 import { db } from '@/server/db/client'
 import { buildBlockedPairs, type RuleStats } from './blocking'
+import { summarizePlan, type PlanBlocker } from './plan-summary'
 import { isIdentityRole, mapRecordFields } from './fields'
 import { JEV_MODEL, judgmentKey, type JudgmentConfig } from './judgment'
-import { LIMITS } from './limits'
-import { buildComparisonSet, groupPairCount, pairKey, type ComparisonPair } from './pairs'
+import { buildComparisonSet, pairKey, type ComparisonPair } from './pairs'
 import { parseIdentityRoles } from './schemas'
 import { getCurrentDataset } from './datasets'
 import { getOwnedEvaluation } from './evaluations'
@@ -13,19 +13,7 @@ import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 // The comparison plan: what a run *would* evaluate right now. Shared by the
 // Plan screen and by startRun, so what the user reviews is exactly what runs.
 
-export type PlanBlocker =
-	'no_dataset' | 'no_vendors' | 'no_jev_fields' | 'no_pairs' | 'too_many_pairs'
-
-export type PlanCounts = {
-	records: number
-	blockedPairs: number
-	vendorPairs: number
-	addedByVendorOnly: number
-	uniquePairs: number
-	allPossiblePairs: number
-	reusable: number
-	toEvaluate: number
-}
+export type { PlanBlocker, PlanContributor, PlanCounts } from './plan-summary'
 
 export async function computePlan({
 	ownerId,
@@ -93,29 +81,19 @@ export async function computePlan({
 	const reusableKeys = new Set(
 		reusableAssessments.map((row) => pairKey({ a: row.recordAId, b: row.recordBId }))
 	)
-	const reusable = comparison.filter((pair) => reusableKeys.has(pairKey(pair))).length
-
-	const vendorPairKeys = new Set(
-		exports.flatMap((vendorExport) =>
-			vendorExport.matches.map((match) => pairKey({ a: match.recordAId, b: match.recordBId }))
-		)
-	)
-	const counts: PlanCounts = {
-		records: records.length,
-		blockedPairs: blocking.pairs.length,
-		vendorPairs: vendorPairKeys.size,
-		addedByVendorOnly: comparison.filter((pair) => pair.ruleIds.length === 0).length,
-		uniquePairs: comparison.length,
-		allPossiblePairs: groupPairCount(records.length),
-		reusable,
-		toEvaluate: comparison.length - reusable
-	}
-
-	const blockers: PlanBlocker[] = []
-	if (exports.length === 0) blockers.push('no_vendors')
-	if (jevFields.length === 0) blockers.push('no_jev_fields')
-	if (comparison.length === 0) blockers.push('no_pairs')
-	if (comparison.length > LIMITS.maxPairsPerRun) blockers.push('too_many_pairs')
+	const { counts, blockers, contributors } = summarizePlan({
+		recordCount: records.length,
+		rules,
+		ruleStats: blocking.stats,
+		blockedPairCount: blocking.pairs.length,
+		comparison,
+		vendorPairs: exports.flatMap((vendorExport) =>
+			vendorExport.matches.map((match) => ({ a: match.recordAId, b: match.recordBId }))
+		),
+		reusableKeys,
+		vendorCount: exports.length,
+		jevFieldCount: jevFields.length
+	})
 
 	return {
 		evaluation,
@@ -127,6 +105,7 @@ export async function computePlan({
 		config,
 		judgmentKey: key,
 		counts,
-		blockers
+		blockers,
+		contributors
 	} as const
 }

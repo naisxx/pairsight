@@ -126,10 +126,10 @@ export function RecordsUploader({
 		<div className="flex flex-col gap-5">
 			<div className="flex flex-wrap items-end justify-between gap-4">
 				<div>
-					<h2 className="text-text text-base font-semibold">{t('previewTitle')}</h2>
-					<p className="text-text-muted mt-1 max-w-2xl text-sm">{t('previewDescription')}</p>
+					<h2 className="text-text type-heading">{t('previewTitle')}</h2>
+					<p className="text-text-muted type-body mt-1 max-w-2xl">{t('previewDescription')}</p>
 				</div>
-				<p className="text-text-muted flex items-center gap-1.5 text-sm">
+				<p className="text-text-muted type-body flex items-center gap-1.5">
 					<FileIcon />
 					{loaded.fileName}
 				</p>
@@ -154,7 +154,7 @@ export function RecordsUploader({
 					setConfirmed((current) => new Set(current).add(header))
 				}}
 			/>
-			<p className="text-text-muted text-xs">
+			<p className="text-text-muted type-meta">
 				{t('showingRows', { shown: preview.sampleRows.length, total: preview.rowCount })}
 			</p>
 			<div className="flex justify-end gap-3">

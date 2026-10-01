@@ -1,5 +1,6 @@
 import 'server-only'
 import { z } from 'zod'
+import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
 import { redirect } from '@/i18n/routing'
 import { FILE_NAME_MAX_LENGTH } from '@/lib/pairsight/input-limits'
@@ -8,7 +9,7 @@ import { suggestReferenceColumn, suggestRole } from '@/server/pairsight/fields'
 import { LIMITS } from '@/server/pairsight/limits'
 
 // PairSight mutations. Every action requires a signed-in user and goes through
-// the owner-scoped store (src/server/pairsight/store.ts). Validation problems
+// the owner-scoped data access in src/server/pairsight/. Validation problems
 // in uploaded files are returned as data — the screens show exactly which rows
 // to fix — while real failures go through AppError/captureError.
 
@@ -17,6 +18,13 @@ const PREVIEW_ROWS = 10
 export const idSchema = z.string().uuid()
 export const fileTextSchema = z.string().max(LIMITS.maxFileBytes)
 export const fileNameSchema = z.string().trim().min(1).max(FILE_NAME_MAX_LENGTH)
+
+// Evaluation pages render per request, but the client router keeps the pages
+// it has shown for Back/Forward. After a change, purge them so going back
+// never shows the configuration from before it.
+export function revalidateEvaluationPages() {
+	revalidatePath('/[locale]/evaluations/[id]', 'layout')
+}
 
 export async function goTo(href: string): Promise<never> {
 	const locale = await getLocale()

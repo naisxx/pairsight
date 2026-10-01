@@ -17,7 +17,7 @@ export function CoverageNotice({
 	const format = useFormatter()
 	return (
 		<>
-			<p className="text-text-muted mt-4 flex items-start gap-2 text-sm">
+			<p className="text-text-muted type-body mt-4 flex items-start gap-2">
 				<InfoIcon className="mt-0.5 shrink-0" />
 				{t('coverage', {
 					total: coverage.total,
@@ -26,7 +26,7 @@ export function CoverageNotice({
 				})}
 			</p>
 			{incomplete > 0 && (
-				<p className="bg-warning-subtle text-warning mt-4 flex flex-wrap items-center gap-2 rounded px-3 py-2 text-sm">
+				<p className="bg-warning-subtle text-warning type-body mt-4 flex flex-wrap items-center gap-2 rounded px-3 py-2">
 					<AlertIcon />
 					{t('incompleteBanner', { count: incomplete })}
 					<Link href={runHref} className="font-medium underline underline-offset-4">

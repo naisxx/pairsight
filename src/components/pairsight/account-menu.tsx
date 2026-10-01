@@ -20,12 +20,17 @@ export function AccountMenu({ email }: { email: string }) {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" aria-label={t('account')} className="w-9 px-0">
+				<Button
+					variant="ghost"
+					size="sm"
+					aria-label={t('account')}
+					className="w-9 bg-transparent px-0"
+				>
 					<UserIcon size={18} />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-56">
-				<DropdownMenuLabel className="text-text-muted truncate text-xs font-normal">
+				<DropdownMenuLabel className="text-text-muted type-meta truncate">
 					{email}
 				</DropdownMenuLabel>
 				<DropdownMenuSeparator />

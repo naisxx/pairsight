@@ -1,4 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
+import { EmptyState } from '@/components/pairsight/empty/empty-state'
+import { NoMatchesIcon } from '@/components/ui/icons'
 import { CategoryTiles } from '@/components/pairsight/results/category-tiles'
 import { CoverageNotice } from '@/components/pairsight/results/coverage-notice'
 import { Pagination } from '@/components/pairsight/results/pagination'
@@ -36,6 +38,7 @@ export default async function ResultsPage({
 	})
 	const { run, counts } = results
 	const filters = { ...parseResultFilters(rawFilters), vendor: results.vendorId }
+	const isFiltered = hasActiveFilters(filters)
 	const rules = parseBlockingRules(run.blockingRules)
 	const ruleLabels = Object.fromEntries(
 		rules.map((rule) => [rule.id, ruleLabel({ ruleId: rule.id, rules, tRules, tRoles })])
@@ -44,7 +47,7 @@ export default async function ResultsPage({
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('agreementNote')}>
-				<span className="text-text-muted text-sm tabular-nums">
+				<span className="text-text-muted type-body">
 					{t('runMeta', {
 						number: run.number,
 						date: format.dateTime(run.createdAt, { dateStyle: 'medium' }),
@@ -60,13 +63,28 @@ export default async function ResultsPage({
 				<ResultsFilters base={base} filters={filters} />
 				<ThresholdControl runId={run.id} threshold={run.threshold} />
 			</div>
-			<p className="text-text-muted mt-4 mb-2 text-sm tabular-nums" aria-live="polite">
+			<p className="text-text-muted type-body mt-4 mb-2" aria-live="polite">
 				{t('matching', { count: results.matching })}
 			</p>
 			{results.rows.length === 0 ? (
-				<div className="border-border flex flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-12 text-center">
-					<p className="text-text font-medium">{t('noResults')}</p>
-					{hasActiveFilters(filters) && <ClearFiltersLink base={base} vendor={results.vendorId} />}
+				<div className="border-border bg-surface rounded-lg border">
+					<EmptyState
+						icon={NoMatchesIcon}
+						title={isFiltered ? t('noResults') : t('noPairs')}
+						description={isFiltered ? t('noResultsHint') : t('noPairsHint')}
+						preview="table"
+						previewHeaders={[
+							t('columnCategory'),
+							t('columnRecordA'),
+							t('columnRecordB'),
+							t('columnScore')
+						]}
+						actions={
+							isFiltered && (
+								<ClearFiltersLink base={base} vendor={results.vendorId} appearance="button" />
+							)
+						}
+					/>
 				</div>
 			) : (
 				<PairsTable

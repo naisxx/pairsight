@@ -22,41 +22,55 @@ import {
 	ArrowLeft,
 	ArrowRight,
 	ArrowSquareOut,
+	Buildings,
 	Calendar,
 	CaretDown,
 	CaretLeft,
 	CaretRight,
 	CaretUp,
+	CaretUpDown,
 	Check,
 	CheckCircle,
 	Circle,
 	CircleDashed,
 	CircleNotch,
+	Compass,
 	Copy,
 	Desktop,
 	DotsThree,
 	DotsThreeVertical,
 	DownloadSimple,
 	Equals,
+	FileCsv,
 	FileText,
 	FunnelSimple,
+	FunnelX,
 	Gear,
+	HourglassMedium,
+	IdentificationCard,
 	Info,
+	Intersect,
 	List,
+	ListChecks,
 	Lock,
 	MagnifyingGlass,
 	Minus,
 	Moon,
 	NotEquals,
+	PaperPlaneTilt,
 	PencilSimple,
 	Play,
 	Plus,
+	Plugs,
+	SidebarSimple,
 	SignOut,
+	SquaresFour,
 	Sun,
 	Trash,
 	UploadSimple,
 	User,
 	Warning,
+	WarningOctagon,
 	X
 } from '@phosphor-icons/react/ssr'
 import type { Icon } from '@phosphor-icons/react'
@@ -72,11 +86,25 @@ export type IconProps = {
 	// default without checking the components that rely on it.
 	size?: number
 	className?: string
+	// How the glyph is drawn, in provider-neutral terms: `line` everywhere by
+	// default, `solid` for active and selected states, `duotone` for the large
+	// icons in empty states and tiles (its second layer takes `--icon-accent`,
+	// see globals.css). A provider without duotone can map it to `line`.
+	variant?: IconVariant
 }
+
+export type IconVariant = 'line' | 'duotone' | 'solid'
+
+const PROVIDER_WEIGHT = { line: 'regular', duotone: 'duotone', solid: 'fill' } as const
 
 const DEFAULT_SIZE = 16
 
-function Glyph({ source: Source, size = DEFAULT_SIZE, className }: IconProps & { source: Icon }) {
+function Glyph({
+	source: Source,
+	size = DEFAULT_SIZE,
+	className,
+	variant = 'line'
+}: IconProps & { source: Icon }) {
 	return (
 		<Source
 			size={size}
@@ -90,9 +118,10 @@ function Glyph({ source: Source, size = DEFAULT_SIZE, className }: IconProps & {
 			// Icons inherit the text color of whatever they sit in — that's why
 			// no color token appears anywhere in this file.
 			color="currentColor"
-			// The house stroke weight, in one place. 'regular' is phosphor's own
-			// default; change it here to restyle every icon at once.
-			weight="regular"
+			// The house stroke weight lives in PROVIDER_WEIGHT; change `line` there
+			// to restyle every icon at once.
+			weight={PROVIDER_WEIGHT[variant]}
+			data-icon-variant={variant}
 		/>
 	)
 }
@@ -113,6 +142,7 @@ export const ChevronDownIcon = (props: IconProps) => <Glyph source={CaretDown} {
 export const ChevronLeftIcon = (props: IconProps) => <Glyph source={CaretLeft} {...props} />
 export const ChevronRightIcon = (props: IconProps) => <Glyph source={CaretRight} {...props} />
 export const ChevronUpIcon = (props: IconProps) => <Glyph source={CaretUp} {...props} />
+export const ChevronsUpDownIcon = (props: IconProps) => <Glyph source={CaretUpDown} {...props} />
 export const CloseIcon = (props: IconProps) => <Glyph source={X} {...props} />
 export const DotIcon = (props: IconProps) => <Glyph source={Circle} {...props} />
 export const CopyIcon = (props: IconProps) => <Glyph source={Copy} {...props} />
@@ -129,6 +159,8 @@ export const PlusIcon = (props: IconProps) => <Glyph source={Plus} {...props} />
 export const SearchIcon = (props: IconProps) => <Glyph source={MagnifyingGlass} {...props} />
 export const SettingsIcon = (props: IconProps) => <Glyph source={Gear} {...props} />
 export const SignOutIcon = (props: IconProps) => <Glyph source={SignOut} {...props} />
+export const SidebarIcon = (props: IconProps) => <Glyph source={SidebarSimple} {...props} />
+export const GridIcon = (props: IconProps) => <Glyph source={SquaresFour} {...props} />
 export const SuccessIcon = (props: IconProps) => <Glyph source={CheckCircle} {...props} />
 export const TrashIcon = (props: IconProps) => <Glyph source={Trash} {...props} />
 export const ArrowLeftIcon = (props: IconProps) => <Glyph source={ArrowLeft} {...props} />
@@ -155,3 +187,14 @@ export const SpinnerIcon = ({ className, ...props }: IconProps) => (
 		{...props}
 	/>
 )
+export const ConnectionErrorIcon = (props: IconProps) => <Glyph source={Plugs} {...props} />
+export const CsvFileIcon = (props: IconProps) => <Glyph source={FileCsv} {...props} />
+export const ErrorIcon = (props: IconProps) => <Glyph source={WarningOctagon} {...props} />
+export const EvaluationIcon = (props: IconProps) => <Glyph source={Intersect} {...props} />
+export const FieldsIcon = (props: IconProps) => <Glyph source={ListChecks} {...props} />
+export const IdentityIcon = (props: IconProps) => <Glyph source={IdentificationCard} {...props} />
+export const NoMatchesIcon = (props: IconProps) => <Glyph source={FunnelX} {...props} />
+export const NotFoundIcon = (props: IconProps) => <Glyph source={Compass} {...props} />
+export const SendIcon = (props: IconProps) => <Glyph source={PaperPlaneTilt} {...props} />
+export const VendorIcon = (props: IconProps) => <Glyph source={Buildings} {...props} />
+export const WaitingIcon = (props: IconProps) => <Glyph source={HourglassMedium} {...props} />

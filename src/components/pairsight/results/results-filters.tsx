@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { SearchIcon } from '@/components/ui/icons'
+import { CloseIcon, SearchIcon } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { SEARCH_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 import type { ResultFilters } from '@/server/pairsight/results'
@@ -28,20 +28,20 @@ export function ResultsFilters({ base, filters }: { base: string; filters: Resul
 					maxLength={SEARCH_MAX_LENGTH}
 					placeholder={t('search')}
 					aria-label={t('search')}
-					className="h-8 w-60 pl-8"
+					className="h-8 w-72 pl-8"
 				/>
 			</div>
 			<select
 				name="source"
 				defaultValue={filters.source ?? ''}
 				aria-label={t('filterSource')}
-				className="border-border-input bg-surface text-text h-8 rounded border px-2 text-sm"
+				className="border-border-input bg-surface text-text type-body h-8 rounded border px-2"
 			>
 				<option value="">{t('sourceAll')}</option>
 				<option value="rules">{t('sourceRules')}</option>
 				<option value="vendor">{t('sourceVendor')}</option>
 			</select>
-			<label className="text-text flex items-center gap-2 text-sm">
+			<label className="text-text type-body flex items-center gap-2">
 				<input
 					type="checkbox"
 					name="lowConfidence"
@@ -59,13 +59,30 @@ export function ResultsFilters({ base, filters }: { base: string; filters: Resul
 	)
 }
 
-export function ClearFiltersLink({ base, vendor }: { base: string; vendor: string | undefined }) {
+export function ClearFiltersLink({
+	base,
+	vendor,
+	appearance = 'link'
+}: {
+	base: string
+	vendor: string | undefined
+	// `button` is the primary action of the empty state; `link` sits in the filter bar.
+	appearance?: 'link' | 'button'
+}) {
 	const t = useTranslations('Results')
+	const href = { pathname: `${base}/results`, query: toQuery({ vendor }) }
+	if (appearance === 'button') {
+		return (
+			<Button asChild>
+				<Link href={href}>
+					<CloseIcon />
+					{t('clear')}
+				</Link>
+			</Button>
+		)
+	}
 	return (
-		<Link
-			href={{ pathname: `${base}/results`, query: toQuery({ vendor }) }}
-			className="text-accent-ink text-sm font-medium hover:underline"
-		>
+		<Link href={href} className="text-accent-ink type-label hover:underline">
 			{t('clear')}
 		</Link>
 	)

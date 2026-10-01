@@ -43,7 +43,11 @@ export default defineConfig({
 					{
 						command: 'pnpm dev',
 						url: 'http://localhost:3000',
-						reuseExistingServer: !process.env.CI,
+						// PairSight specs need this server's stub env. Reusing whatever
+						// already listens on 3000 (often a dev server Playwright left
+						// running on Windows) would send real Jev calls instead, so
+						// they fail loudly on a busy port rather than reuse it.
+						reuseExistingServer: !process.env.CI && !isPairsight,
 						timeout: 60_000,
 						env: isPairsight
 							? {

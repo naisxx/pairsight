@@ -16,12 +16,12 @@ export function CompletenessConfirm({
 	const t = useTranslations('Vendors')
 	return (
 		<div className="border-info/30 bg-info-subtle flex flex-col gap-3 rounded-lg border p-4">
-			<p className="text-text flex items-center gap-2 text-sm font-semibold">
+			<p className="text-text type-subheading flex items-center gap-2">
 				<InfoIcon className="text-info" />
 				{t('completeTitle')}
 			</p>
-			<p className="text-text text-sm">{t('completeExplanation')}</p>
-			<label className="text-text flex items-center gap-2.5 text-sm font-medium">
+			<p className="text-text type-body">{t('completeExplanation')}</p>
+			<label className="text-text type-label flex items-center gap-2.5">
 				<Checkbox checked={isConfirmed} onCheckedChange={(checked) => onChange(checked === true)} />
 				{t('completeConfirm')}
 			</label>

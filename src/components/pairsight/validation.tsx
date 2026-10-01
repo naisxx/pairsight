@@ -43,11 +43,11 @@ export function ValidationPanel({ title, messages }: { title: string; messages: 
 	if (messages.length === 0) return null
 	return (
 		<div role="alert" className="border-danger/40 bg-danger-subtle rounded-lg border p-4">
-			<p className="text-danger flex items-center gap-2 text-sm font-semibold">
+			<p className="text-danger type-subheading flex items-center gap-2">
 				<AlertIcon />
 				{title}
 			</p>
-			<ul className="text-text mt-2 ml-6 list-disc space-y-1 text-sm">
+			<ul className="text-text type-body mt-2 ml-6 list-disc space-y-1">
 				{messages.map((message) => (
 					<li key={message}>{message}</li>
 				))}

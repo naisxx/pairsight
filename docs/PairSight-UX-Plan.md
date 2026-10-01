@@ -49,17 +49,33 @@ new tokens when M1 implements them.
 
 ## 3. Navigation and hierarchy
 
-- **App shell:**
-  - A top bar with the PairSight wordmark, **Evaluations**, a theme menu
-    (Light / Dark / System) and an account menu.
-  - The demo shows a persistent banner instead of the account menu.
-- **Evaluation workspace** (`/evaluations/[id]`):
-  - **Desktop:** a left rail stepper, Records → Vendors → Rules → Plan → Run →
-    Results. Each step is marked not started, complete, needs attention (count),
-    or locked (with the reason on hover). Steps after an unresolved error are
-    locked.
-  - **Mobile:** the stepper becomes a step-select at the top.
-  - **Breadcrumb:** Evaluations / {name} / {step}.
+- **App shell** (adopted 2026-10-01, "workspace sidebar", chosen from three
+  layouts compared side by side; `src/components/pairsight/shell/`). Signed-in
+  pages share it; the landing and auth pages keep the plain top header.
+  - **Sidebar**, full height: wordmark, **Evaluations**, the current
+    evaluation's **pipeline**, then theme and account pinned to the bottom.
+    Only the middle scrolls.
+  - **Collapse** (desktop): 16.5rem ↔ 4.25rem with a 240 ms transition; labels
+    fade, the pipeline keeps its nodes and track, and icons get tooltips.
+    Toggled from the top bar or with `[`; remembered in a cookie so the first
+    paint is already the right width.
+  - **Phones** (below 48rem): the sidebar is a drawer over a scrim, opened by
+    the same toggle and closed by Esc, the scrim, or following a link.
+  - **Top bar** (56 px): the sidebar toggle and the breadcrumb, Evaluations /
+    {name} / {stage}.
+- **Evaluation pipeline** (replaces the step rail): Records → Vendors (Input)
+  → Rules → Plan (Configure) → Run (Execute) → Results (Review) on one
+  connected track.
+  - **Stage states:** done (filled coral + check), active (coral ring — the
+    next thing to do, or the run in progress, pulsing), next (hollow), locked
+    (dashed + lock, not a link).
+  - **Track:** solid coral through finished stages, flowing while a run is
+    going, dashed ahead.
+  - **Each stage shows its output** in the data font ("24 records",
+    "1 vendor · 4 pairs", "run 2 · 1,344 pairs").
+  - **Header:** stages done, the evaluation name, a one-line status (setup,
+    running, complete, stopped) and one segment per stage.
+  - The page you're on is marked separately from pipeline progress.
 - **One primary action per stage.** It sits in a sticky action bar at the
   bottom of the content column, with an optional secondary **Back** and a
   status hint ("2 errors to fix before continuing"). The primary button is
@@ -232,12 +248,14 @@ bar.
 
 ## 6. Theme tokens (contrast checked)
 
-Adopted 2026-09-30. This merges `docs/PairSight-Color-System.md` (the base:
-warm neutrals, the exact brand coral on primary actions in both themes, and
-dark-mode surface layering) with the pieces it didn't define: input borders,
-tinted status backgrounds, and the comparison-category colors. Every value
-below was measured against the surfaces it actually sits on (WCAG 2.1: text
-≥ 4.5, control edges and chart marks ≥ 3).
+Adopted 2026-10-01: **Coral × Slate**, chosen from three candidates
+compared side by side. It replaces the 2026-09-30 palette, whose warm brown
+neutrals made dark mode read like a device's night mode: sepia surfaces,
+brown selection tints, and cards that barely separated from the page. Brand
+coral stays; the neutrals move to cool slate. Every value below was measured
+against the surfaces it actually sits on (WCAG 2.1: text ≥ 4.5, control edges
+and chart marks ≥ 3), and `scripts/check-contrast.test.mjs` re-checks them on
+every `pnpm test`, along with a guard that the neutrals stay cool.
 
 - **Theme switching:** class-based (`.dark` on `<html>`) through
   **`next-themes`**, with a Light / Dark / System menu, preference persisted,
@@ -246,43 +264,52 @@ below was measured against the surfaces it actually sits on (WCAG 2.1: text
   variable names (`--background`, `--primary`, `--accent`, `--ring`, …) are
   aliases of them, so copied shadcn components work unmodified.
 
-| Token                         | Light                                | Dark                  | Use and measured contrast                                                        |
-| ----------------------------- | ------------------------------------ | --------------------- | -------------------------------------------------------------------------------- |
-| `--bg`                        | `#FAF8F7`                            | `#171413`             | Page                                                                             |
-| `--surface`                   | `#FFFFFF`                            | `#211D1B`             | Cards, sidebar, tables                                                           |
-| `--surface-elevated`          | `#FFFFFF`                            | `#2B2522`             | Menus, dialogs, popovers                                                         |
-| `--surface-muted`             | `#F2ECE9`                            | `#302925`             | Table headers, sunken areas                                                      |
-| `--border`                    | `#DED4CF`                            | `#50433C`             | Decorative hairlines only (1.5–1.8: not for controls)                            |
-| `--border-input`              | `#8C7B71`                            | `#857469`             | Form controls and other essential edges: ≥ 3.46 / ≥ 3.20 on every surface        |
-| `--text`                      | `#241C18`                            | `#FAF5F2`             | 15.8 / 16.9                                                                      |
-| `--text-muted`                | `#705E55`                            | `#C2AEA3`             | Secondary text and placeholders: ≥ 5.25 / ≥ 6.72 on every surface                |
-| `--action`                    | `#E45742`                            | `#E45742`             | Primary action. The exact brand coral in both themes.                            |
-| `--action-ink`                | `#241C18`                            | `#241C18`             | Text on action: 4.58 (dark text, never white: white on coral is 3.66)            |
-| `--action-hover`              | `#EA6855`                            | `#EA6855`             | 5.27 with action-ink                                                             |
-| `--accent`                    | `#FCEAE6`                            | `#3B2520`             | Selected nav, row, step or tile, always paired with a border, indicator or label |
-| `--accent-ink`                | `#B83B2A`                            | `#F48977`             | Links and active text: 4.88 / 5.91 on accent, 5.68 / 6.92 on surface             |
-| `--ring`                      | `#B83B2A`                            | `#F48977`             | Keyboard focus: ≥ 5.36 / ≥ 6.92                                                  |
-| `--success` / `-subtle`       | `#237A52` / `#E8F5EE`                | `#76D6A2` / `#1B2D23` | 5.28 on surface; 4.71 / 8.24 on subtle                                           |
-| `--warning` / `-subtle`       | `#946000` / `#FBF1DE`                | `#F3C56B` / `#33291A` | 5.34 on surface; 4.77 / 8.83 on subtle                                           |
-| `--danger` / `-subtle`        | `#B8254F` / `#FCEDF1`                | `#FF8FAE` / `#3A1F27` | Hue 343°, 25° from the brand's 8°. 6.15 / 7.79 on surface; 5.42 / 6.97 on subtle |
-| `--info` / `-subtle`          | `#2864B4` / `#E9F0FA`                | `#91BCFF` / `#1E2635` | 5.88 / 8.63 on surface; 5.13 / 7.83 on subtle                                    |
-| `--cat-both` / `-subtle`      | `#3F5E9E` / `#EDF1F9`                | `#8AA4DB` / `#222838` | Both matched (quiet). 6.35 / 6.70 marks; 5.61 / 5.89 labels                      |
-| `--cat-pairsight` / `-subtle` | `#6841B0` / `#F1ECFA`                | `#B39AF0` / `#2A2338` | PairSight only. 7.07 / 7.00; 6.10 / 6.30                                         |
-| `--cat-vendor` / `-subtle`    | `#0C6B75` / `#E5F3F4`                | `#4FC1C9` / `#172E30` | Vendor only. 6.22 / 7.80; 5.47 / 6.67                                            |
-| `--cat-neither` / `-subtle`   | `#6B625D` / `#F2ECE9`                | `#A89A92` / `#302925` | Neither matched (quiet, warm gray). 5.95 / 6.13; 5.08 / 5.24                     |
-| `--cat-incomplete`            | `--text-muted` with a dashed outline | same                  | Pending or failed                                                                |
+| Token                         | Light                                | Dark                  | Use and measured contrast                                                                                  |
+| ----------------------------- | ------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `--bg`                        | `#F6F7F9`                            | `#0B0F14`             | Page                                                                                                       |
+| `--surface`                   | `#FFFFFF`                            | `#121821`             | Cards, sidebar, tables                                                                                     |
+| `--surface-elevated`          | `#FFFFFF`                            | `#18202B`             | Menus, dialogs, popovers, toasts                                                                           |
+| `--surface-muted`             | `#EEF1F4`                            | `#0E131A`             | Table headers, sunken areas, disabled buttons                                                              |
+| `--surface-hover`             | `#F1F4F7`                            | `#19212C`             | Hover for rows, menu items and interactive surfaces                                                        |
+| `--selected`                  | `#E6EDF6`                            | `#1E2B3F`             | Selected row, current step, enabled rule, drop target — always with a coral edge or outline                |
+| `--ghost`                     | `#EFF2F6`                            | `#151C26`             | Ghost button at rest, so it reads as a button before hover                                                 |
+| `--diff` / `--diff-ink`       | `#E4EDFB` / `#1D5FB8`                | `#1D2C47` / `#8FB6FF` | Changed values in pair detail (a difference, not a warning). Text 15.30 / 11.87; marker 5.27 / 6.85        |
+| `--border`                    | `#DDE2E9`                            | `#263140`             | Decorative hairlines only — too faint for a control edge                                                   |
+| `--border-input`              | `#7D8898`                            | `#6B788B`             | Form controls and essential edges: ≥ 3.05 / ≥ 3.18 on every surface                                        |
+| `--text`                      | `#0F1720`                            | `#E8EDF3`             | 16.83 / 16.33 on the page                                                                                  |
+| `--text-muted`                | `#4E5A6A`                            | `#A3AEBC`             | Secondary text and placeholders: ≥ 5.95 / ≥ 6.34 on every surface                                          |
+| `--action`                    | `#C93A22`                            | `#FF6A4D`             | Primary action. Deeper coral in light (so white text passes), brighter in dark                             |
+| `--action-ink`                | `#FFFFFF`                            | `#1A0B07`             | Text on action: 5.11 / 6.78                                                                                |
+| `--action-hover`              | `#AE2F19`                            | `#FF8469`             | 6.52 / 8.00 with action-ink                                                                                |
+| `--accent`                    | `#FDECE8`                            | `#2A1A24`             | Small brand chips only (step numbers, “Suggested”). Never a large area: coral over dark slate turns maroon |
+| `--accent-ink`                | `#B3321C`                            | `#FF8F79`             | Links and active text: 6.20 / 8.03 on surface                                                              |
+| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Keyboard focus: ≥ 4.33 / ≥ 6.42                                                                            |
+| `--success` / `-subtle`       | `#14773A` / `#E8F6EE`                | `#4ADE9A` / `#10271D` | 5.63 / 10.36 on surface; 5.05 / 9.18 on subtle                                                             |
+| `--warning` / `-subtle`       | `#8A5A00` / `#FCF3DE`                | `#F7C04F` / `#2A2210` | 5.93 / 10.70 on surface; 5.37 / 9.45 on subtle                                                             |
+| `--danger` / `-subtle`        | `#BE1D4B` / `#FCEBF0`                | `#FF6F94` / `#2E1520` | 6.06 / 6.75 on surface; 5.27 / 6.39 on subtle                                                              |
+| `--info` / `-subtle`          | `#1D5FB8` / `#E8F0FB`                | `#6AAEFF` / `#12213A` | 6.21 / 7.73 on surface; 5.41 / 6.99 on subtle                                                              |
+| `--cat-both` / `-subtle`      | `#2F55A8` / `#EAF0FB`                | `#86A8FF` / `#18223A` | Both matched (quiet). 7.03 / 7.69 marks; 6.15 / 6.82 labels                                                |
+| `--cat-pairsight` / `-subtle` | `#6A3FC0` / `#F1ECFB`                | `#BE9CFF` / `#221A38` | PairSight only. 6.81 / 7.97 marks; 5.88 / 7.38 labels                                                      |
+| `--cat-vendor` / `-subtle`    | `#0B6E68` / `#E3F4F2`                | `#3DD9C5` / `#0F2A28` | Vendor only. 6.10 / 10.12 marks; 5.37 / 8.63 labels                                                        |
+| `--cat-neither` / `-subtle`   | `#56606E` / `#EEF1F4`                | `#9AA6B6` / `#1B2230` | Neither matched (quiet). 6.38 / 7.22 marks; 5.62 / 6.45 labels                                             |
+| `--cat-incomplete`            | `--text-muted` with a dashed outline | same                  | Pending or failed                                                                                          |
 
-- **What changed from the source documents:**
-  - **Error hue:** error moves from `#B42338` / `#FF91A1` (hue 351°, only 16°
-    from the brand) to `#B8254F` / `#FF8FAE` (343°), so error never reads as
-    brand. Contrast rises too.
-  - **Input border:** added, because neither `--border` value can serve as a
-    control edge.
-  - **Faint text:** dropped. No warm faint gray reaches 4.5 on the muted
-    surface, so muted text covers secondary text and placeholders.
-  - **Status and category colors:** tinted backgrounds and the four
-    comparison-category colors are added; the brand palette alone can't carry
-    them.
+- **What changed from the 2026-09-30 palette:**
+  - **Neutrals:** warm brown → cool slate in both themes, with clearer steps
+    between page, card, raised and sunken surfaces.
+  - **Coral:** light mode uses a deeper coral (`#C93A22`) with white text;
+    dark mode a brighter one (`#FF6A4D`) with near-black text.
+  - **Selection:** new `--selected` (a cool slate lift) plus a coral edge,
+    instead of a coral tint, which turned maroon on dark.
+  - **Changed values:** new `--diff` / `--diff-ink` (cool blue) instead of the
+    warning tint, which turned muddy brown on dark and wrongly read as a
+    problem.
+  - **Ghost buttons:** new `--ghost` resting background.
+  - **Disabled buttons:** a neutral muted fill instead of 50% opacity, which
+    turned the coral button brown.
+  - **Menus and selects:** hover uses `--surface-hover`, not the brand tint.
+  - **Faint text:** still dropped; muted text covers secondary text and
+    placeholders.
 - **Supporting brand colors:**
   - `#972828`, `#EB7F31` and `#FCAD38` are for the wordmark, the landing page,
     and non-data emphasis.
@@ -291,8 +318,8 @@ below was measured against the surfaces it actually sits on (WCAG 2.1: text
     points; selection uses `--ring` / `--accent-ink`.
   - `#EB7F31` can be a secondary chart series only in charts with no warning
     meaning nearby.
-- **Selection:** the accent background is never the only cue. It's paired with
-  a left indicator bar, an outline or a label.
+- **Selection:** `--selected` is never the only cue. It's paired with a coral
+  left edge, an outline or a label.
 - **Destructive actions:** confirmations use an outline danger style, never a
   filled red next to the coral primary.
 - **Radius and elevation:** keep the existing 6/10/16 px radii. Elevated
@@ -305,11 +332,13 @@ below was measured against the surfaces it actually sits on (WCAG 2.1: text
 ## 7. Typography, spacing, motion, responsiveness, keyboard
 
 - **Type:**
-  - Inter through `next/font` (no dependency), with `tabular-nums` for every
-    number. JetBrains Mono through `next/font` for record references and raw
-    values in inspection.
-  - Scale: 12 (meta) / 14 (body, table) / 16 (lead) / 20 (section) /
-    24 (page title). Weights 400/500/600.
+  - Poppins (400/500/600) for the interface and JetBrains Mono for data —
+    record references, raw values, scores, counts, rule keys, keyboard hints.
+    Poppins has proportional digits and no tabular figures, so numbers that
+    align or change live use the mono. Adopted 2026-10-01, replacing Inter.
+  - Named roles, not raw sizes: display 36 / title 24 / heading 16 /
+    subheading 14 / body 14 / label 14 / meta 12 / overline 11, plus the two
+    mono data roles. The full table is `DESIGN.md` §4.
 - **Spacing:** Tailwind's 4 px scale. 16 px card padding, 24 px section gaps, a
   1,280 px max content width (1,440 px for Results).
 - **Motion:** 120–160 ms color and opacity transitions, a 200 ms popover or sheet

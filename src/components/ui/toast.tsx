@@ -47,12 +47,7 @@ export function ToastTitle({
 	className,
 	...props
 }: React.ComponentProps<typeof ToastPrimitives.Title>) {
-	return (
-		<ToastPrimitives.Title
-			className={cn('text-text text-sm font-semibold', className)}
-			{...props}
-		/>
-	)
+	return <ToastPrimitives.Title className={cn('text-text type-subheading', className)} {...props} />
 }
 
 export function ToastDescription({
@@ -60,7 +55,10 @@ export function ToastDescription({
 	...props
 }: React.ComponentProps<typeof ToastPrimitives.Description>) {
 	return (
-		<ToastPrimitives.Description className={cn('text-text-muted text-sm', className)} {...props} />
+		<ToastPrimitives.Description
+			className={cn('text-text-muted type-body', className)}
+			{...props}
+		/>
 	)
 }
 

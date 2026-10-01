@@ -124,7 +124,7 @@ export function VendorForm({
 			{savedMessage != null && (
 				<p
 					role="status"
-					className="bg-success-subtle text-success flex items-center gap-2 rounded px-3 py-2 text-sm"
+					className="bg-success-subtle text-success type-body flex items-center gap-2 rounded px-3 py-2"
 				>
 					<SuccessIcon />
 					{savedMessage}
@@ -142,15 +142,15 @@ export function VendorForm({
 			</div>
 			{loaded == null ? (
 				<FileDrop
-					label={t('fileLabel')}
-					hint={t('fileHint')}
+					label={t('dropLabel')}
+					hint={t('dropHint')}
 					busyLabel={t('saving')}
 					isBusy={isReading}
 					onFile={onFile}
 				/>
 			) : (
 				<div className="flex flex-col gap-4">
-					<p className="text-text-muted flex items-center gap-1.5 text-sm">
+					<p className="text-text-muted type-data-sm flex items-center gap-1.5">
 						<FileIcon />
 						{loaded.fileName}
 						<Button variant="ghost" size="sm" onClick={() => setLoaded(null)}>

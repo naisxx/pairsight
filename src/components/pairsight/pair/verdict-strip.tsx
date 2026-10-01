@@ -19,14 +19,14 @@ export function VerdictStrip({
 	return (
 		<div className="border-border bg-surface mb-6 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border p-4">
 			<CategoryBadge category={category} />
-			<h1 className="text-text text-base font-semibold">
+			<h1 className="text-text type-heading">
 				{t('verdict', {
 					vendor: vendorName,
 					vendorDecision: isVendorMatch ? t('match') : t('noMatch'),
 					pairsightDecision
 				})}
 			</h1>
-			<span className="text-text-muted text-xs">{t('agreementNote')}</span>
+			<span className="text-text-muted type-meta">{t('agreementNote')}</span>
 		</div>
 	)
 }

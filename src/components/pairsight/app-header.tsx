@@ -12,7 +12,7 @@ export async function AppHeader() {
 		<header className="border-border bg-surface/80 sticky top-0 z-40 border-b backdrop-blur">
 			<a
 				href="#main"
-				className="bg-action text-action-ink sr-only rounded px-3 py-2 text-sm focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
+				className="bg-action text-action-ink type-label sr-only rounded px-3 py-2 focus:not-sr-only focus:absolute focus:top-2 focus:left-2"
 			>
 				{t('skipToContent')}
 			</a>
@@ -27,7 +27,7 @@ export async function AppHeader() {
 					{user != null && (
 						<Link
 							href="/evaluations"
-							className="text-text-muted hover:text-text hover:bg-surface-hover rounded px-2 py-1.5 text-sm font-medium transition-colors"
+							className="text-text-muted hover:text-text hover:bg-surface-hover type-label rounded px-2 py-1.5 transition-colors"
 						>
 							{t('evaluations')}
 						</Link>

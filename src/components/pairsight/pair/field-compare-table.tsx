@@ -39,11 +39,15 @@ export function FieldCompareTable({
 						<TableHead className="w-40">{t('field')}</TableHead>
 						<TableHead>
 							{t('recordA')}{' '}
-							<span className="text-text-muted font-mono font-normal">{referenceA}</span>
+							<span className="text-text-muted type-data-sm tracking-normal normal-case">
+								{referenceA}
+							</span>
 						</TableHead>
 						<TableHead>
 							{t('recordB')}{' '}
-							<span className="text-text-muted font-mono font-normal">{referenceB}</span>
+							<span className="text-text-muted type-data-sm tracking-normal normal-case">
+								{referenceB}
+							</span>
 						</TableHead>
 						<TableHead className="w-32">{t('comparison')}</TableHead>
 					</TableRow>
@@ -55,13 +59,13 @@ export function FieldCompareTable({
 							field.comparison === 'different' || field.comparison === 'oneMissing'
 						return (
 							<TableRow key={field.role}>
-								<TableCell className="text-text-muted text-sm">{tRoles(field.role)}</TableCell>
+								<TableCell className="text-text-muted type-body">{tRoles(field.role)}</TableCell>
 								{[field.a, field.b].map((value, index) => (
 									<TableCell
 										key={index}
 										className={cn(
-											'text-text text-sm break-words whitespace-normal',
-											isDifferent && 'bg-accent/40'
+											'text-text type-data break-words whitespace-normal',
+											isDifferent && 'bg-diff font-medium'
 										)}
 									>
 										{value === '' ? <span className="text-text-muted italic">—</span> : value}
@@ -70,8 +74,8 @@ export function FieldCompareTable({
 								<TableCell>
 									<span
 										className={cn(
-											'inline-flex items-center gap-1.5 text-xs',
-											field.comparison === 'same' ? 'text-text-muted' : 'text-text font-medium'
+											'type-meta inline-flex items-center gap-1.5',
+											field.comparison === 'same' ? 'text-text-muted' : 'text-diff-ink font-medium'
 										)}
 									>
 										<Icon size={14} />
@@ -101,13 +105,11 @@ export function AllColumns({
 	if (headers.length === 0) return null
 	return (
 		<details className="border-border bg-surface rounded-lg border">
-			<summary className="text-text cursor-pointer px-4 py-3 text-sm font-medium">
-				{t('allColumns')}
-			</summary>
-			<dl className="border-border grid grid-cols-[minmax(0,10rem)_1fr_1fr] gap-x-4 gap-y-2 border-t px-4 py-3 text-sm">
+			<summary className="text-text type-label cursor-pointer px-4 py-3">{t('allColumns')}</summary>
+			<dl className="border-border type-data grid grid-cols-[minmax(0,10rem)_1fr_1fr] gap-x-4 gap-y-2 border-t px-4 py-3">
 				{headers.map((header) => (
 					<div key={header} className="contents">
-						<dt className="text-text-muted truncate font-mono text-xs">{header}</dt>
+						<dt className="text-text-muted type-data-sm truncate">{header}</dt>
 						<dd className="text-text break-words">{valuesA[header] || '—'}</dd>
 						<dd className="text-text break-words">{valuesB[header] || '—'}</dd>
 					</div>

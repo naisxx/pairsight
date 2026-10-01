@@ -35,7 +35,7 @@ export function Pagination({
 			className="mt-4 flex items-center justify-end gap-2"
 			aria-label={t('page', { page, pages: pageCount })}
 		>
-			<span className="text-text-muted mr-2 text-sm tabular-nums">
+			<span className="text-text-muted type-body mr-2">
 				{t('page', { page, pages: pageCount })}
 			</span>
 			{pageLink(

@@ -46,11 +46,15 @@ export function ColumnMappingTable({
 			<Table>
 				<TableHeader className="bg-surface-muted">
 					<TableRow>
-						<TableHead className="text-text font-mono text-xs">{referenceColumn}</TableHead>
+						<TableHead className="text-text type-data-sm tracking-normal normal-case">
+							{referenceColumn}
+						</TableHead>
 						{dataColumns.map((header) => (
 							<TableHead key={header} className="min-w-44 py-2 align-top">
-								<div className="flex flex-col gap-1.5">
-									<span className="text-text font-mono text-xs">{header}</span>
+								<div className="flex flex-col gap-1.5 font-normal tracking-normal normal-case">
+									<span className="text-text type-data-sm tracking-normal normal-case">
+										{header}
+									</span>
 									<Select
 										value={roles[header] ?? 'other'}
 										onValueChange={(value) =>
@@ -86,7 +90,7 @@ export function ColumnMappingTable({
 					{sampleRows.map((row, rowIndex) => (
 						<TableRow key={rowIndex}>
 							{[referenceColumn, ...dataColumns].map((header) => (
-								<TableCell key={header} className="text-text max-w-56 truncate font-mono text-xs">
+								<TableCell key={header} className="text-text type-data-sm max-w-56 truncate">
 									{row[headers.indexOf(header)] ?? ''}
 								</TableCell>
 							))}

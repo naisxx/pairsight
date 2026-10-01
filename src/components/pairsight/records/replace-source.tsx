@@ -20,14 +20,14 @@ export function ReplaceSource({
 	const [isOpen, setIsOpen] = useState(false)
 	if (!isOpen) {
 		return (
-			<Button variant="ghost" size="sm" className="mt-3" onClick={() => setIsOpen(true)}>
+			<Button variant="ghost" size="sm" className="mt-3 self-start" onClick={() => setIsOpen(true)}>
 				{t('replace')}
 			</Button>
 		)
 	}
 	return (
 		<div className="mt-5 flex flex-col gap-4">
-			<p className="bg-warning-subtle text-warning flex items-start gap-2 rounded px-3 py-2 text-sm">
+			<p className="bg-warning-subtle text-warning type-body flex items-start gap-2 rounded px-3 py-2">
 				<AlertIcon className="mt-0.5 shrink-0" />
 				{t('replaceWarning')}
 			</p>

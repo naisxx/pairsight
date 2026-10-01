@@ -23,13 +23,18 @@ export function ThemeMenu() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="ghost" size="sm" aria-label={t('label')} className="w-9 px-0">
+				<Button
+					variant="ghost"
+					size="sm"
+					aria-label={t('label')}
+					className="w-9 bg-transparent px-0"
+				>
 					<SunIcon size={18} className="dark:hidden" />
 					<MoonIcon size={18} className="hidden dark:block" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-40">
-				<DropdownMenuLabel className="text-text-muted text-xs">{t('label')}</DropdownMenuLabel>
+				<DropdownMenuLabel className="text-text-muted type-meta">{t('label')}</DropdownMenuLabel>
 				<DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
 					{THEMES.map((value) => (
 						<DropdownMenuRadioItem key={value} value={value} className="gap-2">

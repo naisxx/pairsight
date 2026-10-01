@@ -9,87 +9,97 @@
    that needs to change with color scheme) live directly in @theme. The font
    variables are set by next/font in src/app/[locale]/layout.tsx. */
 @theme {
-	--font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-sans: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 	--radius-sm: 6px;
 	--radius: 10px;
 	--radius-lg: 16px;
 }
 
-/* The PairSight palette (docs/PairSight-UX-Plan.md §6). Every text/background
-   and control-edge pair is contrast-checked in both themes by
-   scripts/check-contrast.test.mjs — change a value here and that test tells
-   you whether it still passes. Brand coral is the primary action in both
-   themes, always with dark ink (white on coral fails AA). */
+/* The PairSight palette, "Coral × Slate" (docs/PairSight-UX-Plan.md §6):
+   brand coral on cool slate neutrals. Every text/background and control-edge
+   pair is contrast-checked in both themes by scripts/check-contrast.test.mjs —
+   change a value here and that test tells you whether it still passes.
+   Large areas are never tinted with the brand (coral over dark slate turns
+   maroon): selection uses --selected plus a coral edge, changed values use
+   --diff, and --accent is for small chips only. */
 :root {
-	--bg: #faf8f7;
+	--bg: #f6f7f9;
 	--surface: #ffffff;
 	--surface-elevated: #ffffff;
-	--surface-muted: #f2ece9;
-	--surface-hover: #f7f1ee;
-	--border: #ded4cf;
-	--border-input: #8c7b71;
-	--text: #241c18;
-	--text-muted: #705e55;
-	--action: #e45742;
-	--action-hover: #ea6855;
-	--action-ink: #241c18;
-	--accent: #fceae6;
-	--accent-ink: #b83b2a;
-	--ring: #b83b2a;
-	--success: #237a52;
-	--success-subtle: #e8f5ee;
-	--warning: #946000;
-	--warning-subtle: #fbf1de;
-	--danger: #b8254f;
-	--danger-subtle: #fcedf1;
-	--info: #2864b4;
-	--info-subtle: #e9f0fa;
-	--cat-both: #3f5e9e;
-	--cat-both-subtle: #edf1f9;
-	--cat-pairsight: #6841b0;
-	--cat-pairsight-subtle: #f1ecfa;
-	--cat-vendor: #0c6b75;
-	--cat-vendor-subtle: #e5f3f4;
-	--cat-neither: #6b625d;
-	--cat-neither-subtle: #f2ece9;
+	--surface-muted: #eef1f4;
+	--surface-hover: #f1f4f7;
+	--selected: #e6edf6;
+	--ghost: #eff2f6;
+	--diff: #e4edfb;
+	--diff-ink: #1d5fb8;
+	--border: #dde2e9;
+	--border-input: #7d8898;
+	--text: #0f1720;
+	--text-muted: #4e5a6a;
+	--action: #c93a22;
+	--action-hover: #ae2f19;
+	--action-ink: #ffffff;
+	--accent: #fdece8;
+	--accent-ink: #b3321c;
+	--ring: #c93a22;
+	--success: #14773a;
+	--success-subtle: #e8f6ee;
+	--warning: #8a5a00;
+	--warning-subtle: #fcf3de;
+	--danger: #be1d4b;
+	--danger-subtle: #fcebf0;
+	--info: #1d5fb8;
+	--info-subtle: #e8f0fb;
+	--cat-both: #2f55a8;
+	--cat-both-subtle: #eaf0fb;
+	--cat-pairsight: #6a3fc0;
+	--cat-pairsight-subtle: #f1ecfb;
+	--cat-vendor: #0b6e68;
+	--cat-vendor-subtle: #e3f4f2;
+	--cat-neither: #56606e;
+	--cat-neither-subtle: #eef1f4;
 	--brand-deep: #972828;
 	--brand-orange: #eb7f31;
 	--brand-amber: #fcad38;
 }
 
 .dark {
-	--bg: #171413;
-	--surface: #211d1b;
-	--surface-elevated: #2b2522;
-	--surface-muted: #302925;
-	--surface-hover: #282220;
-	--border: #50433c;
-	--border-input: #857469;
-	--text: #faf5f2;
-	--text-muted: #c2aea3;
-	--action: #e45742;
-	--action-hover: #ea6855;
-	--action-ink: #241c18;
-	--accent: #3b2520;
-	--accent-ink: #f48977;
-	--ring: #f48977;
-	--success: #76d6a2;
-	--success-subtle: #1b2d23;
-	--warning: #f3c56b;
-	--warning-subtle: #33291a;
-	--danger: #ff8fae;
-	--danger-subtle: #3a1f27;
-	--info: #91bcff;
-	--info-subtle: #1e2635;
-	--cat-both: #8aa4db;
-	--cat-both-subtle: #222838;
-	--cat-pairsight: #b39af0;
-	--cat-pairsight-subtle: #2a2338;
-	--cat-vendor: #4fc1c9;
-	--cat-vendor-subtle: #172e30;
-	--cat-neither: #a89a92;
-	--cat-neither-subtle: #302925;
+	--bg: #0b0f14;
+	--surface: #121821;
+	--surface-elevated: #18202b;
+	--surface-muted: #0e131a;
+	--surface-hover: #19212c;
+	--selected: #1e2b3f;
+	--ghost: #151c26;
+	--diff: #1d2c47;
+	--diff-ink: #8fb6ff;
+	--border: #263140;
+	--border-input: #6b788b;
+	--text: #e8edf3;
+	--text-muted: #a3aebc;
+	--action: #ff6a4d;
+	--action-hover: #ff8469;
+	--action-ink: #1a0b07;
+	--accent: #2a1a24;
+	--accent-ink: #ff8f79;
+	--ring: #ff8f79;
+	--success: #4ade9a;
+	--success-subtle: #10271d;
+	--warning: #f7c04f;
+	--warning-subtle: #2a2210;
+	--danger: #ff6f94;
+	--danger-subtle: #2e1520;
+	--info: #6aaeff;
+	--info-subtle: #12213a;
+	--cat-both: #86a8ff;
+	--cat-both-subtle: #18223a;
+	--cat-pairsight: #be9cff;
+	--cat-pairsight-subtle: #221a38;
+	--cat-vendor: #3dd9c5;
+	--cat-vendor-subtle: #0f2a28;
+	--cat-neither: #9aa6b6;
+	--cat-neither-subtle: #1b2230;
 	color-scheme: dark;
 }
 
@@ -126,6 +136,10 @@
 	--color-surface-elevated: var(--surface-elevated);
 	--color-surface-muted: var(--surface-muted);
 	--color-surface-hover: var(--surface-hover);
+	--color-selected: var(--selected);
+	--color-ghost: var(--ghost);
+	--color-diff: var(--diff);
+	--color-diff-ink: var(--diff-ink);
 	--color-border: var(--border);
 	--color-border-input: var(--border-input);
 	--color-text: var(--text);
@@ -179,6 +193,311 @@
 	--color-chart-5: var(--chart-5);
 }
 
+/* The type scale (DESIGN.md §4). Components use these roles, never raw
+   text-sm/text-xs, so a heading or a label looks the same on every screen.
+   Colour stays separate (text-text, text-text-muted, …).
+
+   Two voices: Poppins for the interface, JetBrains Mono for data the user
+   reads exactly — record references, raw values, scores, counts, rule keys.
+   Poppins' digits are proportional (a 1 is half the width of a 0) and it has
+   no tabular figures, so numbers that sit in columns or change live use the
+   mono roles; otherwise they misalign and jitter. */
+@utility type-display {
+	font-size: 2.25rem;
+	line-height: 2.75rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+@utility type-title {
+	font-size: 1.5rem;
+	line-height: 2rem;
+	font-weight: 600;
+	letter-spacing: -0.015em;
+}
+@utility type-heading {
+	font-size: 1rem;
+	line-height: 1.5rem;
+	font-weight: 600;
+	letter-spacing: -0.005em;
+}
+@utility type-subheading {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 600;
+}
+@utility type-body {
+	font-size: 0.875rem;
+	line-height: 1.375rem;
+	font-weight: 400;
+}
+@utility type-label {
+	font-size: 0.875rem;
+	line-height: 1.25rem;
+	font-weight: 500;
+}
+@utility type-meta {
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	font-weight: 400;
+}
+@utility type-overline {
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	font-weight: 600;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+@utility type-metric {
+	font-size: 1.75rem;
+	line-height: 2.25rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
+}
+@utility type-data {
+	font-family: var(--font-mono);
+	font-size: 0.8125rem;
+	line-height: 1.25rem;
+	font-weight: 400;
+	font-variant-ligatures: none;
+}
+@utility type-data-sm {
+	font-family: var(--font-mono);
+	font-size: 0.75rem;
+	line-height: 1.125rem;
+	font-weight: 400;
+	font-variant-ligatures: none;
+}
+@utility type-kbd {
+	font-family: var(--font-mono);
+	font-size: 0.6875rem;
+	line-height: 1rem;
+	font-weight: 500;
+	padding: 0.0625rem 0.375rem;
+	border: 1px solid var(--border-input);
+	border-bottom-width: 2px;
+	border-radius: 0.25rem;
+	background: var(--surface-muted);
+}
+
+/* ---- App shell (src/components/pairsight/shell/) ----
+   A full-height sidebar beside the page. On desktop it collapses from
+   16.5rem to 4.25rem and the grid column animates with it; every icon,
+   pipeline node and the avatar sit on the same centre line in both widths,
+   so nothing jumps. Below md the sidebar is a drawer instead. */
+@layer components {
+	.app-shell {
+		--sidebar-w: 16.5rem;
+		--shell-ease: cubic-bezier(0.2, 0, 0, 1);
+		display: grid;
+		grid-template-columns: minmax(0, 1fr);
+		min-height: 100dvh;
+	}
+	.shell-sidebar {
+		position: fixed;
+		inset: 0 auto 0 0;
+		z-index: 50;
+		width: 16.5rem;
+		transform: translateX(-100%);
+		transition: transform 240ms var(--shell-ease);
+	}
+	.app-shell[data-mobile-open='true'] .shell-sidebar {
+		transform: none;
+	}
+
+	@media (min-width: 48rem) {
+		.app-shell {
+			grid-template-columns: var(--sidebar-w) minmax(0, 1fr);
+			transition: grid-template-columns 240ms var(--shell-ease);
+		}
+		.app-shell[data-collapsed='true'] {
+			--sidebar-w: 4.25rem;
+		}
+		.shell-sidebar {
+			position: sticky;
+			top: 0;
+			z-index: auto;
+			width: auto;
+			height: 100dvh;
+			transform: none;
+		}
+		/* Labels fade and slide out; blocks that only make sense wide fold away. */
+		.shell-fade {
+			transition:
+				opacity 160ms var(--shell-ease),
+				transform 240ms var(--shell-ease);
+		}
+		.app-shell[data-collapsed='true'] .shell-fade {
+			opacity: 0;
+			transform: translateX(-6px);
+			pointer-events: none;
+		}
+		.shell-fold {
+			max-height: 12rem;
+			overflow: hidden;
+			transition:
+				max-height 240ms var(--shell-ease),
+				opacity 160ms var(--shell-ease),
+				padding 240ms var(--shell-ease);
+		}
+		.app-shell[data-collapsed='true'] .shell-fold {
+			max-height: 0;
+			opacity: 0;
+			padding-top: 0;
+			padding-bottom: 0;
+		}
+		.shell-toggle-icon {
+			transition: transform 240ms var(--shell-ease);
+		}
+		.app-shell[data-collapsed='true'] .shell-toggle-icon {
+			transform: scaleX(-1);
+		}
+		.app-shell[data-collapsed='true'] .shell-scroll::-webkit-scrollbar {
+			width: 0;
+		}
+	}
+
+	/* Duotone icons (icons.tsx, variant="duotone"): the second layer takes the
+	   accent its container sets (an IconTile sets coral, or danger for errors);
+	   without one it stays the icon's own colour at the provider's 20%. */
+	[data-icon-variant='duotone'] [opacity] {
+		fill: var(--icon-accent, currentColor);
+		opacity: var(--icon-accent-opacity, 0.2);
+	}
+
+	/* The pipeline track. Each row draws its own piece: a stage row the half
+	   above its node (solid if the previous stage is done) and the half below
+	   (solid if this stage is done); a phase label row continues the line.
+	   Nothing is measured, so the track stays exact while the sidebar moves. */
+	.pipe-row {
+		--node-x: 1.5rem;
+		--node-y: 1.1875rem;
+		position: relative;
+	}
+	.pipe-row::before,
+	.pipe-row::after {
+		content: '';
+		position: absolute;
+		left: var(--node-x);
+		width: 2px;
+		margin-left: -1px;
+		z-index: 1;
+		background: repeating-linear-gradient(
+			to bottom,
+			var(--border-input) 0 4px,
+			transparent 4px 8px
+		);
+	}
+	.pipe-row::before {
+		top: 0;
+		height: var(--node-y);
+	}
+	.pipe-row::after {
+		top: var(--node-y);
+		bottom: 0;
+	}
+	.pipe-row[data-kind='phase']::before {
+		height: 100%;
+	}
+	.pipe-row[data-kind='phase']::after,
+	.pipe-row[data-first='true']::before,
+	.pipe-row[data-last='true']::after {
+		display: none;
+	}
+	.pipe-row[data-in='filled']::before,
+	.pipe-row[data-out='filled']::after {
+		background: var(--action);
+	}
+	.pipe-row[data-out='flowing']::after {
+		background: repeating-linear-gradient(to bottom, var(--action) 0 6px, transparent 6px 12px);
+		background-size: 100% 12px;
+		animation: pipe-flow 0.8s linear infinite;
+	}
+	.pipe-node {
+		position: relative;
+		z-index: 2;
+	}
+	.pipe-node[data-running='true'] {
+		animation: pipe-pulse 1.6s var(--shell-ease, ease) infinite;
+	}
+	.pipe-segment[data-running='true'] {
+		background: repeating-linear-gradient(
+			-45deg,
+			var(--action) 0 4px,
+			color-mix(in srgb, var(--action) 40%, transparent) 4px 8px
+		);
+		background-size: 11px 11px;
+		animation: pipe-stripes 0.9s linear infinite;
+	}
+}
+
+@keyframes pipe-flow {
+	to {
+		background-position: 0 12px;
+	}
+}
+@keyframes pipe-pulse {
+	0%,
+	100% {
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--action) 25%, transparent);
+	}
+	50% {
+		box-shadow: 0 0 0 7px color-mix(in srgb, var(--action) 0%, transparent);
+	}
+}
+@keyframes pipe-stripes {
+	to {
+		background-position: 11px 0;
+	}
+}
+
+/* ---- Scrollbars ----
+   Chromium ignores ::-webkit-scrollbar as soon as scrollbar-color or
+   scrollbar-width is set and falls back to the OS scrollbar (with arrow
+   buttons on Windows), so the webkit rules style Chromium and Safari and the
+   standard properties only apply where webkit scrollbars don't exist. */
+@layer base {
+	::-webkit-scrollbar {
+		width: 10px;
+		height: 10px;
+	}
+	::-webkit-scrollbar-button {
+		display: none;
+		width: 0;
+		height: 0;
+	}
+	::-webkit-scrollbar-track,
+	::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+	::-webkit-scrollbar-thumb {
+		background-color: var(--border);
+		border: 3px solid transparent;
+		border-radius: 999px;
+		background-clip: padding-box;
+	}
+	::-webkit-scrollbar-thumb:hover {
+		background-color: var(--border-input);
+	}
+	/* The sidebar's is slimmer and quieter. (Chromium doesn't reliably repaint
+	   a thumb that appears only on container hover, so it's always there.) */
+	.shell-scroll::-webkit-scrollbar {
+		width: 8px;
+	}
+	.shell-scroll::-webkit-scrollbar-thumb {
+		background-color: color-mix(in srgb, var(--border-input) 45%, transparent);
+		border-width: 2px;
+	}
+	.shell-scroll::-webkit-scrollbar-thumb:hover {
+		background-color: var(--border-input);
+	}
+	@supports not selector(::-webkit-scrollbar) {
+		* {
+			scrollbar-width: thin;
+			scrollbar-color: var(--border-input) transparent;
+		}
+	}
+}
+
 @layer base {
 	* {
 		border-color: var(--border);
@@ -188,7 +507,6 @@
 		background-color: var(--bg);
 		color: var(--text);
 		font-family: var(--font-sans);
-		font-feature-settings: 'cv11', 'ss01';
 		-webkit-font-smoothing: antialiased;
 	}
 

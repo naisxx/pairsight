@@ -60,27 +60,27 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 					aria-describedby={isSignIn ? undefined : `${id}-hint`}
 				/>
 				{!isSignIn && (
-					<p id={`${id}-hint`} className="text-text-muted text-xs">
+					<p id={`${id}-hint`} className="text-text-muted type-meta">
 						{t('passwordHint')}
 					</p>
 				)}
 			</div>
 			<div aria-live="polite" className="min-h-0">
 				{error != null && (
-					<p className="bg-danger-subtle text-danger flex items-start gap-2 rounded px-3 py-2 text-sm">
+					<p className="bg-danger-subtle text-danger type-body flex items-start gap-2 rounded px-3 py-2">
 						<AlertIcon className="mt-0.5 shrink-0" />
 						{error}
 					</p>
 				)}
 				{notice != null && (
-					<p className="bg-info-subtle text-info rounded px-3 py-2 text-sm">{notice}</p>
+					<p className="bg-info-subtle text-info type-body rounded px-3 py-2">{notice}</p>
 				)}
 			</div>
 			<Button type="submit" disabled={isPending} className="w-full">
 				{isPending && <SpinnerIcon />}
 				{isPending ? t(isSignIn ? 'signingIn' : 'signingUp') : t(isSignIn ? 'signIn' : 'signUp')}
 			</Button>
-			<p className="text-text-muted text-center text-sm">
+			<p className="text-text-muted type-body text-center">
 				{t(isSignIn ? 'noAccount' : 'haveAccount')}{' '}
 				<Link
 					href={{

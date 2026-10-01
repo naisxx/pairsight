@@ -25,7 +25,7 @@ export default async function RecordsPage({ params }: { params: Promise<{ id: st
 					<div className="border-border bg-surface flex flex-wrap items-center gap-3 rounded-lg border p-4">
 						<SuccessIcon size={20} className="text-success" />
 						<FileIcon className="text-text-muted" />
-						<p className="text-text text-sm font-medium">
+						<p className="text-text type-label">
 							{t('current', { fileName: dataset.fileName, count: dataset.rowCount })}
 						</p>
 					</div>

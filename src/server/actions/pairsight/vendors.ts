@@ -11,7 +11,13 @@ import { getCurrentDataset, recordIdsByReference } from '@/server/pairsight/data
 import { getOwnedEvaluation } from '@/server/pairsight/evaluations'
 import { deleteVendorExport, saveVendorExport } from '@/server/pairsight/vendor-exports'
 import { parseVendorPairs, type VendorPairParse } from '@/server/pairsight/vendors'
-import { fileNameSchema, fileTextSchema, idSchema, previewCsv } from './shared'
+import {
+	fileNameSchema,
+	fileTextSchema,
+	idSchema,
+	previewCsv,
+	revalidateEvaluationPages
+} from './shared'
 
 export const previewVendorCsv = validatedAction({
 	input: z.object({ text: fileTextSchema }),
@@ -82,6 +88,7 @@ export const saveVendorAction = validatedAction({
 			mapping: { columnA, columnB },
 			pairs: result.pairs
 		})
+		revalidateEvaluationPages()
 		return {
 			ok: true,
 			pairCount: result.pairs.length,
@@ -96,6 +103,7 @@ export const deleteVendorAction = validatedAction({
 	handler: async ({ exportId }) => {
 		const user = await requireUser()
 		await deleteVendorExport({ ownerId: user.id, exportId })
+		revalidateEvaluationPages()
 		return { deleted: true }
 	}
 })

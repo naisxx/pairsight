@@ -38,7 +38,7 @@ export function ThresholdControl({ runId, threshold }: { runId: string; threshol
 			}}
 		>
 			<div className="flex flex-col gap-1">
-				<Label htmlFor={`${id}-threshold`} className="text-xs">
+				<Label htmlFor={`${id}-threshold`} className="type-meta font-medium">
 					{t('thresholdLabel')}
 				</Label>
 				<Input
@@ -49,7 +49,7 @@ export function ThresholdControl({ runId, threshold }: { runId: string; threshol
 					step={STEP}
 					value={value}
 					onChange={(event) => setValue(event.target.value)}
-					className="h-8 w-24 font-mono tabular-nums"
+					className="type-data h-8 w-24"
 					aria-describedby={`${id}-threshold-help`}
 					aria-invalid={!isValid}
 				/>
@@ -63,11 +63,11 @@ export function ThresholdControl({ runId, threshold }: { runId: string; threshol
 				{isPending && <SpinnerIcon />}
 				{t('thresholdApply')}
 			</Button>
-			<p id={`${id}-threshold-help`} className="text-text-muted basis-full text-xs">
+			<p id={`${id}-threshold-help`} className="text-text-muted type-meta basis-full">
 				{t('thresholdHelp')}
 			</p>
 			{error != null && (
-				<p role="alert" className="text-danger basis-full text-xs">
+				<p role="alert" className="text-danger type-meta basis-full">
 					{error}
 				</p>
 			)}
