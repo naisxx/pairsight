@@ -1,5 +1,10 @@
+import { Link } from '@/i18n/routing'
+import { Button } from '@/components/ui/button'
+import { ArrowLeftIcon } from '@/components/ui/icons'
 import { IconTile, type TileIcon } from '@/components/ui/icon-tile'
 import { cn } from '@/lib/cn'
+
+const BACK_ICON_SIZE = 15
 
 // Every step: a title, one sentence of context, the content, then the action
 // bar with the stage's one primary action (docs/PairSight-UX-Plan.md §3–4).
@@ -31,10 +36,13 @@ export function StepHeader({
 
 export function ActionBar({
 	hint,
+	back,
 	children,
 	className
 }: {
 	hint?: React.ReactNode
+	// The previous stage, on the left.
+	back?: { href: string; label: string }
 	children: React.ReactNode
 	className?: string
 }) {
@@ -48,16 +56,26 @@ export function ActionBar({
 			<div className="border-border bg-surface pointer-events-auto border-t">
 				<div
 					className={cn(
-						'mx-auto flex max-w-[1280px] flex-wrap items-center justify-end gap-3 px-4 py-3 md:px-8',
+						'mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-4 py-3 md:px-8',
 						className
 					)}
 				>
-					{hint != null && (
-						<p role="status" className="text-text-muted type-ui mr-auto flex items-center gap-1.5">
-							{hint}
-						</p>
+					{back != null && (
+						<Button variant="secondary" asChild>
+							<Link href={back.href}>
+								<ArrowLeftIcon size={BACK_ICON_SIZE} />
+								{back.label}
+							</Link>
+						</Button>
 					)}
-					{children}
+					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-3">
+						{hint != null && (
+							<p role="status" className="text-text-muted type-ui flex items-center gap-1.5">
+								{hint}
+							</p>
+						)}
+						{children}
+					</div>
 				</div>
 			</div>
 		</div>

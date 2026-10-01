@@ -250,7 +250,8 @@ test.describe('PairSight vertical slice', () => {
 		// The status filter keeps judged pairs only, applied as it changes.
 		await page.getByRole('link', { name: /^Detailed analysis/ }).click()
 		await page.waitForURL(/tab=detailed/)
-		await page.getByLabel('Assessment status').selectOption('evaluated')
+		await page.getByRole('combobox', { name: 'Assessment status' }).click()
+		await page.getByRole('option', { name: 'Assessed' }).click()
 		await expect(page).toHaveURL(/status=evaluated/)
 		await expect(matching(page)).toHaveText('1 pair')
 		await page.getByRole('button', { name: 'Clear filters' }).click()
@@ -291,9 +292,9 @@ test.describe('PairSight vertical slice', () => {
 		const failures = page.getByRole('heading', { name: 'Why pairs failed' }).locator('..')
 		await expect(failures).toContainText('Request rejected1 pair')
 		const callsBefore = await jevCalls(page, marker)
-		await page.getByRole('button', { name: 'Retry failed pairs' }).click()
+		await page.getByRole('button', { name: 'Retry 1 failed' }).click()
 		await expect.poll(() => jevCalls(page, marker), { timeout: 30_000 }).toBe(callsBefore + 1)
-		await expect(page.getByText(/1 pair failed/)).toBeVisible({ timeout: 30_000 })
+		await expect(page.getByText('1 assessment is incomplete.')).toBeVisible({ timeout: 30_000 })
 		await expect(failures).toContainText('Request rejected1 pair')
 	})
 
@@ -315,17 +316,15 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
 		const stopped = page.getByRole('alert').filter({ hasText: 'The run stopped' })
 		await expect(stopped).toContainText('TypeSafe rejected the API key', { timeout: 30_000 })
-		await expect(page.getByRole('link', { name: 'View results' })).toHaveAttribute(
-			'aria-disabled',
-			'true'
-		)
+		// Stopped, the one way forward is Resume; results wait for a finished run.
+		await expect(page.getByRole('link', { name: 'View results' })).toHaveCount(0)
 
 		// The key is fixed; resuming judges every pair.
 		await page.request.post(`${JEV_STUB}/accept?marker=${marker}`)
-		await page.getByRole('button', { name: 'Resume run' }).click()
+		await page.getByRole('button', { name: 'Resume' }).click()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 		await expect(stopped).toHaveCount(0)
-		await expect(page.getByText('8 of 8 pairs judged')).toBeVisible()
+		await expect(page.getByText('8 / 8', { exact: true })).toBeVisible()
 	})
 
 	test('invalid references are blocked with row numbers', async ({ page }) => {

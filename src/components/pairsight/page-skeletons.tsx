@@ -30,12 +30,21 @@ export function RunSkeleton() {
 	return (
 		<Loading>
 			<HeaderSkeleton />
-			<div className="border-border bg-surface flex flex-col gap-4 rounded-lg border p-5">
-				<Skeleton className="h-5 w-48" />
-				<Skeleton className="h-2 w-full" />
-				<div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+			<div className="border-border bg-surface max-w-4xl rounded-md border">
+				<div className="flex flex-col gap-2 px-5 pt-5">
+					<Skeleton className="h-5 w-48" />
+					<Skeleton className="h-4 w-72" />
+				</div>
+				<div className="flex flex-col gap-2 px-5 pt-4">
+					<Skeleton className="h-4 w-full" />
+					<Skeleton className="h-2 w-full" />
+				</div>
+				<div className="border-border mt-4 grid grid-cols-2 border-t sm:grid-cols-4">
 					{Array.from({ length: 4 }, (_, index) => (
-						<Skeleton key={index} className="h-14" />
+						<div key={index} className="flex flex-col gap-2 px-5 py-3">
+							<Skeleton className="h-3 w-16" />
+							<Skeleton className="h-6 w-10" />
+						</div>
 					))}
 				</div>
 			</div>
