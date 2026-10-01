@@ -300,7 +300,9 @@
 		"next": "Next",
 		"page": "Page {page} of {pages}",
 		"openPair": "Open pair {a} and {b}",
-		"noResultsHint": "Try another category, or clear the search and filters to see every pair in this run."
+		"noResultsHint": "Try another category, or clear the search and filters to see every pair in this run.",
+		"noPairs": "This run has no pairs",
+		"noPairsHint": "Nothing was compared for this vendor in this run. Check the run’s progress, or start a new run from the plan."
 	},
 	"Pair": {
 		"back": "Back to results",

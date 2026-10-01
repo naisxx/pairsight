@@ -4,6 +4,9 @@ export type GhostKind = 'list' | 'table'
 
 const LIST_ROWS = 4
 const TABLE_ROWS = 5
+const TABLE_COLUMNS = 4
+// Placeholder cell widths, cycled across however many columns there are.
+const CELL_WIDTHS = ['w-3/5', 'w-4/5', 'w-4/5', 'w-2/5']
 
 function Bar({ className }: { className: string }) {
 	return (
@@ -39,28 +42,38 @@ export function GhostPreview({ kind, headers }: { kind: GhostKind; headers?: str
 					))}
 				</div>
 			)}
-			{kind === 'table' && (
-				<div className="border-border-input overflow-hidden rounded-lg border border-dashed">
-					<div className="bg-surface-muted border-border text-text-muted type-overline grid grid-cols-4 gap-4 border-b px-4 py-2.5">
-						{(headers ?? ['', '', '', '']).map((header, index) => (
-							<span key={index} className="truncate">
-								{header}
-							</span>
-						))}
-					</div>
-					{Array.from({ length: TABLE_ROWS }, (_, index) => (
-						<div
-							key={index}
-							className="border-border grid h-11 grid-cols-4 items-center gap-4 border-b border-dashed px-4"
-						>
-							<Bar className="w-3/5" />
-							<Bar className="w-4/5" />
-							<Bar className="w-4/5" />
-							<Bar className="w-2/5" />
-						</div>
+			{kind === 'table' && <TableGhost headers={headers} />}
+		</div>
+	)
+}
+
+// One column per header, so the ghost reads as the table it stands in for.
+function TableGhost({ headers }: { headers?: string[] }) {
+	const columns = headers ?? Array.from({ length: TABLE_COLUMNS }, () => '')
+	const grid = { gridTemplateColumns: `repeat(${columns.length}, minmax(0, 1fr))` }
+	return (
+		<div className="border-border-input overflow-hidden rounded-lg border border-dashed">
+			<div
+				style={grid}
+				className="bg-surface-muted border-border text-text-muted type-overline grid gap-4 border-b px-4 py-2.5"
+			>
+				{columns.map((header, index) => (
+					<span key={index} className="truncate">
+						{header}
+					</span>
+				))}
+			</div>
+			{Array.from({ length: TABLE_ROWS }, (_, row) => (
+				<div
+					key={row}
+					style={grid}
+					className="border-border grid h-11 items-center gap-4 border-b border-dashed px-4"
+				>
+					{columns.map((_, index) => (
+						<Bar key={index} className={CELL_WIDTHS[index % CELL_WIDTHS.length] ?? 'w-3/5'} />
 					))}
 				</div>
-			)}
+			))}
 		</div>
 	)
 }

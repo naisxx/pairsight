@@ -38,6 +38,7 @@ export default async function ResultsPage({
 	})
 	const { run, counts } = results
 	const filters = { ...parseResultFilters(rawFilters), vendor: results.vendorId }
+	const isFiltered = hasActiveFilters(filters)
 	const rules = parseBlockingRules(run.blockingRules)
 	const ruleLabels = Object.fromEntries(
 		rules.map((rule) => [rule.id, ruleLabel({ ruleId: rule.id, rules, tRules, tRoles })])
@@ -69,8 +70,8 @@ export default async function ResultsPage({
 				<div className="border-border bg-surface rounded-lg border">
 					<EmptyState
 						icon={NoMatchesIcon}
-						title={t('noResults')}
-						description={hasActiveFilters(filters) ? t('noResultsHint') : undefined}
+						title={isFiltered ? t('noResults') : t('noPairs')}
+						description={isFiltered ? t('noResultsHint') : t('noPairsHint')}
 						preview="table"
 						previewHeaders={[
 							t('columnCategory'),
@@ -79,7 +80,7 @@ export default async function ResultsPage({
 							t('columnScore')
 						]}
 						actions={
-							hasActiveFilters(filters) && (
+							isFiltered && (
 								<ClearFiltersLink base={base} vendor={results.vendorId} appearance="button" />
 							)
 						}
