@@ -28,13 +28,16 @@ const loadWorkspace = cache(async (ownerId: string, evaluationId: string) => {
 			}
 		})
 	])
-	const vendorExports =
+	const [vendorExports, vendorDraftCount] =
 		dataset == null
-			? []
-			: await db.vendorExport.findMany({
-					where: { evaluationId, datasetId: dataset.id },
-					orderBy: { createdAt: 'asc' },
-					select: { id: true, name: true, fileName: true, pairCount: true, createdAt: true }
-				})
-	return { evaluation, dataset, vendorExports, runs }
+			? [[], 0]
+			: await Promise.all([
+					db.vendorExport.findMany({
+						where: { evaluationId, datasetId: dataset.id },
+						orderBy: { createdAt: 'asc' },
+						select: { id: true, name: true, fileName: true, pairCount: true, createdAt: true }
+					}),
+					db.vendorDraft.count({ where: { evaluationId, datasetId: dataset.id } })
+				])
+	return { evaluation, dataset, vendorExports, vendorDraftCount, runs }
 })

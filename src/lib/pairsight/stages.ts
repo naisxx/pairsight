@@ -21,17 +21,25 @@ export type RunStatus = 'running' | 'completed' | 'stopped'
 
 export type StageInput = {
 	hasRecords: boolean
+	// Confirmed vendors, which plans and runs use.
 	hasVendors: boolean
+	// Vendors still being set up keep the Vendors step open.
+	hasUnfinishedVendors?: boolean
 	latestRun: { id: string; status: RunStatus } | null
 }
 
 export type StageSummary = { key: StageKey; access: StageAccess; state: StageState }
 
-function access({ hasRecords, hasVendors, latestRun }: StageInput): Record<StageKey, StageAccess> {
+function access({
+	hasRecords,
+	hasVendors,
+	hasUnfinishedVendors = false,
+	latestRun
+}: StageInput): Record<StageKey, StageAccess> {
 	const afterRecords = !hasRecords ? 'locked' : hasVendors ? 'complete' : 'available'
 	return {
 		records: hasRecords ? 'complete' : 'available',
-		vendors: afterRecords,
+		vendors: afterRecords === 'complete' && hasUnfinishedVendors ? 'available' : afterRecords,
 		rules: afterRecords,
 		plan: hasRecords && hasVendors ? (latestRun == null ? 'available' : 'complete') : 'locked',
 		run: latestRun == null ? 'locked' : latestRun.status === 'completed' ? 'complete' : 'available',

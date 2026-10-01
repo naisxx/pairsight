@@ -33,6 +33,12 @@ test('records unlock vendors and rules; a vendor too makes it ready to run', () 
 	assert.equal(evaluationStatus(ready), 'readyToRun')
 })
 
+test('an unfinished vendor keeps Vendors open without locking what follows', () => {
+	const input = { hasRecords: true, hasVendors: true, hasUnfinishedVendors: true, latestRun: null }
+	assert.deepEqual(states(input), ['done', 'active', 'done', 'next', 'locked', 'locked'])
+	assert.equal(evaluationStatus(input), 'readyToRun')
+})
+
 test('a running run is the active stage and the status', () => {
 	assert.deepEqual(states(withRun('running')), ['done', 'done', 'done', 'done', 'active', 'next'])
 	assert.equal(evaluationStatus(withRun('running')), 'running')

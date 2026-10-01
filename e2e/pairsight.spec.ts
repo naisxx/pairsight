@@ -41,7 +41,7 @@ test.describe('PairSight vertical slice', () => {
 	// Each upload gets its own email domain, returned as a marker. The stub's
 	// per-pair scripts (Flaky, Retrycase) then start fresh even on a stub that
 	// outlived earlier runs, and its call counter sees this test's records only.
-	async function uploadRecords(page: Page, file: string) {
+	async function uploadRecords(page: Page, file: string, { save = true } = {}) {
 		const marker = `e2e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
 		const csv = readFileSync(`${FIXTURES}/${file}`, 'utf8').replace(
 			/@example\.com/gi,
@@ -51,7 +51,11 @@ test.describe('PairSight vertical slice', () => {
 			.locator('input[type=file]')
 			.setInputFiles({ name: file, mimeType: 'text/csv', buffer: Buffer.from(csv) })
 		await expect(page.getByText('Map your columns')).toBeVisible()
-		await page.getByRole('button', { name: 'Save records' }).click()
+		if (save) {
+			// Saving continues to Vendors.
+			await page.getByRole('button', { name: 'Continue to vendors' }).click()
+			await page.waitForURL('**/vendors')
+		}
 		return marker
 	}
 
@@ -63,12 +67,24 @@ test.describe('PairSight vertical slice', () => {
 		return typeof body.count === 'number' ? body.count : Number.NaN
 	}
 
+	// Adds a vendor: a new draft, its file (format and columns worked out from
+	// the records), then the completeness confirmation that makes it ready.
 	async function addVendor(page: Page, file: string) {
-		await page.getByRole('link', { name: 'Continue to vendors' }).click()
-		await page.waitForURL('**/vendors')
-		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/${file}`)
-		await page.getByRole('checkbox').click()
 		await page.getByRole('button', { name: 'Add vendor' }).click()
+		await expect(page.getByText(/^Upload Vendor [A-C]’s export/)).toBeVisible()
+		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/${file}`)
+		const complete = page.getByRole('checkbox', { name: /^This export contains all of/ })
+		await expect(complete).toBeEnabled()
+		await complete.click()
+		await expect(complete).toBeChecked()
+		await expect(complete).toBeDisabled()
+	}
+
+	// The selected vendor's matched-pair count.
+	async function expectVendorPairs(page: Page, count: number) {
+		await expect(page.getByLabel('What the file contains')).toContainText(
+			new RegExp(`Matched pairs\\s*${count}(?!\\d)`)
+		)
 	}
 
 	async function runEvaluation(page: Page) {
@@ -104,7 +120,7 @@ test.describe('PairSight vertical slice', () => {
 		await createEvaluation(page, 'Dashboard check')
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
-		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
+		await expectVendorPairs(page, 4)
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.getByRole('button', { name: 'Review plan' }).click()
 		await page.waitForURL('**/plan')
@@ -170,9 +186,13 @@ test.describe('PairSight vertical slice', () => {
 		await signUp(page)
 		await createEvaluation(page, 'Demo scenario')
 		await uploadRecords(page, 'demo-source.csv')
-		await expect(page.getByText('demo-source.csv · 24 records')).toBeVisible()
+		await expect(
+			page
+				.getByRole('list', { name: 'Pipeline' })
+				.getByRole('link', { name: /^Records, completed\. 24 records/ })
+		).toBeVisible()
 		await addVendor(page, 'demo-vendor-a.csv')
-		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
+		await expectVendorPairs(page, 4)
 
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.getByRole('button', { name: 'Review plan' }).click()
@@ -376,7 +396,7 @@ test.describe('PairSight vertical slice', () => {
 		await createEvaluation(page, 'Key problem')
 		const marker = await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
-		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
+		await expectVendorPairs(page, 4)
 		await page.request.post(`${JEV_STUB}/reject?marker=${marker}`)
 
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
@@ -401,21 +421,44 @@ test.describe('PairSight vertical slice', () => {
 	test('invalid references are blocked with row numbers', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Validation')
-		await uploadRecords(page, 'invalid-source.csv')
-		await expect(page.getByText('Fix these before continuing')).toBeVisible()
-		await expect(page.getByText('1 row has no record reference: 4')).toBeVisible()
-		await expect(page.getByText('Reference “R1” appears on rows 2, 3')).toBeVisible()
+		await uploadRecords(page, 'invalid-source.csv', { save: false })
+		// Checked as soon as the reference column is chosen: one missing, one repeated.
+		const validation = page.getByRole('region', { name: 'Validation' })
+		await expect(validation).toContainText('2 reference problems')
+		await expect(validation).toContainText(/Row 4\s*·\s*Missing reference/)
+		await expect(validation).toContainText(/Rows 2, 3\s*·\s*Duplicate reference\s*R1/)
+		await expect(page.getByRole('button', { name: 'Continue to vendors' })).toBeDisabled()
+		await expect(page.getByText('Resolve 2 reference problems')).toBeVisible()
 
 		await page.getByRole('button', { name: 'Replace file' }).click()
 		await uploadRecords(page, 'demo-source.csv')
+
+		// Saved, the file reads back with its mapping; replacing it asks first.
+		await page.goto(page.url().replace(/\/vendors$/, '/records'))
+		await expect(page.getByRole('heading', { name: 'Column mapping' })).toBeVisible()
+		await expect(page.getByLabel('File details')).toContainText('demo-source.csv')
+		await page.getByRole('button', { name: 'Replace file' }).click()
+		const replace = page.getByRole('dialog', { name: 'Replace records file?' })
+		await replace.getByRole('button', { name: 'Keep current file' }).click()
+		await expect(page.getByRole('heading', { name: 'Column mapping' })).toBeVisible()
 		await page.getByRole('link', { name: 'Continue to vendors' }).click()
-		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/unknown-vendor.csv`)
-		await page.getByRole('checkbox').click()
+		await page.waitForURL('**/vendors')
+
 		await page.getByRole('button', { name: 'Add vendor' }).click()
+		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/unknown-vendor.csv`)
 		await expect(
 			page.getByText(/1 reference isn’t in the source records: Row 2: “R99”/)
 		).toBeVisible()
+		await expect(
+			page.getByRole('checkbox', { name: /^This export contains all of/ })
+		).toBeDisabled()
 		await expect(page.getByRole('link', { name: 'Continue to rules' })).toHaveCount(0)
+
+		// A vendor can be renamed at any point.
+		const name = page.getByLabel('Vendor name')
+		await name.fill('Acme Match')
+		await name.press('Enter')
+		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText('Acme Match')
 	})
 
 	test('an over-cap plan is blocked with its cause, and a custom rule brings it under', async ({
@@ -424,9 +467,13 @@ test.describe('PairSight vertical slice', () => {
 		await signUp(page)
 		await createEvaluation(page, 'Over the cap')
 		await uploadRecords(page, 'over-cap-source.csv')
-		await expect(page.getByText('over-cap-source.csv · 105 records')).toBeVisible()
+		await expect(
+			page
+				.getByRole('list', { name: 'Pipeline' })
+				.getByRole('link', { name: /^Records, completed\. 105 records/ })
+		).toBeVisible()
 		await addVendor(page, 'over-cap-vendor.csv')
-		await expect(page.getByText(/Added 1 pair/)).toBeVisible()
+		await expectVendorPairs(page, 1)
 
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
@@ -565,11 +612,24 @@ test.describe('PairSight vertical slice', () => {
 		await createEvaluation(page, 'Two vendors')
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
-		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
-		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/demo-vendor-b.csv`)
-		await page.getByRole('checkbox').click()
+		await expectVendorPairs(page, 4)
+
+		// Vendor B starts as a draft that survives a reload until it's finished.
 		await page.getByRole('button', { name: 'Add vendor' }).click()
-		await expect(page.getByText(/Added 3 pairs/)).toBeVisible()
+		const vendorList = page.getByRole('navigation', { name: 'Vendors' })
+		await expect(vendorList).toContainText('Needs: upload the export')
+		await page.reload()
+		await expect(vendorList).toContainText('Needs: upload the export')
+		await expect(page.getByText('Finish Vendor B: upload the export')).toBeVisible()
+
+		// A group export: one record per row, read without choosing any columns.
+		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/demo-vendor-b-groups.csv`)
+		await expect(
+			page.getByText('Read as one record per row, grouped by match_id · references in record')
+		).toBeVisible()
+		await expectVendorPairs(page, 3)
+		await page.getByRole('checkbox', { name: /^This export contains all of/ }).click()
+		await expect(vendorList).toContainText('Group format · ready')
 		await runEvaluation(page)
 
 		// One vendor at a time, switchable; and both side by side.
@@ -581,23 +641,36 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('region', { name: 'Where vendors agree' })).toBeVisible()
 	})
 
-	test('empty states: no evaluations yet, and later steps ask for records first', async ({
+	test('locked steps can’t be opened by URL: they land where the evaluation is up to', async ({
 		page
 	}) => {
 		await signUp(page)
 		await expect(page.getByRole('heading', { name: 'Set up your first evaluation' })).toBeVisible()
 
-		await createEvaluation(page, 'Empty states')
+		await createEvaluation(page, 'Locked steps')
 		const records = page.url()
-		for (const step of ['vendors', 'rules']) {
+		for (const step of ['vendors', 'rules', 'plan', 'run', 'results']) {
 			await page.goto(records.replace(/\/records$/, `/${step}`))
-			await expect(
-				page.getByRole('heading', { name: 'Upload the source records first' })
-			).toBeVisible()
+			await page.waitForURL(records)
+			await expect(page.getByText('Drop your customer CSV here')).toBeVisible()
 		}
-		await page.getByRole('link', { name: 'Go to records' }).click()
-		await page.waitForURL('**/records')
-		await expect(page.getByText('Add your source records')).toBeVisible()
+
+		// With records but no vendor, the plan still waits for one.
+		await uploadRecords(page, 'demo-source.csv')
+		await page.goto(records.replace(/\/records$/, '/plan'))
+		await page.waitForURL('**/vendors')
+	})
+
+	test('signed in, “home” is your evaluations, never the landing page', async ({ page }) => {
+		await signUp(page)
+		for (const path of ['/', '/sign-in', '/sign-up']) {
+			await page.goto(path)
+			await page.waitForURL((url) => url.pathname === '/evaluations')
+		}
+		await page.goto('/no-such-page')
+		await expect(page.getByText('Page not found')).toBeVisible()
+		await page.getByRole('link', { name: 'Back to evaluations' }).click()
+		await page.waitForURL((url) => url.pathname === '/evaluations')
 	})
 
 	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
@@ -610,7 +683,6 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('banner').getByText('Draft', { exact: true })).toBeVisible()
 
 		await uploadRecords(page, 'demo-source.csv')
-		await expect(page.getByText('demo-source.csv · 24 records')).toBeVisible()
 		await expect(
 			pipeline.getByRole('link', { name: /^Records, completed\. 24 records/ })
 		).toBeVisible()

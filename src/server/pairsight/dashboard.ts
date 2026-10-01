@@ -57,7 +57,10 @@ export async function getDashboard(ownerId: string): Promise<Dashboard> {
 			datasets: {
 				orderBy: { createdAt: 'desc' },
 				take: 1,
-				select: { rowCount: true, _count: { select: { vendorExports: true } } }
+				select: {
+					rowCount: true,
+					_count: { select: { vendorExports: true, vendorDrafts: true } }
+				}
 			},
 			runs: {
 				orderBy: { number: 'desc' },
@@ -81,6 +84,7 @@ export async function getDashboard(ownerId: string): Promise<Dashboard> {
 		const input: StageInput = {
 			hasRecords: dataset != null,
 			hasVendors: vendorCount > 0,
+			hasUnfinishedVendors: (dataset?._count.vendorDrafts ?? 0) > 0,
 			latestRun: run == null ? null : { id: run.id, status: run.status }
 		}
 		const stages = stageStates(input)
