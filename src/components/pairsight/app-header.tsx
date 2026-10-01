@@ -18,7 +18,7 @@ export async function AppHeader() {
 			</a>
 			<div className="mx-auto flex h-14 max-w-[1440px] items-center gap-6 px-4 sm:px-6">
 				<Link
-					href="/"
+					href={user == null ? '/' : '/evaluations'}
 					className="focus-visible:outline-ring rounded focus-visible:outline-2 focus-visible:outline-offset-4"
 				>
 					<Wordmark />

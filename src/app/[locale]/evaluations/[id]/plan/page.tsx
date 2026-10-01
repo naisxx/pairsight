@@ -12,7 +12,7 @@ import { loadWorkspace } from '../workspace'
 export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params
 	const [{ user }, t, tRoles, format] = await Promise.all([
-		loadWorkspace(id, `/evaluations/${id}/plan`),
+		loadWorkspace(id, `/evaluations/${id}/plan`, 'plan'),
 		getTranslations('Plan'),
 		getTranslations('Roles'),
 		getFormatter()

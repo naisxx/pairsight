@@ -29,7 +29,7 @@ export default async function WelcomePage({
 	return (
 		<div className="bg-bg text-text flex min-h-dvh flex-col">
 			<header className="flex h-16 items-center px-5 md:px-8">
-				<Link href="/" aria-label={t('home')} className="rounded-sm">
+				<Link href="/evaluations" aria-label={t('home')} className="rounded-sm">
 					<Wordmark />
 				</Link>
 			</header>

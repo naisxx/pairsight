@@ -5,6 +5,7 @@ import { redirect } from '@/i18n/routing'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { AppError } from '@/lib/errors/app-error'
 import { env } from '@/lib/env'
+import { safeNext } from '@/lib/auth/safe-next'
 import { db } from '@/server/db/client'
 
 // The signed-in person for this request. `id` is the Supabase auth uuid,
@@ -57,4 +58,14 @@ export async function requireUserOrRedirect(returnTo: string): Promise<AppUser> 
 		return redirect({ href: { pathname: '/welcome', query: { next: returnTo } }, locale })
 	}
 	return { ...user, name }
+}
+
+// For signed-out pages (the landing page, sign-in, sign-up): someone already
+// signed in goes on to where they were headed, by default their evaluations.
+// "/" is never a signed-in destination.
+export async function redirectIfSignedIn(next?: string): Promise<void> {
+	const user = await getSessionUser()
+	if (user == null) return
+	const locale = await getLocale()
+	redirect({ href: safeNext(next), locale })
 }

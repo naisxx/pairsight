@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { AppHeader } from '@/components/pairsight/app-header'
 import { AuthForm } from '@/components/pairsight/auth-form'
 import { Card, CardContent, CardDescription, CardHeader } from '@/components/ui/card'
+import { redirectIfSignedIn } from '@/server/auth/session'
 
 export default async function SignUpPage({
 	searchParams
@@ -9,6 +10,7 @@ export default async function SignUpPage({
 	searchParams: Promise<{ next?: string }>
 }) {
 	const [{ next }, t] = await Promise.all([searchParams, getTranslations('Auth')])
+	await redirectIfSignedIn(next)
 	return (
 		<>
 			<AppHeader />

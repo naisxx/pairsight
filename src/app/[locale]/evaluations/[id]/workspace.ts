@@ -1,6 +1,7 @@
 import 'server-only'
 import { notFound } from 'next/navigation'
-import { getTranslations } from 'next-intl/server'
+import { getLocale, getTranslations } from 'next-intl/server'
+import { redirect } from '@/i18n/routing'
 import { isUuid } from '@/server/pairsight/schemas'
 import type { PipelineData, PipelineStage } from '@/components/pairsight/shell/pipeline-types'
 import {
@@ -29,15 +30,47 @@ export type Step = {
 	alsoMatches?: string[]
 }
 
-export async function loadWorkspace(id: string, path: string) {
+// `stage` gates the page the way the pipeline does: a locked stage can't be
+// opened by its URL either, it redirects to where the evaluation is up to.
+export async function loadWorkspace(id: string, path: string, stage?: StageKey) {
 	if (!isUuid(id)) notFound()
 	const user = await requireUserOrRedirect(path)
+	const workspace = await getOwnedWorkspace(user.id, id)
+	if (stage != null) {
+		const steps = workspaceSteps(id, workspace)
+		if (steps.find((step) => step.key === stage)?.state === 'locked') {
+			const locale = await getLocale()
+			redirect({ href: landingHref(id, steps), locale })
+		}
+	}
+	return { user, workspace }
+}
+
+async function getOwnedWorkspace(ownerId: string, evaluationId: string) {
 	try {
-		return { user, workspace: await getWorkspace({ ownerId: user.id, evaluationId: id }) }
+		return await getWorkspace({ ownerId, evaluationId })
 	} catch (error) {
 		if (error instanceof AppError && error.status === 404) notFound()
 		throw error
 	}
+}
+
+// Where opening the evaluation lands: its latest results once a run exists,
+// else the first step that still needs work (docs/PairSight-UX-Plan.md §3).
+export function landingHref(id: string, steps: Step[]): string {
+	const results = steps.find((step) => step.key === 'results')
+	const target =
+		results != null && results.state !== 'locked'
+			? results
+			: (steps.find((step) => step.state === 'available') ?? steps[0])
+	return target?.href ?? `/evaluations/${id}/records`
+}
+
+// A stage's own page when it's open, else the landing. For /run and
+// /results, which only redirect: the real pages live under a run.
+export function stageOrLandingHref(id: string, steps: Step[], key: StageKey): string {
+	const step = steps.find((candidate) => candidate.key === key)
+	return step == null || step.state === 'locked' ? landingHref(id, steps) : step.href
 }
 
 function stageInput(workspace: Workspace): StageInput {
@@ -45,6 +78,7 @@ function stageInput(workspace: Workspace): StageInput {
 	return {
 		hasRecords: workspace.dataset != null,
 		hasVendors: workspace.vendorExports.length > 0,
+		hasUnfinishedVendors: workspace.vendorDraftCount > 0,
 		latestRun: latestRun == null ? null : { id: latestRun.id, status: latestRun.status }
 	}
 }
@@ -87,7 +121,9 @@ export async function workspacePipeline(id: string, workspace: Workspace): Promi
 				: t('records', { count: workspace.dataset.rowCount }),
 		vendors:
 			workspace.vendorExports.length === 0
-				? t('vendorsEmpty')
+				? workspace.vendorDraftCount > 0
+					? t('vendorsInProgress', { count: workspace.vendorDraftCount })
+					: t('vendorsEmpty')
 				: t('vendors', { count: workspace.vendorExports.length, pairs: vendorPairs }),
 		rules: t('rules', { count: rulesOn }),
 		plan: latestRun == null ? t('planReady') : t('plan', { pairs: latestRun.pairCount }),

@@ -3,10 +3,12 @@ import { Link } from '@/i18n/routing'
 import { AppHeader } from '@/components/pairsight/app-header'
 import { Button } from '@/components/ui/button'
 import { ArrowRightIcon } from '@/components/ui/icons'
+import { redirectIfSignedIn } from '@/server/auth/session'
 
 // Minimal landing (docs/PairSight-UX-Plan.md §4.4). The only place the
 // supporting brand colors appear, and only decoratively.
 export default async function HomePage() {
+	await redirectIfSignedIn()
 	const t = await getTranslations('HomePage')
 	const steps = [t('stepUpload'), t('stepRules'), t('stepCompare')]
 	return (

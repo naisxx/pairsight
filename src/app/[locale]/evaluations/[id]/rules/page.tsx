@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { NeedRecords } from '@/components/pairsight/empty/need-records'
+import { notFound } from 'next/navigation'
 import { RulesForm } from '@/components/pairsight/rules/rules-form'
 import { StepHeader } from '@/components/pairsight/step-layout'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
@@ -10,17 +10,11 @@ import { loadWorkspace } from '../workspace'
 export default async function RulesPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params
 	const [{ user, workspace }, t] = await Promise.all([
-		loadWorkspace(id, `/evaluations/${id}/rules`),
+		loadWorkspace(id, `/evaluations/${id}/rules`, 'rules'),
 		getTranslations('Rules')
 	])
-	if (workspace.dataset == null) {
-		return (
-			<>
-				<StepHeader title={t('title')} description={t('description')} />
-				<NeedRecords evaluationId={id} />
-			</>
-		)
-	}
+	// Unreachable: without records the stage is locked and loadWorkspace redirects.
+	if (workspace.dataset == null) notFound()
 	const preview = await rulesPreview({ ownerId: user.id, evaluationId: id })
 	const { evaluation } = preview
 	return (
