@@ -21,12 +21,9 @@ import {
 	CHART_ANIMATION_MS,
 	formatShare,
 	GRID_STROKE,
-	MUTED_SERIES,
-	SERIES_A,
-	SERIES_B
+	VENDOR_SERIES as SERIES
 } from './chart-theme'
 
-const SERIES = [SERIES_A, SERIES_B, MUTED_SERIES]
 const METRICS = ['precision', 'recall', 'f1'] as const
 const PERCENT = 100
 const X_TICKS = [0, 25, 50, 75, 100]

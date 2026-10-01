@@ -30,8 +30,11 @@ test.describe('PairSight vertical slice', () => {
 	}
 
 	async function createEvaluation(page: Page, name: string) {
-		await page.getByLabel('Name').fill(name)
-		await page.getByRole('button', { name: 'Create evaluation' }).click()
+		// The first evaluation's button sits in the empty state; later ones in the header.
+		await page.getByRole('button', { name: 'New evaluation' }).first().click()
+		const dialog = page.getByRole('dialog', { name: 'New evaluation' })
+		await dialog.getByLabel('Name').fill(name)
+		await dialog.getByRole('button', { name: 'Create evaluation' }).click()
 		await page.waitForURL('**/records')
 	}
 
@@ -92,6 +95,74 @@ test.describe('PairSight vertical slice', () => {
 	function matching(page: Page) {
 		return page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })
 	}
+
+	test('the dashboard sums up evaluations, opens the latest results, and renames and deletes', async ({
+		page
+	}) => {
+		await signUp(page)
+		await expect(page.getByRole('heading', { name: 'Set up your first evaluation' })).toBeVisible()
+		await createEvaluation(page, 'Dashboard check')
+		await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.getByRole('button', { name: 'Review plan' }).click()
+		await page.waitForURL('**/plan')
+		await page.getByRole('button', { name: 'Start evaluation' }).click()
+		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+
+		await page.goto('/evaluations')
+		await createEvaluation(page, 'Still in setup')
+		await page.goto('/evaluations')
+
+		// Names are unique per account, whatever the casing.
+		await page.getByRole('button', { name: 'New evaluation' }).first().click()
+		const create = page.getByRole('dialog', { name: 'New evaluation' })
+		await create.getByLabel('Name').fill('still IN setup')
+		await create.getByRole('button', { name: 'Create evaluation' }).click()
+		await expect(create.getByText('An evaluation with this name already exists')).toBeVisible()
+		await create.getByRole('button', { name: 'Cancel' }).click()
+
+		const summary = page.getByLabel('Summary')
+		await expect(summary).toContainText(/Evaluations\s*2/)
+		await expect(summary).toContainText(/With results\s*1/)
+		await expect(summary).toContainText(/In setup\s*1/)
+		await expect(summary).toContainText(/Pairs assessed\s*8/)
+
+		// 2 both matched, 2 vendor only, 2 PairSight only: 50% precision and recall.
+		const latest = page.getByRole('region', { name: 'Dashboard check' })
+		await expect(latest.getByRole('row', { name: /Vendor A/ })).toContainText('50.0%')
+		await latest.getByRole('link', { name: '4 disagreements for Vendor A' }).click()
+		await page.waitForURL(/category=disagreements/)
+		await expect(matching(page)).toHaveText('4 pairs')
+		await page.goto('/evaluations')
+
+		// Setup picks up where it stopped: records still to upload.
+		const continueSetup = page.getByRole('region', { name: 'Continue setup' })
+		await expect(continueSetup.getByRole('link', { name: /Still in setup/ })).toHaveAttribute(
+			'href',
+			/\/records$/
+		)
+
+		await page.getByRole('button', { name: 'Actions for Still in setup' }).click()
+		await page.getByRole('menuitem', { name: 'Rename' }).click()
+		const rename = page.getByRole('dialog', { name: 'Rename evaluation' })
+		await rename.getByLabel('Name').fill('Renamed')
+		await rename.getByRole('button', { name: 'Save name' }).click()
+		await expect(page.getByRole('link', { name: 'Renamed', exact: true })).toBeVisible()
+
+		await page.getByRole('button', { name: 'Actions for Renamed' }).click()
+		await page.getByRole('menuitem', { name: 'Delete' }).click()
+		await page
+			.getByRole('dialog', { name: 'Delete this evaluation?' })
+			.getByRole('button', { name: 'Delete evaluation' })
+			.click()
+		await expect(page.getByRole('link', { name: 'Renamed', exact: true })).toHaveCount(0)
+		await expect(summary).toContainText(/Evaluations\s*1/)
+
+		await page.getByRole('searchbox', { name: 'Search evaluations' }).fill('nothing like this')
+		await expect(page.getByText('No evaluations match “nothing like this”')).toBeVisible()
+	})
 
 	test('upload to comparison: all four categories, vendor pairs outside blocking, inspection', async ({
 		page
@@ -514,7 +585,7 @@ test.describe('PairSight vertical slice', () => {
 		page
 	}) => {
 		await signUp(page)
-		await expect(page.getByRole('heading', { name: 'No evaluations yet' })).toBeVisible()
+		await expect(page.getByRole('heading', { name: 'Set up your first evaluation' })).toBeVisible()
 
 		await createEvaluation(page, 'Empty states')
 		const records = page.url()

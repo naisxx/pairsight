@@ -1,72 +1,99 @@
-import { getFormatter, getTranslations } from 'next-intl/server'
-import { Link } from '@/i18n/routing'
+import { getTranslations } from 'next-intl/server'
 import { AppShell } from '@/components/pairsight/shell/app-shell'
-import { CreateEvaluationForm } from '@/components/pairsight/create-evaluation-form'
-import { EmptyState } from '@/components/pairsight/empty/empty-state'
-import { Card, CardContent } from '@/components/ui/card'
-import { ChevronRightIcon, EvaluationIcon } from '@/components/ui/icons'
+import { ContinueSetup } from '@/components/pairsight/evaluations/continue-setup'
+import { EmptyEvaluations } from '@/components/pairsight/evaluations/empty-evaluations'
+import { EvaluationsTable } from '@/components/pairsight/evaluations/evaluations-table'
+import { Greeting } from '@/components/pairsight/evaluations/greeting'
+import { LatestResults } from '@/components/pairsight/evaluations/latest-results'
+import { NewEvaluationButton } from '@/components/pairsight/evaluations/new-evaluation-button'
+import { AnimatedCount } from '@/components/ui/animated-number'
+import { Reveal } from '@/components/ui/reveal'
+import { cn } from '@/lib/cn'
 import { requireUserOrRedirect } from '@/server/auth/session'
-import { listEvaluations } from '@/server/pairsight/evaluations'
+import { getDashboard } from '@/server/pairsight/dashboard'
 
 export default async function EvaluationsPage() {
 	const user = await requireUserOrRedirect('/evaluations')
-	const [t, tShell, format, evaluations] = await Promise.all([
+	const [t, tShell, dashboard] = await Promise.all([
 		getTranslations('Evaluations'),
 		getTranslations('Shell'),
-		getFormatter(),
-		listEvaluations(user.id)
+		getDashboard(user.id)
 	])
+	const { rows, stats, latest } = dashboard
+	const names = rows.map((row) => row.name)
+	const firstName = user.name.split(/\s+/)[0] ?? user.name
+	const statItems = [
+		{ label: t('statEvaluations'), value: stats.evaluations },
+		{ label: t('statWithResults'), value: stats.withResults },
+		{ label: t('statInSetup'), value: stats.inSetup },
+		{ label: t('statPairsAssessed'), value: stats.pairsAssessed }
+	]
+
 	return (
 		<AppShell email={user.email} name={user.name} crumbs={[{ label: tShell('evaluations') }]}>
-			<div className="flex flex-col gap-6">
-				<div className="flex flex-col gap-1">
-					<h1 className="text-text type-title">{t('title')}</h1>
-					<p className="text-text-muted type-body">{t('description')}</p>
+			<header className="flex flex-wrap items-end justify-between gap-4">
+				<div>
+					<Greeting firstName={firstName} />
+					<h1 className="type-title mt-0.5">{t('title')}</h1>
 				</div>
-				<Card>
-					<CardContent className="pt-6">
-						<h2 className="text-text type-subheading mb-3">{t('newTitle')}</h2>
-						<CreateEvaluationForm />
-					</CardContent>
-				</Card>
-				{evaluations.length === 0 ? (
-					<div className="border-border bg-surface rounded-lg border">
-						<EmptyState
-							icon={EvaluationIcon}
-							title={t('emptyTitle')}
-							description={t('emptyDescription')}
-							preview="list"
-						/>
+				{rows.length > 0 && <NewEvaluationButton takenNames={names} />}
+			</header>
+
+			{rows.length === 0 ? (
+				<EmptyEvaluations />
+			) : (
+				<>
+					<Reveal index={0}>
+						<dl
+							aria-label={t('statsLabel')}
+							className="border-border bg-surface sm:divide-border mt-5 grid grid-cols-2 gap-y-3 rounded-md border py-3 sm:grid-cols-4 sm:divide-x"
+						>
+							{statItems.map((item) => (
+								<div key={item.label} className="px-4">
+									<dt className="text-text-muted text-xs">{item.label}</dt>
+									<dd className="mt-0.5">
+										<AnimatedCount
+											value={item.value}
+											className="font-mono text-[20px] leading-none font-medium"
+										/>
+									</dd>
+								</div>
+							))}
+						</dl>
+					</Reveal>
+
+					<div className="mt-4 grid gap-4 lg:grid-cols-12">
+						{latest != null && (
+							<Reveal index={1} className="lg:col-span-8">
+								<LatestResults latest={latest} />
+							</Reveal>
+						)}
+						<Reveal index={2} className={cn(latest != null ? 'lg:col-span-4' : 'lg:col-span-12')}>
+							<ContinueSetup
+								rows={rows.filter((row) => row.status !== 'complete')}
+								takenNames={names}
+							/>
+						</Reveal>
 					</div>
-				) : (
-					<ul className="border-border bg-surface divide-border divide-y rounded-lg border">
-						{evaluations.map((evaluation) => {
-							const lastRun = evaluation.runs[0]
-							return (
-								<li key={evaluation.id}>
-									<Link
-										href={`/evaluations/${evaluation.id}`}
-										className="hover:bg-surface-hover focus-visible:outline-ring flex items-center gap-4 px-4 py-3 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
-									>
-										<span className="text-text type-label min-w-0 flex-1 truncate">
-											{evaluation.name}
-										</span>
-										<span className="text-text-muted type-body hidden sm:block">
-											{lastRun == null
-												? t('noRuns')
-												: t('runSummary', { number: lastRun.number, pairs: lastRun.pairCount })}
-										</span>
-										<span className="text-text-muted type-meta w-28 text-right">
-											{format.relativeTime(evaluation.updatedAt)}
-										</span>
-										<ChevronRightIcon className="text-text-muted" />
-									</Link>
-								</li>
-							)
-						})}
-					</ul>
-				)}
-			</div>
+
+					<Reveal index={3}>
+						<EvaluationsTable
+							rows={rows.map((row) => ({
+								id: row.id,
+								name: row.name,
+								createdAt: row.createdAt,
+								updatedAt: row.updatedAt,
+								status: row.status,
+								stages: row.stages,
+								nextKey: row.next?.key ?? null,
+								recordCount: row.recordCount,
+								vendorCount: row.vendorCount,
+								lastRunAt: row.lastRun?.createdAt ?? null
+							}))}
+						/>
+					</Reveal>
+				</>
+			)}
 		</AppShell>
 	)
 }

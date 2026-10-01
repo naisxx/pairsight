@@ -12,6 +12,8 @@ export const SERIES_A = 'var(--series-a)'
 export const SERIES_B = 'var(--series-b)'
 export const MUTED_SERIES = 'var(--text-muted)'
 export const THRESHOLD_STROKE = 'var(--ring)'
+// One colour per vendor, in upload order; a third falls back to muted.
+export const VENDOR_SERIES = [SERIES_A, SERIES_B, MUTED_SERIES]
 
 // Charts draw once, briefly: enough to read as a change, not a performance.
 export const CHART_ANIMATION_MS = 300
