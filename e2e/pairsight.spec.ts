@@ -252,8 +252,11 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'demo-vendor-a.csv')
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
+		// Stages are links in the sidebar's pipeline, named "<stage>, <detail>".
 		const stepLink = (name: string) =>
-			page.getByRole('navigation').getByRole('link', { name: new RegExp(name) })
+			page
+				.getByRole('region', { name: 'Pipeline' })
+				.getByRole('link', { name: new RegExp(`^${name},`) })
 		const dialog = page.getByRole('alertdialog', { name: 'Leave without saving?' })
 
 		// Clean: links just navigate.
@@ -306,6 +309,30 @@ test.describe('PairSight vertical slice', () => {
 		await page.goBack()
 		await page.waitForURL('**/rules')
 		await expect(nameRule).toBeChecked()
+	})
+
+	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
+		await signUp(page)
+		await createEvaluation(page, 'Shell')
+		const pipeline = page.getByRole('region', { name: 'Pipeline' })
+		await expect(pipeline.getByRole('link', { name: /^Records, upload a CSV/ })).toBeVisible()
+
+		await uploadRecords(page, 'demo-source.csv')
+		await expect(page.getByText('demo-source.csv · 24 records')).toBeVisible()
+		await expect(pipeline.getByRole('link', { name: /^Records, 24 records/ })).toBeVisible()
+		await expect(pipeline.getByRole('link', { name: /^Vendors, add vendor matches/ })).toBeVisible()
+		await expect(pipeline.getByText('Setup · 1 of 6 stages')).toBeVisible()
+
+		const shell = page.locator('.app-shell')
+		await expect(shell).toHaveAttribute('data-collapsed', 'false')
+		await page.getByRole('button', { name: 'Collapse sidebar' }).click()
+		await expect(shell).toHaveAttribute('data-collapsed', 'true')
+		// The width is remembered, and the server renders it on the first paint.
+		await page.reload()
+		await expect(shell).toHaveAttribute('data-collapsed', 'true')
+		await page.keyboard.press('[')
+		await expect(shell).toHaveAttribute('data-collapsed', 'false')
+		await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible()
 	})
 
 	test('an evaluation is invisible to another user', async ({ browser }) => {
