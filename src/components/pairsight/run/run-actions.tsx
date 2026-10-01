@@ -7,8 +7,8 @@ import { ArrowRightIcon, InfoIcon, RetryIcon, SpinnerIcon } from '@/components/u
 import type { RunProgress } from '@/server/pairsight/runs'
 import { ActionBar } from '../step-layout'
 
-// The run's action bar: resume after a configuration stop, retry failed pairs
-// once complete, and the stage's primary action, View results.
+// The run's action bar: resume when pairs are left waiting, retry failed
+// pairs once complete, and the stage's primary action, View results.
 export function RunActions({
 	progress,
 	resultsHref,
@@ -24,6 +24,10 @@ export function RunActions({
 }) {
 	const t = useTranslations('Run')
 	const isComplete = progress.status === 'completed'
+	// Stopped for configuration, or completed while a later run (which shares
+	// its judgments) put some of its failed pairs back in the queue.
+	const canResume =
+		progress.status === 'stopped' || (isComplete && progress.pending + progress.running > 0)
 	return (
 		<ActionBar
 			hint={
@@ -35,7 +39,7 @@ export function RunActions({
 				) : undefined
 			}
 		>
-			{progress.status === 'stopped' && (
+			{canResume && (
 				<Button variant="outline" onClick={onResume} disabled={isActing}>
 					{isActing ? <SpinnerIcon /> : <RetryIcon />}
 					{t('resume')}

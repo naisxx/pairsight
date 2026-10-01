@@ -122,6 +122,15 @@ The bucket warning is about workload, not accuracy.
   configuration are identical. Only newly introduced pairs go to Jev.
 - **Changing only the threshold** recalculates decisions from the saved
   scores, without calling Jev again.
+- **Judgments are shared, and only gaps change.** One judgment per pair and
+  judgment configuration serves every run that includes the pair. A
+  successful score never changes once saved. A failed one can be judged
+  again (Retry failed, a single pair's Retry, or a later run with the same
+  configuration), and every run that includes the pair then shows the new
+  judgment. "Reproducible" means a completed run's configuration, pairs and
+  successful scores never change; only its incomplete pairs can be filled
+  in. A run left with waiting pairs this way can be resumed from its Run
+  page.
 
 ## Jev
 
