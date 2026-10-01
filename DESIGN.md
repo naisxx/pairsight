@@ -62,7 +62,7 @@ flash on load. Use `dark:` variants only for things tokens can't express.
 
 ## 3. Component conventions
 
-- Build variant components (buttons, badges, alerts — anything with more
+- Build variant components (buttons, chips — anything with more
   than two visual states) with `class-variance-authority` (`cva`), not a
   chain of ternaries in `className`. Compose the result through `cn()`
   (`src/lib/cn.ts`, `clsx` + `tailwind-merge`) so a caller can still
@@ -83,7 +83,7 @@ Two typefaces, both loaded through `next/font` (no dependency) in
 `src/app/[locale]/layout.tsx`:
 
 - **Poppins** (400 / 500 / 600) is the interface: headings, labels, prose,
-  buttons, badges.
+  buttons, chips.
 - **JetBrains Mono** is the data voice: anything the user reads _exactly_
   rather than skims.
 
@@ -91,22 +91,21 @@ Components use the named roles in `globals.css`, never raw `text-sm` /
 `text-xs`, so a heading or a label looks the same on every screen. Colour
 stays a separate class (`text-text`, `text-text-muted`, …).
 
-| Role              | Spec                                   | Use                                                                         |
-| ----------------- | -------------------------------------- | --------------------------------------------------------------------------- |
-| `type-display`    | Poppins 36 / 44, 600 (48 on `sm`)      | Landing hero only                                                           |
-| `type-title`      | Poppins 22 / 30, 600 (24 / 32 on `md`) | Page titles (`StepHeader`, the evaluations list)                            |
-| `type-heading`    | Poppins 16 / 24, 600                   | Section and card titles, dialog titles, the pair verdict                    |
-| `type-subheading` | Poppins 14 / 20, 600                   | Headings inside a card: rule names, panel titles, notice titles, tile names |
-| `type-body`       | Poppins 14 / 22, 400                   | Prose, notices, table cells, inputs                                         |
-| `type-label`      | Poppins 14 / 20, 500                   | Form labels, nav, tabs, record names, text links                            |
-| `type-ui`         | Poppins 13 / 20, 400                   | Controls, navigation, menus, table text — a step under body copy            |
-| `type-meta`       | Poppins 12 / 18, 400                   | Hints, captions, relative times, chips                                      |
-| `type-caption`    | Poppins 11 / 16, 400                   | Sidebar captions, pipeline summaries, small chart labels                    |
-| `type-overline`   | Poppins 11 / 16, 600, uppercase        | Table column headers                                                        |
-| `type-metric`     | Poppins 28 / 36, 600                   | The count on a category tile                                                |
-| `type-data`       | JetBrains Mono 13 / 20                 | Raw record values, numbers in a column, the threshold input                 |
-| `type-data-sm`    | JetBrains Mono 12 / 18                 | Record references, file names, CSV headers, rule keys and stats             |
-| `type-kbd`        | JetBrains Mono 11, key cap             | Keyboard shortcuts                                                          |
+| Role              | Spec                                   | Use                                                                   |
+| ----------------- | -------------------------------------- | --------------------------------------------------------------------- |
+| `type-title`      | Poppins 22 / 30, 600 (24 / 32 on `md`) | Page titles (`StepHeader`, Evaluations)                               |
+| `type-heading`    | Poppins 16 / 24, 600                   | Dialog titles                                                         |
+| `type-subheading` | Poppins 14 / 20, 600                   | Headings inside a card                                                |
+| `type-body`       | Poppins 14 / 22, 400                   | Prose                                                                 |
+| `type-label`      | Poppins 14 / 20, 500                   | Form labels                                                           |
+| `type-ui`         | Poppins 13 / 20, 400                   | Controls, navigation, menus, table text — the default inside a screen |
+| `type-meta`       | Poppins 12 / 18, 400                   | Hints and relative times                                              |
+| `type-caption`    | Poppins 11 / 16, 400                   | Sidebar captions, pipeline summaries, small chart labels              |
+| `type-data-sm`    | JetBrains Mono 12 / 18                 | A value in the data voice where `font-mono` alone isn't enough        |
+
+Card titles are `text-sm font-semibold`, and values in the data voice are
+`font-mono` at the size around them: `.font-mono` turns on tabular figures
+everywhere (globals.css), so numbers line up without a special role.
 
 **Where the mono goes, and why:**
 
@@ -121,7 +120,7 @@ stays a separate class (`text-text`, `text-text-muted`, …).
 - **Rule keys:** each blocking rule shows the field ids it matches on
   (`name` + `postcode`) under its friendly title — the title is the label, the
   key is the definition.
-- **Keyboard hints:** `J` `K` `Esc` as key caps.
+- **Keyboard hints:** `J` `K` `Esc` as key caps, with the `Kbd` component.
 
 Never use the mono for headings, buttons, category names or prose.
 
@@ -131,39 +130,38 @@ Signed-in pages use the app shell (`src/components/pairsight/shell/`); the UX
 plan §3 describes its behaviour. Spacing follows one system so every screen
 lines up:
 
-| Thing                   | Value                                      |
-| ----------------------- | ------------------------------------------ |
-| Grid                    | Tailwind's 4 px scale                      |
-| Top bar, sidebar header | 56 px (`h-14`)                             |
-| Page padding            | 32 px (`px-8`), 16 px on phones; 28 px top |
-| Between sections        | 24 px (`gap-6`)                            |
-| Inside a card           | 20 px (`p-5`)                              |
-| Controls, nav items     | 36 px tall (`h-9`)                         |
-| Table rows              | 48 px                                      |
-| Sidebar                 | 16.5rem expanded, 4.25rem collapsed        |
+| Thing                   | Value                                                       |
+| ----------------------- | ----------------------------------------------------------- |
+| Grid                    | Tailwind's 4 px scale                                       |
+| Top bar, sidebar header | 48 px (`h-12`)                                              |
+| Page column             | max 1280 px (1440 px on Results and Pair), centred          |
+| Page padding            | 32 px (`px-8`), 16 px on phones; 24 px top                  |
+| Between cards           | 16 px (`gap-4`, `space-y-4`)                                |
+| Inside a card           | 16–20 px (`p-4` / `px-5`)                                   |
+| Controls                | 36 px (`h-9`), 32 px small (`h-8`)                          |
+| Table rows              | 56 px in lists, 40 px in dense tables                       |
+| Sidebar                 | 248 px expanded, 60 px collapsed, a 280 px drawer on phones |
 
-- **Content fills the width the shell leaves it,** so collapsing the sidebar
-  widens tables instead of leaving a gap; only very wide screens cap it
-  (110rem) and centre it.
+- **The page column is centred and capped** (`.page-frame`, 1280 px); a page
+  that sets `data-wide-page` (Results, Pair) widens it to 1440 px. The page
+  scrolls inside `<main>`, not the window.
 - **Everything in the sidebar sits on one centre line** in both widths (icons,
   pipeline nodes, the avatar), so collapsing never shifts them.
 - **The action bar** docks to the bottom of the page column, edge to edge: it
-  rests at the bottom of a short page and stays in view on a long one. A page
-  column is a flex column, so buttons and links placed directly in it need
-  `self-start` to keep their natural width.
+  rests at the bottom of a short page and stays in view on a long one. Back
+  sits on the left; the primary action on the right, with the reason it's
+  blocked beside it (and `aria-describedby` pointing at that reason).
 - **Grids that change column count** always declare a shrinkable column at
   every size (`grid-cols-[minmax(0,1fr)]`), or a wide table widens the page
   instead of scrolling.
-- **Icons in tiles.** Section and card headings carry a 32 px `IconTile`
-  (muted surface, hairline border, line icon); icons never get colour except
-  for status. Active and selected states use the `solid` variant.
-- **Empty states** use one component, `EmptyState`: a 56 px tile with a
-  duotone icon (coral second layer), a heading, one line of explanation and
-  the next action, left-aligned. Screens shaped like a list or table put a
-  faint dashed ghost of that content behind it (`preview="list" | "table"`),
-  so it's clear what will appear; filtered-empty keeps the real filters and
-  tiles above it. Uploads use the drop zone itself as the preview. Errors
-  and simple prompts are a plain block, with a danger tile for errors.
+- **Cards** are hairline-bordered surfaces (`Panel`, or the same classes:
+  `rounded-md border border-border bg-surface`) with a small semibold title
+  and one muted line under it. Icons never get colour except for status;
+  active and selected states use the `solid` variant.
+- **Empty states** are a plain block inside the card that would hold the
+  content: a muted 40 px icon square, a short title, one line of
+  explanation and the next action. Uploads use the drop zone itself.
+  Errors are a `danger-subtle` block with a warning icon.
 - **Scrollbars** are slim and themed (globals.css). Chromium ignores
   `::-webkit-scrollbar` once `scrollbar-color` is set, so the standard
   properties apply only in Firefox.

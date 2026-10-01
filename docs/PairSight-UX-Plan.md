@@ -3,6 +3,104 @@
 Approved 2026-09-30. The design reference for every PairSight screen;
 build order follows [PairSight-Delivery-Plan.md](PairSight-Delivery-Plan.md).
 
+> **Updated 2026-10-02 — the UI was rebuilt to a finished design.** The
+> section below, _What shipped_, is the current reference for every screen
+> and for how each open question was settled. The numbered sections after it
+> are the original plan: the journey, states and principles still hold, but
+> where they describe a layout, a size or a component that the shipped
+> section contradicts, the shipped section wins. Tokens, type roles and
+> spacing are in [`DESIGN.md`](../DESIGN.md).
+
+## What shipped (UI revamp, October 2026)
+
+The whole app was rebuilt to a finished design. Behaviour stayed ours
+(blocking, mapping, validation, runs, gating); the look, layout, copy and
+motion follow the design. Demo, export and human review are **not built**:
+anything of theirs in the design is hidden until they are.
+
+**Shell.** A 248 px sidebar (60 px collapsed, a 280 px drawer on phones,
+toggled with `[` and remembered in a cookie) holds the Evaluations link, the
+current evaluation's name and a numbered pipeline (done, active, next,
+locked — a locked step says why). A 48 px top bar shows the breadcrumb and
+the evaluation's status chip. Pages are a centred column (1280 px; 1440 px
+for Results and Pair) that scrolls inside `<main>`, with an action bar docked
+to its bottom: Back on the left, the primary action on the right and the
+reason it's blocked beside it. A locked step can't be opened by URL either:
+it redirects to where the evaluation is up to.
+
+**Screens.**
+
+- **Landing (`/`, signed out only)** — hero with a static product preview,
+  How it works, Honest about what it measures, a call to action and footer.
+  Signed in, `/`, `/sign-in` and `/sign-up` go to `/evaluations`.
+- **Sign in / Sign up / Welcome** — one column, the form in a card; fields
+  are checked once submitted (then as you type), never on blur; a show/hide
+  password toggle. Welcome asks for a full name (required, ≤ 100) before the
+  app opens.
+- **Evaluations** — a greeting, a summary strip, the latest finished run's
+  precision/recall/F1 per vendor, Continue setup with stage bars, and a
+  searchable table with Open / Rename / Delete. Names are unique per
+  account, ignoring case.
+- **Records** — drop zone; then each PairSight field mapped to one of your
+  columns (with suggestions and sample values), a Validation panel checking
+  references as you choose, and a 10-row preview. Continue saves and goes to
+  Vendors. Once saved the dataset is read-only; Replace file asks first.
+- **Vendors** — a vendor list beside an editor. Each vendor is a draft until
+  confirmed complete; it can be renamed or removed. Drop the file and
+  PairSight works out pair or group format and the columns from your records'
+  references ("Read as …", with Change to override). Group exports expand to
+  every pair in each group. Unknown references block, with row numbers.
+- **Rules** — identity definitions (both required), country by name, at
+  least two fields for Jev; preset rules with an example key and
+  Buckets/Pairs/Largest; composite rules to add, edit and delete; a live
+  summary. Changes save themselves; invalid ones are held back with the reason.
+- **Plan** — the "From records to pairs" ledger (with the cost estimate),
+  What Jev sees, the vendor-pair promise, an over-limit alert with a Turn off
+  per rule, and a notice for unfinished vendors. Start evaluation runs it.
+- **Run** — a state card (assessing / complete / stopped) with progress,
+  counts, elapsed time, why pairs failed and Retry; a stop alert with the fix.
+- **Results** — Overview (metrics, coverage, categories, decision matrix,
+  threshold sensitivity, vendor comparison and overlap, field patterns, top
+  disagreements, score distribution, sources, workload) and Detailed
+  analysis (live filters, sortable table, retry per row). The threshold
+  popover previews precision and recall before you apply.
+- **Pair** — field comparison with differences highlighted, how the pair got
+  here, Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
+- **Not found / errors** — a centred page; signed in, the way back is
+  Evaluations.
+
+**How the open questions were settled.**
+
+| #   | Question                         | Decision                                                                 |
+| --- | -------------------------------- | ------------------------------------------------------------------------ |
+| 1   | Run URLs                         | Runs keep ids and a run switcher                                         |
+| 2   | Idle "Ready to run" page; Pause  | Neither: the run starts from Plan; leaving the page pauses it            |
+| 3   | Stage gating                     | Derived from the data, enforced on the URL too                           |
+| 4   | Detailed tab default             | All pairs, 50 per page (25 and 15 available)                             |
+| 5   | Category markers                 | Distinct shapes kept, for colour-blind safety                            |
+| 6   | Near the threshold               | The low-confidence flag stays; a "near threshold" score filter was added |
+| 7   | Three vendors                    | Supported (up to 3)                                                      |
+| 8   | Mapping UI                       | PairSight field → your column; full, first and last name stay separate   |
+| 9   | Fixing references inline         | No: problems block, listed with rows, fixed in the file                  |
+| 10  | One column on two fields         | Can't happen: choosing a column moves it off the other field             |
+| 11  | Editing the mapping after saving | No: the dataset is fixed; replace the file                               |
+| 12  | Vendor drafts, rename, stats     | Yes, all three                                                           |
+| 13  | Unknown vendor references        | Block                                                                    |
+| 14  | Country                          | Chosen by name, stored as the two-letter code; no "Mixed"                |
+| 15  | Fields for Jev                   | At least two; "Does not count" is required (it's Jev's `criteria.false`) |
+| 16  | Derived rule fields              | Not now                                                                  |
+| 17  | Rules saving                     | Autosave                                                                 |
+| 18  | Greeting name                    | A full name asked at onboarding                                          |
+| 19  | Sample files                     | Not now (with the demo)                                                  |
+| 20  | Toasts                           | Ours, restyled                                                           |
+
+**Components.** `src/components/ui/` holds the foundation listed in
+`docs/rules/components.md`; screens compose it in
+`src/components/pairsight/` (shell, records, vendors, rules, plan, run,
+results and its overview panels, pair). Charts use Recharts, loaded with the
+Results page. Retired: IconTile, EmptyState and its ghost previews, Badge,
+the native select, the unsaved-changes guard.
+
 ## Context
 
 PairSight's agreed scope and build order are in `docs/PairSight-V1-Scope.md`
@@ -61,8 +159,8 @@ new tokens when M1 implements them.
     paint is already the right width.
   - **Phones** (below 48rem): the sidebar is a drawer over a scrim, opened by
     the same toggle and closed by Esc, the scrim, or following a link.
-  - **Top bar** (56 px): the sidebar toggle and the breadcrumb, Evaluations /
-    {name} / {stage}.
+  - **Top bar** (48 px as shipped): the sidebar toggle and the breadcrumb,
+    Evaluations / {name} / {stage}.
 - **Evaluation pipeline** (replaces the step rail): Records → Vendors (Input)
   → Rules → Plan (Configure) → Run (Execute) → Results (Review) on one
   connected track.
@@ -357,6 +455,9 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
   - Dialogs trap focus (Radix). The slider supports arrow keys and PageUp/Down.
 
 ## 8. Components (shadcn where it fits)
+
+_Original plan; the shipped components are summarised under "What shipped"
+above and listed in `docs/rules/components.md`._
 
 - **Setup:**
   - Run `shadcn init` for Tailwind v4 against the alias tokens.

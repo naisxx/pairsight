@@ -30,12 +30,10 @@ setup, treat the answer as settled and don't reopen it per component.
   `variant`, deliberately not the provider's own props. A call site passing
   phosphor's `weight` is a call site that breaks on swap.
 - **Variants are named for intent, not by the provider.** `variant` is
-  `line` (the default, everywhere), `solid` (active and selected states, such
-  as the current nav item) or `duotone` (the large icon in an empty state or
-  icon tile). `Glyph` maps them to the provider's weights in one place; a
-  provider without duotone maps it to `line`. A duotone icon's second layer
-  takes `--icon-accent` from its container (an `IconTile` sets coral, or the
-  danger colour for errors).
+  `line` (the default, everywhere), `bold` (small marks that must read at
+  10–11 px: checks, locks) or `solid` (active and selected states, such as
+  the current nav item, and status marks). `Glyph` maps them to the
+  provider's weights in one place.
 
 ## Adding an icon
 
