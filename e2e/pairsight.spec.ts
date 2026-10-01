@@ -51,8 +51,9 @@ test.describe('PairSight vertical slice', () => {
 	// Jev calls the stub has received for one upload's records.
 	async function jevCalls(page: Page, marker: string) {
 		const response = await page.request.get(`${JEV_STUB}/calls?marker=${marker}`)
-		const { count } = (await response.json()) as { count: number }
-		return count
+		const body: unknown = await response.json()
+		if (typeof body !== 'object' || body == null || !('count' in body)) return Number.NaN
+		return typeof body.count === 'number' ? body.count : Number.NaN
 	}
 
 	async function addVendor(page: Page, file: string) {
@@ -71,6 +72,7 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+		await expect(page.getByText(/^Elapsed \d+:\d{2}$/)).toBeVisible()
 		await page.getByRole('link', { name: 'View results' }).click()
 		await page.waitForURL('**/results')
 	}
@@ -110,7 +112,17 @@ test.describe('PairSight vertical slice', () => {
 
 		await tile(page, 'Vendor only').click()
 		await expect(page.getByText('2 pairs')).toBeVisible()
-		await page.locator('tbody tr a').first().click()
+
+		// From the keyboard: / jumps to search; ↓ then Enter opens the first pair.
+		await page.keyboard.press('/')
+		await expect(page.getByRole('searchbox', { name: 'Search references or names' })).toBeFocused()
+		await page.getByRole('heading', { level: 1 }).click()
+		// A short window scrolled down, so coming back has a position to restore.
+		await page.setViewportSize({ width: 1280, height: 480 })
+		await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+		await page.keyboard.press('ArrowDown')
+		await expect(page.locator('tbody tr a').first()).toBeFocused()
+		await page.keyboard.press('Enter')
 		await page.waitForURL('**/pairs/**')
 		await expect(
 			page.getByRole('heading', { name: /Vendor A: match · PairSight: no match/ })
@@ -119,9 +131,16 @@ test.describe('PairSight vertical slice', () => {
 		const firstPair = page.url()
 		await page.keyboard.press('j')
 		await expect(page).not.toHaveURL(firstPair)
-		await page.keyboard.press('Escape')
-		await page.waitForURL(/\/results\?/)
+		// The URL changes as the loading skeleton shows, and the pair can paint a
+		// moment before its key handler attaches; press until it's listening.
+		await expect(page.getByText('2 of 2')).toBeVisible()
+		await expect(async () => {
+			await page.keyboard.press('Escape')
+			await expect(page).toHaveURL(/\/results\?/, { timeout: 1_000 })
+		}).toPass({ timeout: 10_000 })
 		await expect(page).toHaveURL(/category=vendor_only/)
+		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+		await page.setViewportSize({ width: 1280, height: 720 })
 
 		// Filters that match nothing: the empty state says so and clears them.
 		await page.goto(`${page.url()}&q=no-such-record`)
@@ -144,7 +163,10 @@ test.describe('PairSight vertical slice', () => {
 		const callsBefore = await jevCalls(page, marker)
 		expect(callsBefore).toBeGreaterThan(0)
 
+		// The popover previews the change before anything is saved.
+		await page.getByRole('button', { name: /^Decision threshold/ }).click()
 		await page.getByLabel('Decision threshold').fill('0.40')
+		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*2 → 3/)
 		await page.getByRole('button', { name: 'Apply' }).click()
 		// The borderline Bob/Robert Chen pair (stub score 0.45) crosses the new threshold.
 		await expect(tile(page, 'PairSight only')).toContainText('3')
@@ -160,6 +182,16 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByRole('heading', { name: 'Run 2' })).toBeVisible()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+
+		// Results say which run they are, and switch to an earlier one.
+		await page.getByRole('link', { name: 'View results' }).click()
+		await page.waitForURL('**/results')
+		const main = page.locator('#main')
+		await expect(main.getByText('Complete', { exact: true })).toBeVisible()
+		await expect(main).toContainText('Run 2 ·')
+		await page.getByRole('button', { name: 'Choose a run' }).click()
+		await page.getByRole('menuitem', { name: /^Run 1 ·/ }).click()
+		await expect(main).toContainText(/Run 1 · .+ · threshold 0\.40/)
 	})
 
 	test('a failed pair stays incomplete — never a nonmatch — and a retry can judge it', async ({
@@ -176,8 +208,16 @@ test.describe('PairSight vertical slice', () => {
 		await expect(tile(page, 'Incomplete')).toContainText('2')
 		await expect(tile(page, 'Both matched')).toContainText('1')
 		await expect(tile(page, 'Vendor only')).toContainText('0')
-		await expect(page.getByText(/2 pairs aren’t judged yet or failed/)).toBeVisible()
+		await expect(page.getByText(/33% judged — 2 pairs are incomplete/)).toBeVisible()
 		await expect(page.getByText('Request rejected').first()).toBeVisible()
+
+		// The status filter keeps judged pairs only (and survives the empty "All" selects).
+		await page.getByLabel('Status', { exact: true }).selectOption('evaluated')
+		await page.getByRole('button', { name: 'Filters' }).click()
+		await expect(page).toHaveURL(/status=evaluated/)
+		await expect(page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })).toHaveText('1 pair')
+		await page.getByRole('link', { name: 'Clear filters' }).click()
+		await expect(page).not.toHaveURL(/status=/)
 
 		// Retrying one pair from its page: Jev judges it this time.
 		await tile(page, 'Incomplete').click()
@@ -364,6 +404,23 @@ test.describe('PairSight vertical slice', () => {
 		await page.goBack()
 		await page.waitForURL('**/rules')
 		await expect(nameRule).toBeChecked()
+	})
+
+	test('two vendors are compared side by side', async ({ page }) => {
+		await signUp(page)
+		await createEvaluation(page, 'Two vendors')
+		await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
+		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/demo-vendor-b.csv`)
+		await page.getByRole('checkbox').click()
+		await page.getByRole('button', { name: 'Add vendor' }).click()
+		await expect(page.getByText(/Added 3 pairs/)).toBeVisible()
+		await runEvaluation(page)
+
+		await expect(page.getByRole('heading', { name: 'Agreement by vendor' })).toBeVisible()
+		const byVendor = page.getByRole('table', { name: 'Agreement by vendor' })
+		await expect(byVendor.getByRole('rowheader')).toHaveText(['Vendor A', 'Vendor B'])
 	})
 
 	test('empty states: no evaluations yet, and later steps ask for records first', async ({
