@@ -12,7 +12,13 @@ export function TopBar({ crumbs, stages }: { crumbs: Crumb[]; stages?: PipelineS
 	const t = useTranslations('Shell')
 	const tSteps = useTranslations('Steps')
 	const pathname = usePathname()
-	const { isCollapsed, isMobileOpen, toggleSidebar } = useShell()
+	const { isCollapsed, isMobile, isMobileOpen, toggleSidebar } = useShell()
+	// The toggle reports whichever state it controls: the drawer on phones,
+	// the collapsed width on desktop.
+	const isExpanded = isMobile ? isMobileOpen : !isCollapsed
+	const toggleLabel = isMobile
+		? t(isMobileOpen ? 'closeNavigation' : 'openNavigation')
+		: t(isCollapsed ? 'expandSidebar' : 'collapseSidebar')
 	const stageKey = stages == null ? undefined : currentStageKey(stages, pathname)
 	const trail: Crumb[] = stageKey == null ? crumbs : [...crumbs, { label: tSteps(stageKey) }]
 
@@ -22,9 +28,9 @@ export function TopBar({ crumbs, stages }: { crumbs: Crumb[]; stages?: PipelineS
 				type="button"
 				onClick={toggleSidebar}
 				aria-controls="sidebar"
-				aria-expanded={!isCollapsed || isMobileOpen}
-				aria-label={isCollapsed ? t('expandSidebar') : t('collapseSidebar')}
-				title={`${isCollapsed ? t('expandSidebar') : t('collapseSidebar')}  [`}
+				aria-expanded={isExpanded}
+				aria-label={toggleLabel}
+				title={`${toggleLabel}  [`}
 				className="text-text-muted hover:bg-surface-hover hover:text-text focus-visible:outline-ring grid size-8 shrink-0 place-items-center rounded transition-colors focus-visible:outline-2"
 			>
 				<SidebarIcon size={18} className="shell-toggle-icon" />

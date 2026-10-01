@@ -1,12 +1,14 @@
 'use client'
 
-import { createContext, use, useEffect, useState } from 'react'
+import { createContext, use, useEffect, useState, useSyncExternalStore } from 'react'
 import { useTranslations } from 'next-intl'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { SIDEBAR_COOKIE } from './sidebar-cookie'
 
 type Shell = {
 	isCollapsed: boolean
+	// Below md the sidebar is a drawer, so the toggle opens it instead.
+	isMobile: boolean
 	isMobileOpen: boolean
 	toggleSidebar: () => void
 	closeMobile: () => void
@@ -23,6 +25,16 @@ export function useShell(): Shell {
 const ONE_YEAR_SECONDS = 60 * 60 * 24 * 365
 const TOOLTIP_DELAY_MS = 200
 const MOBILE_QUERY = '(max-width: 47.99rem)'
+
+function isMobileViewport(): boolean {
+	return window.matchMedia(MOBILE_QUERY).matches
+}
+
+function subscribeToViewport(onChange: () => void): () => void {
+	const query = window.matchMedia(MOBILE_QUERY)
+	query.addEventListener('change', onChange)
+	return () => query.removeEventListener('change', onChange)
+}
 
 function isTypingIn(target: EventTarget | null): boolean {
 	return (
@@ -48,6 +60,8 @@ export function ShellFrame({
 	const t = useTranslations('Shell')
 	const [isCollapsed, setIsCollapsed] = useState(initialCollapsed)
 	const [isMobileOpen, setIsMobileOpen] = useState(false)
+	// The server renders desktop, which is what CSS shows before hydration too.
+	const isMobile = useSyncExternalStore(subscribeToViewport, isMobileViewport, () => false)
 
 	// The sidebar width is remembered for the next visit (an external store).
 	useEffect(() => {
@@ -56,7 +70,7 @@ export function ShellFrame({
 
 	// On phones the same control opens the drawer instead of collapsing.
 	function toggleSidebar() {
-		if (window.matchMedia(MOBILE_QUERY).matches) setIsMobileOpen((open) => !open)
+		if (isMobile) setIsMobileOpen((open) => !open)
 		else setIsCollapsed((collapsed) => !collapsed)
 	}
 
@@ -66,7 +80,7 @@ export function ShellFrame({
 			if (event.key !== '[' || event.metaKey || event.ctrlKey || event.altKey) return
 			if (isTypingIn(event.target)) return
 			event.preventDefault()
-			if (window.matchMedia(MOBILE_QUERY).matches) setIsMobileOpen((open) => !open)
+			if (isMobileViewport()) setIsMobileOpen((open) => !open)
 			else setIsCollapsed((collapsed) => !collapsed)
 		}
 		window.addEventListener('keydown', onKeyDown)
@@ -75,6 +89,7 @@ export function ShellFrame({
 
 	const shell: Shell = {
 		isCollapsed,
+		isMobile,
 		isMobileOpen,
 		toggleSidebar,
 		closeMobile: () => setIsMobileOpen(false)

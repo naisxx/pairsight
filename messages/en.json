@@ -20,7 +20,8 @@
 		"breadcrumb": "Breadcrumb",
 		"collapseSidebar": "Collapse sidebar",
 		"expandSidebar": "Expand sidebar",
-		"closeNavigation": "Close navigation"
+		"closeNavigation": "Close navigation",
+		"openNavigation": "Open navigation"
 	},
 	"Theme": {
 		"label": "Theme",

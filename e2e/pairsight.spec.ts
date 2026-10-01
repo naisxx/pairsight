@@ -333,6 +333,19 @@ test.describe('PairSight vertical slice', () => {
 		await page.keyboard.press('[')
 		await expect(shell).toHaveAttribute('data-collapsed', 'false')
 		await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible()
+
+		// On phones the same toggle opens a drawer, and says so. (The scrim
+		// behind the drawer is also a "Close navigation" button.)
+		await page.setViewportSize({ width: 390, height: 844 })
+		const toggle = page.locator('button[aria-controls="sidebar"]')
+		await expect(toggle).toHaveAccessibleName('Open navigation')
+		await expect(toggle).toHaveAttribute('aria-expanded', 'false')
+		await toggle.click()
+		await expect(shell).toHaveAttribute('data-mobile-open', 'true')
+		await expect(toggle).toHaveAccessibleName('Close navigation')
+		await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+		await page.keyboard.press('Escape')
+		await expect(shell).toHaveAttribute('data-mobile-open', 'false')
 	})
 
 	test('an evaluation is invisible to another user', async ({ browser }) => {
