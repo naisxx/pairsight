@@ -8,14 +8,12 @@ import { Button } from '@/components/ui/button'
 import { CloseIcon, SearchIcon } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
-import { NativeSelect } from '@/components/ui/native-select'
+import { OptionSelect, type SelectOption } from '@/components/ui/select'
 import { SEARCH_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 
 const SEARCH_DEBOUNCE_MS = 200
 // Params a filter change keeps: where you are, not what you're filtering.
 const VIEW_PARAMS = ['tab', 'vendor', 'size', 'sort']
-
-type Option = { value: string; label: string }
 
 // The detailed view's filters (docs/PairSight-UX-Plan.md §4.1). They apply
 // as you change them — the URL holds them, the server filters — and the
@@ -86,27 +84,22 @@ export function PairFilters({
 	const select = (
 		param: string,
 		label: string,
-		options: Option[],
+		options: SelectOption[],
 		width: string,
 		fallback = ''
 	) => (
-		<NativeSelect
+		<OptionSelect
 			size="sm"
 			aria-label={label}
-			wrapperClassName={width}
+			className={width}
 			value={searchParams.get(param) ?? fallback}
-			onChange={(event) => update({ [param]: event.target.value })}
-		>
-			{options.map((option) => (
-				<option key={option.value} value={option.value}>
-					{option.label}
-				</option>
-			))}
-		</NativeSelect>
+			onValueChange={(value) => update({ [param]: value })}
+			options={options}
+		/>
 	)
 
 	const score = searchParams.get('score') ?? ''
-	const scoreOptions: Option[] = [
+	const scoreOptions: SelectOption[] = [
 		{ value: '', label: t('anyScore') },
 		{ value: 'below', label: t('belowThreshold') },
 		{ value: 'above', label: t('aboveThreshold') },
