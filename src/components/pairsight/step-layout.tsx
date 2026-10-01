@@ -1,7 +1,6 @@
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon } from '@/components/ui/icons'
-import { IconTile, type TileIcon } from '@/components/ui/icon-tile'
 import { cn } from '@/lib/cn'
 
 const BACK_ICON_SIZE = 15
@@ -86,33 +85,5 @@ export function ActionBar({
 				</div>
 			</div>
 		</div>
-	)
-}
-
-// A card section. Its icon sits in a tile beside the heading (DESIGN.md §5).
-export function Section({
-	title,
-	description,
-	icon,
-	children,
-	className
-}: {
-	title: string
-	description?: string
-	icon?: TileIcon
-	children: React.ReactNode
-	className?: string
-}) {
-	return (
-		<section className={cn('border-border bg-surface rounded-lg border p-5', className)}>
-			<div className="flex items-start gap-3">
-				{icon != null && <IconTile icon={icon} />}
-				<div className="flex min-w-0 flex-col">
-					<h2 className="text-text type-heading">{title}</h2>
-					{description != null && <p className="text-text-muted type-body mt-0.5">{description}</p>}
-				</div>
-			</div>
-			<div className="mt-4">{children}</div>
-		</section>
 	)
 }

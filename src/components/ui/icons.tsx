@@ -109,19 +109,15 @@ export type IconProps = {
 	className?: string
 	// How the glyph is drawn, in provider-neutral terms: `line` everywhere by
 	// default, `bold` for small marks that must read at 10–11px (checks,
-	// locks, ≠), `solid` for active and selected states, `duotone` for the
-	// large icons in empty states and tiles (its second layer takes
-	// `--icon-accent`, see globals.css). A provider without duotone can map
-	// it to `line`.
+	// locks, ≠), and `solid` for active and selected states.
 	variant?: IconVariant
 }
 
-export type IconVariant = 'line' | 'bold' | 'duotone' | 'solid'
+export type IconVariant = 'line' | 'bold' | 'solid'
 
 const PROVIDER_WEIGHT = {
 	line: 'regular',
 	bold: 'bold',
-	duotone: 'duotone',
 	solid: 'fill'
 } as const
 

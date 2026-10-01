@@ -18,11 +18,6 @@ export const buttonVariants = cva(
 				// Toolbar and icon actions that shouldn't compete with the content.
 				quiet: 'text-text-muted hover:bg-surface-hover hover:text-text disabled:opacity-50',
 				danger:
-					'border border-danger bg-surface text-danger hover:bg-danger-subtle disabled:opacity-50',
-				// Older names, kept until every screen is ported to the ones above.
-				outline:
-					'border border-border-input bg-surface text-text hover:bg-surface-hover disabled:border-border disabled:text-text-muted',
-				destructive:
 					'border border-danger bg-surface text-danger hover:bg-danger-subtle disabled:opacity-50'
 			},
 			size: {

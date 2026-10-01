@@ -26,7 +26,7 @@ export function RetryPairButton({
 	return (
 		<div className={compact == null ? 'flex flex-col items-start gap-2' : 'flex flex-col gap-1'}>
 			<Button
-				variant={compact == null ? 'outline' : 'ghost'}
+				variant={compact == null ? 'secondary' : 'ghost'}
 				size="sm"
 				aria-label={compact?.label}
 				className={compact == null ? undefined : 'h-7 px-2'}
