@@ -48,6 +48,9 @@ measured contrast for each is in the UX plan §6.
 | `--success` / `--warning` / `--danger` / `--info` (+ `-subtle`)                   | Status only, never decoration; always with an icon or label. Danger's hue is kept 25° from the brand               |
 | `--cat-both` / `--cat-pairsight` / `--cat-vendor` / `--cat-neither` (+ `-subtle`) | The four comparison categories. They mean **agreement, not correctness**, so they never use brand or status colors |
 | `--brand-deep` / `--brand-orange` / `--brand-amber`                               | Decorative brand only (wordmark, landing). Never status or data                                                    |
+| `--color-brand`                                                                   | The logo's coral, fixed in both themes. The mark only                                                              |
+| `--series-a` / `--series-b`                                                       | Chart series that aren't categories (metrics, vendors side by side)                                                |
+| `--shadow` (`shadow-elevated`)                                                    | Anything floating above the page: menus, popovers, tooltips, dialogs, toasts                                       |
 
 shadcn/ui's variable names (`--background`, `--primary`, `--muted`, …) are
 aliases of these in `globals.css`, so copied shadcn components work unmodified.
@@ -88,20 +91,22 @@ Components use the named roles in `globals.css`, never raw `text-sm` /
 `text-xs`, so a heading or a label looks the same on every screen. Colour
 stays a separate class (`text-text`, `text-text-muted`, …).
 
-| Role              | Spec                              | Use                                                                         |
-| ----------------- | --------------------------------- | --------------------------------------------------------------------------- |
-| `type-display`    | Poppins 36 / 44, 600 (48 on `sm`) | Landing hero only                                                           |
-| `type-title`      | Poppins 24 / 32, 600              | Page titles (`StepHeader`, the evaluations list)                            |
-| `type-heading`    | Poppins 16 / 24, 600              | Section and card titles, dialog titles, the pair verdict                    |
-| `type-subheading` | Poppins 14 / 20, 600              | Headings inside a card: rule names, panel titles, notice titles, tile names |
-| `type-body`       | Poppins 14 / 22, 400              | Prose, notices, table cells, inputs                                         |
-| `type-label`      | Poppins 14 / 20, 500              | Form labels, nav, tabs, record names, text links                            |
-| `type-meta`       | Poppins 12 / 18, 400              | Hints, captions, relative times, chips                                      |
-| `type-overline`   | Poppins 11 / 16, 600, uppercase   | Table column headers                                                        |
-| `type-metric`     | Poppins 28 / 36, 600              | The count on a category tile                                                |
-| `type-data`       | JetBrains Mono 13 / 20            | Raw record values, numbers in a column, the threshold input                 |
-| `type-data-sm`    | JetBrains Mono 12 / 18            | Record references, file names, CSV headers, rule keys and stats             |
-| `type-kbd`        | JetBrains Mono 11, key cap        | Keyboard shortcuts                                                          |
+| Role              | Spec                                   | Use                                                                         |
+| ----------------- | -------------------------------------- | --------------------------------------------------------------------------- |
+| `type-display`    | Poppins 36 / 44, 600 (48 on `sm`)      | Landing hero only                                                           |
+| `type-title`      | Poppins 22 / 30, 600 (24 / 32 on `md`) | Page titles (`StepHeader`, the evaluations list)                            |
+| `type-heading`    | Poppins 16 / 24, 600                   | Section and card titles, dialog titles, the pair verdict                    |
+| `type-subheading` | Poppins 14 / 20, 600                   | Headings inside a card: rule names, panel titles, notice titles, tile names |
+| `type-body`       | Poppins 14 / 22, 400                   | Prose, notices, table cells, inputs                                         |
+| `type-label`      | Poppins 14 / 20, 500                   | Form labels, nav, tabs, record names, text links                            |
+| `type-ui`         | Poppins 13 / 20, 400                   | Controls, navigation, menus, table text — a step under body copy            |
+| `type-meta`       | Poppins 12 / 18, 400                   | Hints, captions, relative times, chips                                      |
+| `type-caption`    | Poppins 11 / 16, 400                   | Sidebar captions, pipeline summaries, small chart labels                    |
+| `type-overline`   | Poppins 11 / 16, 600, uppercase        | Table column headers                                                        |
+| `type-metric`     | Poppins 28 / 36, 600                   | The count on a category tile                                                |
+| `type-data`       | JetBrains Mono 13 / 20                 | Raw record values, numbers in a column, the threshold input                 |
+| `type-data-sm`    | JetBrains Mono 12 / 18                 | Record references, file names, CSV headers, rule keys and stats             |
+| `type-kbd`        | JetBrains Mono 11, key cap             | Keyboard shortcuts                                                          |
 
 **Where the mono goes, and why:**
 

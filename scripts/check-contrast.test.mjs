@@ -71,6 +71,11 @@ const pairs = [
 		[c, 'surface', NON_TEXT],
 		[c, 'bg', NON_TEXT],
 		[c, `${c}-subtle`, TEXT]
+	]),
+	// Chart series are marks, drawn on the panel surface.
+	...['series-a', 'series-b'].flatMap((series) => [
+		[series, 'surface', NON_TEXT],
+		[series, 'surface-muted', NON_TEXT]
 	])
 ]
 

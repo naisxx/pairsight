@@ -4,8 +4,11 @@ import * as React from 'react'
 import { cn } from '@/lib/cn'
 import { Tooltip as TooltipPrimitive } from 'radix-ui'
 
+// Long enough that sweeping the pointer across a toolbar doesn't flash tips.
+export const TOOLTIP_DELAY_MS = 250
+
 function TooltipProvider({
-	delayDuration = 0,
+	delayDuration = TOOLTIP_DELAY_MS,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Provider>) {
 	return (
@@ -25,9 +28,11 @@ function TooltipTrigger({ ...props }: React.ComponentProps<typeof TooltipPrimiti
 	return <TooltipPrimitive.Trigger data-slot="tooltip-trigger" {...props} />
 }
 
+// A quiet card on the elevated surface, not an inverted bubble, and no arrow.
 function TooltipContent({
 	className,
-	sideOffset = 0,
+	sideOffset = 6,
+	collisionPadding = 8,
 	children,
 	...props
 }: React.ComponentProps<typeof TooltipPrimitive.Content>) {
@@ -36,17 +41,39 @@ function TooltipContent({
 			<TooltipPrimitive.Content
 				data-slot="tooltip-content"
 				sideOffset={sideOffset}
+				collisionPadding={collisionPadding}
 				className={cn(
-					'animate-in bg-foreground text-background fade-in-0 zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 type-meta z-50 w-fit origin-(--radix-tooltip-content-transform-origin) rounded-md px-3 py-1.5 text-balance',
+					'border-border bg-surface-elevated text-text shadow-elevated data-[state=delayed-open]:animate-float-in z-[60] max-w-[260px] rounded-sm border px-2.5 py-1.5 text-xs leading-snug',
 					className
 				)}
 				{...props}
 			>
 				{children}
-				<TooltipPrimitive.Arrow className="bg-foreground fill-foreground z-50 size-2.5 translate-y-[calc(-50%_-_2px)] rotate-45 rounded-[2px]" />
 			</TooltipPrimitive.Content>
 		</TooltipPrimitive.Portal>
 	)
 }
 
-export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
+// The everyday form: wrap one focusable element. `disabled` renders the child
+// alone, for tips that only apply in some states.
+function Tip({
+	content,
+	side = 'top',
+	disabled,
+	children
+}: {
+	content: React.ReactNode
+	side?: 'top' | 'right' | 'bottom' | 'left'
+	disabled?: boolean
+	children: React.ReactElement
+}) {
+	if (disabled) return children
+	return (
+		<Tooltip>
+			<TooltipTrigger asChild>{children}</TooltipTrigger>
+			<TooltipContent side={side}>{content}</TooltipContent>
+		</Tooltip>
+	)
+}
+
+export { Tip, Tooltip, TooltipTrigger, TooltipContent, TooltipProvider }
