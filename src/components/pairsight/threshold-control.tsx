@@ -37,10 +37,13 @@ function countAt(scores: JudgedScore[], threshold: number): Record<Category, num
 export function ThresholdControl({
 	runId,
 	threshold,
+	initialThreshold,
 	judged
 }: {
 	runId: string
 	threshold: number
+	// What the run started with; null for runs from before it was recorded.
+	initialThreshold: number | null
 	judged: JudgedScore[]
 }) {
 	const t = useTranslations('Results')
@@ -130,6 +133,18 @@ export function ThresholdControl({
 							/>
 						</div>
 					</div>
+					{initialThreshold != null && initialThreshold !== threshold && (
+						<p className="text-text-muted type-meta flex flex-wrap items-center gap-x-2">
+							{t('thresholdStartedAt', { threshold: initialThreshold.toFixed(2) })}
+							<button
+								type="button"
+								onClick={() => setText(initialThreshold.toFixed(2))}
+								className="text-accent-ink type-label focus-visible:outline-ring rounded hover:underline focus-visible:outline-2"
+							>
+								{t('thresholdUseInitial')}
+							</button>
+						</p>
+					)}
 					<div aria-live="polite" className="flex flex-col gap-1">
 						<p className="text-text type-label">
 							{t('previewTitle', { threshold: draft.toFixed(2) })}

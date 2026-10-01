@@ -42,6 +42,7 @@ export async function startRun({
 				orderBy: { number: 'desc' },
 				select: { number: true, threshold: true }
 			})
+			const threshold = last?.threshold ?? evaluation.threshold ?? DEFAULT_THRESHOLD
 			const run = await tx.run.create({
 				data: {
 					evaluationId,
@@ -55,7 +56,8 @@ export async function startRun({
 					exportIds: exports.map((vendorExport) => vendorExport.id),
 					judgmentKey: key,
 					jevModel: config.model,
-					threshold: last?.threshold ?? evaluation.threshold ?? DEFAULT_THRESHOLD,
+					threshold,
+					initialThreshold: threshold,
 					pairCount: comparison.length
 				},
 				select: { id: true }

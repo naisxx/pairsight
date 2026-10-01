@@ -151,6 +151,9 @@ model Run {
 	jevModel          String
 	// Editable after the run: changing it only re-decides from saved scores.
 	threshold         Float
+	// The threshold the run started with, kept when `threshold` changes. Null
+	// for runs started before it was recorded (their original is unknown).
+	initialThreshold  Float?
 	pairCount         Int
 	createdAt         DateTime      @default(now()) @db.Timestamptz(6)
 	completedAt       DateTime?     @db.Timestamptz(6)

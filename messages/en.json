@@ -334,7 +334,10 @@
 		"statusEvaluated": "Judged",
 		"statusIncomplete": "Incomplete",
 		"keyboardHint": "<key>↑</key> <key>↓</key> move between pairs · <key>Enter</key> open · <key>/</key> search",
-		"vendorChartTitle": "Agreement by vendor"
+		"vendorChartTitle": "Agreement by vendor",
+		"thresholdStartedAt": "Run started at {threshold}",
+		"thresholdUseInitial": "Use it again",
+		"retryPair": "Retry pair {a} and {b}"
 	},
 	"Pair": {
 		"back": "Back to results",
@@ -370,7 +373,8 @@
 		"keyboardHint": "<key>J</key> <key>K</key> next and previous · <key>Esc</key> back to results",
 		"retry": "Retry this pair",
 		"retrying": "Asking Jev again…",
-		"retryError": "Jev couldn’t judge it this time either. Try again in a moment."
+		"retryError": "Jev couldn’t judge it this time either. Try again in a moment.",
+		"retryShort": "Retry"
 	},
 	"Errors": {
 		"generic": "Something went wrong. Try again."
