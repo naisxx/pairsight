@@ -8,12 +8,14 @@ import {
 	TableHeader,
 	TableRow
 } from '@/components/ui/table'
+import { isPairsightMatch } from '@/server/pairsight/decisions'
 import type { ResultFilters, ResultRow } from '@/server/pairsight/results'
 import { CategoryBadge, ScoreBar, StatusChip } from '../result-parts'
 import { toQuery } from './query'
 
-// The current page of pairs. Incomplete rows show their status where a score
-// would be — never "no match". Each row links to its pair detail.
+// The current page of pairs, with the vendor's decision beside PairSight's.
+// Incomplete rows show their status where a score would be and "not judged"
+// as the decision — never "no match". Each row links to its pair detail.
 export function PairsTable({
 	base,
 	filters,
@@ -39,8 +41,10 @@ export function PairsTable({
 						<TableHead>{t('columnRecordA')}</TableHead>
 						<TableHead>{t('columnRecordB')}</TableHead>
 						<TableHead>{vendorName || t('columnVendor')}</TableHead>
+						<TableHead>{t('columnDecision')}</TableHead>
 						<TableHead>{t('columnScore')}</TableHead>
 						<TableHead>{t('columnSource')}</TableHead>
+						<TableHead>{t('columnFlags')}</TableHead>
 					</TableRow>
 				</TableHeader>
 				<TableBody>
@@ -64,22 +68,18 @@ export function PairsTable({
 								</TableCell>
 							))}
 							<TableCell className="type-body">
-								{row.isVendorMatch ? (
-									<span className="text-text font-medium">{t('matched')}</span>
+								<Decision isMatch={row.isVendorMatch} />
+							</TableCell>
+							<TableCell className="type-body">
+								{row.status === 'succeeded' && row.score != null ? (
+									<Decision isMatch={isPairsightMatch({ score: row.score, threshold })} />
 								) : (
-									<span className="text-text-muted">{t('notMatched')}</span>
+									<span className="text-text-muted">{t('notJudged')}</span>
 								)}
 							</TableCell>
 							<TableCell>
 								{row.status === 'succeeded' && row.score != null ? (
-									<span className="flex items-center gap-2">
-										<ScoreBar score={row.score} threshold={threshold} />
-										{row.isLowConfidence && (
-											<span className="text-warning type-meta whitespace-nowrap">
-												{t('lowConfidence')}
-											</span>
-										)}
-									</span>
+									<ScoreBar score={row.score} threshold={threshold} />
 								) : row.status !== 'succeeded' ? (
 									<StatusChip status={row.status} errorCode={row.errorCode} />
 								) : null}
@@ -91,10 +91,26 @@ export function PairsTable({
 											rules: row.ruleIds.map((ruleId) => ruleLabels[ruleId] ?? ruleId).join(', ')
 										})}
 							</TableCell>
+							<TableCell>
+								{row.isLowConfidence && (
+									<span className="text-warning type-meta whitespace-nowrap">
+										{t('lowConfidence')}
+									</span>
+								)}
+							</TableCell>
 						</TableRow>
 					))}
 				</TableBody>
 			</Table>
 		</div>
+	)
+}
+
+function Decision({ isMatch }: { isMatch: boolean }) {
+	const t = useTranslations('Results')
+	return isMatch ? (
+		<span className="text-text font-medium">{t('matched')}</span>
+	) : (
+		<span className="text-text-muted">{t('notMatched')}</span>
 	)
 }
