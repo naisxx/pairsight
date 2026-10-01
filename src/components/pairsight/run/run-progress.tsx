@@ -5,18 +5,26 @@ import { AlertIcon, SpinnerIcon, SuccessIcon } from '@/components/ui/icons'
 import { Progress } from '@/components/ui/progress'
 import type { RunProgress as RunProgressData } from '@/server/pairsight/runs'
 import { RunActions } from './run-actions'
+import { RunElapsed } from './run-elapsed'
 import { useRunLoop } from './use-run-loop'
 
 // The run screen: backend counts, the live status line, the stop banner and
 // the actions. The loop itself lives in useRunLoop.
+
+// Screen readers hear progress at each quarter, not on every batch.
+const MILESTONE_PERCENT = 25
 export function RunProgress({
 	runId,
 	resultsHref,
-	initial
+	initial,
+	startedAt,
+	completedAt
 }: {
 	runId: string
 	resultsHref: string
 	initial: RunProgressData
+	startedAt: Date
+	completedAt: Date | null
 }) {
 	const t = useTranslations('Run')
 	const tFailures = useTranslations('Failures')
@@ -26,6 +34,7 @@ export function RunProgress({
 	})
 	const done = progress.succeeded + progress.failed
 	const percent = progress.total === 0 ? 0 : Math.round((done / progress.total) * 100)
+	const milestone = Math.floor(percent / MILESTONE_PERCENT) * MILESTONE_PERCENT
 	const counts: Array<[string, number]> = [
 		[t('succeeded'), progress.succeeded],
 		[t('failed'), progress.failed],
@@ -41,6 +50,12 @@ export function RunProgress({
 					<p className="text-text-muted type-data">{percent}%</p>
 				</div>
 				<Progress value={percent} aria-label={t('progress', { done, total: progress.total })} />
+				<RunElapsed startedAt={startedAt} completedAt={completedAt} />
+				<p aria-live="polite" className="sr-only">
+					{progress.status === 'running' && milestone > 0 && milestone < 100
+						? t('milestone', { percent: milestone })
+						: ''}
+				</p>
 				<dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
 					{counts.map(([label, value]) => (
 						<div key={label} className="bg-surface-muted rounded px-3 py-2">

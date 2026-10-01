@@ -22,6 +22,8 @@ export default async function RunPage({
 				runId={run.id}
 				resultsHref={`/evaluations/${id}/runs/${run.id}/results`}
 				initial={progress}
+				startedAt={run.createdAt}
+				completedAt={run.completedAt}
 			/>
 		</>
 	)
