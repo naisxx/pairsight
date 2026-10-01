@@ -44,6 +44,13 @@ export function VendorForm({
 	const csvError = useCsvErrorMessage()
 	const list = useRowList()
 	const [name, setName] = useState(defaultName)
+	// After a save the page suggests the next name ("Vendor B"); take it up,
+	// or the next vendor would be saved under the previous one's name.
+	const [suggestedName, setSuggestedName] = useState(defaultName)
+	if (suggestedName !== defaultName) {
+		setSuggestedName(defaultName)
+		setName(defaultName)
+	}
 	const [loaded, setLoaded] = useState<Loaded | null>(null)
 	const [columnA, setColumnA] = useState('')
 	const [columnB, setColumnB] = useState('')
