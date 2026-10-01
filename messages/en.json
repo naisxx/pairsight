@@ -21,7 +21,8 @@
 		"collapseSidebar": "Collapse sidebar",
 		"expandSidebar": "Expand sidebar",
 		"closeNavigation": "Close navigation",
-		"openNavigation": "Open navigation"
+		"openNavigation": "Open navigation",
+		"loading": "Loading…"
 	},
 	"Theme": {
 		"label": "Theme",
@@ -247,7 +248,9 @@
 		"resume": "Resume run",
 		"errorUnknown": "The run couldn’t continue. Try again in a moment.",
 		"failuresTitle": "Why pairs failed",
-		"failureCount": "{count, plural, one {# pair} other {# pairs}}"
+		"failureCount": "{count, plural, one {# pair} other {# pairs}}",
+		"elapsed": "Elapsed",
+		"milestone": "{percent}% of pairs judged"
 	},
 	"Categories": {
 		"both_matched": "Both matched",
@@ -266,8 +269,8 @@
 		"runMeta": "Run {number} · {date} · threshold {threshold} · {model}",
 		"vendor": "Vendor",
 		"agreementNote": "Categories show agreement between the vendor and PairSight, not proven correctness.",
-		"coverage": "{total, plural, one {# pair} other {# pairs}} compared — {fromRules} from your rules, {addedByVendor} added only because a vendor matched them. Pairs outside your rules that no vendor matched weren’t evaluated, so missed duplicates among them can’t be seen.",
-		"incompleteBanner": "{count, plural, one {# pair isn’t} other {# pairs aren’t}} judged yet or failed. They’re excluded from the four categories.",
+		"coverage": "{total, plural, one {# pair} other {# pairs}} compared — {fromRules} from your rules, {addedByVendor} added only because a vendor matched them.",
+		"incompleteBanner": "{percent}% judged — {count, plural, one {# pair is} other {# pairs are}} incomplete and excluded from the four categories.",
 		"openRun": "Open run",
 		"thresholdLabel": "Decision threshold",
 		"thresholdHelp": "Pairs Jev scores at or above this count as a PairSight match. Changing it re-decides from saved scores — Jev isn’t called again.",
@@ -307,7 +310,31 @@
 		"noPairsHint": "Nothing was compared for this vendor in this run. Check the run’s progress, or start a new run from the plan.",
 		"columnDecision": "PairSight",
 		"columnFlags": "Flags",
-		"notJudged": "Not judged"
+		"notJudged": "Not judged",
+		"thresholdTrigger": "Decision threshold",
+		"thresholdSlider": "Threshold",
+		"distributionTitle": "How Jev scored the judged pairs",
+		"distributionSummary": "{above, plural, one {# pair scores} other {# pairs score}} at or above {threshold}, {below} below.",
+		"distributionRange": "Score range",
+		"distributionPairs": "Pairs",
+		"previewTitle": "At {threshold}",
+		"previewNoChange": "No pair changes category at this threshold.",
+		"coverageHowTitle": "How this works",
+		"coverageHowRules": "PairSight compares the pairs your blocking rules find, plus every pair a vendor matched even when your rules didn’t find it.",
+		"coverageHowBlindSpot": "Pairs outside your rules that no vendor matched weren’t evaluated, so duplicates that every vendor missed among them can’t be seen here.",
+		"runSwitcher": "Choose a run",
+		"runOption": "Run {number} · {date} · threshold {threshold}",
+		"runStatus": {
+			"running": "In progress",
+			"completed": "Complete",
+			"stopped": "Stopped"
+		},
+		"filterStatus": "Status",
+		"statusAll": "Any status",
+		"statusEvaluated": "Judged",
+		"statusIncomplete": "Incomplete",
+		"keyboardHint": "<key>↑</key> <key>↓</key> move between pairs · <key>Enter</key> open · <key>/</key> search",
+		"vendorChartTitle": "Agreement by vendor"
 	},
 	"Pair": {
 		"back": "Back to results",

@@ -33,7 +33,7 @@ export function PairsTable({
 }) {
 	const t = useTranslations('Results')
 	return (
-		<div className="border-border bg-surface overflow-x-auto rounded-lg border">
+		<div data-pairs-table className="border-border bg-surface overflow-x-auto rounded-lg border">
 			<Table>
 				<TableHeader className="bg-surface-muted sticky top-0">
 					<TableRow>
@@ -49,7 +49,10 @@ export function PairsTable({
 				</TableHeader>
 				<TableBody>
 					{rows.map((row) => (
-						<TableRow key={row.id} className="hover:bg-surface-hover relative h-10">
+						<TableRow
+							key={row.id}
+							className="hover:bg-surface-hover has-[a:focus-visible]:bg-selected relative h-10"
+						>
 							<TableCell>
 								<Link
 									href={{ pathname: `${base}/pairs/${row.id}`, query: toQuery(filters) }}

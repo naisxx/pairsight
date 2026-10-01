@@ -5,6 +5,10 @@ import { CategoryTiles } from '@/components/pairsight/results/category-tiles'
 import { CoverageNotice } from '@/components/pairsight/results/coverage-notice'
 import { Pagination } from '@/components/pairsight/results/pagination'
 import { PairsTable } from '@/components/pairsight/results/pairs-table'
+import { ResultsKeyboard } from '@/components/pairsight/results/results-keyboard'
+import { RunStatusChip } from '@/components/pairsight/results/run-status-chip'
+import { RunSwitcher } from '@/components/pairsight/results/run-switcher'
+import { VendorChart } from '@/components/pairsight/results/vendor-chart'
 import { hasActiveFilters } from '@/components/pairsight/results/query'
 import { ClearFiltersLink, ResultsFilters } from '@/components/pairsight/results/results-filters'
 import { VendorTabs } from '@/components/pairsight/results/vendor-tabs'
@@ -13,6 +17,7 @@ import { StepHeader } from '@/components/pairsight/step-layout'
 import { ThresholdControl } from '@/components/pairsight/threshold-control'
 import { getRunResults, parseResultFilters } from '@/server/pairsight/results'
 import { parseBlockingRules } from '@/server/pairsight/json'
+import { loadWorkspace } from '../../../workspace'
 import { loadRun } from '../run'
 
 export default async function ResultsPage({
@@ -24,8 +29,10 @@ export default async function ResultsPage({
 }) {
 	const [{ id, runId }, rawFilters] = await Promise.all([params, searchParams])
 	const base = `/evaluations/${id}/runs/${runId}`
-	const [{ user }, t, tRules, tRoles, format] = await Promise.all([
+	const [{ user }, { workspace }, t, tRules, tRoles, format] = await Promise.all([
 		loadRun({ id, runId, path: `${base}/results` }),
+		// Already loaded by the workspace layout this request; cached, not queried again.
+		loadWorkspace(id, `${base}/results`),
 		getTranslations('Results'),
 		getTranslations('Rules'),
 		getTranslations('Roles'),
@@ -46,7 +53,14 @@ export default async function ResultsPage({
 
 	return (
 		<>
+			<ResultsKeyboard />
 			<StepHeader title={t('title')} description={t('agreementNote')}>
+				<RunStatusChip status={run.status} />
+			</StepHeader>
+			<div className="-mt-3 mb-5 flex flex-wrap items-center gap-x-3 gap-y-2">
+				{workspace.runs.length > 1 && (
+					<RunSwitcher evaluationId={id} runId={run.id} runs={workspace.runs} />
+				)}
 				<span className="text-text-muted type-body">
 					{t('runMeta', {
 						number: run.number,
@@ -55,13 +69,14 @@ export default async function ResultsPage({
 						model: results.models.join(', ') || run.jevModel
 					})}
 				</span>
-			</StepHeader>
+			</div>
 			<VendorTabs base={base} vendors={results.vendors} vendorId={results.vendorId} />
 			<CategoryTiles base={base} filters={filters} counts={counts} evaluated={results.evaluated} />
+			{results.vendorCounts.length > 0 && <VendorChart vendors={results.vendorCounts} />}
 			<CoverageNotice runHref={base} coverage={results.coverage} incomplete={counts.incomplete} />
 			<div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 				<ResultsFilters base={base} filters={filters} />
-				<ThresholdControl runId={run.id} threshold={run.threshold} />
+				<ThresholdControl runId={run.id} threshold={run.threshold} judged={results.judged} />
 			</div>
 			<p className="text-text-muted type-body mt-4 mb-2" aria-live="polite">
 				{t('matching', { count: results.matching })}
@@ -97,6 +112,13 @@ export default async function ResultsPage({
 				/>
 			)}
 			<Pagination base={base} filters={filters} page={results.page} pageCount={results.pageCount} />
+			{results.rows.length > 0 && (
+				<p className="text-text-muted type-meta mt-3 flex flex-wrap items-center gap-1">
+					{t.rich('keyboardHint', {
+						key: (chunks) => <kbd className="type-kbd text-text">{chunks}</kbd>
+					})}
+				</p>
+			)}
 		</>
 	)
 }

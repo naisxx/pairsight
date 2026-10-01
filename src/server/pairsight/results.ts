@@ -107,6 +107,32 @@ export async function getRunResults({
 			addedByVendor: rows.filter((row) => row.ruleIds.length === 0).length
 		},
 		models: [...new Set(view.pairs.flatMap((pair) => pair.assessment.modelReported ?? []))],
+		// Every judged score for this vendor, so the threshold control can
+		// preview a new threshold without a round trip.
+		judged: rows.flatMap((row) =>
+			row.status === 'succeeded' && row.score != null
+				? [{ score: row.score, isVendorMatch: row.isVendorMatch }]
+				: []
+		),
+		// Each vendor's categories side by side; only worth showing with two or more.
+		vendorCounts:
+			view.vendors.length < 2
+				? []
+				: view.vendors.map((vendor) => ({
+						id: vendor.id,
+						name: vendor.name,
+						counts:
+							vendor.id === vendorId
+								? counts
+								: countCategories(
+										buildRows({
+											pairs: view.pairs,
+											records: view.recordsById,
+											threshold: view.run.threshold,
+											vendorId: vendor.id
+										})
+									)
+					})),
 		rows: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
 		matching: filtered.length,
 		page,

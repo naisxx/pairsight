@@ -367,7 +367,9 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
     to the new tokens. The existing toast system stays (not sonner).
 - **Add:** Select, Checkbox, Switch, Tabs, Table, Dialog, AlertDialog,
   DropdownMenu, Tooltip, Popover, Progress, Skeleton, Separator, Slider,
-  Breadcrumb, Alert, Collapsible, and Chart (Recharts).
+  Breadcrumb, Alert and Collapsible. (Chart via Recharts was planned; the
+  two charts below turned out simple enough to draw with plain elements, so
+  no chart library was added.)
 - **PairSight-specific components**, composed from the above:
   - `AppShell`, `StepperRail`, `ActionBar`
   - `Dropzone`, `ColumnRoleSelect`, `ValidationPanel`
@@ -375,7 +377,8 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
   - `CategoryTile`, `CategoryBadge`, `StatusChip`, `ScoreBar`
   - `CoverageStrip`, `ThresholdPopover`, `PairTable`, `FieldCompareTable`
   - `DemoBanner`, `ThemeMenu`
-- **Charts** (only where they answer a question; loaded lazily on Results):
+- **Charts** (only where they answer a question; drawn with plain elements,
+  no chart library — `score-histogram.tsx`, `vendor-chart.tsx`):
   1. **Score distribution** with the threshold line, in the threshold popover.
      It answers "how many pairs change if I move the threshold, and how many
      are borderline?"

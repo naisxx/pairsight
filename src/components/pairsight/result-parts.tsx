@@ -7,34 +7,41 @@ import type { ResultCategory } from '@/server/pairsight/results'
 // Category styling means agreement, never right or wrong (docs/PairSight-UX-Plan.md
 // §6): its own palette, never brand or status colors, and a shape as well as a
 // color so it survives grayscale and color-blindness.
-export const CATEGORY_STYLES: Record<ResultCategory, { badge: string; dot: string; tile: string }> =
-	{
-		pairsight_only: {
-			badge: 'bg-cat-pairsight-subtle text-cat-pairsight',
-			dot: 'bg-cat-pairsight rounded-full',
-			tile: 'border-cat-pairsight/50'
-		},
-		vendor_only: {
-			badge: 'bg-cat-vendor-subtle text-cat-vendor',
-			dot: 'bg-cat-vendor rotate-45 rounded-[1px]',
-			tile: 'border-cat-vendor/50'
-		},
-		both_matched: {
-			badge: 'bg-cat-both-subtle text-cat-both',
-			dot: 'bg-cat-both rounded-[1px]',
-			tile: 'border-border'
-		},
-		neither_matched: {
-			badge: 'bg-cat-neither-subtle text-cat-neither',
-			dot: 'border-cat-neither rounded-full border-[1.5px]',
-			tile: 'border-border'
-		},
-		incomplete: {
-			badge: 'border-border-input text-text-muted border border-dashed',
-			dot: 'border-text-muted rounded-full border-[1.5px] border-dashed',
-			tile: 'border-border border-dashed'
-		}
+export const CATEGORY_STYLES: Record<
+	ResultCategory,
+	{ badge: string; dot: string; tile: string; fill: string }
+> = {
+	pairsight_only: {
+		badge: 'bg-cat-pairsight-subtle text-cat-pairsight',
+		dot: 'bg-cat-pairsight rounded-full',
+		tile: 'border-cat-pairsight/50',
+		fill: 'bg-cat-pairsight'
+	},
+	vendor_only: {
+		badge: 'bg-cat-vendor-subtle text-cat-vendor',
+		dot: 'bg-cat-vendor rotate-45 rounded-[1px]',
+		tile: 'border-cat-vendor/50',
+		fill: 'bg-cat-vendor'
+	},
+	both_matched: {
+		badge: 'bg-cat-both-subtle text-cat-both',
+		dot: 'bg-cat-both rounded-[1px]',
+		tile: 'border-border',
+		fill: 'bg-cat-both'
+	},
+	neither_matched: {
+		badge: 'bg-cat-neither-subtle text-cat-neither',
+		dot: 'border-cat-neither rounded-full border-[1.5px]',
+		tile: 'border-border',
+		fill: 'bg-cat-neither'
+	},
+	incomplete: {
+		badge: 'border-border-input text-text-muted border border-dashed',
+		dot: 'border-text-muted rounded-full border-[1.5px] border-dashed',
+		tile: 'border-border border-dashed',
+		fill: 'bg-surface-muted'
 	}
+}
 
 export function CategoryDot({
 	category,
