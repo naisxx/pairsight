@@ -3,8 +3,9 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/cn'
 
 // Focus comes from the global :focus-visible ring (globals.css); a button
-// never draws its own.
-const buttonVariants = cva(
+// never draws its own. Exported for a non-button that must look like one
+// (the file dropzone's decorative "Browse files").
+export const buttonVariants = cva(
 	'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-sm font-medium select-none transition-[background-color,border-color,color,transform] duration-150 ease-out active:scale-[0.98] disabled:pointer-events-none disabled:active:scale-100',
 	{
 		variants: {

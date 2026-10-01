@@ -182,7 +182,8 @@ function OptionSelect({
 	size = 'default',
 	id,
 	className,
-	'aria-label': ariaLabel
+	'aria-label': ariaLabel,
+	'aria-invalid': ariaInvalid
 }: {
 	value: string
 	onValueChange: (value: string) => void
@@ -191,10 +192,17 @@ function OptionSelect({
 	id?: string
 	className?: string
 	'aria-label'?: string
+	'aria-invalid'?: boolean
 }) {
 	return (
 		<Select value={toPrimitive(value)} onValueChange={(next) => onValueChange(fromPrimitive(next))}>
-			<SelectTrigger id={id} size={size} aria-label={ariaLabel} className={className}>
+			<SelectTrigger
+				id={id}
+				size={size}
+				aria-label={ariaLabel}
+				aria-invalid={ariaInvalid}
+				className={className}
+			>
 				<SelectValue />
 			</SelectTrigger>
 			<SelectContent>

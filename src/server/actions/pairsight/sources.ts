@@ -4,8 +4,10 @@ import { z } from 'zod'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import {
+	checkColumns,
 	parseCsv,
 	validateSourceRecords,
+	type ColumnCheck,
 	type CsvParseError,
 	type ReferenceIssues
 } from '@/server/pairsight/csv'
@@ -18,14 +20,28 @@ import {
 	fileTextSchema,
 	idSchema,
 	previewCsv,
-	revalidateEvaluationPages
+	revalidateEvaluationPages,
+	type CsvPreview
 } from './shared'
+
+// Problem rows listed per column; the panel shows a few and counts the rest.
+const MAX_LISTED_ISSUES = 20
+
+export type SourcePreview =
+	| (Extract<CsvPreview, { ok: true }> & { columnChecks: Record<string, ColumnCheck> })
+	| Extract<CsvPreview, { ok: false }>
 
 export const previewSourceCsv = validatedAction({
 	input: z.object({ text: fileTextSchema }),
-	handler: async ({ text }) => {
+	handler: async ({ text }): Promise<SourcePreview> => {
 		await requireUser()
-		return previewCsv(text, LIMITS.maxSourceRecords)
+		const preview = previewCsv(text, LIMITS.maxSourceRecords)
+		if (!preview.ok) return preview
+		// Parsed a second time for the checks: the file is capped (LIMITS), and
+		// keeping previewCsv shared with vendors beats threading the table out.
+		const parsed = parseCsv(text, LIMITS.maxSourceRecords)
+		if (!parsed.ok) return parsed
+		return { ...preview, columnChecks: checkColumns(parsed.table, MAX_LISTED_ISSUES) }
 	}
 })
 

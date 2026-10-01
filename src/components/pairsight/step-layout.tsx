@@ -5,6 +5,9 @@ import { IconTile, type TileIcon } from '@/components/ui/icon-tile'
 import { cn } from '@/lib/cn'
 
 const BACK_ICON_SIZE = 15
+// The hint's id, so a blocked primary action can point at why
+// (aria-describedby). One action bar per page, so one id.
+export const ACTION_HINT_ID = 'action-bar-hint'
 
 // Every step: a title, one sentence of context, the content, then the action
 // bar with the stage's one primary action (docs/PairSight-UX-Plan.md §3–4).
@@ -70,7 +73,11 @@ export function ActionBar({
 					)}
 					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-3">
 						{hint != null && (
-							<p role="status" className="text-text-muted type-ui flex items-center gap-1.5">
+							<p
+								id={ACTION_HINT_ID}
+								role="status"
+								className="text-text-muted type-ui flex min-w-0 items-center gap-1.5"
+							>
 								{hint}
 							</p>
 						)}

@@ -2,13 +2,14 @@
 
 import { useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { CsvFileIcon, SpinnerIcon, UploadIcon } from '@/components/ui/icons'
+import { buttonVariants } from '@/components/ui/button'
+import { SpinnerIcon, UploadIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
-import { IconTile } from '@/components/ui/icon-tile'
+
+const ICON_SIZE = 22
 
 // A dropzone that is also a plain file input (keyboard and screen-reader
-// users get the native control). Accepts one CSV. Styled as the empty-state
-// block (DESIGN.md §5) sitting inside the dashed zone: the zone is the preview.
+// users get the native control). Accepts one CSV.
 export function FileDrop({
 	label,
 	hint,
@@ -40,21 +41,22 @@ export function FileDrop({
 				if (file != null) onFile(file)
 			}}
 			className={cn(
-				'border-border-input bg-surface-muted/60 hover:bg-surface-hover focus-within:outline-ring flex cursor-pointer flex-col items-start gap-2 rounded-xl border-2 border-dashed p-6 text-left transition-colors focus-within:outline-2 sm:p-8',
-				isOver && 'border-action bg-selected',
-				isBusy && 'pointer-events-none opacity-70'
+				'focus-within:outline-ring flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-12 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-2',
+				isOver ? 'border-action bg-surface-hover' : 'border-border-input bg-surface',
+				isBusy && 'pointer-events-none'
 			)}
 		>
-			<IconTile icon={isBusy ? SpinnerIcon : CsvFileIcon} size="lg" className="mb-1" />
-			<span className="text-text type-heading">{isBusy ? busyLabel : label}</span>
-			<span className="text-text-muted type-body max-w-[52ch]">{hint}</span>
+			<span className="bg-surface-muted text-text-muted flex size-11 items-center justify-center rounded-md">
+				{isBusy ? <SpinnerIcon size={ICON_SIZE} /> : <UploadIcon size={ICON_SIZE} />}
+			</span>
+			<span className="mt-3 text-sm font-semibold">{isBusy ? busyLabel : label}</span>
+			<span className="type-ui text-text-muted mt-1 max-w-sm">{hint}</span>
 			{!isBusy && (
 				// Decorative: the whole zone is the file input's label.
 				<span
 					aria-hidden
-					className="bg-action text-action-ink type-label mt-2 inline-flex h-9 items-center gap-2 rounded px-4"
+					className={cn(buttonVariants({ variant: 'secondary', size: 'sm' }), 'mt-4')}
 				>
-					<UploadIcon />
 					{t('choose')}
 				</span>
 			)}
