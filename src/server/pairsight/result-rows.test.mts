@@ -86,11 +86,30 @@ test('the list puts disagreements first and filters by category, source, confide
 	)
 })
 
+test('the status filter splits judged pairs from incomplete ones', () => {
+	assert.deepEqual(
+		applyFilters(rows, { status: 'evaluated' }).map((row) => row.id),
+		['p2', 'p3', 'p1']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { status: 'incomplete' }).map((row) => row.id),
+		['p4']
+	)
+})
+
+// Ignored filters come back as undefined keys; drop them to compare.
+const defined = (filters: object) =>
+	Object.fromEntries(Object.entries(filters).filter(([, value]) => value !== undefined))
+
 test('invalid URL filters are ignored, and an unknown vendor falls back to the first', () => {
-	assert.deepEqual(parseResultFilters({ category: 'nonsense' }), {})
-	assert.deepEqual(parseResultFilters({ category: 'vendor_only', page: '2' }), {
+	assert.deepEqual(defined(parseResultFilters({ category: 'nonsense' })), {})
+	assert.deepEqual(defined(parseResultFilters({ category: 'vendor_only', page: '2' })), {
 		category: 'vendor_only',
 		page: 2
+	})
+	// A GET form submits an "All" select as an empty value; the other filters survive it.
+	assert.deepEqual(defined(parseResultFilters({ q: 'jane', source: '', status: '' })), {
+		q: 'jane'
 	})
 	assert.equal(pickVendorId([{ id: 'v1' }, { id: 'v2' }], 'v2'), 'v2')
 	assert.equal(pickVendorId([{ id: 'v1' }, { id: 'v2' }], 'missing'), 'v1')

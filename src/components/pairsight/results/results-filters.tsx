@@ -24,6 +24,7 @@ export function ResultsFilters({ base, filters }: { base: string; filters: Resul
 				<Input
 					type="search"
 					name="q"
+					data-results-search
 					defaultValue={filters.q ?? ''}
 					maxLength={SEARCH_MAX_LENGTH}
 					placeholder={t('search')}
@@ -40,6 +41,16 @@ export function ResultsFilters({ base, filters }: { base: string; filters: Resul
 				<option value="">{t('sourceAll')}</option>
 				<option value="rules">{t('sourceRules')}</option>
 				<option value="vendor">{t('sourceVendor')}</option>
+			</select>
+			<select
+				name="status"
+				defaultValue={filters.status ?? ''}
+				aria-label={t('filterStatus')}
+				className="border-border-input bg-surface text-text type-body h-8 rounded border px-2"
+			>
+				<option value="">{t('statusAll')}</option>
+				<option value="evaluated">{t('statusEvaluated')}</option>
+				<option value="incomplete">{t('statusIncomplete')}</option>
 			</select>
 			<label className="text-text type-body flex items-center gap-2">
 				<input

@@ -15,15 +15,30 @@ export const resultFiltersSchema = z.object({
 	category: z.enum([...CATEGORIES, 'incomplete']).optional(),
 	source: z.enum(['rules', 'vendor']).optional(),
 	lowConfidence: z.literal('1').optional(),
+	// Judged pairs only, or only those not judged yet or failed.
+	status: z.enum(['evaluated', 'incomplete']).optional(),
 	q: z.string().trim().max(SEARCH_MAX_LENGTH).optional(),
 	page: z.coerce.number().int().min(1).optional()
 })
 
 export type ResultFilters = z.infer<typeof resultFiltersSchema>
 
-// Invalid URL params are ignored rather than erroring the page.
+// Each URL param is checked on its own: an invalid or empty one (a GET form
+// submits "All" selects as `source=`) is ignored without dropping the rest.
+const { shape } = resultFiltersSchema
+const lenientFiltersSchema = z.object({
+	vendor: shape.vendor.catch(undefined),
+	category: shape.category.catch(undefined),
+	source: shape.source.catch(undefined),
+	lowConfidence: shape.lowConfidence.catch(undefined),
+	status: shape.status.catch(undefined),
+	q: shape.q.catch(undefined),
+	page: shape.page.catch(undefined)
+	// Fails to compile if a filter is added above but not here.
+} satisfies Record<keyof ResultFilters, z.ZodType>)
+
 export function parseResultFilters(raw: unknown): ResultFilters {
-	const parsed = resultFiltersSchema.safeParse(raw)
+	const parsed = lenientFiltersSchema.safeParse(raw)
 	return parsed.success ? parsed.data : {}
 }
 
@@ -129,6 +144,10 @@ export function applyFilters(rows: ResultRow[], filters: ResultFilters): ResultR
 				(filters.source === 'rules' ? row.ruleIds.length > 0 : row.ruleIds.length === 0)
 		)
 		.filter((row) => filters.lowConfidence == null || row.isLowConfidence)
+		.filter(
+			(row) =>
+				filters.status == null || (filters.status === 'evaluated') === (row.status === 'succeeded')
+		)
 		.filter(
 			(row) =>
 				query == null ||
