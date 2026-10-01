@@ -49,17 +49,33 @@ new tokens when M1 implements them.
 
 ## 3. Navigation and hierarchy
 
-- **App shell:**
-  - A top bar with the PairSight wordmark, **Evaluations**, a theme menu
-    (Light / Dark / System) and an account menu.
-  - The demo shows a persistent banner instead of the account menu.
-- **Evaluation workspace** (`/evaluations/[id]`):
-  - **Desktop:** a left rail stepper, Records → Vendors → Rules → Plan → Run →
-    Results. Each step is marked not started, complete, needs attention (count),
-    or locked (with the reason on hover). Steps after an unresolved error are
-    locked.
-  - **Mobile:** the stepper becomes a step-select at the top.
-  - **Breadcrumb:** Evaluations / {name} / {step}.
+- **App shell** (adopted 2026-10-01, "workspace sidebar", chosen from three
+  layouts compared side by side; `src/components/pairsight/shell/`). Signed-in
+  pages share it; the landing and auth pages keep the plain top header.
+  - **Sidebar**, full height: wordmark, **Evaluations**, the current
+    evaluation's **pipeline**, then theme and account pinned to the bottom.
+    Only the middle scrolls.
+  - **Collapse** (desktop): 16.5rem ↔ 4.25rem with a 240 ms transition; labels
+    fade, the pipeline keeps its nodes and track, and icons get tooltips.
+    Toggled from the top bar or with `[`; remembered in a cookie so the first
+    paint is already the right width.
+  - **Phones** (below 48rem): the sidebar is a drawer over a scrim, opened by
+    the same toggle and closed by Esc, the scrim, or following a link.
+  - **Top bar** (56 px): the sidebar toggle and the breadcrumb, Evaluations /
+    {name} / {stage}.
+- **Evaluation pipeline** (replaces the step rail): Records → Vendors (Input)
+  → Rules → Plan (Configure) → Run (Execute) → Results (Review) on one
+  connected track.
+  - **Stage states:** done (filled coral + check), active (coral ring — the
+    next thing to do, or the run in progress, pulsing), next (hollow), locked
+    (dashed + lock, not a link).
+  - **Track:** solid coral through finished stages, flowing while a run is
+    going, dashed ahead.
+  - **Each stage shows its output** in the data font ("24 records",
+    "1 vendor · 4 pairs", "run 2 · 1,344 pairs").
+  - **Header:** stages done, the evaluation name, a one-line status (setup,
+    running, complete, stopped) and one segment per stage.
+  - The page you're on is marked separately from pipeline progress.
 - **One primary action per stage.** It sits in a sticky action bar at the
   bottom of the content column, with an optional secondary **Back** and a
   status hint ("2 errors to fix before continuing"). The primary button is

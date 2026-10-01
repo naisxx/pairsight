@@ -27,6 +27,7 @@ import {
 	CaretLeft,
 	CaretRight,
 	CaretUp,
+	CaretUpDown,
 	Check,
 	CheckCircle,
 	Circle,
@@ -51,7 +52,9 @@ import {
 	PencilSimple,
 	Play,
 	Plus,
+	SidebarSimple,
 	SignOut,
+	SquaresFour,
 	Sun,
 	Trash,
 	UploadSimple,
@@ -113,6 +116,7 @@ export const ChevronDownIcon = (props: IconProps) => <Glyph source={CaretDown} {
 export const ChevronLeftIcon = (props: IconProps) => <Glyph source={CaretLeft} {...props} />
 export const ChevronRightIcon = (props: IconProps) => <Glyph source={CaretRight} {...props} />
 export const ChevronUpIcon = (props: IconProps) => <Glyph source={CaretUp} {...props} />
+export const ChevronsUpDownIcon = (props: IconProps) => <Glyph source={CaretUpDown} {...props} />
 export const CloseIcon = (props: IconProps) => <Glyph source={X} {...props} />
 export const DotIcon = (props: IconProps) => <Glyph source={Circle} {...props} />
 export const CopyIcon = (props: IconProps) => <Glyph source={Copy} {...props} />
@@ -129,6 +133,8 @@ export const PlusIcon = (props: IconProps) => <Glyph source={Plus} {...props} />
 export const SearchIcon = (props: IconProps) => <Glyph source={MagnifyingGlass} {...props} />
 export const SettingsIcon = (props: IconProps) => <Glyph source={Gear} {...props} />
 export const SignOutIcon = (props: IconProps) => <Glyph source={SignOut} {...props} />
+export const SidebarIcon = (props: IconProps) => <Glyph source={SidebarSimple} {...props} />
+export const GridIcon = (props: IconProps) => <Glyph source={SquaresFour} {...props} />
 export const SuccessIcon = (props: IconProps) => <Glyph source={CheckCircle} {...props} />
 export const TrashIcon = (props: IconProps) => <Glyph source={Trash} {...props} />
 export const ArrowLeftIcon = (props: IconProps) => <Glyph source={ArrowLeft} {...props} />

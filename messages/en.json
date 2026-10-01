@@ -15,7 +15,12 @@
 		"signOut": "Sign out",
 		"account": "Account",
 		"mainNavigation": "Main",
-		"skipToContent": "Skip to content"
+		"skipToContent": "Skip to content",
+		"sections": "Sections",
+		"breadcrumb": "Breadcrumb",
+		"collapseSidebar": "Collapse sidebar",
+		"expandSidebar": "Expand sidebar",
+		"closeNavigation": "Close navigation"
 	},
 	"Theme": {
 		"label": "Theme",
@@ -64,11 +69,7 @@
 		"rules": "Rules",
 		"plan": "Plan",
 		"run": "Run",
-		"results": "Results",
-		"complete": "Complete",
-		"notStarted": "Not started",
-		"locked": "Complete the earlier steps first",
-		"setup": "Setup steps"
+		"results": "Results"
 	},
 	"Records": {
 		"title": "Source records",
@@ -341,5 +342,34 @@
 		"description": "Your changes to the identity definition, Jev fields or blocking rules haven’t been saved. If you leave now, they’ll be lost.",
 		"leave": "Leave without saving",
 		"stay": "Stay on this page"
+	},
+	"Pipeline": {
+		"label": "Pipeline",
+		"count": "{done} / {total}",
+		"phase": {
+			"input": "Input",
+			"configure": "Configure",
+			"execute": "Execute",
+			"review": "Review"
+		},
+		"records": "{count, plural, one {# record} other {# records}}",
+		"recordsEmpty": "upload a CSV",
+		"vendors": "{count, plural, one {# vendor} other {# vendors}} · {pairs, plural, one {# pair} other {# pairs}}",
+		"vendorsEmpty": "add vendor matches",
+		"rules": "{count, plural, =0 {no rules on} one {# rule on} other {# rules on}}",
+		"plan": "{pairs, plural, one {# pair} other {# pairs}}",
+		"planReady": "review and start",
+		"runNone": "not started",
+		"runRunning": "run {number} · running",
+		"runStopped": "run {number} · stopped",
+		"runDone": "run {number} · {pairs, plural, one {# pair} other {# pairs}}",
+		"resultsNone": "after the run",
+		"resultsPending": "run {number} in progress",
+		"resultsReady": "run {number}",
+		"locked": "after earlier stages",
+		"statusSetup": "Setup · {done} of {total} stages",
+		"statusRunning": "Run {number} running",
+		"statusStopped": "Run {number} stopped",
+		"statusComplete": "Run {number} complete"
 	}
 }

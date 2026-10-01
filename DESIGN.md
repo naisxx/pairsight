@@ -120,7 +120,40 @@ stays a separate class (`text-text`, `text-text-muted`, …).
 
 Never use the mono for headings, buttons, category names or prose.
 
-## 5. Accessibility baseline
+## 5. Layout and spacing
+
+Signed-in pages use the app shell (`src/components/pairsight/shell/`); the UX
+plan §3 describes its behaviour. Spacing follows one system so every screen
+lines up:
+
+| Thing                   | Value                                      |
+| ----------------------- | ------------------------------------------ |
+| Grid                    | Tailwind's 4 px scale                      |
+| Top bar, sidebar header | 56 px (`h-14`)                             |
+| Page padding            | 32 px (`px-8`), 16 px on phones; 28 px top |
+| Between sections        | 24 px (`gap-6`)                            |
+| Inside a card           | 20 px (`p-5`)                              |
+| Controls, nav items     | 36 px tall (`h-9`)                         |
+| Table rows              | 48 px                                      |
+| Sidebar                 | 16.5rem expanded, 4.25rem collapsed        |
+
+- **Content fills the width the shell leaves it,** so collapsing the sidebar
+  widens tables instead of leaving a gap; only very wide screens cap it
+  (110rem) and centre it.
+- **Everything in the sidebar sits on one centre line** in both widths (icons,
+  pipeline nodes, the avatar), so collapsing never shifts them.
+- **The action bar** docks to the bottom of the page column, edge to edge: it
+  rests at the bottom of a short page and stays in view on a long one. A page
+  column is a flex column, so buttons and links placed directly in it need
+  `self-start` to keep their natural width.
+- **Grids that change column count** always declare a shrinkable column at
+  every size (`grid-cols-[minmax(0,1fr)]`), or a wide table widens the page
+  instead of scrolling.
+- **Scrollbars** are slim and themed (globals.css). Chromium ignores
+  `::-webkit-scrollbar` once `scrollbar-color` is set, so the standard
+  properties apply only in Firefox.
+
+## 6. Accessibility baseline
 
 - Text-on-`--bg`/`--surface` must hit at least WCAG AA contrast (4.5:1 for
   body text, 3:1 for large text). Check this when you change a token value,

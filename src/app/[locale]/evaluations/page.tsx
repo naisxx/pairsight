@@ -1,6 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
-import { AppHeader } from '@/components/pairsight/app-header'
+import { AppShell } from '@/components/pairsight/shell/app-shell'
 import { CreateEvaluationForm } from '@/components/pairsight/create-evaluation-form'
 import { Card, CardContent } from '@/components/ui/card'
 import { ChevronRightIcon } from '@/components/ui/icons'
@@ -9,15 +9,15 @@ import { listEvaluations } from '@/server/pairsight/evaluations'
 
 export default async function EvaluationsPage() {
 	const user = await requireUserOrRedirect('/evaluations')
-	const [t, format, evaluations] = await Promise.all([
+	const [t, tShell, format, evaluations] = await Promise.all([
 		getTranslations('Evaluations'),
+		getTranslations('Shell'),
 		getFormatter(),
 		listEvaluations(user.id)
 	])
 	return (
-		<>
-			<AppHeader />
-			<main id="main" className="mx-auto flex max-w-5xl flex-col gap-8 px-4 py-10 sm:px-6">
+		<AppShell email={user.email} crumbs={[{ label: tShell('evaluations') }]}>
+			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-1">
 					<h1 className="text-text type-title">{t('title')}</h1>
 					<p className="text-text-muted type-body">{t('description')}</p>
@@ -61,7 +61,7 @@ export default async function EvaluationsPage() {
 						})}
 					</ul>
 				)}
-			</main>
-		</>
+			</div>
+		</AppShell>
 	)
 }
