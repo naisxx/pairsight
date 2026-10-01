@@ -3,27 +3,14 @@
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { Chip, type ChipTone } from '@/components/ui/chip'
 import { ChevronRightIcon, MenuIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
-import {
-	currentStageKey,
-	type Crumb,
-	type EvaluationStatus,
-	type PipelineData
-} from './pipeline-types'
+import { currentStageKey, type Crumb, type PipelineData } from './pipeline-types'
 import { useShell } from './shell-frame'
+import { EvaluationStatusChip } from './status-chip'
 
 const MENU_ICON_SIZE = 18
 const CRUMB_SEPARATOR_SIZE = 11
-
-const STATUS_TONE: Record<EvaluationStatus, ChipTone> = {
-	draft: 'neutral',
-	readyToRun: 'info',
-	running: 'info',
-	needsAttention: 'danger',
-	complete: 'success'
-}
 
 // The bar above the page: the phone menu button, where you are, and the
 // evaluation's status. On an evaluation the last crumbs are the stage the
@@ -32,7 +19,6 @@ const STATUS_TONE: Record<EvaluationStatus, ChipTone> = {
 export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: PipelineData }) {
 	const t = useTranslations('Shell')
 	const tSteps = useTranslations('Steps')
-	const tPipeline = useTranslations('Pipeline')
 	const pathname = usePathname()
 	const { openMobile } = useShell()
 	const stage =
@@ -101,7 +87,7 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 			</nav>
 			{pipeline != null && (
 				<div className="ml-auto hidden sm:block">
-					<Chip tone={STATUS_TONE[pipeline.status]}>{tPipeline(`status.${pipeline.status}`)}</Chip>
+					<EvaluationStatusChip status={pipeline.status} />
 				</div>
 			)}
 		</header>

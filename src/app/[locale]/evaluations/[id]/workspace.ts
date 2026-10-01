@@ -2,13 +2,15 @@ import 'server-only'
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { isUuid } from '@/server/pairsight/schemas'
-import type {
-	PipelineData,
-	PipelineStage,
-	EvaluationStatus,
-	StageKey,
-	StageState
-} from '@/components/pairsight/shell/pipeline-types'
+import type { PipelineData, PipelineStage } from '@/components/pairsight/shell/pipeline-types'
+import {
+	evaluationStatus,
+	stageHref,
+	stageStates,
+	type StageAccess,
+	type StageInput,
+	type StageKey
+} from '@/lib/pairsight/stages'
 import { AppError } from '@/lib/errors/app-error'
 import { requireUserOrRedirect } from '@/server/auth/session'
 import { parseBlockingRules } from '@/server/pairsight/json'
@@ -23,7 +25,7 @@ type Workspace = Awaited<ReturnType<typeof getWorkspace>>
 export type Step = {
 	key: StageKey
 	href: string
-	state: 'complete' | 'available' | 'locked'
+	state: StageAccess
 	alsoMatches?: string[]
 }
 
@@ -38,45 +40,32 @@ export async function loadWorkspace(id: string, path: string) {
 	}
 }
 
+function stageInput(workspace: Workspace): StageInput {
+	const latestRun = workspace.runs[0]
+	return {
+		hasRecords: workspace.dataset != null,
+		hasVendors: workspace.vendorExports.length > 0,
+		latestRun: latestRun == null ? null : { id: latestRun.id, status: latestRun.status }
+	}
+}
+
 export function workspaceSteps(id: string, workspace: Workspace): Step[] {
 	const base = `/evaluations/${id}`
-	const hasRecords = workspace.dataset != null
-	const hasVendors = workspace.vendorExports.length > 0
-	const latestRun = workspace.runs[0]
-	return [
-		{ key: 'records', href: `${base}/records`, state: hasRecords ? 'complete' : 'available' },
-		{
-			key: 'vendors',
-			href: `${base}/vendors`,
-			state: !hasRecords ? 'locked' : hasVendors ? 'complete' : 'available'
-		},
-		{
-			key: 'rules',
-			href: `${base}/rules`,
-			state: !hasRecords ? 'locked' : hasVendors ? 'complete' : 'available'
-		},
-		{
-			key: 'plan',
-			href: `${base}/plan`,
-			state: hasRecords && hasVendors ? (latestRun ? 'complete' : 'available') : 'locked'
-		},
-		{
-			key: 'run',
-			href: latestRun == null ? `${base}/run` : `${base}/runs/${latestRun.id}`,
-			alsoMatches: workspace.runs.map((run) => `${base}/runs/${run.id}`),
-			state:
-				latestRun == null ? 'locked' : latestRun.status === 'completed' ? 'complete' : 'available'
-		},
-		{
-			key: 'results',
-			href: latestRun == null ? `${base}/results` : `${base}/runs/${latestRun.id}/results`,
-			state: latestRun == null ? 'locked' : 'available',
-			alsoMatches: workspace.runs.flatMap((run) => [
-				`${base}/runs/${run.id}/results`,
-				`${base}/runs/${run.id}/pairs`
-			])
-		}
-	]
+	const latestRunId = workspace.runs[0]?.id ?? null
+	// Every run's pages belong to Run, and its results and pairs to Results.
+	const alsoMatches: Partial<Record<StageKey, string[]>> = {
+		run: workspace.runs.map((run) => `${base}/runs/${run.id}`),
+		results: workspace.runs.flatMap((run) => [
+			`${base}/runs/${run.id}/results`,
+			`${base}/runs/${run.id}/pairs`
+		])
+	}
+	return stageStates(stageInput(workspace)).map((stage) => ({
+		key: stage.key,
+		href: stageHref(id, stage.key, latestRunId),
+		state: stage.access,
+		alsoMatches: alsoMatches[stage.key]
+	}))
 }
 
 // The pipeline: each stage's state and what it has produced so far, plus a
@@ -85,16 +74,9 @@ export function workspaceSteps(id: string, workspace: Workspace): Step[] {
 export async function workspacePipeline(id: string, workspace: Workspace): Promise<PipelineData> {
 	const t = await getTranslations('Pipeline')
 	const latestRun = workspace.runs[0]
-	const isRunning = latestRun?.status === 'running'
+	const input = stageInput(workspace)
 	const steps = workspaceSteps(id, workspace)
-	// Results are "available" as soon as a run exists, but only done once it
-	// has completed.
-	const isDone = (step: Step) =>
-		step.state === 'complete' || (step.key === 'results' && latestRun?.status === 'completed')
-	// The first reachable stage that isn't finished is where the work is.
-	const activeKey = isRunning
-		? 'run'
-		: steps.find((step) => step.state === 'available' && !isDone(step))?.key
+	const states = new Map(stageStates(input).map((stage) => [stage.key, stage.state]))
 
 	const vendorPairs = workspace.vendorExports.reduce((sum, vendor) => sum + vendor.pairCount, 0)
 	const rulesOn = parseBlockingRules(workspace.evaluation.blockingRules).length
@@ -135,37 +117,16 @@ export async function workspacePipeline(id: string, workspace: Workspace): Promi
 		results: t('lockedNeedsRun')
 	}
 
-	const stages: PipelineStage[] = steps.map((step) => {
-		const state: StageState =
-			step.state === 'locked'
-				? 'locked'
-				: isDone(step) && !(step.key === 'run' && isRunning)
-					? 'done'
-					: step.key === activeKey
-						? 'active'
-						: 'next'
-		return {
-			key: step.key,
-			href: step.href,
-			alsoMatches: step.alsoMatches,
-			state,
-			isRunning: step.key === 'run' && isRunning,
-			detail: step.state === 'locked' ? t('locked') : details[step.key],
-			reason: step.state === 'locked' ? lockedReasons[step.key] : undefined
-		}
-	})
-
-	const isPlanReachable = steps.some((step) => step.key === 'plan' && step.state !== 'locked')
-	const status: EvaluationStatus =
-		latestRun == null
-			? isPlanReachable
-				? 'readyToRun'
-				: 'draft'
-			: latestRun.status === 'running'
-				? 'running'
-				: latestRun.status === 'stopped'
-					? 'needsAttention'
-					: 'complete'
+	const stages: PipelineStage[] = steps.map((step) => ({
+		key: step.key,
+		href: step.href,
+		alsoMatches: step.alsoMatches,
+		state: states.get(step.key) ?? 'locked',
+		isRunning: step.key === 'run' && latestRun?.status === 'running',
+		detail: step.state === 'locked' ? t('locked') : details[step.key],
+		reason: step.state === 'locked' ? lockedReasons[step.key] : undefined
+	}))
+	const status = evaluationStatus(input)
 
 	return { evaluationName: workspace.evaluation.name, stages, status }
 }
