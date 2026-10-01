@@ -39,9 +39,11 @@ export async function assess({
 }) {
 	const request = buildJevRequest({ recordA, recordB, config })
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+		// Each attempt renews the claim, so a slow pair is never mistaken for an
+		// abandoned one (run-engine.ts, STALE_CLAIM_MS).
 		await db.assessment.update({
 			where: { id: assessmentId },
-			data: { attempts: { increment: 1 } }
+			data: { attempts: { increment: 1 }, claimedAt: new Date() }
 		})
 		try {
 			const body = await requestDecision(
