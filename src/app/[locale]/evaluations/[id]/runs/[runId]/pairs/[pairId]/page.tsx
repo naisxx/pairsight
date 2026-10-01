@@ -88,6 +88,8 @@ export default async function PairPage({
 				</div>
 				<aside className="flex flex-col gap-4">
 					<JevPanel
+						runId={run.id}
+						pairId={pairId}
 						status={assessment.status}
 						score={assessment.score}
 						errorCode={assessment.errorCode}

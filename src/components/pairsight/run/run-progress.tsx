@@ -19,6 +19,7 @@ export function RunProgress({
 	initial: RunProgressData
 }) {
 	const t = useTranslations('Run')
+	const tFailures = useTranslations('Failures')
 	const { progress, hasTransientError, retryFailed, resume, isActing } = useRunLoop({
 		runId,
 		initial
@@ -48,6 +49,22 @@ export function RunProgress({
 						</div>
 					))}
 				</dl>
+				{progress.failures.length > 0 && (
+					<div className="border-border border-t pt-4">
+						<h2 className="text-text type-subheading mb-2">{t('failuresTitle')}</h2>
+						<ul className="flex flex-col gap-1.5">
+							{progress.failures.map(({ reason, count }) => (
+								<li key={reason} className="type-body flex items-center justify-between gap-4">
+									<span className="text-text flex items-center gap-2">
+										<AlertIcon className="text-danger shrink-0" />
+										{tFailures(reason)}
+									</span>
+									<span className="text-text-muted type-data">{t('failureCount', { count })}</span>
+								</li>
+							))}
+						</ul>
+					</div>
+				)}
 			</div>
 
 			<div aria-live="polite">

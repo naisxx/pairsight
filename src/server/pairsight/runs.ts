@@ -1,5 +1,6 @@
 import 'server-only'
 import { AppError } from '@/lib/errors/app-error'
+import { failureReason, type FailureReason } from '@/lib/pairsight/failure-reasons'
 import { db } from '@/server/db/client'
 
 // Run lookup, progress, and the mutations after a run starts (retry, resume,
@@ -29,14 +30,21 @@ export type RunProgress = {
 	running: number
 	succeeded: number
 	failed: number
+	// Failed pairs grouped by why, most common first.
+	failures: Array<{ reason: FailureReason; count: number }>
 }
 
 export async function getRunProgress(runId: string): Promise<RunProgress> {
-	const [run, groups] = await Promise.all([
+	const [run, groups, failedCodes] = await Promise.all([
 		db.run.findUniqueOrThrow({ where: { id: runId }, select: { status: true, stopReason: true } }),
 		db.assessment.groupBy({
 			by: ['status'],
 			where: { runPairs: { some: { runId } } },
+			_count: { _all: true }
+		}),
+		db.assessment.groupBy({
+			by: ['errorCode'],
+			where: { status: 'failed', runPairs: { some: { runId } } },
 			_count: { _all: true }
 		})
 	])
@@ -50,9 +58,17 @@ export async function getRunProgress(runId: string): Promise<RunProgress> {
 		succeeded: count('succeeded'),
 		failed: count('failed')
 	}
+	const byReason = new Map<FailureReason, number>()
+	for (const group of failedCodes) {
+		const reason = failureReason(group.errorCode)
+		byReason.set(reason, (byReason.get(reason) ?? 0) + group._count._all)
+	}
 	return {
 		...progress,
-		total: progress.pending + progress.running + progress.succeeded + progress.failed
+		total: progress.pending + progress.running + progress.succeeded + progress.failed,
+		failures: [...byReason]
+			.map(([reason, count]) => ({ reason, count }))
+			.sort((a, b) => b.count - a.count)
 	}
 }
 
@@ -70,7 +86,8 @@ export async function retryFailed({ ownerId, runId }: { ownerId: string; runId: 
 	])
 }
 
-// After a configuration stop (for example, the key was added or fixed).
+// After a configuration stop (the key was added or fixed), or when a later
+// run put some of this one's failed pairs back in the queue.
 export async function resumeRun({ ownerId, runId }: { ownerId: string; runId: string }) {
 	await getOwnedRun({ ownerId, runId })
 	await db.run.update({ where: { id: runId }, data: { status: 'running', stopReason: null } })

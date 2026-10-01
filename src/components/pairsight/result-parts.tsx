@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { AlertIcon, SpinnerIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
+import { failureReason } from '@/lib/pairsight/failure-reasons'
 import type { ResultCategory } from '@/server/pairsight/results'
 
 // Category styling means agreement, never right or wrong (docs/PairSight-UX-Plan.md
@@ -73,12 +74,14 @@ export function StatusChip({
 	errorCode?: string | null
 }) {
 	const t = useTranslations('Results')
+	const tFailures = useTranslations('Failures')
 	return (
 		<span
 			className={cn(
 				'type-meta inline-flex items-center gap-1 rounded px-1.5 py-0.5 font-medium whitespace-nowrap',
 				status === 'failed' ? 'bg-danger-subtle text-danger' : 'bg-surface-muted text-text-muted'
 			)}
+			// The raw code stays available for whoever is debugging.
 			title={errorCode ?? undefined}
 		>
 			{status === 'failed' ? (
@@ -87,8 +90,8 @@ export function StatusChip({
 				<SpinnerIcon size={12} />
 			) : null}
 			{t(status)}
-			{status === 'failed' && errorCode != null && (
-				<span className="type-data-sm opacity-80">· {errorCode}</span>
+			{status === 'failed' && (
+				<span className="opacity-80">· {tFailures(failureReason(errorCode))}</span>
 			)}
 		</span>
 	)

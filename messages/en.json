@@ -245,7 +245,9 @@
 		"missing_key": "TypeSafe’s API key isn’t configured. Add TYPESAFE_API_KEY to .env.local, restart the server, then resume.",
 		"invalid_key": "TypeSafe rejected the API key. Check TYPESAFE_API_KEY in .env.local, restart the server, then resume.",
 		"resume": "Resume run",
-		"errorUnknown": "The run couldn’t continue. Try again in a moment."
+		"errorUnknown": "The run couldn’t continue. Try again in a moment.",
+		"failuresTitle": "Why pairs failed",
+		"failureCount": "{count, plural, one {# pair} other {# pairs}}"
 	},
 	"Categories": {
 		"both_matched": "Both matched",
@@ -302,7 +304,10 @@
 		"openPair": "Open pair {a} and {b}",
 		"noResultsHint": "Try another category, or clear the search and filters to see every pair in this run.",
 		"noPairs": "This run has no pairs",
-		"noPairsHint": "Nothing was compared for this vendor in this run. Check the run’s progress, or start a new run from the plan."
+		"noPairsHint": "Nothing was compared for this vendor in this run. Check the run’s progress, or start a new run from the plan.",
+		"columnDecision": "PairSight",
+		"columnFlags": "Flags",
+		"notJudged": "Not judged"
 	},
 	"Pair": {
 		"back": "Back to results",
@@ -330,12 +335,15 @@
 		"model": "Model {model} · judged {date}",
 		"aiNote": "AI judgment — it can be wrong.",
 		"pendingJudgment": "Jev hasn’t judged this pair yet.",
-		"failedJudgment": "Jev couldn’t judge this pair ({reason}). It’s excluded from the categories.",
+		"failedJudgment": "Jev couldn’t judge this pair ({reason}). It’s excluded from the categories until it’s judged.",
 		"originTitle": "How this pair got here",
 		"originRules": "Found by rules: {rules}",
 		"originVendor": "Added because {vendors} matched it (outside your rules)",
 		"vendorsTitle": "Vendor decisions",
-		"keyboardHint": "<key>J</key> <key>K</key> next and previous · <key>Esc</key> back to results"
+		"keyboardHint": "<key>J</key> <key>K</key> next and previous · <key>Esc</key> back to results",
+		"retry": "Retry this pair",
+		"retrying": "Asking Jev again…",
+		"retryError": "Jev couldn’t judge it this time either. Try again in a moment."
 	},
 	"Errors": {
 		"generic": "Something went wrong. Try again."
@@ -382,5 +390,14 @@
 		"needRecordsTitle": "Upload the source records first",
 		"needRecordsDescription": "Vendor matches and blocking rules are checked against your records, so they come first.",
 		"goToRecords": "Go to records"
+	},
+	"Failures": {
+		"rejected": "Request rejected",
+		"rate_limited": "Rate limited",
+		"unavailable": "Service unavailable",
+		"timeout": "Timed out",
+		"network": "Connection failed",
+		"invalid_response": "No usable score",
+		"unknown": "Unexpected error"
 	}
 }

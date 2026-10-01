@@ -1,11 +1,15 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { AlertIcon, InfoIcon } from '@/components/ui/icons'
+import { failureReason } from '@/lib/pairsight/failure-reasons'
 import type { AssessmentStatus } from '@/server/pairsight/decisions'
 import { ScoreBar, StatusChip } from '../result-parts'
+import { RetryPairButton } from './retry-pair-button'
 
 // Jev's judgment of this pair — or, when there isn't one yet or it failed,
 // that state explicitly (never a "no match").
 export function JevPanel({
+	runId,
+	pairId,
 	status,
 	score,
 	errorCode,
@@ -15,6 +19,8 @@ export function JevPanel({
 	threshold,
 	decision
 }: {
+	runId: string
+	pairId: string
 	status: AssessmentStatus
 	score: number | null
 	errorCode: string | null
@@ -25,6 +31,7 @@ export function JevPanel({
 	decision: string
 }) {
 	const t = useTranslations('Pair')
+	const tFailures = useTranslations('Failures')
 	const format = useFormatter()
 	return (
 		<section className="border-border bg-surface rounded-lg border p-4">
@@ -55,8 +62,9 @@ export function JevPanel({
 					<StatusChip status="failed" errorCode={errorCode} />
 					<p className="text-text type-body flex items-start gap-1.5">
 						<AlertIcon className="text-danger mt-0.5 shrink-0" />
-						{t('failedJudgment', { reason: errorCode ?? 'unknown' })}
+						{t('failedJudgment', { reason: tFailures(failureReason(errorCode)) })}
 					</p>
+					<RetryPairButton runId={runId} pairId={pairId} />
 				</div>
 			) : (
 				<div className="flex flex-col gap-2">
