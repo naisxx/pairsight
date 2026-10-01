@@ -14,6 +14,7 @@ import {
 import { MonitorIcon, MoonIcon, SunIcon } from '@/components/ui/icons'
 
 const THEMES = ['light', 'dark', 'system'] as const
+const ICON_SIZE = 17
 
 // The trigger shows both glyphs and lets CSS pick, so the server render and
 // the first client render agree before next-themes knows the preference.
@@ -23,14 +24,9 @@ export function ThemeMenu() {
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button
-					variant="ghost"
-					size="sm"
-					aria-label={t('label')}
-					className="w-9 bg-transparent px-0"
-				>
-					<SunIcon size={18} className="dark:hidden" />
-					<MoonIcon size={18} className="hidden dark:block" />
+				<Button variant="quiet" size="icon" aria-label={t('label')}>
+					<SunIcon size={ICON_SIZE} className="dark:hidden" />
+					<MoonIcon size={ICON_SIZE} className="hidden dark:block" />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="w-40">

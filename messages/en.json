@@ -1,13 +1,29 @@
 {
 	"HomePage": {
-		"title": "PairSight",
-		"tagline": "A second look at every match.",
-		"description": "Compare entity-resolution vendors on your own customer records. PairSight asks Jev to judge each candidate pair, then shows where each vendor agrees or disagrees.",
-		"stepUpload": "Upload your records and each vendor’s matches",
-		"stepRules": "Choose which pairs are worth checking",
-		"stepCompare": "See where vendors and PairSight disagree",
-		"startEvaluation": "Start evaluation",
-		"tryDemo": "Try the demo"
+		"home": "PairSight home",
+		"accountNav": "Account",
+		"signIn": "Sign in",
+		"start": "Start evaluation",
+		"heroTitle": "Check whether your matching tool merged the wrong people — or missed the right ones.",
+		"heroBody": "PairSight compares a vendor’s matching decisions with careful pair-by-pair assessments, so you can see each vendor’s precision and recall tradeoff and inspect every disagreement.",
+		"heroNote": "Use fictional or anonymized records for now.",
+		"howTitle": "How it works",
+		"step1Title": "Bring your data",
+		"step1Body": "Upload the original customer records and each vendor’s matching export, in pair or group format.",
+		"step2Title": "Decide what counts as a match",
+		"step2Body": "Describe when two records are the same individual, and choose which records are worth comparing.",
+		"step3Title": "Compare decisions",
+		"step3Body": "Jev assesses every candidate pair. PairSight lines its judgments up against each vendor’s decisions.",
+		"limitsTitle": "Honest about what it measures",
+		"limitsBody": "Results are a way to find and inspect problems, not a certificate of accuracy.",
+		"limit1Title": "AI-estimated, not verified",
+		"limit1Body": "Precision and recall compare vendors with Jev’s judgments. Jev can be wrong — inspect any pair and use your own judgment.",
+		"limit2Title": "Only the pairs you compare",
+		"limit2Body": "Pairs outside your rules that no vendor matched aren’t assessed, so duplicates among them stay unseen.",
+		"limit3Title": "No winner picked for you",
+		"limit3Body": "One vendor may merge more carefully while another finds more duplicates. You decide which tradeoff fits.",
+		"ctaTitle": "Run your first evaluation on your own records.",
+		"footer": "Fictional or anonymized data only"
 	},
 	"Shell": {
 		"evaluations": "Evaluations",
@@ -37,13 +53,20 @@
 		"change": "Theme: {current}. Change theme"
 	},
 	"Auth": {
+		"home": "PairSight home",
 		"signInTitle": "Sign in to PairSight",
-		"signInDescription": "Your evaluations are saved to your account.",
+		"signInDescription": "Pick up your evaluations where you left them.",
 		"signUpTitle": "Create your account",
-		"signUpDescription": "Save evaluations and come back to them later.",
+		"signUpDescription": "Evaluate your first vendor in about ten minutes.",
 		"email": "Email",
 		"password": "Password",
 		"passwordHint": "At least 8 characters.",
+		"emailRequired": "Enter your email address",
+		"emailInvalid": "Enter a valid email, like name@company.com",
+		"passwordRequired": "Enter a password",
+		"passwordShort": "Use at least {min} characters",
+		"showPassword": "Show password",
+		"hidePassword": "Hide password",
 		"signIn": "Sign in",
 		"signUp": "Create account",
 		"signingIn": "Signing in…",
@@ -52,7 +75,6 @@
 		"haveAccount": "Already have an account?",
 		"toSignUp": "Create an account",
 		"toSignIn": "Sign in",
-		"invalidInput": "Enter a valid email and a password of at least {min} characters.",
 		"checkEmail": "Check your email to confirm your account, then sign in."
 	},
 	"Evaluations": {
@@ -728,7 +750,6 @@
 		"unknown": "Unexpected error"
 	},
 	"Welcome": {
-		"home": "PairSight home",
 		"title": "Welcome to PairSight",
 		"description": "One thing before you start: what should we call you?",
 		"nameLabel": "Full name",
@@ -926,5 +947,12 @@
 		"city": "Town or city",
 		"postcode": "Postal code",
 		"country": "Country name or code"
+	},
+	"NotFound": {
+		"title": "Page not found",
+		"description": "The link may be out of date.",
+		"home": "Home",
+		"signIn": "Sign in",
+		"evaluations": "Evaluations"
 	}
 }

@@ -19,7 +19,7 @@ test.describe('PairSight vertical slice', () => {
 		const email = `e2e+${Date.now()}-${Math.random().toString(36).slice(2, 8)}@pairsight.test`
 		await page.goto('/sign-up')
 		await page.getByLabel('Email').fill(email)
-		await page.getByLabel('Password').fill(PASSWORD)
+		await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
 		await page.getByRole('button', { name: 'Create account' }).click()
 		// Onboarding asks for a full name before the app opens.
 		await page.waitForURL('**/welcome**')
@@ -659,7 +659,7 @@ test.describe('PairSight vertical slice', () => {
 		}
 		await page.goto('/no-such-page')
 		await expect(page.getByText('Page not found')).toBeVisible()
-		await page.getByRole('link', { name: 'Back to evaluations' }).click()
+		await page.getByRole('link', { name: 'Evaluations', exact: true }).click()
 		await page.waitForURL((url) => url.pathname === '/evaluations')
 	})
 
@@ -710,10 +710,33 @@ test.describe('PairSight vertical slice', () => {
 		await expect(shell).toHaveAttribute('data-mobile-open', 'false')
 	})
 
+	test('sign-in checks each field once submitted, and can show the password', async ({ page }) => {
+		await page.goto('/sign-in')
+		const email = page.getByLabel('Email')
+		const password = page.getByLabel('Password', { exact: true })
+		// Leaving a field empty isn't an error until the form is submitted.
+		await email.focus()
+		await password.focus()
+		await expect(page.getByText('Enter your email address')).toHaveCount(0)
+
+		await page.getByRole('button', { name: 'Sign in', exact: true }).click()
+		await expect(page.getByText('Enter your email address')).toBeVisible()
+		await expect(page.getByText('Enter a password')).toBeVisible()
+		await email.fill('not-an-email')
+		await expect(page.getByText('Enter a valid email, like name@company.com')).toBeVisible()
+
+		await password.fill('secret-words')
+		await expect(password).toHaveAttribute('type', 'password')
+		await page.getByRole('button', { name: 'Show password' }).click()
+		await expect(password).toHaveAttribute('type', 'text')
+		await page.getByRole('button', { name: 'Hide password' }).click()
+		await expect(password).toHaveAttribute('type', 'password')
+	})
+
 	test('onboarding asks for a full name first, then the account shows it', async ({ page }) => {
 		await page.goto('/sign-up')
 		await page.getByLabel('Email').fill(`e2e+${Date.now()}-name@pairsight.test`)
-		await page.getByLabel('Password').fill(PASSWORD)
+		await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
 		await page.getByRole('button', { name: 'Create account' }).click()
 		await page.waitForURL('**/welcome**')
 

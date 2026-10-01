@@ -1,6 +1,6 @@
 import { getLocale, getTranslations } from 'next-intl/server'
-import { Link, redirect } from '@/i18n/routing'
-import { Wordmark } from '@/components/pairsight/wordmark'
+import { redirect } from '@/i18n/routing'
+import { AuthShell } from '@/components/pairsight/auth-shell'
 import { WelcomeForm } from '@/components/pairsight/welcome-form'
 import { safeNext } from '@/lib/auth/safe-next'
 import { getProfileName, getSessionUser } from '@/server/auth/session'
@@ -27,22 +27,11 @@ export default async function WelcomePage({
 	}
 
 	return (
-		<div className="bg-bg text-text flex min-h-dvh flex-col">
-			<header className="flex h-16 items-center px-5 md:px-8">
-				<Link href="/evaluations" aria-label={t('home')} className="rounded-sm">
-					<Wordmark />
-				</Link>
-			</header>
-			<main id="main" className="flex flex-1 items-start justify-center px-5 pt-8 pb-16 md:pt-16">
-				<div className="w-full max-w-[400px]">
-					<h1 className="text-2xl font-semibold tracking-[-0.01em]">{t('title')}</h1>
-					<p className="text-text-muted mt-1.5 text-sm">{t('description')}</p>
-					<WelcomeForm next={next} />
-					<p className="text-text-muted type-ui mt-5 text-center">
-						{t('signedInAs', { email: user.email })}
-					</p>
-				</div>
-			</main>
-		</div>
+		<AuthShell title={t('title')} description={t('description')} homeHref="/evaluations">
+			<WelcomeForm next={next} />
+			<p className="text-text-muted type-ui mt-5 text-center">
+				{t('signedInAs', { email: user.email })}
+			</p>
+		</AuthShell>
 	)
 }
