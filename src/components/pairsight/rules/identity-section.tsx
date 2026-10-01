@@ -1,68 +1,129 @@
 'use client'
 
-import { IdentityIcon } from '@/components/ui/icons'
-import { useId } from 'react'
 import { useTranslations } from 'next-intl'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ShieldIcon } from '@/components/ui/icons'
+import { OptionSelect, type SelectOption } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { Section } from '../step-layout'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
+import type { IdentityRole } from '@/server/pairsight/fields'
 
-// What counts as the same individual (sent to Jev as its yes/no criteria),
-// and the country used to read local phone numbers.
+const NOTE_ICON_SIZE = 15
+
+// What counts as the same individual (Jev's yes/no criteria), the country
+// that frames names, addresses and phone numbers, and the mapped fields Jev
+// is sent. Nothing else about the records reaches Jev.
 export function IdentitySection({
 	same,
 	different,
 	country,
-	onSameChange,
-	onDifferentChange,
-	onCountryChange
+	countries,
+	mappedRoles,
+	jevFields,
+	onChange
 }: {
 	same: string
 	different: string
 	country: string
-	onSameChange: (value: string) => void
-	onDifferentChange: (value: string) => void
-	onCountryChange: (value: string) => void
+	countries: SelectOption[]
+	mappedRoles: IdentityRole[]
+	jevFields: ReadonlySet<IdentityRole>
+	onChange: (
+		patch: Partial<{ same: string; different: string; country: string }> & {
+			field?: { role: IdentityRole; isOn: boolean }
+		}
+	) => void
 }) {
 	const t = useTranslations('Rules')
-	const id = useId()
+	const tRoles = useTranslations('Roles')
+	const isSameEmpty = same.trim() === ''
+	const isDifferentEmpty = different.trim() === ''
+	const tooFewFields = jevFields.size < MIN_JEV_FIELDS
 	return (
-		<Section title={t('identityTitle')} icon={IdentityIcon}>
-			<div className="grid gap-4 lg:grid-cols-2">
-				<div className="flex flex-col gap-1.5">
-					<Label htmlFor={`${id}-same`}>{t('identitySame')}</Label>
+		<section
+			aria-labelledby="identity-title"
+			className="border-border bg-surface rounded-md border"
+		>
+			<header className="px-5 pt-4 pb-2">
+				<p className="text-accent-ink text-xs font-medium">{t('identityEyebrow')}</p>
+				<h2 id="identity-title" className="mt-0.5 text-base font-semibold">
+					{t('identityTitle')}
+				</h2>
+				<p className="type-ui text-text-muted mt-1">{t('identityDescription')}</p>
+			</header>
+			<div className="grid gap-4 px-5 pt-2 pb-5 md:grid-cols-2">
+				<div>
+					<label htmlFor="identity-same" className="type-ui font-medium">
+						{t('identitySame')}
+					</label>
 					<Textarea
-						id={`${id}-same`}
+						id="identity-same"
+						className="mt-1.5 min-h-[104px]"
 						value={same}
-						onChange={(event) => onSameChange(event.target.value)}
-						rows={4}
+						aria-invalid={isSameEmpty}
+						aria-describedby={isSameEmpty ? 'identity-same-error' : undefined}
+						onChange={(event) => onChange({ same: event.target.value })}
 					/>
+					{isSameEmpty && (
+						<p id="identity-same-error" className="text-danger mt-1 text-xs">
+							{t('sameRequired')}
+						</p>
+					)}
 				</div>
-				<div className="flex flex-col gap-1.5">
-					<Label htmlFor={`${id}-different`}>{t('identityDifferent')}</Label>
+				<div>
+					<label htmlFor="identity-different" className="type-ui font-medium">
+						{t('identityDifferent')}
+					</label>
 					<Textarea
-						id={`${id}-different`}
+						id="identity-different"
+						className="mt-1.5 min-h-[104px]"
 						value={different}
-						onChange={(event) => onDifferentChange(event.target.value)}
-						rows={4}
+						aria-invalid={isDifferentEmpty}
+						aria-describedby={isDifferentEmpty ? 'identity-different-error' : undefined}
+						onChange={(event) => onChange({ different: event.target.value })}
+					/>
+					{isDifferentEmpty && (
+						<p id="identity-different-error" className="text-danger mt-1 text-xs">
+							{t('differentRequired')}
+						</p>
+					)}
+				</div>
+				<div>
+					<label htmlFor="identity-country" className="type-ui font-medium">
+						{t('country')}
+					</label>
+					<p className="text-text-muted text-xs">{t('countryHint')}</p>
+					<OptionSelect
+						id="identity-country"
+						className="mt-1.5"
+						value={country}
+						options={countries}
+						onValueChange={(value) => onChange({ country: value })}
 					/>
 				</div>
+				<fieldset>
+					<legend className="type-ui font-medium">{t('jevFieldsLegend')}</legend>
+					<p className="text-text-muted text-xs">{t('jevFieldsHint')}</p>
+					<div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+						{mappedRoles.map((role) => (
+							<label key={role} className="type-ui flex items-center gap-2">
+								<Checkbox
+									checked={jevFields.has(role)}
+									onCheckedChange={(checked) =>
+										onChange({ field: { role, isOn: checked === true } })
+									}
+								/>
+								{tRoles(role)}
+							</label>
+						))}
+					</div>
+					{tooFewFields && <p className="text-danger mt-2 text-xs">{t('jevFieldsMin')}</p>}
+				</fieldset>
 			</div>
-			<div className="mt-4 flex max-w-xs flex-col gap-1.5">
-				<Label htmlFor={`${id}-country`}>{t('country')}</Label>
-				<Input
-					id={`${id}-country`}
-					value={country}
-					onChange={(event) => onCountryChange(event.target.value.toUpperCase().slice(0, 2))}
-					maxLength={2}
-					className="type-data w-20 uppercase"
-					aria-describedby={`${id}-country-hint`}
-				/>
-				<p id={`${id}-country-hint`} className="text-text-muted type-meta">
-					{t('countryHint')}
-				</p>
-			</div>
-		</Section>
+			<p className="border-border text-text-muted flex items-center gap-2 border-t px-5 py-3 text-xs">
+				<ShieldIcon size={NOTE_ICON_SIZE} className="shrink-0" />
+				{t('neverSent')}
+			</p>
+		</section>
 	)
 }

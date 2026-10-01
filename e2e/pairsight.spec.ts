@@ -87,11 +87,17 @@ test.describe('PairSight vertical slice', () => {
 		)
 	}
 
+	// Rules save themselves; the plan opens once they have.
+	async function reviewPlan(page: Page) {
+		await expect(page.getByText('All changes saved')).toBeVisible()
+		await page.getByRole('link', { name: 'Review comparison plan' }).click()
+		await page.waitForURL('**/plan')
+	}
+
 	async function runEvaluation(page: Page) {
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
+		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
@@ -122,8 +128,7 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'demo-vendor-a.csv')
 		await expectVendorPairs(page, 4)
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
+		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 
@@ -195,8 +200,7 @@ test.describe('PairSight vertical slice', () => {
 		await expectVendorPairs(page, 4)
 
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
+		await reviewPlan(page)
 		const plan = page.locator('dl')
 		await expect(plan).toContainText('Unique pairs to compare8')
 		await expect(plan).toContainText('Added only because a vendor matched them2')
@@ -401,8 +405,7 @@ test.describe('PairSight vertical slice', () => {
 
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
+		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
 		const stopped = page.getByRole('alert').filter({ hasText: 'The run stopped' })
@@ -478,8 +481,13 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
 		await expect(page.getByText('This rule alone creates 5,460 pairs').first()).toBeVisible()
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
+		// The live summary and the action bar say it before the plan does.
+		await expect(
+			page.getByText('460 pairs over the limit. Turn off or tighten a rule.')
+		).toBeVisible()
+		await expect(page.getByText('Reduce pairs to 5,000 or fewer (now 5,460)')).toBeVisible()
+		await expect(page.getByRole('link', { name: 'Review comparison plan' })).toHaveCount(0)
+		await page.goto(page.url().replace(/\/rules$/, '/plan'))
 		await expect(page.getByText('This plan has 5,460 pairs; one run allows 5,000.')).toBeVisible()
 		await expect(
 			page.getByText('Same name and postcode: 5,460 pairs (largest group: 105 records)')
@@ -488,123 +496,95 @@ test.describe('PairSight vertical slice', () => {
 
 		await page.getByRole('link', { name: 'Turn off or narrow a rule' }).click()
 		await page.waitForURL('**/rules')
-		await page.getByRole('switch', { name: 'Same name and postcode' }).click()
-		await page.getByText('Add a custom rule').click()
-		await page.getByRole('combobox', { name: 'Field 1' }).click()
-		await page.getByRole('option', { name: 'Email' }).click()
+		await page.getByRole('switch', { name: 'Same name and postcode rule' }).click()
+		await page.getByRole('button', { name: 'Add composite rule' }).click()
+		const fields = page.getByRole('group', { name: 'Fields in this rule' })
+		await fields.getByRole('button', { name: 'Email' }).click()
 		await expect(page.getByText('A rule with these fields already exists.')).toBeVisible()
-		await page.getByRole('combobox', { name: 'Field 2' }).click()
-		await page.getByRole('option', { name: 'Postcode' }).click()
-		await expect(page.getByRole('button', { name: 'Add rule' })).toBeEnabled()
-		await page.getByRole('button', { name: 'Add rule' }).click()
-		await expect(page.getByText('Email + Postcode')).toBeVisible()
+		await fields.getByRole('button', { name: 'Postcode' }).click()
+		await expect(page.getByRole('button', { name: 'Save rule' })).toBeEnabled()
+		await page.getByRole('button', { name: 'Save rule' }).click()
+		await expect(page.getByRole('button', { name: 'Edit Email + Postcode' })).toBeVisible()
 
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
+		await reviewPlan(page)
 		await expect(page.locator('dl')).toContainText('Unique pairs to compare1')
 		await expect(page.getByRole('button', { name: 'Start evaluation' })).toBeEnabled()
 
-		// The custom rule was saved with the rest of the configuration.
+		// The composite rule was saved with the rest of the configuration.
 		await page.goto(page.url().replace(/\/plan$/, '/rules'))
-		await expect(page.getByText('Email + Postcode')).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Edit Email + Postcode' })).toBeVisible()
 	})
 
-	test('an unsaved country change is flagged, and saving recounts the presets in place', async ({
-		page
-	}) => {
+	test('changing the country saves itself and recounts the phone rule', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Country change')
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
-		const phoneCard = page.locator('li').filter({ hasText: 'Same phone' })
-		const before = await phoneCard.innerText()
-		await expect(page.getByText(/Unsaved change/)).toHaveCount(0)
+		const phoneRule = page.locator('li').filter({ hasText: 'Same phone' })
+		const before = await phoneRule.innerText()
 
-		await page.getByLabel('Country for phone numbers').fill('GB')
-		await expect(
-			page.getByText(/Unsaved change: the counts below still read phone numbers as US/)
-		).toBeVisible()
-		await page.getByLabel('Country for phone numbers').fill('us')
-		await expect(page.getByText(/Unsaved change/)).toHaveCount(0)
-
-		await page.getByLabel('Country for phone numbers').fill('GB')
-		await page.getByRole('button', { name: 'Save and recount' }).click()
-		await expect(page.getByText(/Unsaved change/)).toHaveCount(0)
-		await expect(page).toHaveURL(/\/rules$/)
+		await page.getByRole('combobox', { name: 'Country context' }).click()
+		await page.getByRole('option', { name: 'United Kingdom' }).click()
+		await expect(page.getByText('All changes saved')).toBeVisible()
 		// US numbers don't parse as British ones, so the phone rule's counts change.
-		await expect(phoneCard).not.toHaveText(before)
+		await expect(phoneRule).not.toHaveText(before)
 		await page.reload()
-		await expect(page.getByLabel('Country for phone numbers')).toHaveValue('GB')
+		await expect(page.getByRole('combobox', { name: 'Country context' })).toHaveText(
+			'United Kingdom'
+		)
 	})
 
-	test('unsaved rule changes are guarded on links, back and unload; saved ones are not', async ({
-		page
-	}) => {
+	test('rule changes save themselves; invalid ones are held back and say why', async ({ page }) => {
 		await signUp(page)
-		await createEvaluation(page, 'Unsaved changes')
+		await createEvaluation(page, 'Autosave')
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
-		// Stages are links in the sidebar's pipeline, named "<stage>, <state>. <detail>".
 		const stepLink = (name: string) =>
 			page
 				.getByRole('list', { name: 'Pipeline' })
 				.getByRole('link', { name: new RegExp(`^${name},`) })
-		const dialog = page.getByRole('alertdialog', { name: 'Leave without saving?' })
 
-		// Clean: links just navigate.
-		await stepLink('Vendors').click()
-		await page.waitForURL('**/vendors')
-		await expect(dialog).toHaveCount(0)
-		await stepLink('Rules').click()
-		await page.waitForURL('**/rules')
-
-		// A link while dirty asks; Stay keeps the edit.
-		const nameRule = page.getByRole('switch', { name: 'Same name', exact: true })
+		// A switch saves itself and is still on after leaving and coming back.
+		const nameRule = page.getByRole('switch', { name: 'Same name rule' })
 		await nameRule.click()
+		await expect(page.getByText('All changes saved')).toBeVisible()
 		await stepLink('Vendors').click()
-		await expect(dialog).toBeVisible()
-		await dialog.getByRole('button', { name: 'Stay on this page' }).click()
-		await expect(dialog).toHaveCount(0)
-		await expect(page).toHaveURL(/\/rules$/)
-		await expect(nameRule).toBeChecked()
-
-		// Back while dirty asks too, and stays until the user chooses to leave.
-		await page.goBack()
-		await expect(dialog).toBeVisible()
-		await expect(page).toHaveURL(/\/rules$/)
-		await dialog.getByRole('button', { name: 'Stay on this page' }).click()
-		await expect(nameRule).toBeChecked()
-
-		// Closing the tab (or reloading) gets the browser's own prompt;
-		// dismissing it keeps the page and the edit.
-		const unloadPrompt = page.waitForEvent('dialog')
-		await page.close({ runBeforeUnload: true })
-		const prompt = await unloadPrompt
-		expect(prompt.type()).toBe('beforeunload')
-		await prompt.dismiss()
-		expect(page.isClosed()).toBe(false)
-		await expect(nameRule).toBeChecked()
-
-		// Leave discards the edit.
-		await stepLink('Vendors').click()
-		await dialog.getByRole('button', { name: 'Leave without saving' }).click()
 		await page.waitForURL('**/vendors')
 		await stepLink('Rules').click()
 		await page.waitForURL('**/rules')
-		await expect(nameRule).not.toBeChecked()
-
-		// Saving is not leaving: no dialog, and Back returns to the rules in one step.
-		await nameRule.click()
-		await page.getByRole('button', { name: 'Review plan' }).click()
-		await page.waitForURL('**/plan')
-		await expect(dialog).toHaveCount(0)
-		await page.goBack()
-		await page.waitForURL('**/rules')
 		await expect(nameRule).toBeChecked()
+
+		// An empty definition is never saved: the reason shows, the plan waits.
+		const same = page.getByLabel('Counts as the same individual')
+		const definition = await same.inputValue()
+		await same.fill('')
+		await expect(
+			page.getByText('Describe what counts as the same individual').first()
+		).toBeVisible()
+		await expect(page.getByRole('link', { name: 'Review comparison plan' })).toHaveCount(0)
+		await page.reload()
+		await expect(same).toHaveValue(definition)
+
+		// One field isn't enough for Jev to tell people apart.
+		const jevFields = page.getByRole('group', { name: 'Fields used for assessment' })
+		for (const field of [
+			'Last name',
+			'Email',
+			'Phone',
+			'Date of birth',
+			'Address',
+			'City',
+			'Postcode'
+		]) {
+			await jevFields.getByLabel(field).uncheck()
+		}
+		await expect(page.getByText('Select at least two fields.')).toBeVisible()
+		await jevFields.getByLabel('Email').check()
+		await reviewPlan(page)
 	})
 
 	test('two vendors are compared side by side', async ({ page }) => {
