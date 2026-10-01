@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { AlertIcon, ArrowRightIcon, SpinnerIcon } from '@/components/ui/icons'
+import { AlertIcon, ArrowRightIcon, FilterIcon, SpinnerIcon } from '@/components/ui/icons'
 import { BLOCKING_FIELDS, isCustomRuleId } from '@/lib/pairsight/custom-rules'
 import { saveRulesAction } from '@/server/actions/pairsight/rules'
 import type { RuleStats } from '@/server/pairsight/blocking'
@@ -161,7 +161,7 @@ export function RulesForm({
 				selected={jevFields}
 				onToggle={(role, isOn) => setJevFields((current) => toggled(current, role, isOn))}
 			/>
-			<Section title={t('blockingTitle')} description={t('blockingDescription')}>
+			<Section title={t('blockingTitle')} description={t('blockingDescription')} icon={FilterIcon}>
 				{isCountryUnsaved && (
 					<div className="mb-3">
 						<UnsavedCountryNotice

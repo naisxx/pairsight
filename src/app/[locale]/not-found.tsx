@@ -1,9 +1,11 @@
 import { Link } from '@/i18n/routing'
 import { ErrorPage, errorPageActionClassName } from '@/components/error-page'
+import { NotFoundIcon } from '@/components/ui/icons'
 
 export default function NotFound() {
 	return (
 		<ErrorPage
+			icon={NotFoundIcon}
 			title="Page not found"
 			description="The page you're looking for doesn't exist or may have moved."
 			action={

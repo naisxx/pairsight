@@ -1,4 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
+import { EmptyState } from '@/components/pairsight/empty/empty-state'
+import { NoMatchesIcon } from '@/components/ui/icons'
 import { CategoryTiles } from '@/components/pairsight/results/category-tiles'
 import { CoverageNotice } from '@/components/pairsight/results/coverage-notice'
 import { Pagination } from '@/components/pairsight/results/pagination'
@@ -64,9 +66,24 @@ export default async function ResultsPage({
 				{t('matching', { count: results.matching })}
 			</p>
 			{results.rows.length === 0 ? (
-				<div className="border-border flex flex-col items-center gap-2 rounded-lg border border-dashed px-6 py-12 text-center">
-					<p className="text-text font-medium">{t('noResults')}</p>
-					{hasActiveFilters(filters) && <ClearFiltersLink base={base} vendor={results.vendorId} />}
+				<div className="border-border bg-surface rounded-lg border">
+					<EmptyState
+						icon={NoMatchesIcon}
+						title={t('noResults')}
+						description={hasActiveFilters(filters) ? t('noResultsHint') : undefined}
+						preview="table"
+						previewHeaders={[
+							t('columnCategory'),
+							t('columnRecordA'),
+							t('columnRecordB'),
+							t('columnScore')
+						]}
+						actions={
+							hasActiveFilters(filters) && (
+								<ClearFiltersLink base={base} vendor={results.vendorId} appearance="button" />
+							)
+						}
+					/>
 				</div>
 			) : (
 				<PairsTable

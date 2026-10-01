@@ -356,6 +356,14 @@
 		}
 	}
 
+	/* Duotone icons (icons.tsx, variant="duotone"): the second layer takes the
+	   accent its container sets (an IconTile sets coral, or danger for errors);
+	   without one it stays the icon's own colour at the provider's 20%. */
+	[data-icon-variant='duotone'] [opacity] {
+		fill: var(--icon-accent, currentColor);
+		opacity: var(--icon-accent-opacity, 0.2);
+	}
+
 	/* The pipeline track. Each row draws its own piece: a stage row the half
 	   above its node (solid if the previous stage is done) and the half below
 	   (solid if this stage is done); a phase label row continues the line.

@@ -1,5 +1,6 @@
 'use client'
 
+import { FieldsIcon } from '@/components/ui/icons'
 import { useTranslations } from 'next-intl'
 import { Checkbox } from '@/components/ui/checkbox'
 import type { IdentityRole } from '@/server/pairsight/fields'
@@ -19,7 +20,7 @@ export function JevFieldsSection({
 	const t = useTranslations('Rules')
 	const tRoles = useTranslations('Roles')
 	return (
-		<Section title={t('jevFieldsTitle')} description={t('jevFieldsDescription')}>
+		<Section title={t('jevFieldsTitle')} description={t('jevFieldsDescription')} icon={FieldsIcon}>
 			<div className="flex flex-wrap gap-x-6 gap-y-3">
 				{mappedRoles.map((role) => (
 					<label key={role} className="text-text type-body flex items-center gap-2">

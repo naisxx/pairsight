@@ -1,5 +1,6 @@
 'use client'
 
+import { IdentityIcon } from '@/components/ui/icons'
 import { useId } from 'react'
 import { useTranslations } from 'next-intl'
 import { Input } from '@/components/ui/input'
@@ -27,7 +28,7 @@ export function IdentitySection({
 	const t = useTranslations('Rules')
 	const id = useId()
 	return (
-		<Section title={t('identityTitle')}>
+		<Section title={t('identityTitle')} icon={IdentityIcon}>
 			<div className="grid gap-4 lg:grid-cols-2">
 				<div className="flex flex-col gap-1.5">
 					<Label htmlFor={`${id}-same`}>{t('identitySame')}</Label>

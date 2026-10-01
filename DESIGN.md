@@ -149,6 +149,16 @@ lines up:
 - **Grids that change column count** always declare a shrinkable column at
   every size (`grid-cols-[minmax(0,1fr)]`), or a wide table widens the page
   instead of scrolling.
+- **Icons in tiles.** Section and card headings carry a 32 px `IconTile`
+  (muted surface, hairline border, line icon); icons never get colour except
+  for status. Active and selected states use the `solid` variant.
+- **Empty states** use one component, `EmptyState`: a 56 px tile with a
+  duotone icon (coral second layer), a heading, one line of explanation and
+  the next action, left-aligned. Screens shaped like a list or table put a
+  faint dashed ghost of that content behind it (`preview="list" | "table"`),
+  so it's clear what will appear; filtered-empty keeps the real filters and
+  tiles above it. Uploads use the drop zone itself as the preview. Errors
+  and simple prompts are a plain block, with a danger tile for errors.
 - **Scrollbars** are slim and themed (globals.css). Chromium ignores
   `::-webkit-scrollbar` once `scrollbar-color` is set, so the standard
   properties apply only in Firefox.

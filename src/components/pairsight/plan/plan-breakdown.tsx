@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import type { PlanCounts } from '@/server/pairsight/plan'
+import { EvaluationIcon } from '@/components/ui/icons'
 import { Section } from '../step-layout'
 
 // Where the plan's pairs come from, ending in the two numbers that matter:
@@ -27,7 +28,7 @@ export async function PlanBreakdown({
 		{ label: t('toEvaluate'), value: counts.toEvaluate, isEmphasis: true }
 	]
 	return (
-		<Section title={t('unique')}>
+		<Section title={t('unique')} icon={EvaluationIcon}>
 			<dl className="divide-border divide-y">
 				{rows.map(({ label, value, isEmphasis }) => (
 					<div key={label} className="flex items-baseline justify-between gap-4 py-2.5">

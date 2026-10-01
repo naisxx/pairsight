@@ -3,7 +3,7 @@ import { PlanBlockers } from '@/components/pairsight/plan/plan-blockers'
 import { PlanBreakdown } from '@/components/pairsight/plan/plan-breakdown'
 import { ActionBar, Section, StepHeader } from '@/components/pairsight/step-layout'
 import { StartRunButton } from '@/components/pairsight/start-run-button'
-import { InfoIcon } from '@/components/ui/icons'
+import { InfoIcon, SendIcon } from '@/components/ui/icons'
 import { LIMITS } from '@/server/pairsight/limits'
 import { estimateCostUsd } from '@/server/pairsight/cost'
 import { computePlan } from '@/server/pairsight/plan'
@@ -29,7 +29,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 					<div />
 				)}
 				<div className="flex flex-col gap-6">
-					<Section title={t('jevReceivesTitle')}>
+					<Section title={t('jevReceivesTitle')} icon={SendIcon}>
 						<p className="text-text type-body">
 							{t('jevReceives', {
 								fields:

@@ -55,7 +55,7 @@ export function Sidebar({ email, pipeline }: { email: string; pipeline?: Pipelin
 									: 'text-text-muted hover:bg-surface-hover hover:text-text'
 							)}
 						>
-							<GridIcon className="shrink-0" />
+							<GridIcon variant={isEvaluationsHome ? 'solid' : 'line'} className="shrink-0" />
 							<span className="shell-fade">{t('evaluations')}</span>
 						</Link>
 					</SidebarTip>

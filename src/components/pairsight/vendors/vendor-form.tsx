@@ -142,8 +142,8 @@ export function VendorForm({
 			</div>
 			{loaded == null ? (
 				<FileDrop
-					label={t('fileLabel')}
-					hint={t('fileHint')}
+					label={t('dropLabel')}
+					hint={t('dropHint')}
 					busyLabel={t('saving')}
 					isBusy={isReading}
 					onFile={onFile}

@@ -57,7 +57,7 @@
 		"create": "Create evaluation",
 		"creating": "Creating…",
 		"emptyTitle": "No evaluations yet",
-		"emptyDescription": "Create one to upload your records and a vendor’s matches.",
+		"emptyDescription": "An evaluation compares one set of your records against each vendor’s matches. Name one above, then upload your files.",
 		"columnName": "Name",
 		"columnLastRun": "Last run",
 		"columnUpdated": "Updated",
@@ -78,8 +78,8 @@
 		"current": "{fileName} · {count, plural, one {# record} other {# records}}",
 		"replace": "Replace file",
 		"replaceWarning": "Replacing the source file starts a new dataset. Vendor results must be uploaded again, and earlier runs keep their original records.",
-		"dropLabel": "Choose a CSV file",
-		"dropHint": "CSV with a header row · up to 500 records · 1 MB",
+		"dropLabel": "Add your source records",
+		"dropHint": "Drop the CSV every vendor evaluated, or choose it. A header row, up to 500 records and 1 MB.",
 		"reading": "Reading file…",
 		"previewTitle": "Map your columns",
 		"previewDescription": "Pick the column that uniquely identifies each record, then tell PairSight what each column contains. Suggestions come from the column names — check them.",
@@ -125,14 +125,12 @@
 	"Vendors": {
 		"title": "Vendor results",
 		"description": "Upload each vendor’s export of the pairs it matched. Vendor names, scores and decisions are never sent to Jev.",
-		"needRecords": "Upload the source records first.",
 		"added": "{count, plural, one {# matched pair} other {# matched pairs}}",
 		"remove": "Remove {name}",
 		"addTitle": "Add vendor results",
 		"nameLabel": "Vendor name",
 		"namePlaceholder": "Vendor A",
 		"fileLabel": "Pair CSV",
-		"fileHint": "One matched pair per row, two record-reference columns",
 		"columnA": "First record column",
 		"columnB": "Second record column",
 		"completeTitle": "Is this the vendor’s complete list of matches?",
@@ -148,12 +146,13 @@
 		"sameColumns": "Choose two different columns.",
 		"maxVendors": "You can compare up to {max} vendors.",
 		"errorsTitle": "Fix these before adding this vendor",
-		"continue": "Continue to rules"
+		"continue": "Continue to rules",
+		"dropLabel": "Add this vendor’s matched pairs",
+		"dropHint": "Drop the vendor’s export, or choose it: one matched pair per row, with two record-reference columns."
 	},
 	"Rules": {
 		"title": "Identity and blocking",
 		"description": "Define what counts as the same person, then choose which pairs are worth asking Jev about.",
-		"needRecords": "Upload the source records first.",
 		"identityTitle": "What counts as the same individual",
 		"identitySame": "Counts as the same individual",
 		"identityDifferent": "Does not count",
@@ -282,7 +281,7 @@
 		"search": "Search references or names",
 		"clear": "Clear filters",
 		"matching": "{count, plural, one {# pair} other {# pairs}}",
-		"noResults": "No pairs match these filters.",
+		"noResults": "No pairs match these filters",
 		"columnCategory": "Category",
 		"columnRecordA": "Record A",
 		"columnRecordB": "Record B",
@@ -300,7 +299,8 @@
 		"previous": "Previous",
 		"next": "Next",
 		"page": "Page {page} of {pages}",
-		"openPair": "Open pair {a} and {b}"
+		"openPair": "Open pair {a} and {b}",
+		"noResultsHint": "Try another category, or clear the search and filters to see every pair in this run."
 	},
 	"Pair": {
 		"back": "Back to results",
@@ -372,5 +372,13 @@
 		"statusRunning": "Run {number} running",
 		"statusStopped": "Run {number} stopped",
 		"statusComplete": "Run {number} complete"
+	},
+	"FileDrop": {
+		"choose": "Choose a CSV"
+	},
+	"Empty": {
+		"needRecordsTitle": "Upload the source records first",
+		"needRecordsDescription": "Vendor matches and blocking rules are checked against your records, so they come first.",
+		"goToRecords": "Go to records"
 	}
 }

@@ -1,3 +1,4 @@
+import { IconTile, type TileIcon } from '@/components/ui/icon-tile'
 import { cn } from '@/lib/cn'
 
 // Every step: a title, one sentence of context, the content, then the action
@@ -50,21 +51,29 @@ export function ActionBar({
 	)
 }
 
+// A card section. Its icon sits in a tile beside the heading (DESIGN.md §5).
 export function Section({
 	title,
 	description,
+	icon,
 	children,
 	className
 }: {
 	title: string
 	description?: string
+	icon?: TileIcon
 	children: React.ReactNode
 	className?: string
 }) {
 	return (
 		<section className={cn('border-border bg-surface rounded-lg border p-5', className)}>
-			<h2 className="text-text type-heading">{title}</h2>
-			{description != null && <p className="text-text-muted type-body mt-1">{description}</p>}
+			<div className="flex items-start gap-3">
+				{icon != null && <IconTile icon={icon} />}
+				<div className="flex min-w-0 flex-col">
+					<h2 className="text-text type-heading">{title}</h2>
+					{description != null && <p className="text-text-muted type-body mt-0.5">{description}</p>}
+				</div>
+			</div>
 			<div className="mt-4">{children}</div>
 		</section>
 	)

@@ -1,10 +1,11 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
+import { NeedRecords } from '@/components/pairsight/empty/need-records'
 import { RemoveVendorButton } from '@/components/pairsight/vendors/remove-vendor-button'
 import { ActionBar, Section, StepHeader } from '@/components/pairsight/step-layout'
 import { VendorForm } from '@/components/pairsight/vendors/vendor-form'
 import { Button } from '@/components/ui/button'
-import { ArrowRightIcon, FileIcon } from '@/components/ui/icons'
+import { ArrowRightIcon, FileIcon, VendorIcon } from '@/components/ui/icons'
 import { LIMITS } from '@/server/pairsight/limits'
 import { loadWorkspace } from '../workspace'
 
@@ -22,14 +23,7 @@ export default async function VendorsPage({ params }: { params: Promise<{ id: st
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
 			{dataset == null ? (
-				<p className="text-text-muted type-body">
-					<Link
-						href={`/evaluations/${id}/records`}
-						className="text-accent-ink type-label hover:underline"
-					>
-						{t('needRecords')}
-					</Link>
-				</p>
+				<NeedRecords evaluationId={id} />
 			) : (
 				<div className="flex flex-1 flex-col gap-6">
 					{vendorExports.length > 0 && (
@@ -50,7 +44,7 @@ export default async function VendorsPage({ params }: { params: Promise<{ id: st
 						</ul>
 					)}
 					{canAdd ? (
-						<Section title={t('addTitle')}>
+						<Section title={t('addTitle')} icon={VendorIcon}>
 							<VendorForm
 								evaluationId={id}
 								defaultName={`Vendor ${VENDOR_LETTERS[vendorExports.length] ?? vendorExports.length + 1}`}

@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { Link } from '@/i18n/routing'
+import { NeedRecords } from '@/components/pairsight/empty/need-records'
 import { RulesForm } from '@/components/pairsight/rules/rules-form'
 import { StepHeader } from '@/components/pairsight/step-layout'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
@@ -17,12 +17,7 @@ export default async function RulesPage({ params }: { params: Promise<{ id: stri
 		return (
 			<>
 				<StepHeader title={t('title')} description={t('description')} />
-				<Link
-					href={`/evaluations/${id}/records`}
-					className="text-accent-ink type-label self-start hover:underline"
-				>
-					{t('needRecords')}
-				</Link>
+				<NeedRecords evaluationId={id} />
 			</>
 		)
 	}

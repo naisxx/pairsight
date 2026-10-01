@@ -26,9 +26,16 @@ setup, treat the answer as settled and don't reopen it per component.
 - **One place to enforce defaults.** Size, `currentColor`, `aria-hidden`,
   and the house stroke weight are set once in `Glyph`. Without the wrapper
   every call site re-decides them, and they drift.
-- **The prop surface stays narrow.** `IconProps` is `size` and `className`,
-  deliberately not the provider's own props. A call site passing phosphor's
-  `weight` is a call site that breaks on swap.
+- **The prop surface stays narrow.** `IconProps` is `size`, `className` and
+  `variant`, deliberately not the provider's own props. A call site passing
+  phosphor's `weight` is a call site that breaks on swap.
+- **Variants are named for intent, not by the provider.** `variant` is
+  `line` (the default, everywhere), `solid` (active and selected states, such
+  as the current nav item) or `duotone` (the large icon in an empty state or
+  icon tile). `Glyph` maps them to the provider's weights in one place; a
+  provider without duotone maps it to `line`. A duotone icon's second layer
+  takes `--icon-accent` from its container (an `IconTile` sets coral, or the
+  danger colour for errors).
 
 ## Adding an icon
 

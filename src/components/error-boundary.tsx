@@ -5,10 +5,13 @@ import { unstable_rethrow } from 'next/navigation'
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { captureClientError } from '@/lib/observability/capture-client-error'
 import { ErrorPage, errorPageActionClassName } from '@/components/error-page'
+import { ConnectionErrorIcon } from '@/components/ui/icons'
 
 function Fallback({ resetErrorBoundary }: FallbackProps) {
 	return (
 		<ErrorPage
+			icon={ConnectionErrorIcon}
+			tone="danger"
 			title="This section couldn't load"
 			description="Try again, or refresh the page if it keeps happening."
 			action={

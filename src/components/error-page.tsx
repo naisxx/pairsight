@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { IconTile, type TileIcon } from '@/components/ui/icon-tile'
 
 // Shared shell for every "something went wrong" screen (error.tsx,
 // not-found.tsx) so the copy/actions differ but the layout, spacing, and
@@ -11,19 +12,25 @@ export function ErrorPage({
 	title,
 	description,
 	digest,
-	action
+	action,
+	icon,
+	tone = 'neutral'
 }: {
 	title: string
 	description: string
 	digest?: string
 	action?: ReactNode
+	// The same tile as the product's empty states; `danger` for real errors.
+	icon: TileIcon
+	tone?: 'neutral' | 'danger'
 }) {
 	return (
-		<div className="flex min-h-screen flex-col items-center justify-center gap-4 px-6 text-center">
-			<div className="border-border bg-surface flex max-w-md flex-col items-center gap-4 rounded-lg border p-8 shadow-sm">
+		<div className="flex min-h-screen flex-col items-center justify-center px-6">
+			<div className="border-border bg-surface flex w-full max-w-md flex-col items-start gap-2 rounded-xl border p-8 text-left">
+				<IconTile icon={icon} size="lg" tone={tone} className="mb-1" />
 				<h1 className="text-text type-heading">{title}</h1>
 				<p className="text-text-muted type-body">{description}</p>
-				{action}
+				<div className="mt-2">{action}</div>
 				{digest && (
 					<p className="text-text-muted type-data-sm">
 						Reference: <code>{digest}</code>

@@ -2,8 +2,9 @@ import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { AppShell } from '@/components/pairsight/shell/app-shell'
 import { CreateEvaluationForm } from '@/components/pairsight/create-evaluation-form'
+import { EmptyState } from '@/components/pairsight/empty/empty-state'
 import { Card, CardContent } from '@/components/ui/card'
-import { ChevronRightIcon } from '@/components/ui/icons'
+import { ChevronRightIcon, EvaluationIcon } from '@/components/ui/icons'
 import { requireUserOrRedirect } from '@/server/auth/session'
 import { listEvaluations } from '@/server/pairsight/evaluations'
 
@@ -29,9 +30,13 @@ export default async function EvaluationsPage() {
 					</CardContent>
 				</Card>
 				{evaluations.length === 0 ? (
-					<div className="border-border flex flex-col items-center gap-1 rounded-lg border border-dashed px-6 py-12 text-center">
-						<p className="text-text font-medium">{t('emptyTitle')}</p>
-						<p className="text-text-muted type-body">{t('emptyDescription')}</p>
+					<div className="border-border bg-surface rounded-lg border">
+						<EmptyState
+							icon={EvaluationIcon}
+							title={t('emptyTitle')}
+							description={t('emptyDescription')}
+							preview="list"
+						/>
 					</div>
 				) : (
 					<ul className="border-border bg-surface divide-border divide-y rounded-lg border">
