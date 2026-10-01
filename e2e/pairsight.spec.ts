@@ -102,6 +102,15 @@ test.describe('PairSight vertical slice', () => {
 		await page.keyboard.press('Escape')
 		await page.waitForURL(/\/results\?/)
 		await expect(page).toHaveURL(/category=vendor_only/)
+
+		// Filters that match nothing: the empty state says so and clears them.
+		await page.goto(`${page.url()}&q=no-such-record`)
+		const noMatches = page.getByRole('status').filter({ hasText: 'No pairs match these filters' })
+		await expect(noMatches).toBeVisible()
+		await noMatches.getByRole('link', { name: 'Clear filters' }).click()
+		// Clearing keeps the selected vendor, nothing else.
+		await page.waitForURL(/\/results(\?vendor=[^&]+)?$/)
+		await expect(page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })).toHaveText('8 pairs')
 	})
 
 	test('changing the threshold re-decides from saved scores; a new run reuses every assessment', async ({
@@ -309,6 +318,25 @@ test.describe('PairSight vertical slice', () => {
 		await page.goBack()
 		await page.waitForURL('**/rules')
 		await expect(nameRule).toBeChecked()
+	})
+
+	test('empty states: no evaluations yet, and later steps ask for records first', async ({
+		page
+	}) => {
+		await signUp(page)
+		await expect(page.getByRole('heading', { name: 'No evaluations yet' })).toBeVisible()
+
+		await createEvaluation(page, 'Empty states')
+		const records = page.url()
+		for (const step of ['vendors', 'rules']) {
+			await page.goto(records.replace(/\/records$/, `/${step}`))
+			await expect(
+				page.getByRole('heading', { name: 'Upload the source records first' })
+			).toBeVisible()
+		}
+		await page.getByRole('link', { name: 'Go to records' }).click()
+		await page.waitForURL('**/records')
+		await expect(page.getByText('Add your source records')).toBeVisible()
 	})
 
 	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
