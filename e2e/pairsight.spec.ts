@@ -201,9 +201,9 @@ test.describe('PairSight vertical slice', () => {
 
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await reviewPlan(page)
-		const plan = page.locator('dl')
-		await expect(plan).toContainText('Unique pairs to compare8')
-		await expect(plan).toContainText('Added only because a vendor matched them2')
+		const plan = page.getByRole('region', { name: 'From records to pairs' })
+		await expect(plan).toContainText(/Unique pairs to assess\s*8/)
+		await expect(plan).toContainText(/Added so every vendor match is assessed\s*\+2/)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 		await page.getByRole('link', { name: 'View results' }).click()
@@ -305,9 +305,9 @@ test.describe('PairSight vertical slice', () => {
 
 		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
 		await page.goto(`${evaluationPath}/plan`)
-		const plan = page.locator('dl')
-		await expect(plan).toContainText('Already judged in an earlier run (reused)8')
-		await expect(plan).toContainText('New Jev evaluations0')
+		const plan = page.getByRole('region', { name: 'From records to pairs' })
+		await expect(plan).toContainText(/Saved from an earlier run — not assessed again\s*8/)
+		await expect(plan).toContainText(/New Jev assessmentsAbout \$0\.00 at a stand-in rate[^0-9]*0/)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByRole('heading', { name: 'Run 2' })).toBeVisible()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
@@ -488,15 +488,23 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText('Reduce pairs to 5,000 or fewer (now 5,460)')).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Review comparison plan' })).toHaveCount(0)
 		await page.goto(page.url().replace(/\/rules$/, '/plan'))
-		await expect(page.getByText('This plan has 5,460 pairs; one run allows 5,000.')).toBeVisible()
+		const overLimit = page.getByRole('heading', {
+			name: '5,460 pairs is over the 5,000-pair limit'
+		})
+		await expect(overLimit).toBeVisible()
 		await expect(
-			page.getByText('Same name and postcode: 5,460 pairs (largest group: 105 records)')
-		).toBeVisible()
+			page.getByRole('listitem').filter({ hasText: 'Same name and postcode' })
+		).toContainText('5,460 pairs · largest bucket 105')
 		await expect(page.getByRole('button', { name: 'Start evaluation' })).toBeDisabled()
 
-		await page.getByRole('link', { name: 'Turn off or narrow a rule' }).click()
+		// Turning the rule off from the plan brings it under the limit.
+		await page.getByRole('button', { name: 'Turn off Same name and postcode' }).click()
+		await expect(overLimit).toHaveCount(0)
+		await page.getByRole('link', { name: 'Rules', exact: true }).click()
 		await page.waitForURL('**/rules')
-		await page.getByRole('switch', { name: 'Same name and postcode rule' }).click()
+		await expect(
+			page.getByRole('switch', { name: 'Same name and postcode rule' })
+		).not.toBeChecked()
 		await page.getByRole('button', { name: 'Add composite rule' }).click()
 		const fields = page.getByRole('group', { name: 'Fields in this rule' })
 		await fields.getByRole('button', { name: 'Email' }).click()
@@ -507,7 +515,9 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('button', { name: 'Edit Email + Postcode' })).toBeVisible()
 
 		await reviewPlan(page)
-		await expect(page.locator('dl')).toContainText('Unique pairs to compare1')
+		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
+			/Unique pairs to assess\s*1/
+		)
 		await expect(page.getByRole('button', { name: 'Start evaluation' })).toBeEnabled()
 
 		// The composite rule was saved with the rest of the configuration.

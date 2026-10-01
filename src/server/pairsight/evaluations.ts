@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
 import { DEFAULT_IDENTITY } from './judgment'
-import type { blockingRuleSchema } from './schemas'
+import { blockingRulesSchema, type blockingRuleSchema } from './schemas'
 
 // Owner-scoped data access for PairSight (docs/rules/auth.md: authorization
 // lives in the action layer, because Prisma bypasses RLS). Every function
@@ -122,5 +122,24 @@ export async function updateEvaluationConfig({
 	await db.evaluation.update({
 		where: { id: evaluationId },
 		data: { identitySame, identityDifferent, countryCode, jevFields, blockingRules }
+	})
+}
+
+// One rule switched off from the Plan's over-limit list; everything else in
+// the configuration stays as saved.
+export async function removeBlockingRule({
+	ownerId,
+	evaluationId,
+	ruleId
+}: {
+	ownerId: string
+	evaluationId: string
+	ruleId: string
+}) {
+	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
+	const rules = blockingRulesSchema.parse(evaluation.blockingRules)
+	await db.evaluation.update({
+		where: { id: evaluationId },
+		data: { blockingRules: rules.filter((rule) => rule.id !== ruleId) }
 	})
 }

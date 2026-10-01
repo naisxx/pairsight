@@ -10,7 +10,7 @@ import {
 	identityDefinitionSchema,
 	identityRoleSchema
 } from '@/server/pairsight/schemas'
-import { updateEvaluationConfig } from '@/server/pairsight/evaluations'
+import { removeBlockingRule, updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import { previewRuleStats } from '@/server/pairsight/rules-preview'
 import { MAX_RULE_FIELDS, MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { idSchema, revalidateEvaluationPages } from './shared'
@@ -50,5 +50,17 @@ export const previewRuleAction = validatedAction({
 	handler: async ({ evaluationId, fields, countryCode }) => {
 		const user = await requireUser()
 		return previewRuleStats({ ownerId: user.id, evaluationId, fields, country: countryCode })
+	}
+})
+
+// "Turn off" on the Plan's over-limit list: removes one rule from the saved
+// configuration.
+export const turnOffRuleAction = validatedAction({
+	input: z.object({ evaluationId: idSchema, ruleId: z.string().min(1) }),
+	handler: async ({ evaluationId, ruleId }) => {
+		const user = await requireUser()
+		await removeBlockingRule({ ownerId: user.id, evaluationId, ruleId })
+		revalidateEvaluationPages()
+		return { removed: true }
 	}
 })
