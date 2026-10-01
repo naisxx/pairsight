@@ -13,6 +13,11 @@ function isTyping(target: EventTarget | null) {
 	)
 }
 
+// The page scrolls inside the app shell's <main>, not the window.
+function scroller(): HTMLElement | null {
+	return document.getElementById('main')
+}
+
 function rowLinks() {
 	return [...document.querySelectorAll<HTMLAnchorElement>('[data-pairs-table] tbody a[href]')]
 }
@@ -44,7 +49,7 @@ export function ResultsKeyboard() {
 		const saved = readSaved()
 		if (saved != null && saved.pathname === window.location.pathname) {
 			// After Next's own scroll-to-top for the navigation.
-			requestAnimationFrame(() => window.scrollTo(0, saved.y))
+			requestAnimationFrame(() => scroller()?.scrollTo(0, saved.y))
 		}
 
 		function onKey(event: KeyboardEvent) {
@@ -57,9 +62,12 @@ export function ResultsKeyboard() {
 			if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
 			const links = rowLinks()
 			const index = links.findIndex((link) => link === document.activeElement)
-			// Only take the arrows from the table, or from nowhere in particular,
-			// so they still scroll the page and work inside menus everywhere else.
-			if (index === -1 && document.activeElement !== document.body) return
+			// Only take the arrows from the table, or from nowhere in particular
+			// (the page itself: <body>, or <main> after a click on the page), so
+			// they still work inside menus and fields everywhere else.
+			const isOnPage =
+				document.activeElement === document.body || document.activeElement === scroller()
+			if (index === -1 && !isOnPage) return
 			const next =
 				index === -1
 					? 0
@@ -78,8 +86,13 @@ export function ResultsKeyboard() {
 			) {
 				return
 			}
+			// Read outside the try: the React Compiler can't yet compile
+			// optional chaining inside one.
+			const entry: SavedScroll = {
+				pathname: window.location.pathname,
+				y: scroller()?.scrollTop ?? 0
+			}
 			try {
-				const entry: SavedScroll = { pathname: window.location.pathname, y: window.scrollY }
 				sessionStorage.setItem(SCROLL_KEY, JSON.stringify(entry))
 			} catch {
 				// Storage can be unavailable (private mode); the page just starts at the top.

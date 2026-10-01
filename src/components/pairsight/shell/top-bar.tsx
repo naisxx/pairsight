@@ -2,60 +2,94 @@
 
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
-import { ChevronRightIcon, SidebarIcon } from '@/components/ui/icons'
-import { currentStageKey, type Crumb, type PipelineStage } from './pipeline-types'
+import { Button } from '@/components/ui/button'
+import { Chip, type ChipTone } from '@/components/ui/chip'
+import { ChevronRightIcon, MenuIcon } from '@/components/ui/icons'
+import { cn } from '@/lib/cn'
+import {
+	currentStageKey,
+	type Crumb,
+	type EvaluationStatus,
+	type PipelineData
+} from './pipeline-types'
 import { useShell } from './shell-frame'
 
-// The bar above the page: the sidebar toggle, then where you are. On an
-// evaluation the last crumb is the stage the current page belongs to.
-export function TopBar({ crumbs, stages }: { crumbs: Crumb[]; stages?: PipelineStage[] }) {
+const MENU_ICON_SIZE = 18
+const CRUMB_SEPARATOR_SIZE = 11
+
+const STATUS_TONE: Record<EvaluationStatus, ChipTone> = {
+	draft: 'neutral',
+	readyToRun: 'info',
+	running: 'info',
+	needsAttention: 'danger',
+	complete: 'success'
+}
+
+// The bar above the page: the phone menu button, where you are, and the
+// evaluation's status. On an evaluation the last crumbs are the stage the
+// page belongs to; the stage links back to its page from deeper ones (a pair
+// back to its results).
+export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: PipelineData }) {
 	const t = useTranslations('Shell')
 	const tSteps = useTranslations('Steps')
+	const tPipeline = useTranslations('Pipeline')
 	const pathname = usePathname()
-	const { isCollapsed, isMobile, isMobileOpen, toggleSidebar } = useShell()
-	// The toggle reports whichever state it controls: the drawer on phones,
-	// the collapsed width on desktop.
-	const isExpanded = isMobile ? isMobileOpen : !isCollapsed
-	const toggleLabel = isMobile
-		? t(isMobileOpen ? 'closeNavigation' : 'openNavigation')
-		: t(isCollapsed ? 'expandSidebar' : 'collapseSidebar')
-	const stageKey = stages == null ? undefined : currentStageKey(stages, pathname)
-	const trail: Crumb[] = stageKey == null ? crumbs : [...crumbs, { label: tSteps(stageKey) }]
+	const { openMobile } = useShell()
+	const stage =
+		pipeline == null
+			? undefined
+			: pipeline.stages.find(
+					(candidate) => candidate.key === currentStageKey(pipeline.stages, pathname)
+				)
+	const trail: Crumb[] =
+		stage == null
+			? crumbs
+			: [
+					...crumbs,
+					{ label: tSteps(stage.key), href: pathname === stage.href ? undefined : stage.href }
+				]
 
 	return (
-		<header className="border-border bg-bg/85 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-3 border-b pr-4 pl-3 backdrop-blur sm:pr-8">
-			<button
-				type="button"
-				onClick={toggleSidebar}
-				aria-controls="sidebar"
-				aria-expanded={isExpanded}
-				aria-label={toggleLabel}
-				title={`${toggleLabel}  [`}
-				className="text-text-muted hover:bg-surface-hover hover:text-text focus-visible:outline-ring grid size-8 shrink-0 place-items-center rounded transition-colors focus-visible:outline-2"
+		<header className="border-border bg-surface flex h-12 shrink-0 items-center gap-2 border-b px-3 md:px-5">
+			<Button
+				variant="quiet"
+				size="icon"
+				className="md:hidden"
+				onClick={openMobile}
+				aria-label={t('openNavigation')}
 			>
-				<SidebarIcon size={18} className="shell-toggle-icon" />
-			</button>
-			<span aria-hidden className="bg-border h-5 w-px shrink-0" />
+				<MenuIcon size={MENU_ICON_SIZE} />
+			</Button>
 			<nav aria-label={t('breadcrumb')} className="min-w-0">
-				<ol className="type-body flex min-w-0 items-center gap-1.5">
+				<ol className="type-ui flex min-w-0 items-center gap-1.5">
 					{trail.map((crumb, index) => {
 						const isLast = index === trail.length - 1
 						return (
-							<li key={`${crumb.label}-${index}`} className="flex min-w-0 items-center gap-1.5">
-								{index > 0 && <ChevronRightIcon size={12} className="text-text-muted shrink-0" />}
+							<li
+								key={`${crumb.label}-${index}`}
+								className={cn(
+									'flex min-w-0 items-center gap-1.5',
+									// On phones only the first and last two crumbs fit.
+									index > 0 && index < trail.length - 2 && 'hidden sm:flex'
+								)}
+							>
+								{index > 0 && (
+									<ChevronRightIcon
+										size={CRUMB_SEPARATOR_SIZE}
+										className="text-text-muted shrink-0"
+									/>
+								)}
 								{crumb.href != null && !isLast ? (
 									<Link
 										href={crumb.href}
-										className="text-text-muted hover:text-text truncate transition-colors"
+										className="text-text-muted hover:text-text truncate transition-colors duration-150"
 									>
 										{crumb.label}
 									</Link>
 								) : (
 									<span
 										aria-current={isLast ? 'page' : undefined}
-										className={
-											isLast ? 'text-text type-label truncate' : 'text-text-muted truncate'
-										}
+										className="text-text truncate font-medium"
 									>
 										{crumb.label}
 									</span>
@@ -65,6 +99,11 @@ export function TopBar({ crumbs, stages }: { crumbs: Crumb[]; stages?: PipelineS
 					})}
 				</ol>
 			</nav>
+			{pipeline != null && (
+				<div className="ml-auto hidden sm:block">
+					<Chip tone={STATUS_TONE[pipeline.status]}>{tPipeline(`status.${pipeline.status}`)}</Chip>
+				</div>
+			)}
 		</header>
 	)
 }

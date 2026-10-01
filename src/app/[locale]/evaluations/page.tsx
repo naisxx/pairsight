@@ -17,7 +17,7 @@ export default async function EvaluationsPage() {
 		listEvaluations(user.id)
 	])
 	return (
-		<AppShell email={user.email} crumbs={[{ label: tShell('evaluations') }]}>
+		<AppShell email={user.email} name={user.name} crumbs={[{ label: tShell('evaluations') }]}>
 			<div className="flex flex-col gap-6">
 				<div className="flex flex-col gap-1">
 					<h1 className="text-text type-title">{t('title')}</h1>

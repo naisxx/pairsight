@@ -1,6 +1,6 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useSyncExternalStore, useTransition } from 'react'
 import { useTheme } from 'next-themes'
 import { useTranslations } from 'next-intl'
 import {
@@ -8,86 +8,137 @@ import {
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
-	DropdownMenuRadioGroup,
-	DropdownMenuRadioItem,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import {
-	ChevronsUpDownIcon,
-	MonitorIcon,
-	MoonIcon,
-	SignOutIcon,
-	SunIcon
-} from '@/components/ui/icons'
+import { CheckIcon, MonitorIcon, MoonIcon, SignOutIcon, SunIcon } from '@/components/ui/icons'
+import { Tip } from '@/components/ui/tooltip'
+import { initialsOf } from '@/lib/auth/profile'
+import { cn } from '@/lib/cn'
 import { signOut } from '@/server/actions/auth'
-import { SidebarTip } from './sidebar-tip'
+import { useSidebarMode } from './shell-frame'
 
+const ICON_SIZE = 15
 const THEMES = ['light', 'dark', 'system'] as const
+type ThemeChoice = (typeof THEMES)[number]
 
-// Rows share the nav items' geometry, so their icons sit on the collapsed
-// sidebar's centre line.
-const ROW =
-	'hover:bg-surface-hover focus-visible:outline-ring flex h-9 w-full items-center gap-3 overflow-hidden rounded px-4 text-left whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2'
+const THEME_ICONS: Record<ThemeChoice, React.ComponentType<{ size?: number }>> = {
+	light: SunIcon,
+	dark: MoonIcon,
+	system: MonitorIcon
+}
+
+function isThemeChoice(value: string | undefined): value is ThemeChoice {
+	return THEMES.some((theme) => theme === value)
+}
+
+const noSubscription = () => () => {}
+
+// next-themes only knows the saved choice in the browser, so the server and
+// the first client render show none; it appears once hydrated.
+function useIsHydrated(): boolean {
+	return useSyncExternalStore(
+		noSubscription,
+		() => true,
+		() => false
+	)
+}
 
 export function SidebarThemeMenu() {
 	const t = useTranslations('Theme')
 	const { theme, setTheme } = useTheme()
+	const { isCollapsed } = useSidebarMode()
+	const isHydrated = useIsHydrated()
+	const current: ThemeChoice = isHydrated && isThemeChoice(theme) ? theme : 'system'
+	const CurrentIcon = THEME_ICONS[current]
+
+	const trigger = (
+		<DropdownMenuTrigger
+			aria-label={t('change', { current: t(current) })}
+			className={cn(
+				'type-ui text-text-muted hover:bg-surface-hover hover:text-text flex h-8 items-center gap-2 rounded-sm transition-colors duration-150',
+				isCollapsed ? 'w-8 justify-center' : 'w-full px-2'
+			)}
+		>
+			<CurrentIcon size={ICON_SIZE} />
+			{!isCollapsed && (
+				<>
+					<span>{t('label')}</span>
+					<span className="ml-auto text-xs">{isHydrated ? t(current) : null}</span>
+				</>
+			)}
+		</DropdownMenuTrigger>
+	)
+
 	return (
 		<DropdownMenu>
-			<SidebarTip label={t('label')}>
-				<DropdownMenuTrigger className={`${ROW} text-text-muted hover:text-text type-label`}>
-					{/* Both glyphs render and CSS picks, so server and client agree before next-themes knows the preference. */}
-					<SunIcon className="shrink-0 dark:hidden" />
-					<MoonIcon className="hidden shrink-0 dark:block" />
-					<span className="shell-fade">{t('label')}</span>
-				</DropdownMenuTrigger>
-			</SidebarTip>
-			<DropdownMenuContent side="right" align="end" className="w-40">
-				<DropdownMenuRadioGroup value={theme ?? 'system'} onValueChange={setTheme}>
-					{THEMES.map((value) => (
-						<DropdownMenuRadioItem key={value} value={value} className="gap-2">
-							{value === 'light' ? <SunIcon /> : value === 'dark' ? <MoonIcon /> : <MonitorIcon />}
+			{isCollapsed ? (
+				<Tip content={t('label')} side="right">
+					{trigger}
+				</Tip>
+			) : (
+				trigger
+			)}
+			<DropdownMenuContent align="start" side="top">
+				<DropdownMenuLabel>{t('appearance')}</DropdownMenuLabel>
+				{THEMES.map((value) => {
+					const Icon = THEME_ICONS[value]
+					return (
+						<DropdownMenuItem key={value} onSelect={() => setTheme(value)}>
+							<span className="text-text-muted">
+								<Icon size={ICON_SIZE} />
+							</span>
 							{t(value)}
-						</DropdownMenuRadioItem>
-					))}
-				</DropdownMenuRadioGroup>
+							{current === value && <CheckIcon size={14} className="text-accent-ink ml-auto" />}
+						</DropdownMenuItem>
+					)
+				})}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	)
 }
 
-export function SidebarAccountMenu({ email }: { email: string }) {
+export function SidebarAccountMenu({ email, name }: { email: string; name: string }) {
 	const t = useTranslations('Shell')
+	const { isCollapsed } = useSidebarMode()
 	const [isPending, startTransition] = useTransition()
-	const initials = email.slice(0, 2).toUpperCase()
+	const initials = initialsOf(name)
+
+	const trigger = (
+		<DropdownMenuTrigger
+			aria-label={t('accountOf', { name })}
+			className={cn(
+				'hover:bg-surface-hover flex items-center gap-2 rounded-sm text-left transition-colors duration-150',
+				isCollapsed ? 'size-9 justify-center' : 'h-11 w-full px-2'
+			)}
+		>
+			<span className="bg-surface-muted text-text flex size-7 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold">
+				{initials}
+			</span>
+			{!isCollapsed && (
+				<span className="min-w-0">
+					<span className="text-text type-ui block truncate font-medium">{name}</span>
+					<span className="text-text-muted type-caption block truncate">{email}</span>
+				</span>
+			)}
+		</DropdownMenuTrigger>
+	)
+
 	return (
 		<DropdownMenu>
-			<SidebarTip label={email}>
-				<DropdownMenuTrigger
-					aria-label={t('account')}
-					className="hover:bg-surface-hover focus-visible:outline-ring flex w-full items-center gap-2.5 overflow-hidden rounded py-2 pr-2 pl-2.5 text-left whitespace-nowrap transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2"
-				>
-					<span className="bg-selected text-text grid size-7 shrink-0 place-items-center rounded-full text-[11px] font-semibold">
-						{initials}
-					</span>
-					<span className="shell-fade flex min-w-0 flex-1 flex-col">
-						<span className="text-text type-label">{t('account')}</span>
-						<span className="text-text-muted type-meta truncate">{email}</span>
-					</span>
-					<ChevronsUpDownIcon size={14} className="shell-fade text-text-muted shrink-0" />
-				</DropdownMenuTrigger>
-			</SidebarTip>
-			<DropdownMenuContent side="right" align="end" className="w-56">
-				<DropdownMenuLabel className="text-text-muted type-meta truncate">
-					{email}
-				</DropdownMenuLabel>
-				<DropdownMenuSeparator />
+			{isCollapsed ? (
+				<Tip content={email} side="right">
+					{trigger}
+				</Tip>
+			) : (
+				trigger
+			)}
+			<DropdownMenuContent align="start" side="top" className="w-[220px]">
+				<DropdownMenuLabel className="truncate">{email}</DropdownMenuLabel>
 				<DropdownMenuItem
 					disabled={isPending}
 					onSelect={() => startTransition(async () => void (await signOut({})))}
 				>
-					<SignOutIcon />
+					<SignOutIcon size={ICON_SIZE} />
 					{t('signOut')}
 				</DropdownMenuItem>
 			</DropdownMenuContent>

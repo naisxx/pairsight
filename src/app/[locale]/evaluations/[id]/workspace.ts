@@ -5,6 +5,7 @@ import { isUuid } from '@/server/pairsight/schemas'
 import type {
 	PipelineData,
 	PipelineStage,
+	EvaluationStatus,
 	StageKey,
 	StageState
 } from '@/components/pairsight/shell/pipeline-types'
@@ -124,6 +125,16 @@ export async function workspacePipeline(id: string, workspace: Workspace): Promi
 					: t('resultsPending', { number: latestRun.number })
 	}
 
+	// What a locked stage is waiting for: records unlock vendors and rules,
+	// records plus a vendor unlock the plan, and a started run unlocks the rest.
+	const lockedReasons: Partial<Record<StageKey, string>> = {
+		vendors: t('lockedNeedsRecords'),
+		rules: t('lockedNeedsRecords'),
+		plan: t('lockedNeedsRecordsAndVendor'),
+		run: t('lockedNeedsPlan'),
+		results: t('lockedNeedsRun')
+	}
+
 	const stages: PipelineStage[] = steps.map((step) => {
 		const state: StageState =
 			step.state === 'locked'
@@ -139,19 +150,22 @@ export async function workspacePipeline(id: string, workspace: Workspace): Promi
 			alsoMatches: step.alsoMatches,
 			state,
 			isRunning: step.key === 'run' && isRunning,
-			detail: step.state === 'locked' ? t('locked') : details[step.key]
+			detail: step.state === 'locked' ? t('locked') : details[step.key],
+			reason: step.state === 'locked' ? lockedReasons[step.key] : undefined
 		}
 	})
 
-	const done = stages.filter((stage) => stage.state === 'done').length
-	const status: PipelineData['status'] =
+	const isPlanReachable = steps.some((step) => step.key === 'plan' && step.state !== 'locked')
+	const status: EvaluationStatus =
 		latestRun == null
-			? { tone: 'action', label: t('statusSetup', { done, total: stages.length }) }
+			? isPlanReachable
+				? 'readyToRun'
+				: 'draft'
 			: latestRun.status === 'running'
-				? { tone: 'action', label: t('statusRunning', { number: latestRun.number }) }
+				? 'running'
 				: latestRun.status === 'stopped'
-					? { tone: 'danger', label: t('statusStopped', { number: latestRun.number }) }
-					: { tone: 'success', label: t('statusComplete', { number: latestRun.number }) }
+					? 'needsAttention'
+					: 'complete'
 
 	return { evaluationName: workspace.evaluation.name, stages, status }
 }

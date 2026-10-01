@@ -15,16 +15,19 @@ export type PipelineStage = {
 	isRunning?: boolean
 	// What the stage has produced so far, e.g. "24 records" or "Run 2 · running".
 	detail: string
+	// For a locked stage: what it's waiting for ("Upload the source records first").
+	reason?: string
 	// Other paths that belong to this stage (a pair page is part of Results).
 	alsoMatches?: string[]
 }
 
-export type PipelineTone = 'action' | 'success' | 'danger'
+// The evaluation's overall state, shown as a chip in the top bar.
+export type EvaluationStatus = 'draft' | 'readyToRun' | 'running' | 'needsAttention' | 'complete'
 
 export type PipelineData = {
 	evaluationName: string
 	stages: PipelineStage[]
-	status: { tone: PipelineTone; label: string }
+	status: EvaluationStatus
 }
 
 export type Crumb = { label: string; href?: string }
