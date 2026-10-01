@@ -8,17 +8,18 @@ import { Input } from '@/components/ui/input'
 import { FULL_NAME_MAX_LENGTH, fullNameSchema } from '@/lib/auth/profile'
 import { saveProfile } from '@/server/actions/auth'
 
-// Onboarding's one question. The name is checked as you type (after the
-// first blur) and again by the action.
+// Onboarding's one question. The name is checked once you first submit, then
+// as you type, and again by the action. Never on blur: leaving an empty field
+// isn't a mistake yet.
 export function WelcomeForm({ next }: { next?: string }) {
 	const t = useTranslations('Welcome')
 	const id = useId()
 	const [name, setName] = useState('')
-	const [isTouched, setIsTouched] = useState(false)
+	const [isSubmitted, setIsSubmitted] = useState(false)
 	const [formError, setFormError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
 	const fieldError = fullNameSchema.safeParse(name).success ? null : t('nameRequired')
-	const showFieldError = isTouched && fieldError != null
+	const showFieldError = isSubmitted && fieldError != null
 
 	return (
 		<form
@@ -26,7 +27,7 @@ export function WelcomeForm({ next }: { next?: string }) {
 			className="border-border bg-surface mt-7 rounded-md border p-5"
 			onSubmit={(event) => {
 				event.preventDefault()
-				setIsTouched(true)
+				setIsSubmitted(true)
 				setFormError(null)
 				if (fieldError != null) return
 				startTransition(async () => {
@@ -55,7 +56,6 @@ export function WelcomeForm({ next }: { next?: string }) {
 				className="mt-1.5"
 				value={name}
 				onChange={(event) => setName(event.target.value)}
-				onBlur={() => setIsTouched(true)}
 				aria-invalid={showFieldError}
 				aria-describedby={`${id}-${showFieldError ? 'error' : 'hint'}`}
 			/>

@@ -32,14 +32,15 @@
 			opacity: 0;
 		}
 	}
-	/* Dialogs are centred with translate(-50%, -50%), so the keyframes keep it. */
+	/* Dialogs are centred with Tailwind's -translate-1/2, which sets the
+	   `translate` property, so the keyframes animate that same property (and
+	   `scale`) rather than `transform`: the two would stack and start the
+	   dialog off-centre. With no `to`, it settles on its own centred value. */
 	@keyframes pop-in {
 		from {
 			opacity: 0;
-			transform: translate(-50%, -48%) scale(0.96);
-		}
-		to {
-			transform: translate(-50%, -50%) scale(1);
+			translate: -50% -48%;
+			scale: 0.96;
 		}
 	}
 	@keyframes float-in {
