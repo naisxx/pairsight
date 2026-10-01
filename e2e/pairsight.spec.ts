@@ -173,6 +173,13 @@ test.describe('PairSight vertical slice', () => {
 		await expect(tile(page, 'Neither matched')).toContainText('1')
 		// Re-decided from the saved scores: Jev wasn't asked again.
 		expect(await jevCalls(page, marker)).toBe(callsBefore)
+		// The run remembers what it started with, and can preview going back.
+		await expect(page.locator('#main')).toContainText('Run started at 0.50')
+		await page.getByRole('button', { name: /^Decision threshold/ }).click()
+		await page.getByRole('button', { name: 'Use it again' }).click()
+		await expect(page.getByLabel('Decision threshold')).toHaveValue('0.50')
+		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*3 → 2/)
+		await page.keyboard.press('Escape')
 
 		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
 		await page.goto(`${evaluationPath}/plan`)
@@ -192,6 +199,7 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('button', { name: 'Choose a run' }).click()
 		await page.getByRole('menuitem', { name: /^Run 1 ·/ }).click()
 		await expect(main).toContainText(/Run 1 · .+ · threshold 0\.40/)
+		await expect(main).toContainText('Run started at 0.50')
 	})
 
 	test('a failed pair stays incomplete — never a nonmatch — and a retry can judge it', async ({
@@ -231,6 +239,17 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL(/\/results\?/)
 		await expect(tile(page, 'Incomplete')).toContainText('1')
 		await expect(tile(page, 'Both matched')).toContainText('2')
+
+		// A failed row can be retried from the table too; Failcase fails again.
+		const rowCalls = await jevCalls(page, marker)
+		await page.getByRole('button', { name: /^Retry pair F\d and F\d$/ }).click()
+		await expect(
+			page.getByText('Jev couldn’t judge it this time either.', { exact: false })
+		).toBeVisible({
+			timeout: 30_000
+		})
+		expect(await jevCalls(page, marker)).toBe(rowCalls + 1)
+		await expect(tile(page, 'Incomplete')).toContainText('1')
 
 		// Retry failed on the Run page asks Jev again about the pair that's
 		// still failed; Failcase fails again and stays incomplete.
