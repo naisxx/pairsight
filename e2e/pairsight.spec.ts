@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 
 // The PairSight vertical slice, end to end, against local Supabase and the Jev
@@ -6,6 +7,7 @@ import { expect, test, type Page } from '@playwright/test'
 
 const FIXTURES = 'e2e/fixtures'
 const PASSWORD = 'e2e-password-123'
+const JEV_STUB = `http://127.0.0.1:${process.env.JEV_STUB_PORT ?? 4010}`
 
 test.describe('PairSight vertical slice', () => {
 	test.skip(
@@ -29,10 +31,28 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/records')
 	}
 
+	// Each upload gets its own email domain, returned as a marker. The stub's
+	// per-pair scripts (Flaky, Retrycase) then start fresh even on a stub that
+	// outlived earlier runs, and its call counter sees this test's records only.
 	async function uploadRecords(page: Page, file: string) {
-		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/${file}`)
+		const marker = `e2e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+		const csv = readFileSync(`${FIXTURES}/${file}`, 'utf8').replace(
+			/@example\.com/gi,
+			`@${marker}.example.com`
+		)
+		await page
+			.locator('input[type=file]')
+			.setInputFiles({ name: file, mimeType: 'text/csv', buffer: Buffer.from(csv) })
 		await expect(page.getByText('Map your columns')).toBeVisible()
 		await page.getByRole('button', { name: 'Save records' }).click()
+		return marker
+	}
+
+	// Jev calls the stub has received for one upload's records.
+	async function jevCalls(page: Page, marker: string) {
+		const response = await page.request.get(`${JEV_STUB}/calls?marker=${marker}`)
+		const { count } = (await response.json()) as { count: number }
+		return count
 	}
 
 	async function addVendor(page: Page, file: string) {
@@ -118,15 +138,19 @@ test.describe('PairSight vertical slice', () => {
 	}) => {
 		await signUp(page)
 		await createEvaluation(page, 'Threshold and reuse')
-		await uploadRecords(page, 'demo-source.csv')
+		const marker = await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
 		await runEvaluation(page)
+		const callsBefore = await jevCalls(page, marker)
+		expect(callsBefore).toBeGreaterThan(0)
 
 		await page.getByLabel('Decision threshold').fill('0.40')
 		await page.getByRole('button', { name: 'Apply' }).click()
 		// The borderline Bob/Robert Chen pair (stub score 0.45) crosses the new threshold.
 		await expect(tile(page, 'PairSight only')).toContainText('3')
 		await expect(tile(page, 'Neither matched')).toContainText('1')
+		// Re-decided from the saved scores: Jev wasn't asked again.
+		expect(await jevCalls(page, marker)).toBe(callsBefore)
 
 		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
 		await page.goto(`${evaluationPath}/plan`)
@@ -138,24 +162,46 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 	})
 
-	test('failed evaluations stay incomplete — never a nonmatch — and 529s are retried', async ({
+	test('a failed pair stays incomplete — never a nonmatch — and a retry can judge it', async ({
 		page
 	}) => {
 		await signUp(page)
 		await createEvaluation(page, 'Failures')
-		await uploadRecords(page, 'failures-source.csv')
+		const marker = await uploadRecords(page, 'failures-source.csv')
 		await addVendor(page, 'failures-vendor.csv')
 		await runEvaluation(page)
 
-		await expect(tile(page, 'Incomplete')).toContainText('1')
+		// Failcase always fails and Retrycase fails its first call; Flaky's 529
+		// is retried within the run and judged.
+		await expect(tile(page, 'Incomplete')).toContainText('2')
 		await expect(tile(page, 'Both matched')).toContainText('1')
 		await expect(tile(page, 'Vendor only')).toContainText('0')
-		await expect(page.getByText(/1 pair isn’t judged yet or failed/)).toBeVisible()
-		await expect(page.getByText('http_422')).toBeVisible()
+		await expect(page.getByText(/2 pairs aren’t judged yet or failed/)).toBeVisible()
+		await expect(page.getByText('Request rejected').first()).toBeVisible()
 
+		// Retrying one pair from its page: Jev judges it this time.
+		await tile(page, 'Incomplete').click()
+		await page.locator('tbody tr').filter({ hasText: 'Retrycase' }).locator('a').click()
+		await page.waitForURL('**/pairs/**')
+		await page.getByRole('button', { name: 'Retry this pair' }).click()
+		await expect(page.getByText('PairSight decision at this threshold: match')).toBeVisible({
+			timeout: 30_000
+		})
+		await page.getByRole('link', { name: 'Back to results' }).click()
+		await page.waitForURL(/\/results\?/)
+		await expect(tile(page, 'Incomplete')).toContainText('1')
+		await expect(tile(page, 'Both matched')).toContainText('2')
+
+		// Retry failed on the Run page asks Jev again about the pair that's
+		// still failed; Failcase fails again and stays incomplete.
 		await page.getByRole('link', { name: 'Open run' }).click()
+		const failures = page.getByRole('heading', { name: 'Why pairs failed' }).locator('..')
+		await expect(failures).toContainText('Request rejected1 pair')
+		const callsBefore = await jevCalls(page, marker)
 		await page.getByRole('button', { name: 'Retry failed pairs' }).click()
-		await expect(page.getByText(/1 pair failed/)).toBeVisible({ timeout: 45_000 })
+		await expect.poll(() => jevCalls(page, marker), { timeout: 30_000 }).toBe(callsBefore + 1)
+		await expect(page.getByText(/1 pair failed/)).toBeVisible({ timeout: 30_000 })
+		await expect(failures).toContainText('Request rejected1 pair')
 	})
 
 	test('invalid references are blocked with row numbers', async ({ page }) => {

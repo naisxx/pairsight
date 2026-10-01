@@ -4,3 +4,5 @@ F2,Failcase,Doe,failcase.doe@example.com,,,,Springfield,00001
 F3,Flaky,Roe,flaky.roe@example.com,,,,Springfield,00002
 F4,Flaky,Roe,flaky.roe@example.com,,,,Springfield,00002
 F5,Quinn,Lowe,quinn.lowe@example.com,,,,Springfield,00003
+F6,Retrycase,Moe,retrycase.moe@example.com,,,,Springfield,00004
+F7,Retrycase,Moe,retrycase.moe@example.com,,,,Springfield,00004

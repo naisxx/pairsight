@@ -7,8 +7,15 @@
 // results are never mistaken for real judgments.
 //
 // Scripted failures, keyed on record_1's first_name:
-//   "Failcase" -> 422 every time (a permanent failure)
-//   "Flaky"    -> 529 on the first call for that pair, then a normal answer
+//   "Failcase"  -> 422 every time (a permanent failure)
+//   "Flaky"     -> 529 on the first call for that pair, then a normal answer
+//                  (retried within the run)
+//   "Retrycase" -> 422 on the first call for that pair, then a normal answer
+//                  (fails the run's attempt; a later retry succeeds)
+//
+// GET /calls?marker=<text> counts the calls whose request contained <text>,
+// so a test can prove an action made no Jev calls for its own records even
+// while other tests run in parallel.
 //
 // Usage: node scripts/jev-stub.mjs   (JEV_STUB_PORT, default 4010)
 
@@ -16,6 +23,10 @@ import { createServer } from 'node:http'
 
 const PORT = Number(process.env.JEV_STUB_PORT ?? 4010)
 const flakySeen = new Set()
+const retrySeen = new Set()
+// Recent request bodies for /calls; capped so a long dev session can't grow it forever.
+const MAX_RECORDED_CALLS = 5_000
+const recordedCalls = []
 
 const norm = (value) => (value ?? '').toString().trim().toLowerCase().replace(/\s+/g, ' ')
 const digits = (value) => (value ?? '').toString().replace(/\D/g, '').slice(-10)
@@ -66,6 +77,11 @@ function send(response, status, body) {
 const server = createServer((request, response) => {
 	if (request.method === 'GET' && request.url === '/health')
 		return send(response, 200, { ok: true })
+	if (request.method === 'GET' && request.url?.startsWith('/calls')) {
+		const marker = new URL(request.url, 'http://stub').searchParams.get('marker') ?? ''
+		const count = marker === '' ? 0 : recordedCalls.filter((raw) => raw.includes(marker)).length
+		return send(response, 200, { count })
+	}
 	if (request.method !== 'POST' || !request.url?.endsWith('/systemone')) {
 		return send(response, 404, { error: 'not_found' })
 	}
@@ -75,6 +91,8 @@ const server = createServer((request, response) => {
 	let raw = ''
 	request.on('data', (chunk) => (raw += chunk))
 	request.on('end', () => {
+		recordedCalls.push(raw)
+		if (recordedCalls.length > MAX_RECORDED_CALLS) recordedCalls.shift()
 		let body
 		try {
 			body = JSON.parse(raw)
@@ -88,6 +106,10 @@ const server = createServer((request, response) => {
 		if (norm(a.first_name) === 'failcase')
 			return send(response, 422, { error: 'validation_failed' })
 		const pairKey = JSON.stringify([a, b])
+		if (norm(a.first_name) === 'retrycase' && !retrySeen.has(pairKey)) {
+			retrySeen.add(pairKey)
+			return send(response, 422, { error: 'validation_failed' })
+		}
 		if (norm(a.first_name) === 'flaky' && !flakySeen.has(pairKey)) {
 			flakySeen.add(pairKey)
 			return send(response, 529, { error: 'overloaded' })
