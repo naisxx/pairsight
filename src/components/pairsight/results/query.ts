@@ -19,6 +19,7 @@ export function hasActiveFilters(filters: ResultFilters): boolean {
 		filters.source != null ||
 		filters.lowConfidence != null ||
 		filters.status != null ||
+		filters.score != null ||
 		(filters.q ?? '') !== ''
 	)
 }

@@ -21,6 +21,10 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByLabel('Email').fill(email)
 		await page.getByLabel('Password').fill(PASSWORD)
 		await page.getByRole('button', { name: 'Create account' }).click()
+		// Onboarding asks for a full name before the app opens.
+		await page.waitForURL('**/welcome**')
+		await page.getByLabel('Full name').fill('Test Person')
+		await page.getByRole('button', { name: 'Continue' }).click()
 		await page.waitForURL('**/evaluations')
 		return email
 	}
@@ -77,8 +81,16 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/results')
 	}
 
+	// The Overview's category tiles; each opens its pairs in the detailed view.
 	function tile(page: Page, name: string) {
-		return page.locator('a[aria-pressed]').filter({ hasText: name })
+		return page
+			.getByRole('region', { name: 'Pairs by category' })
+			.getByRole('link', { name: new RegExp(`^${name}: `) })
+	}
+
+	// The detailed view's live count of matching pairs.
+	function matching(page: Page) {
+		return page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })
 	}
 
 	test('upload to comparison: all four categories, vendor pairs outside blocking, inspection', async ({
@@ -106,28 +118,37 @@ test.describe('PairSight vertical slice', () => {
 			await expect(tile(page, name)).toContainText('2')
 		}
 		await expect(tile(page, 'Incomplete')).toContainText('0')
-		await expect(
-			page.getByText(/8 pairs compared — 6 from your rules, 2 added only because a vendor/)
-		).toBeVisible()
+		// Coverage: 6 pairs from the rules, 2 added only because the vendor matched them.
+		const coverage = page.getByRole('region', { name: 'Assessment coverage' })
+		await expect(coverage).toContainText(/From your rules\s*6/)
+		await expect(coverage).toContainText(/Added because a vendor matched\s*2/)
 
 		await tile(page, 'Vendor only').click()
-		await expect(page.getByText('2 pairs')).toBeVisible()
+		await page.waitForURL(/tab=detailed/)
+		await expect(matching(page)).toHaveText('2 pairs')
 
 		// From the keyboard: / jumps to search; ↓ then Enter opens the first pair.
 		await page.keyboard.press('/')
-		await expect(page.getByRole('searchbox', { name: 'Search references or names' })).toBeFocused()
+		await expect(
+			page.getByRole('searchbox', { name: 'Search by record reference or name' })
+		).toBeFocused()
 		await page.getByRole('heading', { level: 1 }).click()
 		// A short window scrolled down, so coming back has a position to restore.
 		await page.setViewportSize({ width: 1280, height: 480 })
-		await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+		// The page scrolls inside the shell's <main>, not the window.
+		await page.evaluate(() => {
+			const main = document.getElementById('main')
+			main?.scrollTo(0, main.scrollHeight)
+		})
 		await page.keyboard.press('ArrowDown')
 		await expect(page.locator('tbody tr a').first()).toBeFocused()
 		await page.keyboard.press('Enter')
 		await page.waitForURL('**/pairs/**')
-		await expect(
-			page.getByRole('heading', { name: /Vendor A: match · PairSight: no match/ })
-		).toBeVisible()
-		await expect(page.getByText('AI judgment — it can be wrong.')).toBeVisible()
+		// Vendor only: the vendor matched it, PairSight didn't.
+		const decisions = page.getByRole('region', { name: 'Decisions' })
+		await expect(decisions).toContainText(/Vendor A\s*Matched/)
+		await expect(decisions).toContainText(/PairSight \(AI\)\s*No match/)
+		await expect(page.getByText(/AI judgment — it may be wrong/)).toBeVisible()
 		const firstPair = page.url()
 		await page.keyboard.press('j')
 		await expect(page).not.toHaveURL(firstPair)
@@ -139,17 +160,21 @@ test.describe('PairSight vertical slice', () => {
 			await expect(page).toHaveURL(/\/results\?/, { timeout: 1_000 })
 		}).toPass({ timeout: 10_000 })
 		await expect(page).toHaveURL(/category=vendor_only/)
-		await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+		await expect
+			.poll(() => page.evaluate(() => document.getElementById('main')?.scrollTop ?? 0))
+			.toBeGreaterThan(0)
 		await page.setViewportSize({ width: 1280, height: 720 })
+
+		// The pair you came back from is highlighted.
+		await expect(page).toHaveURL(/sel=/)
 
 		// Filters that match nothing: the empty state says so and clears them.
 		await page.goto(`${page.url()}&q=no-such-record`)
-		const noMatches = page.getByRole('status').filter({ hasText: 'No pairs match these filters' })
-		await expect(noMatches).toBeVisible()
-		await noMatches.getByRole('link', { name: 'Clear filters' }).click()
-		// Clearing keeps the selected vendor, nothing else.
-		await page.waitForURL(/\/results(\?vendor=[^&]+)?$/)
-		await expect(page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })).toHaveText('8 pairs')
+		await expect(page.getByRole('heading', { name: 'No pairs match these filters' })).toBeVisible()
+		await page.getByRole('link', { name: 'Clear filters' }).click()
+		// Clearing keeps the vendor and the detailed view, nothing else.
+		await page.waitForURL(/\/results\?vendor=[^&]+&tab=detailed$/)
+		await expect(matching(page)).toHaveText('8 pairs')
 	})
 
 	test('changing the threshold re-decides from saved scores; a new run reuses every assessment', async ({
@@ -165,8 +190,10 @@ test.describe('PairSight vertical slice', () => {
 
 		// The popover previews the change before anything is saved.
 		await page.getByRole('button', { name: /^Decision threshold/ }).click()
-		await page.getByLabel('Decision threshold').fill('0.40')
-		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*2 → 3/)
+		const thresholdValue = page.getByLabel('Threshold value')
+		await thresholdValue.fill('0.40')
+		await thresholdValue.press('Enter')
+		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*2\s*becomes\s*3/)
 		await page.getByRole('button', { name: 'Apply' }).click()
 		// The borderline Bob/Robert Chen pair (stub score 0.45) crosses the new threshold.
 		await expect(tile(page, 'PairSight only')).toContainText('3')
@@ -176,9 +203,9 @@ test.describe('PairSight vertical slice', () => {
 		// The run remembers what it started with, and can preview going back.
 		await expect(page.locator('#main')).toContainText('Run started at 0.50')
 		await page.getByRole('button', { name: /^Decision threshold/ }).click()
-		await page.getByRole('button', { name: 'Use it again' }).click()
-		await expect(page.getByLabel('Decision threshold')).toHaveValue('0.50')
-		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*3 → 2/)
+		await page.getByRole('button', { name: 'Reset to 0.50' }).click()
+		await expect(page.getByLabel('Threshold value')).toHaveValue('0.50')
+		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*3\s*becomes\s*2/)
 		await page.keyboard.press('Escape')
 
 		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
@@ -194,11 +221,12 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('link', { name: 'View results' }).click()
 		await page.waitForURL('**/results')
 		const main = page.locator('#main')
-		await expect(main.getByText('Complete', { exact: true })).toBeVisible()
+		await expect(main.getByText('Run complete', { exact: true })).toBeVisible()
 		await expect(main).toContainText('Run 2 ·')
 		await page.getByRole('button', { name: 'Choose a run' }).click()
 		await page.getByRole('menuitem', { name: /^Run 1 ·/ }).click()
-		await expect(main).toContainText(/Run 1 · .+ · threshold 0\.40/)
+		await expect(main).toContainText('Run 1 ·')
+		await expect(page.getByRole('button', { name: /^Decision threshold 0\.40/ })).toBeVisible()
 		await expect(main).toContainText('Run started at 0.50')
 	})
 
@@ -216,29 +244,33 @@ test.describe('PairSight vertical slice', () => {
 		await expect(tile(page, 'Incomplete')).toContainText('2')
 		await expect(tile(page, 'Both matched')).toContainText('1')
 		await expect(tile(page, 'Vendor only')).toContainText('0')
-		await expect(page.getByText(/33% judged — 2 pairs are incomplete/)).toBeVisible()
-		await expect(page.getByText('Request rejected').first()).toBeVisible()
+		await expect(page.locator('#main').getByText('2 incomplete', { exact: true })).toBeVisible()
+		await expect(page.getByText('Provisional')).toBeVisible()
 
-		// The status filter keeps judged pairs only (and survives the empty "All" selects).
-		await page.getByLabel('Status', { exact: true }).selectOption('evaluated')
-		await page.getByRole('button', { name: 'Filters' }).click()
+		// The status filter keeps judged pairs only, applied as it changes.
+		await page.getByRole('link', { name: /^Detailed analysis/ }).click()
+		await page.waitForURL(/tab=detailed/)
+		await page.getByLabel('Assessment status').selectOption('evaluated')
 		await expect(page).toHaveURL(/status=evaluated/)
-		await expect(page.locator('p[aria-live]').filter({ hasText: /pairs?$/ })).toHaveText('1 pair')
-		await page.getByRole('link', { name: 'Clear filters' }).click()
+		await expect(matching(page)).toHaveText('1 pair')
+		await page.getByRole('button', { name: 'Clear filters' }).click()
 		await expect(page).not.toHaveURL(/status=/)
+		await page.getByRole('link', { name: /^Overview/ }).click()
+		await page.waitForURL(/\/results\?vendor=[^&]+$/)
 
 		// Retrying one pair from its page: Jev judges it this time.
 		await tile(page, 'Incomplete').click()
+		await page.waitForURL(/category=incomplete/)
+		await expect(page.getByText('Failed · Request rejected').first()).toBeVisible()
 		await page.locator('tbody tr').filter({ hasText: 'Retrycase' }).locator('a').click()
 		await page.waitForURL('**/pairs/**')
 		await page.getByRole('button', { name: 'Retry this pair' }).click()
-		await expect(page.getByText('PairSight decision at this threshold: match')).toBeVisible({
-			timeout: 30_000
-		})
+		await expect(page.getByRole('region', { name: 'Decisions' })).toContainText(
+			/PairSight \(AI\)\s*Match/,
+			{ timeout: 30_000 }
+		)
 		await page.getByRole('link', { name: 'Back to results' }).click()
 		await page.waitForURL(/\/results\?/)
-		await expect(tile(page, 'Incomplete')).toContainText('1')
-		await expect(tile(page, 'Both matched')).toContainText('2')
 
 		// A failed row can be retried from the table too; Failcase fails again.
 		const rowCalls = await jevCalls(page, marker)
@@ -249,11 +281,13 @@ test.describe('PairSight vertical slice', () => {
 			timeout: 30_000
 		})
 		expect(await jevCalls(page, marker)).toBe(rowCalls + 1)
+		await page.getByRole('link', { name: /^Overview/ }).click()
 		await expect(tile(page, 'Incomplete')).toContainText('1')
+		await expect(tile(page, 'Both matched')).toContainText('2')
 
 		// Retry failed on the Run page asks Jev again about the pair that's
 		// still failed; Failcase fails again and stays incomplete.
-		await page.getByRole('link', { name: 'Open run' }).click()
+		await page.getByRole('list', { name: 'Pipeline' }).getByRole('link', { name: /^Run,/ }).click()
 		const failures = page.getByRole('heading', { name: 'Why pairs failed' }).locator('..')
 		await expect(failures).toContainText('Request rejected1 pair')
 		const callsBefore = await jevCalls(page, marker)
@@ -397,10 +431,10 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'demo-vendor-a.csv')
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
-		// Stages are links in the sidebar's pipeline, named "<stage>, <detail>".
+		// Stages are links in the sidebar's pipeline, named "<stage>, <state>. <detail>".
 		const stepLink = (name: string) =>
 			page
-				.getByRole('region', { name: 'Pipeline' })
+				.getByRole('list', { name: 'Pipeline' })
 				.getByRole('link', { name: new RegExp(`^${name},`) })
 		const dialog = page.getByRole('alertdialog', { name: 'Leave without saving?' })
 
@@ -468,9 +502,13 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText(/Added 3 pairs/)).toBeVisible()
 		await runEvaluation(page)
 
-		await expect(page.getByRole('heading', { name: 'Agreement by vendor' })).toBeVisible()
-		const byVendor = page.getByRole('table', { name: 'Agreement by vendor' })
-		await expect(byVendor.getByRole('rowheader')).toHaveText(['Vendor A', 'Vendor B'])
+		// One vendor at a time, switchable; and both side by side.
+		await expect(page.getByRole('radio', { name: 'Vendor B' })).toBeVisible()
+		const comparison = page.getByRole('region', { name: 'Vendor comparison' })
+		await expect(comparison).toBeVisible()
+		await comparison.getByRole('button', { name: 'Show as table' }).click()
+		await expect(comparison.getByRole('rowheader')).toHaveText(['Vendor A', 'Vendor B'])
+		await expect(page.getByRole('region', { name: 'Where vendors agree' })).toBeVisible()
 	})
 
 	test('empty states: no evaluations yet, and later steps ask for records first', async ({
@@ -495,19 +533,30 @@ test.describe('PairSight vertical slice', () => {
 	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Shell')
-		const pipeline = page.getByRole('region', { name: 'Pipeline' })
-		await expect(pipeline.getByRole('link', { name: /^Records, upload a CSV/ })).toBeVisible()
+		const pipeline = page.getByRole('list', { name: 'Pipeline' })
+		await expect(
+			pipeline.getByRole('link', { name: /^Records, next step\. No file yet/ })
+		).toBeVisible()
+		await expect(page.getByRole('banner').getByText('Draft', { exact: true })).toBeVisible()
 
 		await uploadRecords(page, 'demo-source.csv')
 		await expect(page.getByText('demo-source.csv · 24 records')).toBeVisible()
-		await expect(pipeline.getByRole('link', { name: /^Records, 24 records/ })).toBeVisible()
-		await expect(pipeline.getByRole('link', { name: /^Vendors, add vendor matches/ })).toBeVisible()
-		await expect(pipeline.getByText('Setup · 1 of 6 stages')).toBeVisible()
+		await expect(
+			pipeline.getByRole('link', { name: /^Records, completed\. 24 records/ })
+		).toBeVisible()
+		await expect(
+			pipeline.getByRole('link', { name: /^Vendors, next step\. None added/ })
+		).toBeVisible()
+		// Locked stages say what they're waiting for.
+		await expect(
+			pipeline.getByRole('link', { name: /^Run, locked\. Start a run from the plan first/ })
+		).toBeVisible()
 
 		const shell = page.locator('.app-shell')
 		await expect(shell).toHaveAttribute('data-collapsed', 'false')
 		await page.getByRole('button', { name: 'Collapse sidebar' }).click()
 		await expect(shell).toHaveAttribute('data-collapsed', 'true')
+		await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible()
 		// The width is remembered, and the server renders it on the first paint.
 		await page.reload()
 		await expect(shell).toHaveAttribute('data-collapsed', 'true')
@@ -515,18 +564,39 @@ test.describe('PairSight vertical slice', () => {
 		await expect(shell).toHaveAttribute('data-collapsed', 'false')
 		await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible()
 
-		// On phones the same toggle opens a drawer, and says so. (The scrim
-		// behind the drawer is also a "Close navigation" button.)
+		// On phones the sidebar is a drawer, opened from the top bar.
 		await page.setViewportSize({ width: 390, height: 844 })
-		const toggle = page.locator('button[aria-controls="sidebar"]')
-		await expect(toggle).toHaveAccessibleName('Open navigation')
-		await expect(toggle).toHaveAttribute('aria-expanded', 'false')
-		await toggle.click()
+		await page.getByRole('button', { name: 'Open navigation' }).click()
+		const drawer = page.getByRole('dialog', { name: 'Navigation' })
+		await expect(drawer).toBeVisible()
 		await expect(shell).toHaveAttribute('data-mobile-open', 'true')
-		await expect(toggle).toHaveAccessibleName('Close navigation')
-		await expect(toggle).toHaveAttribute('aria-expanded', 'true')
+		await drawer.getByRole('button', { name: 'Close navigation' }).click()
+		await expect(drawer).toHaveCount(0)
+		await page.getByRole('button', { name: 'Open navigation' }).click()
+		await expect(drawer).toBeVisible()
 		await page.keyboard.press('Escape')
 		await expect(shell).toHaveAttribute('data-mobile-open', 'false')
+	})
+
+	test('onboarding asks for a full name first, then the account shows it', async ({ page }) => {
+		await page.goto('/sign-up')
+		await page.getByLabel('Email').fill(`e2e+${Date.now()}-name@pairsight.test`)
+		await page.getByLabel('Password').fill(PASSWORD)
+		await page.getByRole('button', { name: 'Create account' }).click()
+		await page.waitForURL('**/welcome**')
+
+		// The app stays closed until a name is saved.
+		await page.goto('/evaluations')
+		await page.waitForURL('**/welcome**')
+		await page.getByRole('button', { name: 'Continue' }).click()
+		await expect(page.getByText('Enter your name')).toBeVisible()
+
+		await page.getByLabel('Full name').fill('  Ana María López  ')
+		await page.getByRole('button', { name: 'Continue' }).click()
+		await page.waitForURL('**/evaluations')
+		const account = page.getByRole('button', { name: 'Account: Ana María López' })
+		await expect(account).toBeVisible()
+		await expect(account).toContainText('AM')
 	})
 
 	test('an evaluation is invisible to another user', async ({ browser }) => {

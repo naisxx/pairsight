@@ -2,14 +2,13 @@
 
 import { useFormatter, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
-import { Button } from '@/components/ui/button'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { CheckIcon, ChevronsUpDownIcon } from '@/components/ui/icons'
+import { CheckIcon, ChevronDownIcon } from '@/components/ui/icons'
 
 export type RunOption = {
 	id: string
@@ -36,25 +35,28 @@ export function RunSwitcher({
 	const label = (run: RunOption) =>
 		t('runOption', {
 			number: run.number,
-			date: format.dateTime(run.createdAt, { dateStyle: 'medium' }),
-			threshold: run.threshold.toFixed(2)
+			date: format.dateTime(run.createdAt, { dateStyle: 'medium', timeStyle: 'short' })
 		})
 
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
-				<Button variant="outline" size="sm" aria-label={t('runSwitcher')}>
-					{current != null ? label(current) : t('runSwitcher')}
-					<ChevronsUpDownIcon />
-				</Button>
+				<button
+					type="button"
+					aria-label={t('runSwitcher')}
+					className="border-border-input bg-surface text-text type-ui flex h-8 w-[200px] items-center justify-between gap-2 rounded-sm border pr-2.5 pl-3 text-left"
+				>
+					<span className="truncate">{current != null ? label(current) : t('runSwitcher')}</span>
+					<ChevronDownIcon size={14} className="text-text-muted shrink-0" />
+				</button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="start" className="min-w-72">
+			<DropdownMenuContent align="end" className="min-w-72">
 				{runs.map((run) => (
 					<DropdownMenuItem key={run.id} asChild>
 						<Link
 							href={`/evaluations/${evaluationId}/runs/${run.id}/results`}
 							aria-current={run.id === runId ? 'page' : undefined}
-							className="type-body flex items-center gap-2"
+							className="flex items-center gap-2"
 						>
 							<CheckIcon className={run.id === runId ? undefined : 'invisible'} />
 							<span className="flex-1">{label(run)}</span>

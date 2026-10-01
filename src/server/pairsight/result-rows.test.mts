@@ -118,3 +118,39 @@ test('invalid URL filters are ignored, and an unknown vendor falls back to the f
 		{ reference: 'R10' }
 	])
 })
+
+test('disagreements, score sides, ranges and the band filter on PairSight decisions', () => {
+	assert.deepEqual(
+		applyFilters(rows, { category: 'disagreements' }).map((row) => row.id),
+		['p2', 'p3']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'above' }).map((row) => row.id),
+		['p2', 'p1']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'below' }).map((row) => row.id),
+		['p3']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'near' }).map((row) => row.id),
+		['p2']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { score: 'r:0.9-1.0' }).map((row) => row.id),
+		['p1']
+	)
+	// An unparseable score filter is ignored, like any other bad URL param.
+	assert.equal(defined(parseResultFilters({ score: 'r:2-3' })).score, undefined)
+})
+
+test('sorting by score keeps unscored pairs last in either direction', () => {
+	assert.deepEqual(
+		applyFilters(rows, { sort: 'score-asc' }).map((row) => row.id),
+		['p3', 'p2', 'p1', 'p4']
+	)
+	assert.deepEqual(
+		applyFilters(rows, { sort: 'score-desc' }).map((row) => row.id),
+		['p1', 'p2', 'p3', 'p4']
+	)
+})

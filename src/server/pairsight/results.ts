@@ -11,6 +11,7 @@ import {
 	recordLabel,
 	type ResultFilters
 } from './result-rows'
+import { buildOverview } from './result-overview'
 import { getOwnedRun } from './runs'
 import { parseColumnRoles, parseRecordValues } from './json'
 
@@ -93,7 +94,8 @@ export async function getRunResults({
 	})
 	const counts = countCategories(rows)
 	const filtered = applyFilters(rows, filters)
-	const pageCount = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
+	const pageSize = filters.size ?? PAGE_SIZE
+	const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
 	const page = Math.min(filters.page ?? 1, pageCount)
 	return {
 		run: view.run,
@@ -107,13 +109,24 @@ export async function getRunResults({
 			addedByVendor: rows.filter((row) => row.ruleIds.length === 0).length
 		},
 		models: [...new Set(view.pairs.flatMap((pair) => pair.assessment.modelReported ?? []))],
-		// Every judged score for this vendor, so the threshold control can
-		// preview a new threshold without a round trip.
-		judged: rows.flatMap((row) =>
-			row.status === 'succeeded' && row.score != null
-				? [{ score: row.score, isVendorMatch: row.isVendorMatch }]
-				: []
-		),
+		overview: buildOverview({
+			pairs: view.pairs,
+			rows,
+			vendors: view.vendors,
+			vendorId,
+			threshold: view.run.threshold,
+			recordCount: view.recordsById.size,
+			records: view.recordsById,
+			columnRoles: view.columnRoles,
+			country: view.run.countryCode
+		}),
+		// Every pair's status, score and this vendor's decision, so the threshold
+		// control can preview a new threshold without a round trip.
+		metricPairs: rows.map((row) => ({
+			status: row.status,
+			score: row.score,
+			isVendorMatch: row.isVendorMatch
+		})),
 		// Each vendor's categories side by side; only worth showing with two or more.
 		vendorCounts:
 			view.vendors.length < 2
@@ -133,7 +146,8 @@ export async function getRunResults({
 										})
 									)
 					})),
-		rows: filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE),
+		rows: filtered.slice((page - 1) * pageSize, page * pageSize),
+		pageSize,
 		matching: filtered.length,
 		page,
 		pageCount
@@ -166,7 +180,11 @@ export async function getPairDetail({
 	})
 	const row = rows.find((candidate) => candidate.id === pairId)
 	if (row == null) return null
-	const list = applyFilters(rows, filters)
+	// The filtered list it was opened from; if the filters no longer include
+	// this pair, step through the whole run instead.
+	const filtered = applyFilters(rows, filters)
+	const isInFiltered = filtered.some((candidate) => candidate.id === pairId)
+	const list = isInFiltered ? filtered : applyFilters(rows, {})
 	const position = list.findIndex((candidate) => candidate.id === pairId)
 	const [recordA, recordB] = byReference(first, second)
 	return {
@@ -193,6 +211,7 @@ export async function getPairDetail({
 		vendorId,
 		position: position === -1 ? null : position + 1,
 		listSize: list.length,
+		isInFiltered,
 		previousId: position > 0 ? (list[position - 1]?.id ?? null) : null,
 		nextId: position !== -1 ? (list[position + 1]?.id ?? null) : null
 	}
