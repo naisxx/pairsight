@@ -8,17 +8,28 @@ import { AlertIcon, RetryIcon, SpinnerIcon } from '@/components/ui/icons'
 import { retryPairAction } from '@/server/actions/pairsight/runs'
 
 // Asks Jev about this one failed pair again, then shows whatever the backend
-// now holds: a score, or the failure if it failed again.
-export function RetryPairButton({ runId, pairId }: { runId: string; pairId: string }) {
+// now holds: a score, or the failure if it failed again. `compact` is the
+// results-table form: a short button that names its pair for screen readers.
+export function RetryPairButton({
+	runId,
+	pairId,
+	compact
+}: {
+	runId: string
+	pairId: string
+	compact?: { label: string }
+}) {
 	const t = useTranslations('Pair')
 	const router = useRouter()
 	const [error, setError] = useState<string | null>(null)
 	const [isPending, startTransition] = useTransition()
 	return (
-		<div className="flex flex-col items-start gap-2">
+		<div className={compact == null ? 'flex flex-col items-start gap-2' : 'flex flex-col gap-1'}>
 			<Button
-				variant="outline"
+				variant={compact == null ? 'outline' : 'ghost'}
 				size="sm"
+				aria-label={compact?.label}
+				className={compact == null ? undefined : 'h-7 px-2'}
 				disabled={isPending}
 				onClick={() =>
 					startTransition(async () => {
@@ -31,7 +42,7 @@ export function RetryPairButton({ runId, pairId }: { runId: string; pairId: stri
 				}
 			>
 				{isPending ? <SpinnerIcon /> : <RetryIcon />}
-				{isPending ? t('retrying') : t('retry')}
+				{compact != null ? t('retryShort') : isPending ? t('retrying') : t('retry')}
 			</Button>
 			{error != null && (
 				<p role="alert" className="text-danger type-meta flex items-center gap-1.5">

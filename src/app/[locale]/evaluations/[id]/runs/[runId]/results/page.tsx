@@ -69,6 +69,11 @@ export default async function ResultsPage({
 						model: results.models.join(', ') || run.jevModel
 					})}
 				</span>
+				{run.initialThreshold != null && run.initialThreshold !== run.threshold && (
+					<span className="text-text-muted type-body">
+						{t('thresholdStartedAt', { threshold: run.initialThreshold.toFixed(2) })}
+					</span>
+				)}
 			</div>
 			<VendorTabs base={base} vendors={results.vendors} vendorId={results.vendorId} />
 			<CategoryTiles base={base} filters={filters} counts={counts} evaluated={results.evaluated} />
@@ -76,7 +81,12 @@ export default async function ResultsPage({
 			<CoverageNotice runHref={base} coverage={results.coverage} incomplete={counts.incomplete} />
 			<div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
 				<ResultsFilters base={base} filters={filters} />
-				<ThresholdControl runId={run.id} threshold={run.threshold} judged={results.judged} />
+				<ThresholdControl
+					runId={run.id}
+					threshold={run.threshold}
+					initialThreshold={run.initialThreshold}
+					judged={results.judged}
+				/>
 			</div>
 			<p className="text-text-muted type-body mt-4 mb-2" aria-live="polite">
 				{t('matching', { count: results.matching })}
@@ -103,6 +113,7 @@ export default async function ResultsPage({
 				</div>
 			) : (
 				<PairsTable
+					runId={run.id}
 					base={base}
 					filters={filters}
 					rows={results.rows}

@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/table'
 import { isPairsightMatch } from '@/server/pairsight/decisions'
 import type { ResultFilters, ResultRow } from '@/server/pairsight/results'
+import { RetryPairButton } from '../pair/retry-pair-button'
 import { CategoryBadge, ScoreBar, StatusChip } from '../result-parts'
 import { toQuery } from './query'
 
@@ -17,6 +18,7 @@ import { toQuery } from './query'
 // Incomplete rows show their status where a score would be and "not judged"
 // as the decision — never "no match". Each row links to its pair detail.
 export function PairsTable({
+	runId,
 	base,
 	filters,
 	rows,
@@ -24,6 +26,7 @@ export function PairsTable({
 	vendorName,
 	ruleLabels
 }: {
+	runId: string
 	base: string
 	filters: ResultFilters
 	rows: ResultRow[]
@@ -83,6 +86,23 @@ export function PairsTable({
 							<TableCell>
 								{row.status === 'succeeded' && row.score != null ? (
 									<ScoreBar score={row.score} threshold={threshold} />
+								) : row.status === 'failed' ? (
+									<span className="flex items-center gap-1.5">
+										<StatusChip status={row.status} errorCode={row.errorCode} />
+										{/* Above the row's full-size link, so it takes its own clicks. */}
+										<span className="relative z-10">
+											<RetryPairButton
+												runId={runId}
+												pairId={row.id}
+												compact={{
+													label: t('retryPair', {
+														a: row.recordA.reference,
+														b: row.recordB.reference
+													})
+												}}
+											/>
+										</span>
+									</span>
 								) : row.status !== 'succeeded' ? (
 									<StatusChip status={row.status} errorCode={row.errorCode} />
 								) : null}
