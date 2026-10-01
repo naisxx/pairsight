@@ -22,7 +22,7 @@ export default async function PlanPage({ params }: { params: Promise<{ id: strin
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
-			<div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
+			<div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,24rem)]">
 				{counts != null ? (
 					<PlanBreakdown counts={counts} maxPairsPerRun={LIMITS.maxPairsPerRun} />
 				) : (

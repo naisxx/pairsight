@@ -31,7 +31,7 @@ export default async function VendorsPage({ params }: { params: Promise<{ id: st
 					</Link>
 				</p>
 			) : (
-				<div className="flex flex-col gap-6">
+				<div className="flex flex-1 flex-col gap-6">
 					{vendorExports.length > 0 && (
 						<ul className="border-border bg-surface divide-border divide-y rounded-lg border">
 							{vendorExports.map((vendorExport) => (

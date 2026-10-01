@@ -20,7 +20,7 @@ export function ReplaceSource({
 	const [isOpen, setIsOpen] = useState(false)
 	if (!isOpen) {
 		return (
-			<Button variant="ghost" size="sm" className="mt-3" onClick={() => setIsOpen(true)}>
+			<Button variant="ghost" size="sm" className="mt-3 self-start" onClick={() => setIsOpen(true)}>
 				{t('replace')}
 			</Button>
 		)

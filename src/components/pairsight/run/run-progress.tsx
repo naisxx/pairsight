@@ -33,7 +33,7 @@ export function RunProgress({
 	]
 
 	return (
-		<div className="flex flex-col gap-6">
+		<div className="flex flex-1 flex-col gap-6">
 			<div className="border-border bg-surface flex flex-col gap-4 rounded-lg border p-5">
 				<div className="flex items-baseline justify-between gap-4">
 					<p className="text-text type-label">{t('progress', { done, total: progress.total })}</p>

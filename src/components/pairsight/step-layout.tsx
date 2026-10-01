@@ -32,15 +32,20 @@ export function ActionBar({
 	children: React.ReactNode
 	className?: string
 }) {
+	// Docked to the bottom of the page column: `mt-auto` rests it at the bottom
+	// of a short page, the transparent `pt-8` keeps a gap above it, and sticky
+	// keeps it in view on a long one. It spans the column edge to edge.
 	return (
-		<div
-			className={cn(
-				'border-border bg-surface/90 sticky bottom-0 z-30 -mx-4 mt-8 flex flex-wrap items-center justify-end gap-3 border-t px-4 py-3 backdrop-blur sm:mx-0 sm:rounded-lg sm:border',
-				className
-			)}
-		>
-			{hint != null && <p className="text-text-muted type-body mr-auto">{hint}</p>}
-			{children}
+		<div className="pointer-events-none sticky bottom-0 z-20 -mx-4 mt-auto -mb-7 pt-8 sm:-mx-8">
+			<div
+				className={cn(
+					'border-border bg-surface/90 pointer-events-auto flex flex-wrap items-center justify-end gap-3 border-t px-4 py-3 backdrop-blur sm:px-8',
+					className
+				)}
+			>
+				{hint != null && <p className="text-text-muted type-body mr-auto">{hint}</p>}
+				{children}
+			</div>
 		</div>
 	)
 }
