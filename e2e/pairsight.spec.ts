@@ -244,6 +244,37 @@ test.describe('PairSight vertical slice', () => {
 		await expect(failures).toContainText('Request rejected1 pair')
 	})
 
+	test('a rejected API key stops the run with the fix, and it resumes once the key works', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Key problem')
+		const marker = await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await expect(page.getByText(/Added 4 pairs/)).toBeVisible()
+		await page.request.post(`${JEV_STUB}/reject?marker=${marker}`)
+
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.waitForURL('**/rules')
+		await page.getByRole('button', { name: 'Review plan' }).click()
+		await page.waitForURL('**/plan')
+		await page.getByRole('button', { name: 'Start evaluation' }).click()
+		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
+		const stopped = page.getByRole('alert').filter({ hasText: 'The run stopped' })
+		await expect(stopped).toContainText('TypeSafe rejected the API key', { timeout: 30_000 })
+		await expect(page.getByRole('link', { name: 'View results' })).toHaveAttribute(
+			'aria-disabled',
+			'true'
+		)
+
+		// The key is fixed; resuming judges every pair.
+		await page.request.post(`${JEV_STUB}/accept?marker=${marker}`)
+		await page.getByRole('button', { name: 'Resume run' }).click()
+		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+		await expect(stopped).toHaveCount(0)
+		await expect(page.getByText('8 of 8 pairs judged')).toBeVisible()
+	})
+
 	test('invalid references are blocked with row numbers', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Validation')
