@@ -110,6 +110,15 @@
 	}
 }
 
+@keyframes parallax {
+	from {
+		translate: 0 var(--parallax-range, 0px);
+	}
+	to {
+		translate: 0 calc(var(--parallax-range, 0px) * -1);
+	}
+}
+
 @keyframes header-settle {
 	to {
 		background-color: color-mix(in oklab, var(--bg) 80%, transparent);
@@ -183,6 +192,60 @@
 	opacity: calc(var(--glow-strength) * 0.7);
 }
 
+/* "How it works": a soft brand wash, with three blurred shapes behind it
+   that drift at their own depths (the parallax is in Motion, below). */
+.how-section {
+	background:
+		linear-gradient(180deg, color-mix(in oklab, var(--surface) 92%, transparent), transparent 60%),
+		color-mix(in oklab, var(--bg) 70%, transparent);
+	border-block: 1px solid var(--border);
+}
+.how-backdrop {
+	position: absolute;
+	inset: 0;
+	z-index: -1;
+	overflow: hidden;
+	pointer-events: none;
+}
+.how-shape {
+	position: absolute;
+	border-radius: 9999px;
+	filter: blur(64px);
+	opacity: var(--glow-strength);
+}
+.how-shape--a {
+	top: -10%;
+	left: -6%;
+	width: 28rem;
+	height: 22rem;
+	background: var(--brand-orange);
+}
+.how-shape--b {
+	top: 30%;
+	right: -8%;
+	width: 30rem;
+	height: 24rem;
+	background: var(--cat-pairsight);
+	opacity: calc(var(--glow-strength) * 0.8);
+}
+.how-shape--c {
+	bottom: -20%;
+	left: 34%;
+	width: 26rem;
+	height: 20rem;
+	background: var(--brand-amber);
+	opacity: calc(var(--glow-strength) * 0.7);
+}
+
+/* The closing call to action: a deep brand panel. It stays in the darker
+   brand range so white text keeps its contrast. */
+.cta-panel {
+	background:
+		radial-gradient(40rem 20rem at 85% 0%, rgb(255 255 255 / 0.14), transparent 60%),
+		linear-gradient(120deg, #7f2020, var(--brand-deep) 35%, #b8331e);
+	color: #ffffff;
+}
+
 /* The sign-in/up backdrop: one glow behind the form. */
 .auth-backdrop {
 	position: fixed;
@@ -254,6 +317,22 @@
 	height: 6px;
 	border-radius: 9999px;
 	background: var(--action);
+}
+
+/* Parallax depth: how far a layer travels as its block crosses the screen.
+   Deeper layers (higher) move more; a negative depth moves against the
+   scroll, for layers behind. Used with `.parallax` below. */
+.depth-1 {
+	--parallax-range: 10px;
+}
+.depth-2 {
+	--parallax-range: 24px;
+}
+.depth-3 {
+	--parallax-range: 44px;
+}
+.depth-back {
+	--parallax-range: -36px;
 }
 
 /* ---- Motion ---- */
@@ -388,6 +467,17 @@
 	[data-in-view='true'] .on-view-draw {
 		transform-origin: left;
 		animation: grow-x 400ms ease-in-out calc(var(--at) + 200ms) both;
+	}
+
+	/* Parallax: a layer drifts from below to above its resting place while
+	   its block crosses the screen, by its depth's range. It moves `translate`,
+	   not `transform`, so it adds to any tilt or entrance on the same layer. */
+	@supports (animation-timeline: view()) {
+		.parallax {
+			animation: parallax linear both;
+			animation-timeline: view();
+			animation-range: cover;
+		}
 	}
 
 	/* The header starts clear over the hero and frosts as the page scrolls. */
