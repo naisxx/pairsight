@@ -56,7 +56,7 @@ export function ActionBar({
 	// the page column.
 	return (
 		<div className="pointer-events-none sticky bottom-0 z-20 mx-[calc(50%-50cqw)] mt-auto -mb-10 pt-8">
-			<div className="border-border bg-surface pointer-events-auto border-t">
+			<div data-action-bar className="border-border bg-surface pointer-events-auto border-t">
 				<div
 					className={cn(
 						'mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-4 py-3 md:px-8',
@@ -71,16 +71,23 @@ export function ActionBar({
 							</Link>
 						</Button>
 					)}
-					<div className="ml-auto flex min-w-0 flex-wrap items-center justify-end gap-3">
-						{hint != null && (
-							<p
-								id={ACTION_HINT_ID}
-								role="status"
-								className="text-text-muted type-ui flex min-w-0 items-center gap-1.5"
-							>
-								{hint}
-							</p>
+					{/* Narrow, the hint gets its own line on top, so Back and the main
+					    action share one row below it instead of stacking three high. */}
+					{hint != null && (
+						<p
+							id={ACTION_HINT_ID}
+							role="status"
+							className="text-text-muted type-ui order-first flex min-w-0 basis-full items-center gap-1.5 @3xl:order-none @3xl:ml-auto @3xl:basis-auto"
+						>
+							{hint}
+						</p>
+					)}
+					<div
+						className={cn(
+							'ml-auto flex min-w-0 flex-wrap items-center justify-end gap-3',
+							hint != null && '@3xl:ml-0'
 						)}
+					>
 						{children}
 					</div>
 				</div>

@@ -45,7 +45,7 @@ export function CategorySummary({
 
 	return (
 		<section aria-label={t('categoriesLabel')}>
-			<div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+			<div className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @6xl:grid-cols-5">
 				{ORDER.map((category) => {
 					const count = metrics.counts[category]
 					const share = metrics.assessed === 0 ? 0 : (count / metrics.assessed) * PERCENT

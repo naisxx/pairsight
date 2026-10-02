@@ -232,7 +232,8 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 				<label
 					className={cn(
 						'mt-4 flex gap-3 rounded-sm border p-3 transition-[background-color,border-color] duration-150',
-						!isDraft ? 'border-action bg-surface-hover' : 'border-border-input',
+						// Confirmed reads as done (success), never as the coral of an error.
+						!isDraft ? 'border-success bg-success-subtle' : 'border-border-input',
 						isDraft && hasPassingFile ? 'cursor-pointer' : 'cursor-default'
 					)}
 				>
@@ -303,7 +304,7 @@ function ColumnPicker({
 			<div
 				role="radiogroup"
 				aria-labelledby="format-title"
-				className="mt-3 grid gap-3 md:grid-cols-2"
+				className="mt-3 grid gap-3 @3xl:grid-cols-2"
 			>
 				{FORMATS.map((option) => {
 					const isSelected = pending.format === option
@@ -343,7 +344,7 @@ function ColumnPicker({
 					)
 				})}
 			</div>
-			<div className="mt-4 grid gap-3 md:grid-cols-2">
+			<div className="mt-4 grid gap-3 @3xl:grid-cols-2">
 				{(['first', 'second'] as const).map((slot, index) => (
 					<div key={slot}>
 						<label htmlFor={`vendor-col-${slot}`} className="type-ui font-medium">

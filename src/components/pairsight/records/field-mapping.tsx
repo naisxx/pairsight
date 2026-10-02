@@ -63,7 +63,7 @@ export function FieldMapping({
 					</Button>
 				)}
 			</header>
-			<div className="border-border bg-surface-muted text-text-muted hidden grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)] gap-3 border-y px-4 py-2 text-xs font-medium md:grid">
+			<div className="border-border bg-surface-muted text-text-muted hidden grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)] gap-3 border-y px-4 py-2 text-xs font-medium @3xl:grid">
 				<span>{t('colField')}</span>
 				<span>{t('colColumn')}</span>
 				<span>{t('colSamples')}</span>
@@ -82,7 +82,7 @@ export function FieldMapping({
 						<li
 							key={key}
 							className={cn(
-								'border-border grid gap-2 border-b px-4 py-2.5 last:border-0 md:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)] md:items-center md:gap-3',
+								'border-border grid gap-2 border-b px-4 py-2.5 last:border-0 @3xl:grid-cols-[minmax(0,1fr)_200px_minmax(0,1fr)] @3xl:items-center @3xl:gap-3',
 								isMissing && 'bg-danger-subtle'
 							)}
 						>
@@ -116,7 +116,7 @@ export function FieldMapping({
 							)}
 							<div className="flex min-w-0 items-center gap-2">
 								{edit != null && column != null && column === suggestion && (
-									<span className="bg-accent text-accent-ink type-caption shrink-0 rounded-[5px] px-1.5 py-0.5 font-medium">
+									<span className="bg-info-subtle text-info type-caption shrink-0 rounded-[5px] px-1.5 py-0.5 font-medium">
 										{t('suggested')}
 									</span>
 								)}

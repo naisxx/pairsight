@@ -119,9 +119,9 @@ export function VendorsWorkspace({
 					</Button>
 				</div>
 			) : (
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-					<nav aria-label={t('listLabel')} className="lg:col-span-3">
-						<ul className="relative flex gap-2 overflow-x-auto lg:flex-col lg:gap-1">
+				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+					<nav aria-label={t('listLabel')} className="@5xl:col-span-3">
+						<ul className="relative flex gap-2 overflow-x-auto @5xl:flex-col @5xl:gap-1">
 							{vendors.map((vendor) => {
 								const step = missingStep(vendor)
 								const isSelected = vendor.id === current.id
@@ -175,7 +175,7 @@ export function VendorsWorkspace({
 							</li>
 						</ul>
 					</nav>
-					<ReadOnlyFieldset className="space-y-4 lg:col-span-9">
+					<ReadOnlyFieldset className="space-y-4 @5xl:col-span-9">
 						<VendorName
 							key={`name-${current.id}`}
 							vendor={current}

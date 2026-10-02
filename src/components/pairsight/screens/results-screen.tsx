@@ -188,7 +188,7 @@ export async function ResultsScreen({
 								pageSize={results.pageSize}
 								total={results.matching}
 							/>
-							<p className="text-text-muted mt-3 flex flex-wrap items-center gap-1 text-xs">
+							<p className="text-text-muted mt-3 flex flex-wrap items-center gap-1 text-xs [@media(pointer:coarse)]:hidden">
 								{t.rich('keyboardHint', { key: (chunks) => <Kbd>{chunks}</Kbd> })}
 							</p>
 						</div>

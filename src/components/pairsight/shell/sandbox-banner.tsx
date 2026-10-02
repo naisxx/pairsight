@@ -23,7 +23,11 @@ export async function SandboxBanner({
 			className="drop border-border bg-accent text-accent-ink flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1.5 border-b px-3 py-2 md:px-5"
 		>
 			<ShowIcon size={ICON_SIZE} className="shrink-0" />
-			<p className="type-ui min-w-0 flex-1">
+			{/* On phones the short form; the full sentence wraps to five lines there. */}
+			<p className="type-ui min-w-0 flex-1 sm:hidden">
+				{t.rich('bannerShort', { b: (chunks) => <span className="font-semibold">{chunks}</span> })}
+			</p>
+			<p className="type-ui hidden min-w-0 flex-1 sm:block">
 				{t.rich('banner', {
 					model: recording.model,
 					date: format.dateTime(recording.recordedAt, { dateStyle: 'medium' }),

@@ -37,10 +37,10 @@ export function VendorStats({
 	return (
 		<dl
 			aria-label={t('statsLabel')}
-			className="border-border md:divide-border mt-4 grid grid-cols-2 overflow-hidden rounded-sm border md:grid-cols-4 md:divide-x"
+			className="border-border @3xl:divide-border mt-4 grid grid-cols-2 overflow-hidden rounded-sm border @3xl:grid-cols-4 @3xl:divide-x"
 		>
 			{items.map((item) => (
-				<div key={item.label} className="border-border border-b p-3 md:border-b-0">
+				<div key={item.label} className="border-border border-b p-3 @3xl:border-b-0">
 					<dt className="text-text-muted text-xs">{item.label}</dt>
 					<dd
 						className={cn(

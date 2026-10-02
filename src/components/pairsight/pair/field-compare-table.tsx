@@ -34,6 +34,21 @@ function StateIcon({ state }: { state: State }) {
 
 // The words of `value` the other record doesn't have, underlined: the part of
 // a value that actually differs, not the whole cell.
+// A line may break after a separator inside a value (the "@" or a "." of an
+// email), so long values wrap there rather than mid-word.
+function breakAfter(part: string) {
+	return SEPARATORS.test(part) && !/\s/.test(part) ? <wbr /> : null
+}
+
+function BreakableText({ value }: { value: string }) {
+	return value.split(SEPARATORS).map((part, index) => (
+		<span key={index}>
+			{part}
+			{breakAfter(part)}
+		</span>
+	))
+}
+
 function DiffText({ value, other }: { value: string; other: string }) {
 	const otherWords = new Set(
 		other
@@ -43,7 +58,10 @@ function DiffText({ value, other }: { value: string; other: string }) {
 	)
 	return value.split(SEPARATORS).map((part, index) =>
 		part === '' || SEPARATORS.test(part) || otherWords.has(part.toLowerCase()) ? (
-			<span key={index}>{part}</span>
+			<span key={index}>
+				{part}
+				{breakAfter(part)}
+			</span>
 		) : (
 			<mark
 				key={index}
@@ -82,7 +100,11 @@ function FieldValue({
 		return <span className="text-text-muted text-xs italic">{missingLabel}</span>
 	return (
 		<span className={cn('break-words', row.isMono && 'font-mono text-[0.78125rem]')}>
-			{row.state === 'different' ? <DiffText value={value} other={other} /> : value}
+			{row.state === 'different' ? (
+				<DiffText value={value} other={other} />
+			) : (
+				<BreakableText value={value} />
+			)}
 		</span>
 	)
 }
@@ -163,7 +185,7 @@ export function FieldCompareTable({
 			</header>
 
 			{/* Side by side from md; stacked A over B on phones. */}
-			<div className="hidden md:block">
+			<div className="hidden @3xl:block">
 				<div className="border-border bg-surface-muted text-text-muted grid grid-cols-[150px_minmax(0,1fr)_40px_minmax(0,1fr)] border-y text-xs font-medium">
 					<div className="px-4 py-2">{t('field')}</div>
 					<div className="px-3 py-2">
@@ -218,7 +240,7 @@ export function FieldCompareTable({
 					})}
 				</ul>
 			</div>
-			<ul className="border-border border-t md:hidden">
+			<ul className="border-border border-t @3xl:hidden">
 				{rows.map((row) => (
 					<li
 						key={row.key}

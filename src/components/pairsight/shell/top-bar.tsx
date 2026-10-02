@@ -55,6 +55,8 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 								key={`${crumb.label}-${index}`}
 								className={cn(
 									'flex min-w-0 items-center gap-1.5',
+									// Where you are is never the part that's cut short.
+									isLast && 'shrink-0',
 									// On phones only the first and last two crumbs fit.
 									index > 0 && index < trail.length - 2 && 'hidden sm:flex'
 								)}

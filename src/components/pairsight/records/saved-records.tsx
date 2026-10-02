@@ -81,8 +81,8 @@ export function SavedRecords({
 						</ReadOnlyGate>
 					}
 				/>
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-					<div className="lg:col-span-8">
+				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+					<div className="@5xl:col-span-8">
 						<FieldMapping
 							fields={fieldKeys(roles)}
 							headers={headers}
@@ -90,7 +90,7 @@ export function SavedRecords({
 							mapping={mapping}
 						/>
 					</div>
-					<div className="lg:col-span-4">
+					<div className="@5xl:col-span-4">
 						<SourceValidation check={NO_PROBLEMS} rowCount={rowCount} blanks={[]} />
 					</div>
 				</div>

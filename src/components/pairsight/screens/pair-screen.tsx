@@ -114,20 +114,20 @@ export async function PairScreen({
 						</span>
 					)}
 				</span>
-				<span aria-hidden className="bg-border h-4 w-px" />
+				<span aria-hidden className="bg-border hidden h-4 w-px @3xl:block" />
 				<span className="flex items-center gap-2">
 					<span className="text-text-muted">{t('pairsightAi')}</span>
 					<span className={pairsightDecision === t('match') ? 'font-medium' : 'text-text-muted'}>
 						{pairsightDecision}
 					</span>
 				</span>
-				<span aria-hidden className="bg-border h-4 w-px" />
+				<span aria-hidden className="bg-border hidden h-4 w-px @3xl:block" />
 				<CategoryBadge category={row.category} />
 				<span className="text-text-muted text-xs">{t('agreementNote')}</span>
 			</section>
 
-			<div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-12">
-				<div className="flex flex-col gap-4 lg:col-span-8">
+			<div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 @5xl:grid-cols-12">
+				<div className="flex flex-col gap-4 @5xl:col-span-8">
 					<FieldCompareTable
 						fields={fields}
 						others={otherHeaders.map((header) => ({
@@ -148,7 +148,11 @@ export async function PairScreen({
 							.map((vendor) => vendor.name)}
 					/>
 				</div>
-				<aside aria-label={t('judgments')} className="flex flex-col gap-4 lg:col-span-4">
+				{/* In one column, Jev's verdict comes before the field-by-field detail. */}
+				<aside
+					aria-label={t('judgments')}
+					className="order-first flex flex-col gap-4 @5xl:order-none @5xl:col-span-4"
+				>
 					<JevPanel
 						runId={run.id}
 						pairId={pairId}

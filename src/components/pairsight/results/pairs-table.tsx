@@ -60,9 +60,9 @@ export function PairsTable({
 	return (
 		<div
 			data-pairs-table
-			className="border-border bg-surface max-h-[calc(100dvh-300px)] min-h-[320px] overflow-auto rounded-t-md border border-b-0"
+			className="border-border bg-surface scroll-fade-x max-h-[calc(100dvh-300px)] min-h-[320px] overflow-auto rounded-t-md border border-b-0"
 		>
-			<table className="type-ui w-full border-separate border-spacing-0 lg:min-w-[1180px]">
+			<table className="type-ui w-full border-separate border-spacing-0 @5xl:min-w-[1180px]">
 				<caption className="sr-only">{t('tableCaption')}</caption>
 				<thead className="bg-surface-muted sticky top-0 z-10">
 					<tr>
@@ -75,7 +75,7 @@ export function PairsTable({
 						<th scope="col" className={th}>
 							{t('columnRecordB')}
 						</th>
-						<th scope="col" className={cn(th, 'hidden lg:table-cell')}>
+						<th scope="col" className={cn(th, 'hidden @5xl:table-cell')}>
 							{t('columnVendorDecision', { vendor: vendorName })}
 						</th>
 						<th
@@ -99,16 +99,16 @@ export function PairsTable({
 								)}
 							</Link>
 						</th>
-						<th scope="col" className={cn(th, 'hidden md:table-cell')}>
+						<th scope="col" className={cn(th, 'hidden @3xl:table-cell')}>
 							{t('columnDecision')}
 						</th>
-						<th scope="col" className={cn(th, 'hidden xl:table-cell')}>
+						<th scope="col" className={cn(th, 'hidden @6xl:table-cell')}>
 							{t('columnReason')}
 						</th>
-						<th scope="col" className={cn(th, 'hidden lg:table-cell')}>
+						<th scope="col" className={cn(th, 'hidden @5xl:table-cell')}>
 							{t('columnAssessment')}
 						</th>
-						<th scope="col" className={cn(th, 'hidden md:table-cell')}>
+						<th scope="col" className={cn(th, 'hidden @3xl:table-cell')}>
 							{t('columnFlags')}
 						</th>
 					</tr>
@@ -152,7 +152,7 @@ export function PairsTable({
 										<span className="text-text block max-w-[180px] truncate">{record.label}</span>
 									</td>
 								))}
-								<td className={cn(td, 'hidden lg:table-cell')}>
+								<td className={cn(td, 'hidden @5xl:table-cell')}>
 									{row.isVendorMatch ? (
 										<span className="text-text inline-flex items-center gap-1.5">
 											<CheckIcon size={14} variant="bold" /> {t('matched')}
@@ -172,7 +172,7 @@ export function PairsTable({
 										</Chip>
 									)}
 								</td>
-								<td className={cn(td, 'hidden md:table-cell')}>
+								<td className={cn(td, 'hidden @3xl:table-cell')}>
 									{row.status === 'succeeded' && row.score != null ? (
 										isPairsightMatch({ score: row.score, threshold }) ? (
 											<span className="text-text font-medium">{t('match')}</span>
@@ -183,12 +183,12 @@ export function PairsTable({
 										<span className="text-text-muted">{t('notAssessed')}</span>
 									)}
 								</td>
-								<td className={cn(td, 'hidden max-w-[220px] xl:table-cell')}>
+								<td className={cn(td, 'hidden max-w-[220px] @6xl:table-cell')}>
 									<span className="text-text-muted block truncate" title={reason}>
 										{reason}
 									</span>
 								</td>
-								<td className={cn(td, 'hidden lg:table-cell')}>
+								<td className={cn(td, 'hidden @5xl:table-cell')}>
 									{row.status === 'succeeded' ? (
 										<span className="text-text-muted">{t('assessed')}</span>
 									) : row.status === 'failed' ? (
@@ -224,7 +224,7 @@ export function PairsTable({
 										</Chip>
 									)}
 								</td>
-								<td className={cn(td, 'hidden md:table-cell')}>
+								<td className={cn(td, 'hidden @3xl:table-cell')}>
 									{row.isLowConfidence ? (
 										<span className="text-warning text-xs whitespace-nowrap">
 											{t('lowConfidence')}

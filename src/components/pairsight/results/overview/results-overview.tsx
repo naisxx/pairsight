@@ -64,8 +64,8 @@ export function ResultsOverview({
 
 	return (
 		<div className="mt-6 flex flex-col gap-4">
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<Reveal index={index++} className="lg:col-span-8">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<Reveal index={index++} className="@5xl:col-span-8">
 					<MetricStrip
 						vendorName={vendorName}
 						metrics={overview.metrics}
@@ -73,10 +73,10 @@ export function ResultsOverview({
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="lg:col-span-4 lg:row-span-2">
+				<Reveal index={index++} className="@5xl:col-span-4 @5xl:row-span-2">
 					<CoveragePanel coverage={overview.coverage} className="h-full" />
 				</Reveal>
-				<Reveal index={index++} className="lg:col-span-8">
+				<Reveal index={index++} className="@5xl:col-span-8">
 					<CategorySummary
 						vendorName={vendorName}
 						metrics={overview.metrics}
@@ -86,8 +86,8 @@ export function ResultsOverview({
 			</div>
 
 			<SectionTitle title={t('sectionDecisions')} hint={t('sectionDecisionsHint')} />
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<Reveal index={index++} className="lg:col-span-7">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<Reveal index={index++} className="@5xl:col-span-7">
 					<ThresholdSensitivity
 						vendorName={vendorName}
 						threshold={threshold}
@@ -97,7 +97,7 @@ export function ResultsOverview({
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="lg:col-span-5">
+				<Reveal index={index++} className="@5xl:col-span-5">
 					<DecisionMatrix
 						vendorName={vendorName}
 						counts={overview.metrics.counts}
@@ -108,8 +108,8 @@ export function ResultsOverview({
 				</Reveal>
 			</div>
 			{overview.byVendor.length > 1 && (
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-					<Reveal index={index++} className="lg:col-span-7">
+				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+					<Reveal index={index++} className="@5xl:col-span-7">
 						<VendorComparison
 							vendors={overview.byVendor.map((vendor) => ({
 								...vendor,
@@ -120,7 +120,7 @@ export function ResultsOverview({
 						/>
 					</Reveal>
 					{overlap != null && firstOverlap != null && secondOverlap != null && (
-						<Reveal index={index++} className="lg:col-span-5">
+						<Reveal index={index++} className="@5xl:col-span-5">
 							<VendorOverlap
 								first={firstOverlap.name}
 								second={secondOverlap.name}
@@ -133,8 +133,8 @@ export function ResultsOverview({
 			)}
 
 			<SectionTitle title={t('sectionDisagreements')} hint={t('sectionDisagreementsHint')} />
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<Reveal index={index++} className="lg:col-span-7">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<Reveal index={index++} className="@5xl:col-span-7">
 					<FieldPatternsPanel
 						vendorName={vendorName}
 						patterns={overview.fieldPatterns}
@@ -142,7 +142,7 @@ export function ResultsOverview({
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="lg:col-span-5">
+				<Reveal index={index++} className="@5xl:col-span-5">
 					<TopDisagreements
 						vendorName={vendorName}
 						threshold={threshold}
@@ -153,8 +153,8 @@ export function ResultsOverview({
 					/>
 				</Reveal>
 			</div>
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<Reveal index={index++} className="lg:col-span-5">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<Reveal index={index++} className="@5xl:col-span-5">
 					<ScoreDistribution
 						vendorName={vendorName}
 						threshold={threshold}
@@ -166,7 +166,7 @@ export function ResultsOverview({
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="lg:col-span-4">
+				<Reveal index={index++} className="@5xl:col-span-4">
 					<SourceBreakdown
 						sources={overview.sources}
 						ruleLabels={ruleLabels}
@@ -177,7 +177,7 @@ export function ResultsOverview({
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="lg:col-span-3">
+				<Reveal index={index++} className="@5xl:col-span-3">
 					<WorkloadPanel
 						vendorName={vendorName}
 						workload={overview.workload}

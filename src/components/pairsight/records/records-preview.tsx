@@ -29,7 +29,13 @@ export function RecordsPreview({
 				</h2>
 				<p className="text-text-muted text-xs">{t('previewRows', { count: rows.length })}</p>
 			</header>
-			<div className="border-border relative overflow-x-auto border-t">
+			{/* Focusable, so the keyboard can scroll it sideways. */}
+			<div
+				role="region"
+				tabIndex={0}
+				aria-label={t('previewCaption')}
+				className="border-border scroll-fade-x relative overflow-x-auto border-t"
+			>
 				<table className="w-full border-separate border-spacing-0 text-[12.5px]">
 					<caption className="sr-only">{t('previewCaption')}</caption>
 					<thead className="bg-surface-muted">

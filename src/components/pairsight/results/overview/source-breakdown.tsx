@@ -54,7 +54,7 @@ export function SourceBreakdown({
 								className="group hover:bg-surface-hover -mx-1.5 block w-[calc(100%+12px)] rounded-sm px-1.5 py-1 text-left transition-colors duration-150"
 							>
 								<span className="flex items-baseline justify-between gap-2 text-xs">
-									<span className={cn('text-text truncate', isVendor && 'italic')}>{label}</span>
+									<span className={cn('text-text min-w-0', isVendor && 'italic')}>{label}</span>
 									<span className="text-text-muted shrink-0">
 										<span className="text-text font-mono">{source.total}</span>
 										{disagreements > 0 && (

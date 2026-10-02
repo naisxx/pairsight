@@ -13,6 +13,7 @@ export function ToastViewport({
 }: React.ComponentProps<typeof ToastPrimitives.Viewport>) {
 	return (
 		<ToastPrimitives.Viewport
+			data-toast-viewport
 			className={cn(
 				'fixed right-0 bottom-0 z-[70] flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-[calc(356px+3rem)] sm:p-6',
 				className

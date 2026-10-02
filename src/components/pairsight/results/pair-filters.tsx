@@ -113,7 +113,7 @@ export function PairFilters({
 	return (
 		<div className="flex flex-col gap-3">
 			<div className="flex flex-wrap items-center gap-2">
-				<div className="relative w-full sm:w-[260px]">
+				<div className="relative w-full @2xl:w-[260px]">
 					<SearchIcon
 						size={15}
 						className="text-text-muted pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
@@ -128,7 +128,7 @@ export function PairFilters({
 						aria-label={t('search')}
 						className="type-ui h-8 pr-9 pl-8"
 					/>
-					<span className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 sm:block">
+					<span className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 @2xl:block">
 						<Kbd>/</Kbd>
 					</span>
 				</div>
@@ -155,7 +155,7 @@ export function PairFilters({
 						'vendor',
 						t('vendor'),
 						vendors.map((vendor) => ({ value: vendor.id, label: vendor.name })),
-						'w-[130px]',
+						'w-[180px]',
 						vendorId
 					)}
 				{select('score', t('score'), scoreOptions, 'w-[190px]')}

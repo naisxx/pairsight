@@ -63,10 +63,10 @@ export function ContinueSetup({
 							>
 								<span className="min-w-0 flex-1">
 									<span className="type-ui text-text block truncate font-medium">{row.name}</span>
-									<span className="mt-1.5 flex items-center gap-2">
+									<span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
 										<StageProgress stages={row.stages} />
 										{row.next != null && (
-											<span className="text-text-muted type-caption truncate">
+											<span className="text-text-muted type-caption">
 												{t.rich('next', {
 													stage: tSteps(row.next.key),
 													strong: (chunks) => <span className="text-text">{chunks}</span>

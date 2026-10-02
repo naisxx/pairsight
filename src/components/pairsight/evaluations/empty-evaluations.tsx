@@ -16,8 +16,8 @@ const STEPS = [
 export function EmptyEvaluations() {
 	const t = useTranslations('Evaluations')
 	return (
-		<section className="border-border bg-surface mt-6 grid grid-cols-1 items-center gap-8 rounded-md border p-6 md:p-8 lg:grid-cols-12">
-			<div className="lg:col-span-5">
+		<section className="border-border bg-surface mt-6 grid grid-cols-1 items-center gap-8 rounded-md border p-6 @3xl:p-8 @5xl:grid-cols-12">
+			<div className="@5xl:col-span-5">
 				<h2 className="text-lg font-semibold tracking-[-0.01em]">{t('emptyTitle')}</h2>
 				<p className="type-ui text-text-muted mt-1.5 leading-relaxed">{t('emptyDescription')}</p>
 				<ol className="mt-5 space-y-4">
@@ -40,7 +40,7 @@ export function EmptyEvaluations() {
 					</Button>
 				</div>
 			</div>
-			<Reveal index={2} className="lg:col-span-7">
+			<Reveal index={2} className="@5xl:col-span-7">
 				<ProductPreview />
 				<p className="text-text-muted type-caption mt-2 text-center">{t('previewCaption')}</p>
 			</Reveal>

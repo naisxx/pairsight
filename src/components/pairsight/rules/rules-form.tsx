@@ -13,7 +13,7 @@ import type { IdentityRole } from '@/server/pairsight/fields'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
 import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
-import { missingField, type Rule, type RuleLimits } from './rule-fields'
+import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
 import { RulesSummary, type RulesSummaryData } from './rules-summary'
 import { useEvaluationView } from '../evaluation-context'
 import { ReadOnlyFieldset } from '../read-only'
@@ -165,8 +165,8 @@ export function RulesForm({
 
 	return (
 		<>
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<ReadOnlyFieldset className="space-y-4 lg:col-span-8">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<ReadOnlyFieldset className="space-y-4 @5xl:col-span-8">
 					<IdentitySection
 						same={draft.same}
 						different={draft.different}
@@ -224,7 +224,7 @@ export function RulesForm({
 						}
 					/>
 				</ReadOnlyFieldset>
-				<div className="lg:col-span-4">
+				<div className="@5xl:col-span-4">
 					<RulesSummary summary={summary} isUpdating={isPending} />
 				</div>
 			</div>

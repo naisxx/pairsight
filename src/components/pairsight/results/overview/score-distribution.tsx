@@ -21,10 +21,13 @@ import {
 	CHART_ANIMATION_BEGIN_MS,
 	CHART_ANIMATION_MS,
 	GRID_STROKE,
-	SERIES_A,
-	SERIES_B,
+	MATCHED_SERIES,
+	UNMATCHED_SERIES,
 	THRESHOLD_STROKE
 } from './chart-theme'
+
+// Room for the last tick label ("1.0") so it isn't clipped.
+const CHART_RIGHT_MARGIN = 16
 
 const X_TICKS = [0, 0.2, 0.4, 0.6, 0.8, 1]
 const HALF_BIN = 0.05
@@ -79,11 +82,11 @@ export function ScoreDistribution({
 		>
 			<ul aria-hidden className="text-text-muted mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
 				<li className="flex items-center gap-1.5">
-					<span className="bg-series-b size-2.5 rounded-[3px]" />
+					<span className="bg-text size-2.5 rounded-[3px]" />
 					{t('matchedBy', { vendor: vendorName })}
 				</li>
 				<li className="flex items-center gap-1.5">
-					<span className="bg-series-a size-2.5 rounded-[3px]" />
+					<span className="bg-border-input size-2.5 rounded-[3px]" />
 					{t('notMatched')}
 				</li>
 				<li className="flex items-center gap-1.5">
@@ -103,7 +106,7 @@ export function ScoreDistribution({
 					<ResponsiveContainer width="100%" height="100%">
 						<BarChart
 							data={data}
-							margin={{ top: 18, right: 8, bottom: 0, left: -20 }}
+							margin={{ top: 18, right: CHART_RIGHT_MARGIN, bottom: 0, left: -20 }}
 							barCategoryGap="14%"
 						>
 							<CartesianGrid vertical={false} stroke={GRID_STROKE} />
@@ -144,7 +147,7 @@ export function ScoreDistribution({
 							<Bar
 								dataKey="notMatched"
 								stackId="score"
-								fill={SERIES_A}
+								fill={UNMATCHED_SERIES}
 								animationBegin={CHART_ANIMATION_BEGIN_MS}
 								animationDuration={CHART_ANIMATION_MS}
 								animationEasing="ease-out"
@@ -154,7 +157,7 @@ export function ScoreDistribution({
 							<Bar
 								dataKey="matched"
 								stackId="score"
-								fill={SERIES_B}
+								fill={MATCHED_SERIES}
 								radius={[3, 3, 0, 0]}
 								animationBegin={CHART_ANIMATION_BEGIN_MS}
 								animationDuration={CHART_ANIMATION_MS}
