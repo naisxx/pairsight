@@ -4,9 +4,11 @@
 		"accountNav": "Account",
 		"signIn": "Sign in",
 		"start": "Start evaluation",
-		"heroTitle": "Check whether your matching tool merged the wrong people — or missed the right ones.",
+		"heroEyebrow": "Vendor matching, checked pair by pair",
+		"heroTitleLead": "Check whether your matching tool merged the wrong people —",
+		"heroTitleAccent": "or missed the right ones.",
 		"heroBody": "PairSight compares a vendor’s matching decisions with careful pair-by-pair assessments, so you can see each vendor’s precision and recall tradeoff and inspect every disagreement.",
-		"heroNote": "Use fictional or anonymized records for now.",
+		"heroNote": "The sandbox needs no account.",
 		"howTitle": "How it works",
 		"step1Title": "Bring your data",
 		"step1Body": "Upload the original customer records and each vendor’s matching export, in pair or group format.",
@@ -23,11 +25,13 @@
 		"limit3Title": "No winner picked for you",
 		"limit3Body": "One vendor may merge more carefully while another finds more duplicates. You decide which tradeoff fits.",
 		"ctaTitle": "Run your first evaluation on your own records.",
-		"footer": "Fictional or anonymized data only"
+		"footer": "Pairs are judged by Jev, TypeSafe’s AI",
+		"explore": "Explore the sandbox"
 	},
 	"Shell": {
 		"evaluations": "Evaluations",
 		"signIn": "Sign in",
+		"signUp": "Sign up",
 		"signOut": "Sign out",
 		"mainNavigation": "Main",
 		"skipToContent": "Skip to content",
@@ -41,7 +45,8 @@
 		"navigation": "Navigation",
 		"home": "PairSight home",
 		"currentEvaluation": "Current evaluation",
-		"accountOf": "Account: {name}"
+		"accountOf": "Account: {name}",
+		"sandbox": "Sandbox"
 	},
 	"Theme": {
 		"label": "Theme",
@@ -74,7 +79,8 @@
 		"haveAccount": "Already have an account?",
 		"toSignUp": "Create an account",
 		"toSignIn": "Sign in",
-		"checkEmail": "Check your email to confirm your account, then sign in."
+		"checkEmail": "Check your email to confirm your account, then sign in.",
+		"orSandbox": "or <link>explore the sandbox</link> without an account"
 	},
 	"Evaluations": {
 		"title": "Evaluations",
@@ -157,7 +163,9 @@
 		"step2Body": "What counts as the same individual, and which records are worth comparing.",
 		"step3Title": "Run and compare",
 		"step3Body": "Jev assesses each pair; you inspect where vendors disagree.",
-		"previewCaption": "What results look like · fictional demo data"
+		"previewCaption": "What results look like · fictional demo data",
+		"startYourOwn": "Start your own evaluation",
+		"exploreSandbox": "Explore the sandbox"
 	},
 	"Steps": {
 		"records": "Records",
@@ -463,7 +471,7 @@
 		"no_vendors": "Add at least one vendor’s results.",
 		"no_jev_fields": "Choose at least two fields for Jev to compare.",
 		"no_pairs": "There are no pairs to evaluate. Turn on a blocking rule or add vendor results.",
-		"fictionalOnly": "Use fictional or anonymized records only for now.",
+		"sentToJev": "Jev, TypeSafe’s AI, judges each pair: the fields above are sent to it.",
 		"start": "Start evaluation",
 		"starting": "Starting…"
 	},
@@ -914,5 +922,26 @@
 		"home": "Home",
 		"signIn": "Sign in",
 		"evaluations": "Evaluations"
+	},
+	"Sandbox": {
+		"bannerLabel": "About the sandbox",
+		"banner": "<b>Sandbox</b> · fictional data · read-only. Judgments recorded from Jev <n>{model}</n> on {date}.",
+		"signUp": "Sign up to run your own",
+		"yourEvaluations": "Your evaluations",
+		"title": "Sandbox",
+		"intro": "A prepared evaluation on fictional records: 24 customers, two vendors, one real Jev run. Click through every step to see how PairSight works — nothing here can be changed.",
+		"missingTitle": "The sandbox isn’t set up",
+		"missingDescription": "Its prepared evaluation hasn’t been loaded into this database yet. Run pnpm demo:seed, then reload.",
+		"readOnly": "Sign up to {action}",
+		"readOnlyStatus": "Sandbox · changes aren’t saved",
+		"actions": {
+			"upload": "upload your own records",
+			"vendor": "add or change vendors",
+			"rules": "change the rules",
+			"run": "start a run",
+			"threshold": "save a threshold",
+			"retry": "retry a pair",
+			"turnOff": "turn rules off"
+		}
 	}
 }

@@ -8,9 +8,9 @@ import { Tip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 import { LogoGlyph, Wordmark } from '../wordmark'
 import { Pipeline } from './pipeline'
-import type { PipelineData } from './pipeline-types'
+import type { PipelineData, ShellHome, ShellViewer } from './pipeline-types'
 import { useShell, useSidebarMode } from './shell-frame'
-import { SidebarAccountMenu, SidebarThemeMenu } from './sidebar-menus'
+import { SidebarAccountMenu, SidebarSignIn, SidebarThemeMenu } from './sidebar-menus'
 
 const NAV_ICON_SIZE = 17
 
@@ -18,19 +18,19 @@ const NAV_ICON_SIZE = 17
 // control, the sections, the current evaluation's pipeline, then theme and
 // account pinned to the bottom. Only the middle scrolls.
 export function Sidebar({
-	email,
-	name,
+	viewer,
+	home,
 	pipeline
 }: {
-	email: string
-	name: string
+	viewer: ShellViewer
+	home: ShellHome
 	pipeline?: PipelineData
 }) {
 	const t = useTranslations('Shell')
 	const pathname = usePathname()
 	const { toggleCollapsed, closeMobile } = useShell()
 	const { isCollapsed, isMobile } = useSidebarMode()
-	const isEvaluationsHome = pathname === '/evaluations'
+	const isHome = pathname === home.href
 
 	return (
 		<div className="flex h-full flex-col">
@@ -55,7 +55,7 @@ export function Sidebar({
 					</Tip>
 				) : (
 					<>
-						<Link href="/evaluations" aria-label={t('home')} className="rounded-sm p-1">
+						<Link href={home.href} aria-label={t('home')} className="rounded-sm p-1">
 							<Wordmark />
 						</Link>
 						{isMobile ? (
@@ -89,21 +89,21 @@ export function Sidebar({
 			>
 				<ul className="flex flex-col gap-0.5">
 					<li>
-						<Tip content={t('evaluations')} side="right" disabled={!isCollapsed}>
+						<Tip content={home.label} side="right" disabled={!isCollapsed}>
 							<Link
-								href="/evaluations"
-								aria-current={isEvaluationsHome ? 'page' : undefined}
-								aria-label={isCollapsed ? t('evaluations') : undefined}
+								href={home.href}
+								aria-current={isHome ? 'page' : undefined}
+								aria-label={isCollapsed ? home.label : undefined}
 								className={cn(
 									'type-ui flex h-8 items-center gap-2.5 rounded-sm transition-colors duration-150',
 									isCollapsed ? 'justify-center' : 'px-2',
-									isEvaluationsHome
+									isHome
 										? 'bg-selected text-text font-medium shadow-[inset_2px_0_0_var(--action)]'
 										: 'text-text-muted hover:bg-surface-hover hover:text-text'
 								)}
 							>
 								<FolderIcon size={NAV_ICON_SIZE} />
-								{!isCollapsed && t('evaluations')}
+								{!isCollapsed && home.label}
 							</Link>
 						</Tip>
 					</li>
@@ -136,7 +136,11 @@ export function Sidebar({
 				)}
 			>
 				<SidebarThemeMenu />
-				<SidebarAccountMenu email={email} name={name} />
+				{viewer == null ? (
+					<SidebarSignIn />
+				) : (
+					<SidebarAccountMenu email={viewer.email} name={viewer.name} />
+				)}
 			</div>
 		</div>
 	)

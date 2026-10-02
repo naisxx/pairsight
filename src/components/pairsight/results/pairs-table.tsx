@@ -13,6 +13,7 @@ import { cn } from '@/lib/cn'
 import { isPairsightMatch } from '@/server/pairsight/decisions'
 import type { ResultFilters, ResultRow } from '@/server/pairsight/results'
 import { RetryPairButton } from '../pair/retry-pair-button'
+import { ReadOnlyGate } from '../read-only'
 import { CategoryBadge, ScoreBar } from '../result-parts'
 import { toQuery } from './query'
 
@@ -203,16 +204,18 @@ export function PairsTable({
 											</Chip>
 											{/* Above the row's full-size link, so it takes its own clicks. */}
 											<span className="relative z-10">
-												<RetryPairButton
-													runId={runId}
-													pairId={row.id}
-													compact={{
-														label: t('retryPair', {
-															a: row.recordA.reference,
-															b: row.recordB.reference
-														})
-													}}
-												/>
+												<ReadOnlyGate action="retry">
+													<RetryPairButton
+														runId={runId}
+														pairId={row.id}
+														compact={{
+															label: t('retryPair', {
+																a: row.recordA.reference,
+																b: row.recordB.reference
+															})
+														}}
+													/>
+												</ReadOnlyGate>
 											</span>
 										</span>
 									) : (

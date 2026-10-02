@@ -76,6 +76,7 @@ import {
 	Robot,
 	ShieldCheck,
 	SidebarSimple,
+	SignIn,
 	SignOut,
 	Sliders,
 	Sparkle,
@@ -182,6 +183,7 @@ export const MoreHorizontalIcon = (props: IconProps) => <Glyph source={DotsThree
 export const PlusIcon = (props: IconProps) => <Glyph source={Plus} {...props} />
 export const SearchIcon = (props: IconProps) => <Glyph source={MagnifyingGlass} {...props} />
 export const SettingsIcon = (props: IconProps) => <Glyph source={Gear} {...props} />
+export const SignInIcon = (props: IconProps) => <Glyph source={SignIn} {...props} />
 export const SignOutIcon = (props: IconProps) => <Glyph source={SignOut} {...props} />
 export const SidebarIcon = (props: IconProps) => <Glyph source={SidebarSimple} {...props} />
 export const GridIcon = (props: IconProps) => <Glyph source={SquaresFour} {...props} />

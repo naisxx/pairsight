@@ -17,6 +17,7 @@ import type { RunProgress as RunProgressData } from '@/server/pairsight/runs'
 import { RunActions } from './run-actions'
 import { RunElapsed } from './run-elapsed'
 import { useRunLoop } from './use-run-loop'
+import { ReadOnlyGate } from '../read-only'
 
 // The run screen: the state, backend counts and why pairs failed in one card,
 // the stop alert above it when the run stopped, and the action bar. The loop
@@ -210,20 +211,18 @@ export function RunProgress({
 								))}
 							</ul>
 							{showIncomplete && (
-								<Button
-									variant="secondary"
-									size="sm"
-									className="mt-3"
-									onClick={retryFailed}
-									disabled={isActing}
-								>
-									{isActing ? (
-										<SpinnerIcon size={RETRY_ICON_SIZE} />
-									) : (
-										<RetryIcon size={RETRY_ICON_SIZE} />
-									)}
-									{isActing ? t('retrying') : t('retryFailed', { count: progress.failed })}
-								</Button>
+								<div className="mt-3">
+									<ReadOnlyGate action="retry">
+										<Button variant="secondary" size="sm" onClick={retryFailed} disabled={isActing}>
+											{isActing ? (
+												<SpinnerIcon size={RETRY_ICON_SIZE} />
+											) : (
+												<RetryIcon size={RETRY_ICON_SIZE} />
+											)}
+											{isActing ? t('retrying') : t('retryFailed', { count: progress.failed })}
+										</Button>
+									</ReadOnlyGate>
+								</div>
 							)}
 						</div>
 					</div>

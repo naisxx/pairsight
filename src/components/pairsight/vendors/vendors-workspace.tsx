@@ -26,6 +26,8 @@ import {
 import type { VendorListItem } from '@/server/pairsight/vendor-exports'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
 import { VendorFile } from './vendor-file'
+import { useEvaluationView } from '../evaluation-context'
+import { ReadOnlyFieldset, ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 15
 const STATUS_ICON_SIZE = 17
@@ -56,6 +58,7 @@ export function VendorsWorkspace({
 }) {
 	const t = useTranslations('Vendors')
 	const router = useRouter()
+	const view = useEvaluationView()
 	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const [removing, setRemoving] = useState<VendorListItem | null>(null)
 	const [isAdding, startAdding] = useTransition()
@@ -85,16 +88,18 @@ export function VendorsWorkspace({
 	}
 
 	const addButton = (
-		<Button
-			variant="quiet"
-			size="sm"
-			className="w-full justify-start"
-			onClick={add}
-			disabled={!canAdd || isAdding}
-		>
-			{isAdding ? <SpinnerIcon size={ICON_SIZE} /> : <PlusIcon size={ICON_SIZE} />}
-			{isAdding ? t('adding') : t('add')}
-		</Button>
+		<ReadOnlyGate action="vendor">
+			<Button
+				variant="quiet"
+				size="sm"
+				className="w-full justify-start"
+				onClick={add}
+				disabled={!canAdd || isAdding}
+			>
+				{isAdding ? <SpinnerIcon size={ICON_SIZE} /> : <PlusIcon size={ICON_SIZE} />}
+				{isAdding ? t('adding') : t('add')}
+			</Button>
+		</ReadOnlyGate>
 	)
 
 	return (
@@ -114,9 +119,9 @@ export function VendorsWorkspace({
 					</Button>
 				</div>
 			) : (
-				<div className="grid gap-4 lg:grid-cols-12">
+				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 					<nav aria-label={t('listLabel')} className="lg:col-span-3">
-						<ul className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-1">
+						<ul className="relative flex gap-2 overflow-x-auto lg:flex-col lg:gap-1">
 							{vendors.map((vendor) => {
 								const step = missingStep(vendor)
 								const isSelected = vendor.id === current.id
@@ -170,19 +175,19 @@ export function VendorsWorkspace({
 							</li>
 						</ul>
 					</nav>
-					<div className="space-y-4 lg:col-span-9">
+					<ReadOnlyFieldset className="space-y-4 lg:col-span-9">
 						<VendorName
 							key={`name-${current.id}`}
 							vendor={current}
 							onRemove={() => setRemoving(current)}
 						/>
 						<VendorFile key={`file-${current.id}`} vendor={current} maxPairs={maxPairs} />
-					</div>
+					</ReadOnlyFieldset>
 				</div>
 			)}
 
 			<ActionBar
-				back={{ href: `/evaluations/${evaluationId}/records`, label: t('back') }}
+				back={{ href: `${view.base}/records`, label: t('back') }}
 				hint={
 					blockedReason == null ? undefined : (
 						<>
@@ -194,7 +199,7 @@ export function VendorsWorkspace({
 			>
 				{blockedReason == null ? (
 					<Button asChild>
-						<Link href={`/evaluations/${evaluationId}/rules`}>
+						<Link href={`${view.base}/rules`}>
 							{t('continue')}
 							<ArrowRightIcon size={ICON_SIZE} />
 						</Link>

@@ -10,6 +10,7 @@ import {
 	retryFailedAction
 } from '@/server/actions/pairsight/runs'
 import type { RunProgress } from '@/server/pairsight/runs'
+import { useIsReadOnly } from '../evaluation-context'
 
 const PAUSE_BETWEEN_BATCHES_MS = 250
 const RETRY_AFTER_ERROR_MS = 3_000
@@ -24,10 +25,12 @@ async function unwrap<T>(result: Promise<ActionResult<T>>): Promise<T> {
 // execution"): each successful advance schedules the next batch; a failed call
 // waits and tries again. Leaving the page stops scheduling, which pauses the
 // run until someone comes back. Every number shown comes from the backend.
+// In the read-only sandbox it shows the prepared run and never advances it.
 export function useRunLoop({ runId, initial }: { runId: string; initial: RunProgress }) {
 	const router = useRouter()
+	const isReadOnly = useIsReadOnly()
 	const [progress, setProgress] = useState(initial)
-	const isRunning = progress.status === 'running'
+	const isRunning = progress.status === 'running' && !isReadOnly
 
 	const advance = useMutation({
 		mutationFn: () => unwrap(advanceRunAction({ runId })),

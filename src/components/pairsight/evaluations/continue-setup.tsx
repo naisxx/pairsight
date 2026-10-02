@@ -1,6 +1,7 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Reveal } from '@/components/ui/reveal'
+import { Button } from '@/components/ui/button'
 import { ArrowRightIcon, SuccessIcon } from '@/components/ui/icons'
 import type { DashboardRow } from '@/server/pairsight/dashboard'
 import { NewEvaluationButton } from './new-evaluation-button'
@@ -13,10 +14,13 @@ const EMPTY_ICON_SIZE = 20
 // up from.
 export function ContinueSetup({
 	rows,
-	takenNames
+	takenNames,
+	isReadOnly
 }: {
 	rows: DashboardRow[]
 	takenNames: string[]
+	// The sandbox: "start your own" is a sign-up, not a new evaluation.
+	isReadOnly: boolean
 }) {
 	const t = useTranslations('Evaluations')
 	const tSteps = useTranslations('Steps')
@@ -40,7 +44,13 @@ export function ContinueSetup({
 					<p className="mt-3 text-sm font-semibold">{t('nothingWaitingTitle')}</p>
 					<p className="type-ui text-text-muted mt-1">{t('nothingWaiting')}</p>
 					<div className="mt-4">
-						<NewEvaluationButton variant="secondary" size="sm" takenNames={takenNames} />
+						{isReadOnly ? (
+							<Button variant="secondary" size="sm" asChild>
+								<Link href="/sign-up">{t('startYourOwn')}</Link>
+							</Button>
+						) : (
+							<NewEvaluationButton variant="secondary" size="sm" takenNames={takenNames} />
+						)}
 					</div>
 				</div>
 			) : (
@@ -48,7 +58,7 @@ export function ContinueSetup({
 					{rows.map((row, index) => (
 						<Reveal as="li" key={row.id} index={index + 1}>
 							<Link
-								href={row.next?.href ?? `/evaluations/${row.id}`}
+								href={row.next?.href ?? row.href}
 								className="group hover:bg-surface-hover flex items-center gap-3 rounded-sm px-2 py-2.5 transition-colors duration-150"
 							>
 								<span className="min-w-0 flex-1">

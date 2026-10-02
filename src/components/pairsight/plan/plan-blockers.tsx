@@ -4,6 +4,7 @@ import { ArrowRightIcon, WarningCircleIcon } from '@/components/ui/icons'
 import type { PlanBlocker, PlanContributor } from '@/server/pairsight/plan'
 import { ruleLabel } from '../rule-label'
 import { TurnOffRuleButton } from './turn-off-rule-button'
+import { ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 17
 const LINK_ICON_SIZE = 13
@@ -12,6 +13,7 @@ const LINK_ICON_SIZE = 13
 // from, largest first, each rule with a Turn off; vendor-matched pairs always
 // stay in. Any other blocker is listed as what to fix.
 export async function PlanBlockers({
+	base,
 	evaluationId,
 	blockers,
 	contributors,
@@ -19,6 +21,8 @@ export async function PlanBlockers({
 	uniquePairs,
 	maxPairsPerRun
 }: {
+	// The evaluation's pages, for the fix links.
+	base: string
 	evaluationId: string
 	blockers: readonly PlanBlocker[]
 	contributors: readonly PlanContributor[]
@@ -62,11 +66,13 @@ export async function PlanBlockers({
 											n: mono
 										})}
 									</span>
-									<TurnOffRuleButton
-										evaluationId={evaluationId}
-										ruleId={item.ruleId}
-										label={ruleLabel({ ruleId: item.ruleId, rules, tRules, tRoles })}
-									/>
+									<ReadOnlyGate action="turnOff">
+										<TurnOffRuleButton
+											evaluationId={evaluationId}
+											ruleId={item.ruleId}
+											label={ruleLabel({ ruleId: item.ruleId, rules, tRules, tRoles })}
+										/>
+									</ReadOnlyGate>
 								</li>
 							) : (
 								<li key="vendors" className="type-ui flex flex-wrap items-center gap-3 px-3 py-2">
@@ -81,16 +87,13 @@ export async function PlanBlockers({
 					<p className="text-text-muted mt-2 text-xs">{t('overNote')}</p>
 					<div className="type-ui mt-3 flex flex-wrap gap-x-4 gap-y-1">
 						<Link
-							href={`/evaluations/${evaluationId}/rules`}
+							href={`${base}/rules`}
 							className="text-accent-ink inline-flex items-center gap-1 font-medium hover:underline"
 						>
 							{t('editRules')}
 							<ArrowRightIcon size={LINK_ICON_SIZE} />
 						</Link>
-						<Link
-							href={`/evaluations/${evaluationId}/records`}
-							className="text-accent-ink font-medium hover:underline"
-						>
+						<Link href={`${base}/records`} className="text-accent-ink font-medium hover:underline">
 							{t('fixRecords')}
 						</Link>
 					</div>

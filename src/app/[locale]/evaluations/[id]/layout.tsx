@@ -1,6 +1,5 @@
-import { getTranslations } from 'next-intl/server'
-import { AppShell } from '@/components/pairsight/shell/app-shell'
-import { loadWorkspace, workspacePipeline } from './workspace'
+import { dashboardHome, EvaluationLayout } from '@/components/pairsight/screens/evaluation-layout'
+import { loadWorkspace } from '@/server/pairsight/evaluation-pages'
 
 export default async function WorkspaceLayout({
 	children,
@@ -10,22 +9,13 @@ export default async function WorkspaceLayout({
 	params: Promise<{ id: string }>
 }) {
 	const { id } = await params
-	const [{ user, workspace }, t] = await Promise.all([
-		loadWorkspace(id, `/evaluations/${id}`),
-		getTranslations('Shell')
+	const [loaded, home] = await Promise.all([
+		loadWorkspace({ kind: 'owner', id, path: `/evaluations/${id}` }),
+		dashboardHome()
 	])
-	const pipeline = await workspacePipeline(id, workspace)
 	return (
-		<AppShell
-			email={user.email}
-			name={user.name}
-			pipeline={pipeline}
-			crumbs={[
-				{ label: t('evaluations'), href: '/evaluations' },
-				{ label: workspace.evaluation.name, href: `/evaluations/${id}` }
-			]}
-		>
+		<EvaluationLayout loaded={loaded} home={home}>
 			{children}
-		</AppShell>
+		</EvaluationLayout>
 	)
 }

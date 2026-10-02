@@ -3,6 +3,7 @@ import { AiIcon, WarningCircleIcon } from '@/components/ui/icons'
 import { failureReason } from '@/lib/pairsight/failure-reasons'
 import { cn } from '@/lib/cn'
 import type { AssessmentStatus } from '@/server/pairsight/decisions'
+import { ReadOnlyGate } from '../read-only'
 import { RetryPairButton } from './retry-pair-button'
 
 const PERCENT = 100
@@ -61,7 +62,9 @@ export function JevPanel({
 				<p className="text-text-muted mt-2 text-xs">{t('incompleteNote')}</p>
 				{isFailed && (
 					<div className="mt-3">
-						<RetryPairButton runId={runId} pairId={pairId} />
+						<ReadOnlyGate action="retry">
+							<RetryPairButton runId={runId} pairId={pairId} />
+						</ReadOnlyGate>
 					</div>
 				)}
 			</section>

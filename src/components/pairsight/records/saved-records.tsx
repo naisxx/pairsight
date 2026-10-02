@@ -14,6 +14,8 @@ import { fieldFor, fieldKeys, savedMapping, type FieldKey } from './mapping'
 import { RecordsPreview } from './records-preview'
 import { RecordsUploader } from './records-uploader'
 import { SourceValidation } from './source-validation'
+import { useEvaluationView } from '../evaluation-context'
+import { ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 15
 const SMALL_ICON_SIZE = 14
@@ -45,6 +47,7 @@ export function SavedRecords({
 }) {
 	const t = useTranslations('Records')
 	const tRoles = useTranslations('Roles')
+	const view = useEvaluationView()
 	const format = useFormatter()
 	const [isConfirming, setIsConfirming] = useState(false)
 	const [isReplacing, setIsReplacing] = useState(false)
@@ -70,13 +73,15 @@ export function SavedRecords({
 					rows={rowCount}
 					columns={headers.length}
 					action={
-						<Button variant="secondary" size="sm" onClick={() => setIsConfirming(true)}>
-							<RetryIcon size={SMALL_ICON_SIZE} />
-							{t('replace')}
-						</Button>
+						<ReadOnlyGate action="upload">
+							<Button variant="secondary" size="sm" onClick={() => setIsConfirming(true)}>
+								<RetryIcon size={SMALL_ICON_SIZE} />
+								{t('replace')}
+							</Button>
+						</ReadOnlyGate>
 					}
 				/>
-				<div className="grid gap-4 lg:grid-cols-12">
+				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 					<div className="lg:col-span-8">
 						<FieldMapping
 							fields={fieldKeys(roles)}
@@ -103,9 +108,9 @@ export function SavedRecords({
 				/>
 			</div>
 
-			<ActionBar back={{ href: '/evaluations', label: t('back') }}>
+			<ActionBar back={{ href: view.homeHref, label: t('back') }}>
 				<Button asChild>
-					<Link href={`/evaluations/${evaluationId}/vendors`}>
+					<Link href={`${view.base}/vendors`}>
 						{t('continue')}
 						<ArrowRightIcon size={ICON_SIZE} />
 					</Link>

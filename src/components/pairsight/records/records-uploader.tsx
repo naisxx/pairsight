@@ -28,6 +28,7 @@ import {
 } from './mapping'
 import { RecordsPreview } from './records-preview'
 import { SourceValidation } from './source-validation'
+import { useEvaluationView } from '../evaluation-context'
 
 type Loaded = {
 	fileName: string
@@ -68,6 +69,7 @@ export function RecordsUploader({
 }) {
 	const t = useTranslations('Records')
 	const tRoles = useTranslations('Roles')
+	const view = useEvaluationView()
 	const router = useRouter()
 	const csvError = useCsvErrorMessage()
 	const list = useRowList()
@@ -148,7 +150,7 @@ export function RecordsUploader({
 			})
 			if (!result.ok) return setErrors([result.error])
 			const data = result.data
-			if (data.ok) router.push(`/evaluations/${evaluationId}/vendors`)
+			if (data.ok) router.push(`${view.base}/vendors`)
 			else if ('parseError' in data) setErrors([csvError(data.parseError)])
 			else setErrors(issueMessages(data))
 		})
@@ -156,7 +158,7 @@ export function RecordsUploader({
 
 	const actionBar = (
 		<ActionBar
-			back={{ href: '/evaluations', label: t('back') }}
+			back={{ href: view.homeHref, label: t('back') }}
 			hint={
 				blockedReason == null ? undefined : (
 					<>
@@ -234,7 +236,7 @@ export function RecordsUploader({
 					}
 				/>
 				<ValidationPanel title={t('errorsTitle')} messages={errors} />
-				<div className="grid gap-4 lg:grid-cols-12">
+				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 					<div className="lg:col-span-8">
 						<FieldMapping
 							fields={fields}
