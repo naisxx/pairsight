@@ -39,7 +39,7 @@ pairsight/
 │   ├── rules/                one file per engineering rule (see below)
 │   ├── STANDARDS.md          what every 8x repo carries, and the check that proves it
 │   └── CI_CD_SETUP.md        GitHub secrets/environments + Vercel setup
-├── e2e/smoke.spec.ts        Playwright — delete once real coverage exists
+├── e2e/                     Playwright: public (runs in CI), pairsight + sandbox (local Supabase)
 ├── messages/en.json         i18n strings
 ├── prisma/schema/            multi-file schema — the only thing you hand-edit
 │   └── migrations/           CI-generated only, never by hand
@@ -237,9 +237,7 @@ expected here.
    workflow, the Server/Client Component rules, and the token conventions
    are not optional style preferences, they're enforced in CI (or, where
    noted, by `local-review`'s manual pass).
-2. Delete `prisma/schema/example.prisma` once you've written real models,
-   and `e2e/smoke.spec.ts` once real e2e coverage exists.
-3. Decide on state management beyond the TanStack Query default, and
+2. Decide on state management beyond the TanStack Query default, and
    whichever i18n/Tailwind-major/Prisma-major open decisions apply.
 
 ## Scripts

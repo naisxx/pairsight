@@ -44,7 +44,7 @@ this skill is not the right gate on its own — run `/ai-usage-check`, which
 covers the model map, the pricing arithmetic, and a real row written to a
 real database. The specs here only prove the endpoint's auth boundary holds.
 
-Delete `e2e/smoke.spec.ts` once the project has real coverage — it exists only to prove the initial App Router + i18n wiring works on a fresh clone.
+`e2e/public.spec.ts` covers the signed-out surface (landing, auth, the 404, theme persistence, axe in both themes) and is the one spec CI can run without a database; keep anything that needs no database there. (A fresh clone starts with `e2e/smoke.spec.ts` instead; replace it once real coverage exists.)
 
 ## 5. Report
 
