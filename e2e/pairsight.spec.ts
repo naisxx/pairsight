@@ -279,7 +279,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(matching(page)).toHaveText('8 pairs')
 	})
 
-	test('changing the threshold re-decides from saved scores; a new run reuses every assessment', async ({
+	test('the threshold is set in Rules; a new run at it reuses every saved score', async ({
 		page
 	}) => {
 		await signUp(page)
@@ -290,46 +290,63 @@ test.describe('PairSight vertical slice', () => {
 		const callsBefore = await jevCalls(page, marker)
 		expect(callsBefore).toBeGreaterThan(0)
 
-		// The popover previews the change before anything is saved.
-		await page.getByRole('button', { name: /^Decision threshold/ }).click()
+		// Results preview another threshold, but a run keeps its own: no Apply.
+		await page.getByRole('button', { name: /^Decision threshold 0\.50/ }).click()
 		const thresholdValue = page.getByLabel('Threshold value')
 		await thresholdValue.fill('0.40')
 		await thresholdValue.press('Enter')
-		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*2\s*becomes\s*3/)
-		await page.getByRole('button', { name: 'Apply' }).click()
-		// The borderline Bob/Robert Chen pair (stub score 0.45) crosses the new threshold.
-		await expect(tile(page, 'PairSight only')).toContainText('3')
-		await expect(tile(page, 'Neither matched')).toContainText('1')
-		// Re-decided from the saved scores: Jev wasn't asked again.
-		expect(await jevCalls(page, marker)).toBe(callsBefore)
-		// The run remembers what it started with, and can preview going back.
-		await expect(page.locator('#main')).toContainText('Run started at 0.50')
-		await page.getByRole('button', { name: /^Decision threshold/ }).click()
-		await page.getByRole('button', { name: 'Reset to 0.50' }).click()
-		await expect(page.getByLabel('Threshold value')).toHaveValue('0.50')
-		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*3\s*becomes\s*2/)
-		await page.keyboard.press('Escape')
+		const popover = page.getByRole('dialog')
+		await expect(popover).toContainText(/PairSight only\s*2\s*becomes\s*3/)
+		await expect(popover.getByRole('button', { name: 'Apply' })).toHaveCount(0)
+		await popover.getByRole('button', { name: 'Reset to 0.50' }).click()
+		await expect(thresholdValue).toHaveValue('0.50')
+		await popover.getByRole('link', { name: 'Change in Rules' }).click()
+		await page.waitForURL('**/rules')
 
-		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
-		await page.goto(`${evaluationPath}/plan`)
+		// Rules: a custom value, then a preset; either saves itself.
+		const threshold = page.getByRole('radiogroup', { name: 'Match threshold' })
+		await expect(threshold.getByRole('radio', { name: /^Balanced/ })).toBeChecked()
+		await threshold.getByRole('radio', { name: 'Custom' }).click()
+		const custom = page.getByLabel('Threshold', { exact: true })
+		await custom.fill('0.62')
+		await custom.press('Enter')
+		await expect(
+			page.getByText('Pairs Jev scores at or above 0.62 count as a match.')
+		).toBeVisible()
+		await threshold.getByRole('radio', { name: /^Lenient/ }).click()
+		await expect(threshold.getByRole('radio', { name: /^Lenient/ })).toBeChecked()
+
+		// The plan shows it, and nothing needs Jev again.
+		await reviewPlan(page)
+		const side = page.getByRole('region', { name: 'Match threshold' })
+		await expect(side).toContainText(/0\.35\s*Lenient/)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
 		await expect(plan).toContainText(/Reused assessments\s*8/)
 		await expect(plan).toContainText(/New Jev assessments\s*0\s*About \$0\.00 at a stand-in rate/)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
+		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
 		await expect(page.getByRole('heading', { name: 'Run 2' })).toBeVisible()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+		// Every score was reused, so it's complete from the start.
+		await expect(page.getByText('Run complete', { exact: true })).toBeVisible()
 
-		// Results say which run they are, and switch to an earlier one.
+		// The borderline Bob/Robert Chen pair (stub score 0.45) is a match at 0.35,
+		// decided from the saved scores: Jev wasn't asked again.
 		await page.getByRole('link', { name: 'View results' }).click()
 		await page.waitForURL('**/results')
+		await expect(page.getByRole('button', { name: /^Decision threshold 0\.35/ })).toBeVisible()
+		await expect(tile(page, 'PairSight only')).toContainText('3')
+		await expect(tile(page, 'Neither matched')).toContainText('1')
+		expect(await jevCalls(page, marker)).toBe(callsBefore)
+
+		// Results say which run they are; the first still decides at its own 0.50.
 		const main = page.locator('#main')
 		await expect(main.getByText('Run complete', { exact: true })).toBeVisible()
 		await expect(main).toContainText('Run 2 ·')
 		await page.getByRole('button', { name: 'Choose a run' }).click()
 		await page.getByRole('menuitem', { name: /^Run 1 ·/ }).click()
 		await expect(main).toContainText('Run 1 ·')
-		await expect(page.getByRole('button', { name: /^Decision threshold 0\.40/ })).toBeVisible()
-		await expect(main).toContainText('Run started at 0.50')
+		await expect(page.getByRole('button', { name: /^Decision threshold 0\.50/ })).toBeVisible()
+		await expect(tile(page, 'PairSight only')).toContainText('2')
 	})
 
 	test('a failed pair stays incomplete — never a nonmatch — and a retry can judge it', async ({

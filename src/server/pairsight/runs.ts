@@ -99,19 +99,3 @@ export async function resumeRun({ ownerId, runId }: { ownerId: string; runId: st
 	await getOwnedRun({ ownerId, runId })
 	await db.run.update({ where: { id: runId }, data: { status: 'running', stopReason: null } })
 }
-
-export async function updateRunThreshold({
-	ownerId,
-	runId,
-	threshold
-}: {
-	ownerId: string
-	runId: string
-	threshold: number
-}) {
-	const run = await getOwnedRun({ ownerId, runId })
-	await db.$transaction([
-		db.run.update({ where: { id: runId }, data: { threshold } }),
-		db.evaluation.update({ where: { id: run.evaluationId }, data: { threshold } })
-	])
-}

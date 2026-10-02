@@ -8,7 +8,8 @@ import {
 	blockingRulesSchema,
 	countryCodeSchema,
 	identityDefinitionSchema,
-	identityRoleSchema
+	identityRoleSchema,
+	thresholdSchema
 } from '@/server/pairsight/schemas'
 import { removeBlockingRule, updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import { previewRuleStats } from '@/server/pairsight/rules-preview'
@@ -23,9 +24,10 @@ export const saveRulesAction = validatedAction({
 		countryCode: countryCodeSchema,
 		// One field alone gives Jev too little to tell two people apart.
 		jevFields: z.array(identityRoleSchema).min(MIN_JEV_FIELDS),
-		blockingRules: blockingRulesSchema
+		blockingRules: blockingRulesSchema,
+		threshold: thresholdSchema
 	}),
-	handler: async ({ evaluationId, identity, countryCode, jevFields, blockingRules }) => {
+	handler: async ({ evaluationId, identity, countryCode, jevFields, blockingRules, threshold }) => {
 		const user = await requireUser()
 		await updateEvaluationConfig({
 			ownerId: user.id,
@@ -34,7 +36,8 @@ export const saveRulesAction = validatedAction({
 			identityDifferent: identity.different,
 			countryCode,
 			jevFields,
-			blockingRules
+			blockingRules,
+			threshold
 		})
 		revalidateEvaluationPages()
 		return { saved: true }

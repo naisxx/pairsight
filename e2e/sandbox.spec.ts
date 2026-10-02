@@ -54,6 +54,11 @@ test.describe('Sandbox', () => {
 		await page.waitForURL('**/sandbox/rules')
 		await expect(page.getByRole('switch', { name: 'Same email rule' })).toBeDisabled()
 		await expect(page.getByLabel('Counts as the same individual')).toBeDisabled()
+		await expect(
+			page
+				.getByRole('radiogroup', { name: 'Match threshold' })
+				.getByRole('radio', { name: /^Balanced/ })
+		).toBeDisabled()
 		await expect(page.getByText('Sandbox · changes aren’t saved')).toBeVisible()
 
 		// Plan: the ledger, but starting a run needs an account.
@@ -92,13 +97,13 @@ test.describe('Sandbox', () => {
 			await expect(tile(name)).toBeVisible()
 		}
 
-		// The threshold previews live; saving it is for accounts.
+		// The threshold previews live; a run keeps its own, so there's no Apply.
 		await page.getByRole('button', { name: /^Decision threshold/ }).click()
 		const value = page.getByLabel('Threshold value')
 		await value.fill('0.90')
 		await value.press('Enter')
 		await expect(page.getByRole('dialog')).toContainText('becomes')
-		await expect(page.getByLabel('Sign up to save a threshold')).toBeVisible()
+		await expect(page.getByRole('dialog').getByRole('button', { name: 'Apply' })).toHaveCount(0)
 		await page.keyboard.press('Escape')
 		await page.reload()
 		await expect(page.getByRole('button', { name: /^Decision threshold 0\.50/ })).toBeVisible()

@@ -54,17 +54,24 @@ it redirects to where the evaluation is up to.
 - **Rules** — identity definitions (both required), country by name, at
   least two fields for Jev; preset rules with an example key and
   Buckets/Pairs/Largest; composite rules to add, edit and delete; a live
-  summary. Changes save themselves; invalid ones are held back with the reason.
-- **Plan** — the "From records to pairs" ledger (with the cost estimate),
-  What Jev sees, the vendor-pair promise, an over-limit alert with a Turn off
+  summary. The **match threshold** is set here too: Lenient 0.35 / Balanced
+  0.50 / Strict 0.70, or a custom value from 0.01 to 0.99. It's decided before
+  any results are seen, and the next run keeps it. Changes save themselves;
+  invalid ones are held back with the reason.
+- **Plan** — the "From records to pairs" ledger (with the cost estimate), the
+  match threshold the run will keep (with Change, back to Rules), What Jev
+  sees, the vendor-pair promise, an over-limit alert with a Turn off
   per rule, and a notice for unfinished vendors. Start evaluation runs it.
 - **Run** — a state card (assessing / complete / stopped) with progress,
   counts, elapsed time, why pairs failed and Retry; a stop alert with the fix.
 - **Results** — Overview (metrics, coverage, categories, decision matrix,
   threshold sensitivity, vendor comparison and overlap, field patterns, top
   disagreements, score distribution, sources, workload) and Detailed
-  analysis (live filters, sortable table, retry per row). The threshold
-  popover previews precision and recall before you apply.
+  analysis (live filters, sortable table, retry per row). The run's threshold
+  is fixed: its popover previews precision and recall at another value (a
+  "what if"), with no Apply. A different threshold means changing it in Rules
+  and running again. Every saved score is reused, so that run is complete at
+  once and costs nothing.
 - **Pair** — field comparison with differences highlighted, how the pair got
   here, Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
 - **Not found / errors** — a centred page; signed in, the way back is
@@ -247,7 +254,8 @@ new tokens when M1 implements them.
     match"
   - the **score distribution chart** with the threshold line
   - a preview of how the counts change
-  - **Apply** recomputes from saved scores, with no Jev calls.
+  - no Apply: the run keeps its threshold. **Change in Rules** leads to where
+    the next run's threshold is set (see "What shipped").
 - **Filter bar** (state in the URL):
   - category (tied to the tiles)
   - source: all / from rules / added by vendor
@@ -573,8 +581,8 @@ above and listed in `docs/rules/components.md`._
   `docs/PairSight-V1-Scope.md`, "Verified live".
 - **Default threshold (decided):** 0.50 (`DEFAULT_THRESHOLD`). In the live
   check, likely-different pairs scored ≤ 0.11 and likely-same pairs ≥ 0.76,
-  so 0.50 sits in a wide gap. Each run keeps its own threshold, and changing
-  it re-reads saved scores.
+  so 0.50 sits in a wide gap. It's set in Rules (with Lenient 0.35 and Strict
+  0.70 beside it), and each run keeps the threshold it started with.
 - **Wordmark (decided):** a text wordmark, "PairSight" in 600 weight with a
   small `--action` coral pair glyph. It's swapped when a real logo arrives.
 - **Multiple vendors (built):** up to three, compared side by side.

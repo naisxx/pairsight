@@ -120,9 +120,10 @@ migration):
   `criteria.true` and `criteria.false`. The `state` holds only the two
   records' fields and the country.
 - **Threshold:**
-  - A pair is a match when `noul ≥ threshold`. The threshold is editable
-    on the results page.
-  - The default comes from the M1 test (0.5 until then).
+  - A pair is a match when `noul ≥ threshold`. The threshold is set in
+    Rules (presets 0.35 / 0.50 / 0.70, or custom), and each run keeps its
+    own. Results preview other values but never change a run's.
+  - The default, 0.5, was confirmed by the M1 test.
   - A band around the threshold raises a "low confidence" filter, not a
     category.
 - **Sign-in:** email and password against local Supabase, through server

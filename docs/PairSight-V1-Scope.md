@@ -120,8 +120,10 @@ The bucket warning is about workload, not accuracy.
 - **Changing blocking rules or adding a vendor** also means a new run, but
   it reuses successful assessments whose records and judgment
   configuration are identical. Only newly introduced pairs go to Jev.
-- **Changing only the threshold** recalculates decisions from the saved
-  scores, without calling Jev again.
+- **Changing only the threshold** (in Rules, before a run) needs no new
+  judgments: the next run reuses every saved score, is complete at once,
+  and decides at the new threshold. Each run keeps the threshold it started
+  with, so a result never shifts after it's been seen.
 - **Judgments are shared, and only gaps change.** One judgment per pair and
   judgment configuration serves every run that includes the pair. A
   successful score never changes once saved. A failed one can be judged

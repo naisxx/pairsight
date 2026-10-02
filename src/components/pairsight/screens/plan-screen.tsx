@@ -103,6 +103,8 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					<PlanSide
 						jevFields={'config' in plan && plan.config != null ? plan.config.jevFields : []}
 						counts={counts}
+						threshold={workspace.evaluation.threshold}
+						rulesHref={`${view.base}/rules`}
 					/>
 				</div>
 			</div>

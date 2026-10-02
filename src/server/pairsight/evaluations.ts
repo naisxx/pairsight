@@ -116,7 +116,8 @@ export async function updateEvaluationConfig({
 	identityDifferent,
 	countryCode,
 	jevFields,
-	blockingRules
+	blockingRules,
+	threshold
 }: {
 	ownerId: string
 	evaluationId: string
@@ -125,11 +126,13 @@ export async function updateEvaluationConfig({
 	countryCode: string
 	jevFields: string[]
 	blockingRules: Array<z.infer<typeof blockingRuleSchema>>
+	// The next run's threshold; runs already started keep their own.
+	threshold: number
 }) {
 	await getOwnedEvaluation({ ownerId, id: evaluationId })
 	await db.evaluation.update({
 		where: { id: evaluationId },
-		data: { identitySame, identityDifferent, countryCode, jevFields, blockingRules }
+		data: { identitySame, identityDifferent, countryCode, jevFields, blockingRules, threshold }
 	})
 }
 

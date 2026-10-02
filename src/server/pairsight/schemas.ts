@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import { MAX_CUSTOM_RULES, MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
+import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/pairsight/decisions'
 import { COUNTRY_CODE_PATTERN } from '@/lib/pairsight/input-limits'
 import { RULE_PRESETS } from './blocking'
 import { FIELD_ROLES } from './fields'
@@ -38,7 +39,8 @@ export const countryCodeSchema = z
 	.regex(COUNTRY_CODE_PATTERN)
 	.transform((value) => value.toUpperCase())
 
-export const thresholdSchema = z.number().min(0).max(1)
+// Set in Rules: a preset or a custom value between the bounds.
+export const thresholdSchema = z.number().min(MIN_THRESHOLD).max(MAX_THRESHOLD)
 
 // Identity roles stored as plain strings (Evaluation.jevFields, Run.jevFields),
 // keeping only valid ones.

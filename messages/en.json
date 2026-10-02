@@ -346,6 +346,19 @@
 		"title": "Rules",
 		"description": "Define what counts as the same individual, then choose which records are worth comparing.",
 		"identityEyebrow": "Identity",
+		"thresholdEyebrow": "Decision",
+		"thresholdTitle": "Match threshold",
+		"thresholdDescription": "How sure Jev must be for a pair to count as a PairSight match. Jev scores every pair the same way; this only sets where the line is drawn. The next run keeps it.",
+		"threshold_lenient": "Lenient",
+		"threshold_balanced": "Balanced",
+		"threshold_strict": "Strict",
+		"thresholdCustom": "Custom",
+		"thresholdCustomLabel": "Threshold",
+		"thresholdCustomHint": "Any value from {min} to {max}",
+		"thresholdNote_lenient": "Borderline pairs count as matches: finds more likely duplicates, at the risk of more wrong merges.",
+		"thresholdNote_balanced": "The default. In testing, clearly different people scored 0.11 or less and the same people 0.76 or more, so {value} sits in the gap.",
+		"thresholdNote_strict": "Only pairs Jev is confident about count: fewer wrong merges, more duplicates left unmatched.",
+		"thresholdNote_custom": "Pairs Jev scores at or above {value} count as a match.",
 		"identityTitle": "What makes two records the same individual?",
 		"identityDescription": "Jev reads these instructions for every pair it assesses. Plain language works best.",
 		"identitySame": "Counts as the same individual",
@@ -426,6 +439,9 @@
 	},
 	"Plan": {
 		"seeRun": "See the run",
+		"thresholdTitle": "Match threshold",
+		"thresholdChange": "Change",
+		"thresholdNote": "Pairs Jev scores at or above it count as a PairSight match. This run keeps it, so its results never shift; a different threshold is a new run.",
 		"title": "Comparison plan",
 		"description": "Check what will be assessed before any Jev assessments run. Nothing is sent to Jev until you start.",
 		"draftsNotice": "{names} {count, plural, one {isn’t} other {aren’t}} finished, so {count, plural, one {it won’t} other {they won’t}} be in this run.",
@@ -536,8 +552,7 @@
 		"agreementNote": "Categories show agreement between the vendor and PairSight, not proven correctness.",
 		"coverage": "{total, plural, one {# pair} other {# pairs}} compared — {fromRules} from your rules, {addedByVendor} added only because a vendor matched them.",
 		"thresholdLabel": "Decision threshold",
-		"thresholdHelp": "Pairs Jev scores at or above this count as a PairSight match. Changing it re-reads saved scores — no new AI calls.",
-		"thresholdApply": "Apply",
+		"thresholdHelp": "Pairs Jev scores at or above this count as a PairSight match. This run keeps its threshold; drag to preview another. To use one, change it in Rules and run again (saved scores are reused, so no new AI calls).",
 		"search": "Search references or names",
 		"clear": "Clear filters",
 		"matching": "{count, plural, one {# pair} other {# pairs}}",
@@ -605,9 +620,7 @@
 		"previewFor": "Preview for {vendor}",
 		"becomes": "becomes",
 		"resetTo": "Reset to {value}",
-		"cancel": "Cancel",
-		"thresholdSet": "Decision threshold set to {value}",
-		"thresholdSetDescription": "Decisions updated from saved scores. No new Jev assessments were made."
+		"thresholdChangeInRules": "Change in Rules"
 	},
 	"Pair": {
 		"back": "Back to results",
@@ -943,7 +956,6 @@
 			"vendor": "add or change vendors",
 			"rules": "change the rules",
 			"run": "start a run",
-			"threshold": "save a threshold",
 			"retry": "retry a pair",
 			"turnOff": "turn rules off"
 		}
