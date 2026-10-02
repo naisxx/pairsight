@@ -62,8 +62,25 @@ it redirects to where the evaluation is up to.
   match threshold the run will keep (with Change, back to Rules), What Jev
   sees, the vendor-pair promise, an over-limit alert with a Turn off
   per rule, and a notice for unfinished vendors. Start evaluation runs it.
-- **Run** — a state card (assessing / complete / stopped) with progress,
-  counts, elapsed time, why pairs failed and Retry; a stop alert with the fix.
+- **Runs centre** (replaces the Run step; the pipeline is now Records →
+  Vendors → Rules → Plan → Results). A dialog opened from **Runs** in the top
+  bar on every app page, with a spinner and a count while something runs.
+  - **Contents:** every run across your evaluations, in two tabs. Active is
+    the default while something runs, otherwise Completed. Completed holds
+    finished runs, runs finished with failures (Retry failed on the card),
+    and stopped runs (a red card with the reason, the fix and Resume).
+  - **Cards:** the front shows run and evaluation, status, live progress or
+    pairs and threshold, and the one action that matters. Details expand to
+    everything the run was run with: threshold and preset, judgments reused
+    and new, why pairs failed, Jev model, vendors and files, rules, fields,
+    country, identity text, times and the run ID.
+  - **Starting a run:** Start opens the centre on Active. On completion the
+    run moves to Completed and you're taken to its results. Closed early,
+    the run keeps going and a toast offers its results when it's done.
+  - **Driving:** the run loop lives in the shell, so a run keeps going on any
+    page; closing the app pauses it.
+  - **Old Run page links** redirect to the run's results with the centre
+    open on it (`?runs=<id>`).
 - **Results** — Overview (metrics, coverage, categories, decision matrix,
   threshold sensitivity, vendor comparison and overlap, field patterns, top
   disagreements, score distribution, sources, workload) and Detailed
@@ -179,7 +196,7 @@ new tokens when M1 implements them.
 | Vendors        | Upload a pair CSV, pick A/B columns, confirm it's complete  | **Continue to rules**                           | Validated or errors           | Unknown references block. Completeness confirmation is required. Group CSV is Next. |
 | Rules          | Define "same individual" and the blocking rules             | **Review plan**                                 | Live pair counts per rule     | Warning above 50 records per bucket                                                 |
 | Plan           | Check what will be evaluated                                | **Start evaluation**                            | Limit check                   | Over the cap: blocked, with the cause                                               |
-| Run            | Watch progress, handle failures                             | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the page is closed                                                |
+| Runs centre    | Watch progress, handle failures (a dialog, not a step)      | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the app is closed                                                 |
 | Results        | See agreement per vendor, adjust threshold, filter          | Open a pair                                     | Run status, threshold, model  | Incomplete pairs are counted separately                                             |
 | Pair detail    | Understand one decision                                     | **Next pair** (J/K)                             | That pair's assessment status | Human review is Next                                                                |
 | Export         | Take findings away                                          | **Export CSV**                                  | —                             | **Next.** The button is hidden until it exists.                                     |
@@ -345,7 +362,7 @@ bar.
   - The estimated calls and cost, labeled as an estimate at a stand-in rate.
   - Over the cap: an error panel naming the rule or vendor responsible, with
     fixes (turn off a rule, reduce the input).
-- **Run:**
+- **Run** (as first planned; superseded by the Runs centre, "What shipped"):
   - A progress bar with exact counts (succeeded / failed / pending of total),
     elapsed time, and a live region announcing milestones.
   - A callout: "Keep this page open — the run pauses if you leave and resumes
@@ -381,7 +398,7 @@ bar.
 | Blocking config error                        | A persistent banner with the fix; the run stops                                                                        |
 | Pair failed                                  | A status chip with the reason and **Retry**; excluded from categories and counted as Incomplete                        |
 | No results (filters)                         | "No pairs match these filters" plus **Clear filters**                                                                  |
-| Partial run                                  | Results show a banner, "86% evaluated — 164 pairs incomplete", with a link to the Run page                             |
+| Partial run                                  | Results show a banner, "86% evaluated — 164 pairs incomplete", with a link to the Runs centre                          |
 | Demo                                         | A persistent banner; editing actions hidden                                                                            |
 
 ## 6. Theme tokens (contrast checked)

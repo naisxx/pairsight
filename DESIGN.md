@@ -203,5 +203,8 @@ so server components animate without becoming client ones:
   number, brings in its text and draws the line on to the next.
 - Results charts draw over a second once their card has arrived, and its
   bars wipe in from the left (`bar-wipe`).
+- Dialogs ease in and fade back out, a little quicker. Anything that
+  expands (a run card's details) eases its height open (`grid-rows-[0fr]` →
+  `[1fr]`) instead of popping, and stays inert while closed.
 - Every animation sits inside `prefers-reduced-motion: no-preference`.
   With reduced motion, everything is simply there.
