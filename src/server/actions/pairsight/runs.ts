@@ -14,6 +14,8 @@ export const startRunAction = validatedAction({
 	handler: async ({ evaluationId }) => {
 		const user = await requireUser()
 		const run = await startRun({ ownerId: user.id, evaluationId })
+		// The shell (pipeline, status, breadcrumb) now has a run to show.
+		revalidateEvaluationPages()
 		return goTo(`/evaluations/${evaluationId}/runs/${run.id}`)
 	}
 })

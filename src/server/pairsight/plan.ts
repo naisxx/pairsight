@@ -2,7 +2,7 @@ import 'server-only'
 import { db } from '@/server/db/client'
 import { buildBlockedPairs, type RuleStats } from './blocking'
 import { summarizePlan, type PlanBlocker } from './plan-summary'
-import { isIdentityRole, mapRecordFields } from './fields'
+import { mapRecordFields, mappedIdentityRoles } from './fields'
 import { JEV_MODEL, judgmentKey, type JudgmentConfig } from './judgment'
 import { buildComparisonSet, pairKey, type ComparisonPair } from './pairs'
 import { parseIdentityRoles } from './schemas'
@@ -49,7 +49,7 @@ export async function computePlan({
 	])
 
 	const columnRoles = parseColumnRoles(dataset.columnRoles)
-	const mappedRoles = new Set(Object.values(columnRoles).filter(isIdentityRole))
+	const mappedRoles = mappedIdentityRoles(columnRoles)
 	const jevFields = parseIdentityRoles(evaluation.jevFields).filter((role) => mappedRoles.has(role))
 
 	const blocking = buildBlockedPairs({

@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { AlertIcon, WarningCircleIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
 
@@ -26,12 +26,13 @@ export function RulesSummary({
 	isUpdating: boolean
 }) {
 	const t = useTranslations('Rules')
+	const format = useFormatter()
 	const isOver = summary.total > summary.limit
 	const percent = Math.min(FULL_PERCENT, (summary.total / summary.limit) * FULL_PERCENT)
 	return (
 		<aside
 			aria-labelledby="summary-title"
-			className="border-border bg-surface rounded-md border lg:sticky lg:top-4"
+			className="border-border bg-surface rounded-md border @5xl:sticky @5xl:top-4"
 		>
 			<header className="flex items-center justify-between px-4 pt-3.5 pb-1">
 				<h2 id="summary-title" className="text-sm font-semibold">
@@ -45,16 +46,16 @@ export function RulesSummary({
 			>
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryFromRules')}</dt>
-					<dd className="font-mono">{summary.fromRules}</dd>
+					<dd className="font-mono">{format.number(summary.fromRules)}</dd>
 				</div>
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryVendor')}</dt>
-					<dd className="font-mono">+{summary.vendorOnly}</dd>
+					<dd className="font-mono">+{format.number(summary.vendorOnly)}</dd>
 				</div>
 				<div className="border-border flex justify-between border-t pt-2">
 					<dt className="font-medium">{t('summaryTotal')}</dt>
 					<dd className={cn('font-mono font-semibold', isOver && 'text-danger')}>
-						{summary.total}
+						{format.number(summary.total)}
 					</dd>
 				</div>
 			</dl>
@@ -78,7 +79,7 @@ export function RulesSummary({
 				<p className="text-text-muted mt-1.5 flex justify-between text-xs">
 					<span>{t('summaryLimit')}</span>
 					<span className="font-mono">
-						{summary.total} / {summary.limit}
+						{format.number(summary.total)} / {format.number(summary.limit)}
 					</span>
 				</p>
 			</div>

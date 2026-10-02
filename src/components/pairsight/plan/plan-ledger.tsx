@@ -31,19 +31,21 @@ export async function PlanLedger({
 	const rows = [
 		{ label: t('rowRecords'), value: format.number(counts.records), note: fileName },
 		{ label: t('rowPossible'), value: format.number(possible), note: t('rowPossibleNote') },
+		// Read down, these add up: rule matches + vendor pairs − duplicates
+		// = the unique pairs below.
 		{
 			label: t('rowRules'),
-			value: format.number(counts.blockedPairs),
-			note: t('rowRulesNote', { raw: ruleMatches, count: ruleCount })
+			value: format.number(ruleMatches),
+			note: t('rowRulesNote', { count: ruleCount })
 		},
 		{
 			label: t('rowVendor'),
-			value: `+${format.number(counts.addedByVendorOnly)}`,
+			value: `+${format.number(counts.vendorPairs)}`,
 			note: t('rowVendorNote')
 		},
 		{
 			label: t('rowDuplicates'),
-			value: format.number(overlaps + vendorInside),
+			value: `−${format.number(overlaps + vendorInside)}`,
 			note: t('rowDuplicatesNote', { overlaps, inside: vendorInside })
 		}
 	]
@@ -54,17 +56,16 @@ export async function PlanLedger({
 					{t('ledgerTitle')}
 				</h2>
 			</header>
+			{/* Each row: the term and its value on one line, a note under the term. */}
 			<dl>
 				{rows.map((row) => (
 					<div
 						key={row.label}
-						className="border-border flex items-baseline justify-between gap-4 border-t px-5 py-3"
+						className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3"
 					>
-						<div className="min-w-0">
-							<dt className="type-ui">{row.label}</dt>
-							<dd className="text-text-muted truncate text-xs">{row.note}</dd>
-						</div>
+						<dt className="type-ui">{row.label}</dt>
 						<dd className="font-mono text-[15px]">{row.value}</dd>
+						<dd className="text-text-muted truncate text-xs">{row.note}</dd>
 					</div>
 				))}
 				<div className="border-border bg-surface-muted flex items-baseline justify-between gap-4 border-t px-5 py-4">
@@ -78,23 +79,19 @@ export async function PlanLedger({
 						{format.number(counts.uniquePairs)}
 					</dd>
 				</div>
-				<div className="border-border flex items-baseline justify-between gap-4 border-t px-5 py-3">
-					<div>
-						<dt className="type-ui">{t('rowReused')}</dt>
-						<dd className="text-text-muted text-xs">
-							{counts.reusable > 0 ? t('rowReusedNote') : t('rowReusedNone')}
-						</dd>
-					</div>
+				<div className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3">
+					<dt className="type-ui">{t('rowReused')}</dt>
 					<dd className="font-mono text-[15px]">{format.number(counts.reusable)}</dd>
+					<dd className="text-text-muted text-xs">
+						{counts.reusable > 0 ? t('rowReusedNote') : t('rowReusedNone')}
+					</dd>
 				</div>
-				<div className="border-border flex items-baseline justify-between gap-4 border-t px-5 py-3">
-					<div>
-						<dt className="type-ui font-medium">{t('rowNew')}</dt>
-						<dd className="text-text-muted text-xs">{t('rowNewNote', { cost })}</dd>
-					</div>
+				<div className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3">
+					<dt className="type-ui font-medium">{t('rowNew')}</dt>
 					<dd className="font-mono text-[15px] font-semibold">
 						{format.number(counts.toEvaluate)}
 					</dd>
+					<dd className="text-text-muted text-xs">{t('rowNewNote', { cost })}</dd>
 				</div>
 			</dl>
 			<div className="border-border border-t px-5 py-4">

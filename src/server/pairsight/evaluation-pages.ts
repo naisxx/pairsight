@@ -21,7 +21,9 @@ import {
 	type EvaluationView
 } from '@/lib/pairsight/evaluation-view'
 import { getProfileName, getSessionUser, requireUserOrRedirect } from '@/server/auth/session'
-import { parseBlockingRules } from '@/server/pairsight/json'
+import { parseBlockingRules, parseColumnRoles } from '@/server/pairsight/json'
+import { mappedIdentityRoles, type IdentityRole } from '@/server/pairsight/fields'
+import { runnableRules } from '@/lib/pairsight/rule-fields'
 import { getVisibleRun } from '@/server/pairsight/runs'
 import { db } from '@/server/db/client'
 import {
@@ -176,7 +178,14 @@ export async function workspacePipeline(
 	const states = new Map(stageStates(input).map((stage) => [stage.key, stage.state]))
 
 	const vendorPairs = workspace.vendorExports.reduce((sum, vendor) => sum + vendor.pairCount, 0)
-	const rulesOn = parseBlockingRules(workspace.evaluation.blockingRules).length
+	const mapped =
+		workspace.dataset == null
+			? new Set<IdentityRole>()
+			: mappedIdentityRoles(parseColumnRoles(workspace.dataset.columnRoles))
+	const rulesOn = runnableRules(
+		parseBlockingRules(workspace.evaluation.blockingRules),
+		mapped
+	).length
 	const details: Record<StageKey, string> = {
 		records:
 			workspace.dataset == null
@@ -203,7 +212,9 @@ export async function workspacePipeline(
 				? t('resultsNone')
 				: latestRun.status === 'completed'
 					? t('resultsReady', { number: latestRun.number })
-					: t('resultsPending', { number: latestRun.number })
+					: latestRun.status === 'stopped'
+						? t('resultsStopped', { number: latestRun.number })
+						: t('resultsPending', { number: latestRun.number })
 	}
 
 	// What a locked stage is waiting for: records unlock vendors and rules,

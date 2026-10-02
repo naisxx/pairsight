@@ -104,16 +104,21 @@ export function RunProgress({
 							{status === 'running' && (
 								<SpinnerIcon size={STATE_ICON_SIZE} className="text-text-muted" />
 							)}
-							{status === 'completed' && (
-								<SuccessIcon size={STATE_ICON_SIZE} variant="solid" className="text-success" />
-							)}
+							{status === 'completed' &&
+								(showIncomplete ? (
+									<AlertIcon size={STATE_ICON_SIZE} variant="solid" className="text-warning" />
+								) : (
+									<SuccessIcon size={STATE_ICON_SIZE} variant="solid" className="text-success" />
+								))}
 							{status === 'stopped' && (
 								<AlertIcon size={STATE_ICON_SIZE} variant="solid" className="text-warning" />
 							)}
 							{status === 'running'
 								? t('stateRunning')
 								: status === 'completed'
-									? t('stateComplete')
+									? showIncomplete
+										? t('stateIncomplete', { count: progress.failed })
+										: t('stateComplete')
 									: t('stateStopped')}
 						</h2>
 						<p aria-live="polite" className="type-ui text-text-muted mt-1">
@@ -155,7 +160,7 @@ export function RunProgress({
 						aria-valuenow={done}
 						aria-valuemin={0}
 						aria-valuemax={progress.total}
-						className="bg-surface-muted mt-2 h-2 overflow-hidden rounded-full"
+						className="bg-border mt-2 h-2 overflow-hidden rounded-full"
 					>
 						<div
 							className={cn(
@@ -172,9 +177,9 @@ export function RunProgress({
 					</p>
 				</div>
 
-				<dl className="border-border sm:divide-border mt-4 grid grid-cols-2 border-t sm:grid-cols-4 sm:divide-x">
+				<dl className="border-border @2xl:divide-border mt-4 grid grid-cols-2 border-t @2xl:grid-cols-4 @2xl:divide-x">
 					{counts.map((count) => (
-						<div key={count.label} className="border-border border-b px-5 py-3 sm:border-b-0">
+						<div key={count.label} className="border-border border-b px-5 py-3 @2xl:border-b-0">
 							<dt className="text-text-muted flex items-center gap-1.5 text-xs">
 								<span aria-hidden className={cn('size-2 rounded-full', count.dot)} />
 								{count.label}
@@ -204,16 +209,16 @@ export function RunProgress({
 							<h3 className="type-ui font-medium">{t('failuresTitle')}</h3>
 							<ul className="mt-1.5 flex max-w-md flex-col gap-1">
 								{progress.failures.map(({ reason, count }) => (
-									<li key={reason} className="type-ui flex items-center justify-between gap-4">
+									<li key={reason} className="type-ui flex items-baseline gap-2">
 										<span className="text-text-muted">{tFailures(reason)}</span>
-										<span className="font-mono text-xs">{t('failureCount', { count })}</span>
+										<span className="font-mono text-xs">· {t('failureCount', { count })}</span>
 									</li>
 								))}
 							</ul>
 							{showIncomplete && (
 								<div className="mt-3">
 									<ReadOnlyGate action="retry">
-										<Button variant="secondary" size="sm" onClick={retryFailed} disabled={isActing}>
+										<Button size="sm" onClick={retryFailed} disabled={isActing}>
 											{isActing ? (
 												<SpinnerIcon size={RETRY_ICON_SIZE} />
 											) : (
@@ -230,10 +235,13 @@ export function RunProgress({
 			</section>
 
 			<ul className="type-ui text-text-muted mt-4 max-w-4xl space-y-2">
-				<li className="flex items-start gap-2">
-					<InfoIcon size={NOTE_ICON_SIZE} className="mt-0.5 shrink-0" />
-					{t('noteLeave')}
-				</li>
+				{/* Only a running run is paused by leaving; a finished one has nothing left. */}
+				{status === 'running' && (
+					<li className="flex items-start gap-2">
+						<InfoIcon size={NOTE_ICON_SIZE} className="mt-0.5 shrink-0" />
+						{t('noteLeave')}
+					</li>
+				)}
 				<li className="flex items-start gap-2">
 					<InfoIcon size={NOTE_ICON_SIZE} className="mt-0.5 shrink-0" />
 					{t('noteIncomplete')}

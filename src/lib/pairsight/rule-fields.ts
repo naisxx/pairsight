@@ -16,3 +16,12 @@ export function missingField(fields: readonly BlockingField[], mapped: ReadonlyS
 	}
 	return null
 }
+
+// The rules that can run on this mapping: what "rules on" counts everywhere,
+// so a switched-on rule whose field isn't mapped is never counted.
+export function runnableRules<T extends { fields: readonly BlockingField[] }>(
+	rules: readonly T[],
+	mapped: ReadonlySet<IdentityRole>
+): T[] {
+	return rules.filter((rule) => missingField(rule.fields, mapped) == null)
+}
