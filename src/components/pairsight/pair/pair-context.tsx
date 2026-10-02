@@ -63,8 +63,11 @@ export function VendorDecisions({
 			</h2>
 			<ul className="divide-border mt-2 divide-y">
 				{vendors.map((vendor) => (
-					<li key={vendor.id} className="type-ui flex items-center justify-between gap-2 py-2">
-						<span>{vendor.name}</span>
+					<li
+						key={vendor.id}
+						className="type-ui flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2"
+					>
+						<span className="min-w-0">{vendor.name}</span>
 						<span className="flex items-center gap-2">
 							<span className={vendor.isMatch ? 'font-medium' : 'text-text-muted'}>
 								{vendor.isMatch ? t('matched') : t('notMatched')}

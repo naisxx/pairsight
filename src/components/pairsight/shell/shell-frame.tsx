@@ -40,7 +40,6 @@ const DRAWER_WIDTH_PX = 280
 const DRAWER_DURATION_S = 0.22
 const SCRIM_DURATION_S = 0.16
 const PAGE_DURATION_S = 0.18
-const PAGE_LIFT_PX = 4
 
 function isTypingIn(target: EventTarget | null): boolean {
 	return (
@@ -51,18 +50,22 @@ function isTypingIn(target: EventTarget | null): boolean {
 
 // The app shell's client half (docs/PairSight-UX-Plan.md §3): a sidebar that
 // collapses on desktop and is a sliding drawer on phones, and the page,
-// which scrolls inside <main> and fades in on every navigation. The width is
+// which scrolls inside <main> and fades in on every navigation, its sections
+// rising in one after another (motion.css, .page-frame). The width is
 // remembered in a cookie so the server renders it on the first paint, and
 // `[` toggles it from anywhere.
 export function ShellFrame({
 	initialCollapsed,
 	sidebar,
 	topBar,
+	banner,
 	children
 }: {
 	initialCollapsed: boolean
 	sidebar: React.ReactNode
 	topBar: React.ReactNode
+	// A strip under the top bar that doesn't scroll away (the sandbox's).
+	banner?: React.ReactNode
 	children: React.ReactNode
 }) {
 	const t = useTranslations('Shell')
@@ -164,20 +167,26 @@ export function ShellFrame({
 
 					<div className="flex min-w-0 flex-1 flex-col">
 						{topBar}
+						{banner}
 						<main
 							id="main"
 							tabIndex={-1}
-							className="[container-type:inline-size] relative flex-1 overflow-y-auto focus:outline-none"
+							className="relative flex-1 overflow-y-auto focus:outline-none"
 						>
-							<motion.div
-								key={pathname}
-								className="page-frame mx-auto flex min-h-full w-full max-w-[1280px] flex-col px-4 pt-6 pb-10 md:px-8"
-								initial={isReduced ? false : { opacity: 0, y: PAGE_LIFT_PX }}
-								animate={{ opacity: 1, y: 0 }}
-								transition={{ duration: PAGE_DURATION_S, ease: EASE_OUT_SOFT }}
-							>
-								{children}
-							</motion.div>
+							{/* The width the page can use: the container that full-bleed parts
+							    (the action bar) measure with cqw. On <main> itself that width
+							    would include a classic scrollbar, and they'd overflow by it. */}
+							<div className="[container-type:inline-size] flex min-h-full flex-col">
+								<motion.div
+									key={pathname}
+									className="page-frame mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 pt-6 pb-10 md:px-8"
+									initial={isReduced ? false : { opacity: 0 }}
+									animate={{ opacity: 1 }}
+									transition={{ duration: PAGE_DURATION_S, ease: EASE_OUT_SOFT }}
+								>
+									{children}
+								</motion.div>
+							</div>
 						</main>
 					</div>
 				</div>
