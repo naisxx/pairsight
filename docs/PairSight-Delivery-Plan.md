@@ -227,14 +227,14 @@ stubbed e2e, not in the demo data.
 
 ## Roadmap
 
-| Feature                                                                                                                                                                                   | When                                                                          |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Login, saved evaluations, upload/validation/mapping, pair CSV, identity and blocking, plan preview, Jev runs with progress and retry, comparison, inspection, prepared demo, bare landing | Before Friday                                                                 |
-| Multiple vendors (up to 3)                                                                                                                                                                | Before Friday if stable, otherwise next                                       |
-| Group CSV, delete an evaluation (required before any real data), human review, CSV findings export                                                                                        | Next                                                                          |
-| Qualified metrics (precision on evaluated vendor pairs; recall and F1 labeled "evaluated set only"), summary export, polished landing, analytics events                                   | Next                                                                          |
-| Background worker, fuzzy blocking, vendor-specific adapters, XLSX, sampling excluded pairs, verified ground-truth labels, other entity types, larger scale                                | Deferred                                                                      |
-| Real customer data                                                                                                                                                                        | Deferred until TypeSafe's data handling and our authorization are established |
+| Feature                                                                                                                                                                                   | When                                    |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Login, saved evaluations, upload/validation/mapping, pair CSV, identity and blocking, plan preview, Jev runs with progress and retry, comparison, inspection, prepared demo, bare landing | Before Friday                           |
+| Multiple vendors (up to 3)                                                                                                                                                                | Before Friday if stable, otherwise next |
+| Group CSV, delete an evaluation (required before any real data), human review, CSV findings export                                                                                        | Next                                    |
+| Qualified metrics (precision on evaluated vendor pairs; recall and F1 labeled "evaluated set only"), summary export, polished landing, analytics events                                   | Next                                    |
+| Background worker, fuzzy blocking, vendor-specific adapters, XLSX, sampling excluded pairs, verified ground-truth labels, other entity types, larger scale                                | Deferred                                |
+| Live deployment: on-premises, with Jev on the customer's own infrastructure, so their data never leaves it                                                                                | Deferred                                |
 
 ## Risks to check early (M1)
 
