@@ -189,9 +189,12 @@ references.
 
 ## Personal data
 
-- The trial and demo use fictional or appropriately anonymized records
-  only. No real identifiable customer data goes to Jev until TypeSafe's
-  data handling and our authorization are established.
+- PairSight runs on whatever the user uploads, and says plainly that Jev,
+  TypeSafe's AI, judges the pairs (the Plan names the fields it's sent).
+  Whether a customer may send their records to Jev is theirs to decide,
+  not ours. A live deployment is meant to run on-premises with Jev on the
+  customer's own infrastructure, so their data never leaves it and we
+  never hold it. The sandbox uses fictional records only.
 - Records and results live in local Supabase, through Prisma.
 - Uploaded records, pair contents and credentials never go into agent logs,
   analytics, AI usage `meta` or error reports.

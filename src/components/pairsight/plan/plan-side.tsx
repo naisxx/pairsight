@@ -47,7 +47,7 @@ export async function PlanSide({
 				</p>
 				<p className="text-text-muted mt-3 flex items-center gap-1.5 text-xs">
 					<InfoIcon size={ICON_SIZE} className="shrink-0" />
-					{t('fictionalOnly')}
+					{t('sentToJev')}
 				</p>
 			</section>
 			{counts != null && (

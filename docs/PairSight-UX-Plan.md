@@ -15,8 +15,9 @@ build order follows [PairSight-Delivery-Plan.md](PairSight-Delivery-Plan.md).
 
 The whole app was rebuilt to a finished design. Behaviour stayed ours
 (blocking, mapping, validation, runs, gating); the look, layout, copy and
-motion follow the design. Demo, export and human review are **not built**:
-anything of theirs in the design is hidden until they are.
+motion follow the design. Export and human review are **not built**:
+anything of theirs in the design is hidden until they are. The demo became
+the Sandbox (below).
 
 **Shell.** A 248 px sidebar (60 px collapsed, a 280 px drawer on phones,
 toggled with `[` and remembered in a cookie) holds the Evaluations link, the
@@ -68,6 +69,18 @@ it redirects to where the evaluation is up to.
   here, Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
 - **Not found / errors** — a centred page; signed in, the way back is
   Evaluations.
+- **Sandbox (`/sandbox`, M4)** — the whole app on one prepared, fictional
+  evaluation (24 records, a pair-format and a group-format vendor, one run
+  judged by the real Jev), with no login. Every screen is the real one,
+  read-only: anything that would save, upload or call Jev is shown but inert,
+  with a "Sign up to …" tip; rules are disabled and never saved. What only
+  reads still works: filters, tabs, sorting, the threshold preview, pairs
+  and J/K. A banner under the top bar says what it is, and when the
+  judgments were recorded, beside a Sign up button. Signed out, the sidebar
+  offers Sign up / Sign in; signed in, it shows your account but none of
+  your evaluations. It's reached from the landing, the auth screens and the
+  empty Evaluations page. `pnpm demo:seed` loads it from
+  `prisma/demo/sandbox-snapshot.json`; until then it says it isn't set up.
 
 **How the open questions were settled.**
 
@@ -91,7 +104,7 @@ it redirects to where the evaluation is up to.
 | 16  | Derived rule fields              | Not now                                                                  |
 | 17  | Rules saving                     | Autosave                                                                 |
 | 18  | Greeting name                    | A full name asked at onboarding                                          |
-| 19  | Sample files                     | Not now (with the demo)                                                  |
+| 19  | Sample files                     | Not now; the Sandbox shows a full evaluation instead                     |
 | 20  | Toasts                           | Ours, restyled                                                           |
 
 **Components.** `src/components/ui/` holds the foundation listed in
