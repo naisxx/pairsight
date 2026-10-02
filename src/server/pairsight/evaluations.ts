@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
 import { DEFAULT_IDENTITY } from './judgment'
+import { evaluationWhere, ownerScope, type EvaluationScope } from './scope'
 import { blockingRulesSchema, type blockingRuleSchema } from './schemas'
 
 // Owner-scoped data access for PairSight (docs/rules/auth.md: authorization
@@ -95,8 +96,15 @@ export async function deleteEvaluation({
 	await db.evaluation.delete({ where: { id: evaluationId } })
 }
 
+// For changes: only the owner's own live evaluation. The sandbox is never
+// reachable here, so no mutation can touch it.
 export async function getOwnedEvaluation({ ownerId, id }: { ownerId: string; id: string }) {
-	const evaluation = await db.evaluation.findFirst({ where: { id, ownerId, kind: 'live' } })
+	return getVisibleEvaluation({ scope: ownerScope(ownerId), id })
+}
+
+// For reads: whatever the scope may see (the owner's evaluation, or the sandbox).
+export async function getVisibleEvaluation({ scope, id }: { scope: EvaluationScope; id: string }) {
+	const evaluation = await db.evaluation.findFirst({ where: { id, ...evaluationWhere(scope) } })
 	if (evaluation == null) throw evaluationNotFound()
 	return evaluation
 }

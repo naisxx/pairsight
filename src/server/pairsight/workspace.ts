@@ -2,17 +2,24 @@ import 'server-only'
 import { cache } from 'react'
 import { db } from '@/server/db/client'
 import { getCurrentDataset } from './datasets'
-import { getOwnedEvaluation } from './evaluations'
+import { getVisibleEvaluation } from './evaluations'
+import { scopeKey, type EvaluationScope } from './scope'
 
 // Everything the evaluation workspace (step rail and step pages) needs. The
 // layout and the page it wraps both ask for it; React's per-request cache
-// (keyed on the two ids, so primitives) makes that one query, not two.
-export function getWorkspace({ ownerId, evaluationId }: { ownerId: string; evaluationId: string }) {
-	return loadWorkspace(ownerId, evaluationId)
+// (keyed on primitives: the scope's key and the id) makes that one query.
+export function getWorkspace({
+	scope,
+	evaluationId
+}: {
+	scope: EvaluationScope
+	evaluationId: string
+}) {
+	return loadWorkspace(scopeKey(scope), scope, evaluationId)
 }
 
-const loadWorkspace = cache(async (ownerId: string, evaluationId: string) => {
-	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
+const loadWorkspace = cache(async (_key: string, scope: EvaluationScope, evaluationId: string) => {
+	const evaluation = await getVisibleEvaluation({ scope, id: evaluationId })
 	const [dataset, runs] = await Promise.all([
 		getCurrentDataset(evaluationId),
 		db.run.findMany({

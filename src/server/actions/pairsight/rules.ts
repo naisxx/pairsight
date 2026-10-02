@@ -12,6 +12,7 @@ import {
 } from '@/server/pairsight/schemas'
 import { removeBlockingRule, updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import { previewRuleStats } from '@/server/pairsight/rules-preview'
+import { ownerScope } from '@/server/pairsight/scope'
 import { MAX_RULE_FIELDS, MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { idSchema, revalidateEvaluationPages } from './shared'
 
@@ -49,7 +50,12 @@ export const previewRuleAction = validatedAction({
 	}),
 	handler: async ({ evaluationId, fields, countryCode }) => {
 		const user = await requireUser()
-		return previewRuleStats({ ownerId: user.id, evaluationId, fields, country: countryCode })
+		return previewRuleStats({
+			scope: ownerScope(user.id),
+			evaluationId,
+			fields,
+			country: countryCode
+		})
 	}
 })
 

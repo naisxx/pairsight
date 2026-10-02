@@ -77,6 +77,12 @@ export function activeStage(stages: StageSummary[]): StageKey | null {
 	return stages.find((stage) => stage.state === 'active')?.key ?? null
 }
 
+// Where opening an evaluation lands: its results once the latest run is
+// complete, else the stage where the work is.
+export function landingStage(stages: StageSummary[]): StageKey {
+	return activeStage(stages) ?? 'results'
+}
+
 export function evaluationStatus(input: StageInput): EvaluationStatus {
 	const { latestRun } = input
 	if (latestRun == null) return access(input).plan === 'locked' ? 'draft' : 'readyToRun'
@@ -86,8 +92,7 @@ export function evaluationStatus(input: StageInput): EvaluationStatus {
 }
 
 // Each stage's page. Run and Results point at the latest run once there is one.
-export function stageHref(evaluationId: string, key: StageKey, latestRunId: string | null): string {
-	const base = `/evaluations/${evaluationId}`
+export function stageHref(base: string, key: StageKey, latestRunId: string | null): string {
 	if (key === 'run' && latestRunId != null) return `${base}/runs/${latestRunId}`
 	if (key === 'results' && latestRunId != null) return `${base}/runs/${latestRunId}/results`
 	return `${base}/${key}`

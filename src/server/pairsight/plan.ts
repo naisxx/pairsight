@@ -7,7 +7,8 @@ import { JEV_MODEL, judgmentKey, type JudgmentConfig } from './judgment'
 import { buildComparisonSet, pairKey, type ComparisonPair } from './pairs'
 import { parseIdentityRoles } from './schemas'
 import { getCurrentDataset } from './datasets'
-import { getOwnedEvaluation } from './evaluations'
+import { getVisibleEvaluation } from './evaluations'
+import type { EvaluationScope } from './scope'
 import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 
 // The comparison plan: what a run *would* evaluate right now. Shared by the
@@ -16,13 +17,13 @@ import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 export type { PlanBlocker, PlanContributor, PlanCounts } from './plan-summary'
 
 export async function computePlan({
-	ownerId,
+	scope,
 	evaluationId
 }: {
-	ownerId: string
+	scope: EvaluationScope
 	evaluationId: string
 }) {
-	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
+	const evaluation = await getVisibleEvaluation({ scope, id: evaluationId })
 	const dataset = await getCurrentDataset(evaluationId)
 	const rules = parseBlockingRules(evaluation.blockingRules)
 	if (dataset == null) {

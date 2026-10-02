@@ -12,7 +12,8 @@ import {
 	type ResultFilters
 } from './result-rows'
 import { buildOverview } from './result-overview'
-import { getOwnedRun } from './runs'
+import { getVisibleRun } from './runs'
+import type { EvaluationScope } from './scope'
 import { parseColumnRoles, parseRecordValues } from './json'
 
 export {
@@ -28,8 +29,8 @@ export {
 // in memory (src/server/pairsight/result-rows.ts) is cheap and keeps one
 // definition of "the current list" for both screens.
 
-async function loadRunView({ ownerId, runId }: { ownerId: string; runId: string }) {
-	const run = await getOwnedRun({ ownerId, runId })
+async function loadRunView({ scope, runId }: { scope: EvaluationScope; runId: string }) {
+	const run = await getVisibleRun({ scope, runId })
 	const [dataset, records, vendors, pairs] = await Promise.all([
 		db.sourceDataset.findUniqueOrThrow({
 			where: { id: run.datasetId },
@@ -76,15 +77,15 @@ async function loadRunView({ ownerId, runId }: { ownerId: string; runId: string 
 }
 
 export async function getRunResults({
-	ownerId,
+	scope,
 	runId,
 	filters
 }: {
-	ownerId: string
+	scope: EvaluationScope
 	runId: string
 	filters: ResultFilters
 }) {
-	const view = await loadRunView({ ownerId, runId })
+	const view = await loadRunView({ scope, runId })
 	const vendorId = pickVendorId(view.vendors, filters.vendor)
 	const rows = buildRows({
 		pairs: view.pairs,
@@ -155,17 +156,17 @@ export async function getRunResults({
 }
 
 export async function getPairDetail({
-	ownerId,
+	scope,
 	runId,
 	pairId,
 	filters
 }: {
-	ownerId: string
+	scope: EvaluationScope
 	runId: string
 	pairId: string
 	filters: ResultFilters
 }) {
-	const view = await loadRunView({ ownerId, runId })
+	const view = await loadRunView({ scope, runId })
 	const pair = view.pairs.find((candidate) => candidate.id === pairId)
 	const first = pair == null ? undefined : view.recordsById.get(pair.recordAId)
 	const second = pair == null ? undefined : view.recordsById.get(pair.recordBId)

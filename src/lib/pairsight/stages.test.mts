@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
 	activeStage,
 	evaluationStatus,
+	landingStage,
 	stageHref,
 	stageStates,
 	type RunStatus,
@@ -55,9 +56,21 @@ test('a completed run finishes every stage', () => {
 	assert.equal(activeStage(stageStates(withRun('completed'))), null)
 })
 
-test('Run and Results point at the latest run once there is one', () => {
-	assert.equal(stageHref('e1', 'records', null), '/evaluations/e1/records')
-	assert.equal(stageHref('e1', 'run', null), '/evaluations/e1/run')
-	assert.equal(stageHref('e1', 'run', 'r1'), '/evaluations/e1/runs/r1')
-	assert.equal(stageHref('e1', 'results', 'r1'), '/evaluations/e1/runs/r1/results')
+test('Run and Results point at the latest run once there is one, under any base', () => {
+	assert.equal(stageHref('/evaluations/e1', 'records', null), '/evaluations/e1/records')
+	assert.equal(stageHref('/evaluations/e1', 'run', null), '/evaluations/e1/run')
+	assert.equal(stageHref('/evaluations/e1', 'run', 'r1'), '/evaluations/e1/runs/r1')
+	assert.equal(stageHref('/evaluations/e1', 'results', 'r1'), '/evaluations/e1/runs/r1/results')
+	assert.equal(stageHref('/sandbox', 'plan', 'r1'), '/sandbox/plan')
+	assert.equal(stageHref('/sandbox', 'results', 'r1'), '/sandbox/runs/r1/results')
+})
+
+test('opening an evaluation lands on results once complete, else where the work is', () => {
+	const land = (input: StageInput) => landingStage(stageStates(input))
+	assert.equal(land(fresh), 'records')
+	assert.equal(land({ ...fresh, hasRecords: true }), 'vendors')
+	assert.equal(land({ ...fresh, hasRecords: true, hasVendors: true }), 'plan')
+	assert.equal(land(withRun('running')), 'run')
+	assert.equal(land(withRun('stopped')), 'run')
+	assert.equal(land(withRun('completed')), 'results')
 })

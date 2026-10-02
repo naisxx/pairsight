@@ -4,6 +4,7 @@ import { db } from '@/server/db/client'
 import { DEFAULT_THRESHOLD } from './decisions'
 import { pairKey } from './pairs'
 import { computePlan, type PlanBlocker } from './plan'
+import { ownerScope } from './scope'
 
 // Starting a run freezes the configuration (docs/PairSight-V1-Scope.md, "Runs
 // and reuse"): the run stores a snapshot, its pairs, and a link from each pair
@@ -28,7 +29,7 @@ export async function startRun({
 	ownerId: string
 	evaluationId: string
 }) {
-	const plan = await computePlan({ ownerId, evaluationId })
+	const plan = await computePlan({ scope: ownerScope(ownerId), evaluationId })
 	const [blocker] = plan.blockers
 	if (blocker != null || plan.dataset == null || !('comparison' in plan)) {
 		throw new AppError(BLOCKER_MESSAGES[blocker ?? 'no_dataset'], { code: blocker ?? 'no_dataset' })

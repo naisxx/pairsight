@@ -2,6 +2,7 @@ import 'server-only'
 import { AppError } from '@/lib/errors/app-error'
 import { failureReason, type FailureReason } from '@/lib/pairsight/failure-reasons'
 import { db } from '@/server/db/client'
+import { evaluationWhere, ownerScope, type EvaluationScope } from './scope'
 
 // Run lookup, progress, and the mutations after a run starts (retry, resume,
 // threshold). Starting a run lives in start-run.ts.
@@ -13,9 +14,15 @@ export function runNotFound() {
 	})
 }
 
+// For changes: only a run of the owner's own live evaluation.
 export async function getOwnedRun({ ownerId, runId }: { ownerId: string; runId: string }) {
+	return getVisibleRun({ scope: ownerScope(ownerId), runId })
+}
+
+// For reads: a run the scope may see.
+export async function getVisibleRun({ scope, runId }: { scope: EvaluationScope; runId: string }) {
 	const run = await db.run.findFirst({
-		where: { id: runId, evaluation: { ownerId, kind: 'live' } },
+		where: { id: runId, evaluation: evaluationWhere(scope) },
 		include: { evaluation: { select: { id: true, name: true } } }
 	})
 	if (run == null) throw runNotFound()
