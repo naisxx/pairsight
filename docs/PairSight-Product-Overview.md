@@ -56,7 +56,7 @@ The user names the evaluation, for example â€œCRM migration vendor comparison.â€
 
 ### 3. Upload original records
 
-The user uploads a CSV and previews its contents. They identify the unique record reference and map fields such as name, email, phone, date of birth, and address. PairSight checks for missing or repeated record references and explains any issues before continuing.
+The user uploads a CSV or Excel file and previews its contents. They identify the unique record reference and map fields such as name, email, phone, date of birth, and address. PairSight checks for missing or repeated record references and explains any issues before continuing.
 
 ### 4. Add matching results
 
@@ -97,7 +97,7 @@ The user opens a pair to view both records side by side, the vendor decision, an
 
 ### 10. Export and return
 
-The user downloads a comparison summary and a CSV of findings for further review or discussion with vendors. The report records the identity definition, evaluation scope, decision threshold, and extent of human review so the scores retain their context. Saved evaluations remain available to revisit.
+The user downloads a comparison summary and a CSV or Excel file of findings for further review or discussion with vendors. The report records the identity definition, evaluation scope, decision threshold, and extent of human review so the scores retain their context. Saved evaluations remain available to revisit.
 
 ## Understanding the scores
 
@@ -125,11 +125,11 @@ V1 shipped in October 2026 as a complete loop:
 
 Saved evaluations, the fictional demo data (a public, read-only sandbox) and the landing page shipped with it.
 
-V1 focuses on customer/person records in CSV files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run.
+V1 focuses on customer/person records in CSV or Excel files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run.
 
 **Next:** human corrections (step 9) and exports (step 10). Their controls are hidden until they're built.
 
-**Later:** companies and products, larger-scale processing and a background worker, more vendor-specific formats and XLSX, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
+**Later:** companies and products, larger-scale processing and a background worker, more vendor-specific formats, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
 
 ## What success looks like
 
