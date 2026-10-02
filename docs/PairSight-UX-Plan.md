@@ -565,17 +565,21 @@ above and listed in `docs/rules/components.md`._
      happening, what's next.
    - Fix findings before the design is called complete.
 
-## 11. Unresolved decisions (flagged, not invented)
+## 11. Decisions once flagged as open
 
-- **Low-confidence band width:** set after the M1 Jev test. The filter exists;
-  its width is configured later.
-- **Default threshold:** set after the M1 test. The UI shows whatever the run
-  stores.
+- **Low-confidence band (decided):** ±0.1 around the threshold
+  (`LOW_CONFIDENCE_BAND`). It's far wider than Jev's run-to-run noise
+  (about ±0.01). It raises a filter, never a category. Evidence:
+  `docs/PairSight-V1-Scope.md`, "Verified live".
+- **Default threshold (decided):** 0.50 (`DEFAULT_THRESHOLD`). In the live
+  check, likely-different pairs scored ≤ 0.11 and likely-same pairs ≥ 0.76,
+  so 0.50 sits in a wide gap. Each run keeps its own threshold, and changing
+  it re-reads saved scores.
 - **Wordmark (decided):** a text wordmark, "PairSight" in 600 weight with a
   small `--action` coral pair glyph. It's swapped when a real logo arrives.
-- **Export, human review, metrics, multiple vendors:** placements are planned,
-  but the controls stay hidden until each is built (Next, per the delivery
-  plan).
+- **Multiple vendors (built):** up to three, compared side by side.
+- **Export and human review:** placements are planned, but the controls stay
+  hidden until each is built (Next, per the delivery plan).
 
 ## 12. Verification
 
