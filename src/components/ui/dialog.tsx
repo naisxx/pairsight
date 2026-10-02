@@ -4,7 +4,12 @@ import { Dialog as DialogPrimitive } from 'radix-ui'
 import { cn } from '@/lib/cn'
 import { CloseIcon } from './icons'
 
-const WIDTHS = { sm: 'max-w-[420px]', md: 'max-w-[520px]', lg: 'max-w-[640px]' }
+const WIDTHS = {
+	sm: 'max-w-[420px]',
+	md: 'max-w-[520px]',
+	lg: 'max-w-[640px]',
+	xl: 'max-w-[760px]'
+}
 
 // A controlled modal: title, optional description, a scrolling body and a
 // footer for its actions. Radix traps focus and returns it on close.
@@ -30,10 +35,10 @@ export function Dialog({
 	return (
 		<DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
 			<DialogPrimitive.Portal>
-				<DialogPrimitive.Overlay className="data-[state=open]:animate-fade-in fixed inset-0 z-50 bg-black/40" />
+				<DialogPrimitive.Overlay className="data-[state=open]:animate-fade-in data-[state=closed]:animate-fade-out fixed inset-0 z-50 bg-black/40" />
 				<DialogPrimitive.Content
 					className={cn(
-						'border-border bg-surface-elevated text-text shadow-elevated data-[state=open]:animate-pop-in fixed top-1/2 left-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border focus:outline-none',
+						'border-border bg-surface-elevated text-text shadow-elevated data-[state=open]:animate-pop-in data-[state=closed]:animate-pop-out fixed top-1/2 left-1/2 z-50 flex max-h-[88vh] w-[calc(100vw-32px)] -translate-x-1/2 -translate-y-1/2 flex-col rounded-lg border focus:outline-none',
 						WIDTHS[width]
 					)}
 				>

@@ -3,6 +3,7 @@
 import { useToast } from '@/lib/toast'
 import {
 	Toast,
+	ToastAction,
 	ToastClose,
 	ToastDescription,
 	ToastProvider,
@@ -17,11 +18,18 @@ export function Toaster() {
 
 	return (
 		<ToastProvider>
-			{toasts.map(({ id, title, description, variant }) => (
+			{toasts.map(({ id, title, description, variant, action }) => (
 				<Toast key={id} variant={variant} onOpenChange={(open) => !open && dismiss(id)}>
 					<div className="grid gap-0.5">
 						{title && <ToastTitle>{title}</ToastTitle>}
 						{description && <ToastDescription>{description}</ToastDescription>}
+						{action != null && (
+							<div>
+								<ToastAction altText={action.label} onClick={action.onClick}>
+									{action.label}
+								</ToastAction>
+							</div>
+						)}
 					</div>
 					<ToastClose />
 				</Toast>

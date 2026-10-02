@@ -44,6 +44,23 @@ export function Toast({
 	return <ToastPrimitives.Root className={cn(toastVariants({ variant }), className)} {...props} />
 }
 
+// A toast's one follow-up. `altText` is what a screen reader hears, since
+// Radix announces toasts without their buttons.
+export function ToastAction({
+	className,
+	...props
+}: React.ComponentProps<typeof ToastPrimitives.Action>) {
+	return (
+		<ToastPrimitives.Action
+			className={cn(
+				'border-border-input hover:bg-surface-hover type-ui mt-2 inline-flex h-8 items-center rounded-sm border px-3 font-medium transition-colors duration-150',
+				className
+			)}
+			{...props}
+		/>
+	)
+}
+
 export function ToastTitle({
 	className,
 	...props

@@ -21,11 +21,14 @@
 	--radius-md: 10px;
 	--radius-lg: 16px;
 
-	/* One easing for everything that moves: fast out, gentle settle. Overlays
-	   animate in only; they close instantly. */
+	/* One easing for everything that moves: fast out, gentle settle. Dialogs
+	   ease in and fade back out (a touch quicker, so closing never lags);
+	   menus and popovers animate in only. */
 	--ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
 	--animate-fade-in: fade-in 150ms var(--ease-out-soft);
-	--animate-pop-in: pop-in 200ms var(--ease-out-soft);
+	--animate-pop-in: pop-in 260ms var(--ease-out-soft);
+	--animate-fade-out: fade-out 150ms ease-in;
+	--animate-pop-out: pop-out 160ms ease-in;
 	--animate-float-in: float-in 160ms var(--ease-out-soft);
 
 	@keyframes fade-in {
@@ -37,6 +40,18 @@
 	   `translate` property, so the keyframes animate that same property (and
 	   `scale`) rather than `transform`: the two would stack and start the
 	   dialog off-centre. With no `to`, it settles on its own centred value. */
+	@keyframes fade-out {
+		to {
+			opacity: 0;
+		}
+	}
+	@keyframes pop-out {
+		to {
+			opacity: 0;
+			translate: -50% -48%;
+			scale: 0.97;
+		}
+	}
 	@keyframes pop-in {
 		from {
 			opacity: 0;
