@@ -31,9 +31,18 @@ it redirects to where the evaluation is up to.
 
 **Screens.**
 
-- **Landing (`/`, signed out only)** — hero with a static product preview,
-  How it works, Honest about what it measures, a call to action and footer.
+- **Landing (`/`, signed out only)**:
+  - A hero with the product preview.
+  - How it works: three step cards whose illustrations drift in parallax.
+  - A closer look: a pair and a run's card, layered in parallax.
+  - Honest about what it measures.
+  - A deep coral call-to-action panel, and the footer.
+
   Signed in, `/`, `/sign-in` and `/sign-up` go to `/evaluations`.
+
+- **UI style** — Classic (default) or Glass, from the Theme menu's Style
+  section; Glass makes surfaces frosted and translucent over a soft colour
+  wash (`DESIGN.md` §8).
 - **Sign in / Sign up / Welcome** — one column, the form in a card; fields
   are checked once submitted (then as you type), never on blur; a show/hide
   password toggle. Welcome asks for a full name (required, ≤ 100) before the

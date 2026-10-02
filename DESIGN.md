@@ -206,5 +206,26 @@ so server components animate without becoming client ones:
 - Dialogs ease in and fade back out, a little quicker. Anything that
   expands (a run card's details) eases its height open (`grid-rows-[0fr]` →
   `[1fr]`) instead of popping, and stays inert while closed.
+- Parallax (`.parallax` with a `.depth-1/2/3` or `.depth-back`): a layer
+  drifts by its depth while its block crosses the screen. It's scroll-driven
+  CSS, so browsers without it just show the layers still. The landing's "How
+  it works" and "A closer look" use it.
 - Every animation sits inside `prefers-reduced-motion: no-preference`.
   With reduced motion, everything is simply there.
+
+## 8. UI style: Classic or Glass
+
+A second look, chosen in the Theme menu under Style and kept in a cookie
+(`src/lib/ui-style.ts`), so the server puts `data-ui` on `<html>` and the first
+paint is right. **Glass** (`src/app/glass.css`) only redefines the surfaces,
+borders and page backdrop:
+
+- **Panels:** translucent, and frosted with a backdrop blur.
+- **Edge:** cards get a fine light line along the top.
+- **Backdrop:** a soft coral, periwinkle and amber wash behind everything.
+
+Text and accent tokens are untouched, so contrast holds; axe passes in both
+themes. With the OS's "reduce transparency" on, Glass falls back to solid
+surfaces. Both styles ship; Classic is the default. A component never needs
+to know which is on: use the surface tokens (`bg-surface`, `bg-surface-muted`,
+`bg-surface-elevated`) and Glass applies itself.
