@@ -6,14 +6,14 @@ import {
 	stageOrLandingHref
 } from '@/server/pairsight/evaluation-pages'
 
-// The sandbox's run stage: its prepared run's page.
+// The old run step: the prepared run's results.
 export default async function SandboxRunStagePage() {
 	const [{ view, workspace }, locale] = await Promise.all([
 		loadWorkspace(SANDBOX_TARGET),
 		getLocale()
 	])
 	return redirect({
-		href: stageOrLandingHref(view, workspace, 'run'),
+		href: stageOrLandingHref(view, workspace, 'results'),
 		locale
 	})
 }

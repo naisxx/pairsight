@@ -1,5 +1,6 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
+import { RUNS_PARAM } from '@/lib/pairsight/evaluation-view'
 import { Button } from '@/components/ui/button'
 import { PlanBlockers } from '@/components/pairsight/plan/plan-blockers'
 import { PlanLedger } from '@/components/pairsight/plan/plan-ledger'
@@ -126,7 +127,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				{/* Read-only, starting is out of reach, so the way on is the run that exists. */}
 				{view.isReadOnly && latestRun != null && (
 					<Button variant="secondary" asChild>
-						<Link href={`${view.base}/runs/${latestRun.id}`}>
+						<Link href={`${view.base}/runs/${latestRun.id}/results?${RUNS_PARAM}=${latestRun.id}`}>
 							{t('seeRun')}
 							<ArrowRightIcon size={ICON_SIZE} />
 						</Link>

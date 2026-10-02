@@ -18,6 +18,7 @@ export default async function EvaluationsPage() {
 	const firstName = user.name.split(/\s+/)[0] ?? user.name
 	return (
 		<AppShell
+			scope={ownerScope(user.id)}
 			viewer={{ email: user.email, name: user.name }}
 			home={{ href: '/evaluations', label: tShell('evaluations') }}
 			crumbs={[{ label: tShell('evaluations') }]}

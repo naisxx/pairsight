@@ -148,9 +148,8 @@ function stageInput(workspace: Workspace): StageInput {
 export function workspaceSteps(view: EvaluationView, workspace: Workspace): Step[] {
 	const { base } = view
 	const latestRunId = workspace.runs[0]?.id ?? null
-	// Every run's pages belong to Run, and its results and pairs to Results.
+	// Every run's results and pairs belong to Results.
 	const alsoMatches: Partial<Record<StageKey, string[]>> = {
-		run: workspace.runs.map((run) => `${base}/runs/${run.id}`),
 		results: workspace.runs.flatMap((run) => [
 			`${base}/runs/${run.id}/results`,
 			`${base}/runs/${run.id}/pairs`
@@ -199,14 +198,6 @@ export async function workspacePipeline(
 				: t('vendors', { count: workspace.vendorExports.length, pairs: vendorPairs }),
 		rules: t('rules', { count: rulesOn }),
 		plan: latestRun == null ? t('planReady') : t('plan', { pairs: latestRun.pairCount }),
-		run:
-			latestRun == null
-				? t('runNone')
-				: latestRun.status === 'running'
-					? t('runRunning', { number: latestRun.number })
-					: latestRun.status === 'stopped'
-						? t('runStopped', { number: latestRun.number })
-						: t('runDone', { number: latestRun.number, pairs: latestRun.pairCount }),
 		results:
 			latestRun == null
 				? t('resultsNone')
@@ -223,7 +214,6 @@ export async function workspacePipeline(
 		vendors: t('lockedNeedsRecords'),
 		rules: t('lockedNeedsRecords'),
 		plan: t('lockedNeedsRecordsAndVendor'),
-		run: t('lockedNeedsPlan'),
 		results: t('lockedNeedsRun')
 	}
 
@@ -232,7 +222,7 @@ export async function workspacePipeline(
 		href: step.href,
 		alsoMatches: step.alsoMatches,
 		state: states.get(step.key) ?? 'locked',
-		isRunning: step.key === 'run' && latestRun?.status === 'running',
+		isRunning: step.key === 'results' && latestRun?.status === 'running',
 		detail: step.state === 'locked' ? t('locked') : details[step.key],
 		reason: step.state === 'locked' ? lockedReasons[step.key] : undefined
 	}))

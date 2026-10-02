@@ -94,21 +94,27 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/plan')
 	}
 
+	// Start opens the Runs centre on the new run. When it's done, the centre
+	// moves it to Completed and takes you to its results; Escape closes it.
+	async function startRun(page: Page) {
+		await page.getByRole('button', { name: 'Start evaluation' }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		await expect(runs).toBeVisible()
+		await page.waitForURL(/\/runs\/[0-9a-f-]+\/results/, { timeout: 45_000 })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		// Finished: complete, or with the pairs Jev couldn't judge called out.
+		await expect(
+			runs.getByText(/^(Complete|Finished with \d+ incomplete pairs?) · Started/).first()
+		).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(runs).toHaveCount(0)
+	}
+
 	async function runEvaluation(page: Page) {
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
-		// Finished: complete, or with the pairs Jev couldn't judge called out.
-		await expect(
-			page.getByText(/^(Run complete|Finished with \d+ incomplete pairs?)$/)
-		).toBeVisible({
-			timeout: 45_000
-		})
-		await expect(page.getByText(/^Elapsed \d+:\d{2}$/)).toBeVisible()
-		await page.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL('**/results')
+		await startRun(page)
 	}
 
 	// The Overview's category tiles; each opens its pairs in the detailed view.
@@ -134,8 +140,7 @@ test.describe('PairSight vertical slice', () => {
 		await expectVendorPairs(page, 4)
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await reviewPlan(page)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+		await startRun(page)
 
 		await page.goto('/evaluations')
 		await createEvaluation(page, 'Still in setup')
@@ -211,10 +216,7 @@ test.describe('PairSight vertical slice', () => {
 		// All 4 vendor pairs are assessed; 2 of them the rules already found.
 		await expect(plan).toContainText(/Pairs your vendors matched\s*\+4/)
 		await expect(plan).toContainText('2 vendor pairs your rules already found')
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
-		await page.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL('**/results')
+		await startRun(page)
 
 		for (const name of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
 			await expect(tile(page, name)).toContainText('2')
@@ -323,16 +325,11 @@ test.describe('PairSight vertical slice', () => {
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
 		await expect(plan).toContainText(/Reused assessments\s*8/)
 		await expect(plan).toContainText(/New Jev assessments\s*0\s*About \$0\.00 at a stand-in rate/)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
-		await expect(page.getByRole('heading', { name: 'Run 2' })).toBeVisible()
-		// Every score was reused, so it's complete from the start.
-		await expect(page.getByText('Run complete', { exact: true })).toBeVisible()
+		// Every score was reused, so it's complete at once: straight to its results.
+		await startRun(page)
 
 		// The borderline Bob/Robert Chen pair (stub score 0.45) is a match at 0.35,
 		// decided from the saved scores: Jev wasn't asked again.
-		await page.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL('**/results')
 		await expect(page.getByRole('button', { name: /^Decision threshold 0\.35/ })).toBeVisible()
 		await expect(tile(page, 'PairSight only')).toContainText('3')
 		await expect(tile(page, 'Neither matched')).toContainText('1')
@@ -405,16 +402,19 @@ test.describe('PairSight vertical slice', () => {
 		await expect(tile(page, 'Incomplete')).toContainText('1')
 		await expect(tile(page, 'Both matched')).toContainText('2')
 
-		// Retry failed on the Run page asks Jev again about the pair that's
-		// still failed; Failcase fails again and stays incomplete.
-		await page.getByRole('list', { name: 'Pipeline' }).getByRole('link', { name: /^Run,/ }).click()
-		const failures = page.getByRole('heading', { name: 'Why pairs failed' }).locator('..')
-		await expect(failures).toContainText('Request rejected· 1 pair')
+		// Retry failed from the run's card in the Runs centre asks Jev again about
+		// the pair that's still failed; Failcase fails again and stays incomplete.
+		await page.getByRole('button', { name: 'Runs', exact: true }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		const card = runs.getByRole('article', { name: 'Run 1 · Failures' })
+		await card.getByRole('button', { name: 'Details' }).click()
+		await expect(card).toContainText('Request rejected · 1')
 		const callsBefore = await jevCalls(page, marker)
-		await page.getByRole('button', { name: 'Retry 1 failed' }).click()
+		await card.getByRole('button', { name: 'Retry 1 failed' }).click()
 		await expect.poll(() => jevCalls(page, marker), { timeout: 30_000 }).toBe(callsBefore + 1)
-		await expect(page.getByText('1 assessment is incomplete.')).toBeVisible({ timeout: 30_000 })
-		await expect(failures).toContainText('Request rejected· 1 pair')
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked({ timeout: 30_000 })
+		await expect(card).toContainText('Finished with 1 incomplete pair')
 	})
 
 	test('a rejected API key stops the run with the fix, and it resumes once the key works', async ({
@@ -431,18 +431,25 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
-		const stopped = page.getByRole('alert').filter({ hasText: 'The run stopped' })
-		await expect(stopped).toContainText('TypeSafe rejected the API key', { timeout: 30_000 })
+		// A stopped run is in Completed, marked as failed, with the reason and the fix.
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		const card = runs.getByRole('article', { name: 'Run 1 · Key problem' })
+		await expect(card.getByRole('alert')).toContainText('TypeSafe rejected the API key', {
+			timeout: 30_000
+		})
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		await expect(card).toContainText('Stopped · Started')
 		// Stopped, the one way forward is Resume; results wait for a finished run.
-		await expect(page.getByRole('link', { name: 'View results' })).toHaveCount(0)
+		await expect(card.getByRole('link', { name: 'View results' })).toHaveCount(0)
+		await expect(page).toHaveURL(/\/plan$/)
 
 		// The key is fixed; resuming judges every pair.
 		await page.request.post(`${JEV_STUB}/accept?marker=${marker}`)
-		await page.getByRole('button', { name: 'Resume' }).click()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
-		await expect(stopped).toHaveCount(0)
-		await expect(page.getByText('8 / 8', { exact: true })).toBeVisible()
+		await card.getByRole('button', { name: 'Resume' }).click()
+		await expect(card).toContainText(/^Run 1 · Key problemComplete · Started/, { timeout: 45_000 })
+		await expect(card.getByRole('alert')).toHaveCount(0)
+		await expect(card).toContainText('8 pairs')
+		await expect(card.getByRole('link', { name: 'View results' })).toBeVisible()
 	})
 
 	test('invalid references are blocked with row numbers', async ({ page }) => {
@@ -691,6 +698,7 @@ test.describe('PairSight vertical slice', () => {
 		await createEvaluation(page, 'Locked steps')
 		const records = page.url()
 		for (const step of ['vendors', 'rules', 'plan', 'run', 'results']) {
+			// (`run` is the old Run step's address; it lands in the same place.)
 			await page.goto(records.replace(/\/records$/, `/${step}`))
 			await page.waitForURL(records)
 			await expect(page.getByText('Drop your customer CSV here')).toBeVisible()
@@ -751,7 +759,7 @@ test.describe('PairSight vertical slice', () => {
 		).toBeVisible()
 		// Locked stages say what they're waiting for.
 		await expect(
-			pipeline.getByRole('link', { name: /^Run, locked\. Start a run from the plan first/ })
+			pipeline.getByRole('link', { name: /^Results, locked\. Start a run from the Plan first/ })
 		).toBeVisible()
 
 		const shell = page.locator('.app-shell')

@@ -67,11 +67,15 @@ test.describe('Sandbox', () => {
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toBeVisible()
 		await expect(page.getByLabel('Sign up to start a run')).toBeVisible()
 
-		// Run: the prepared run, complete.
-		await step(page, 'Run').click()
-		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+$/)
-		await expect(page.getByText('Run complete', { exact: true })).toBeVisible()
-		await expect(page.getByText('8 / 8', { exact: true })).toBeVisible()
+		// Runs: the prepared run, complete, in the Runs centre; nothing to retry.
+		await page.getByRole('button', { name: 'Runs', exact: true }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		const card = runs.getByRole('article', { name: /^Run 1 · / })
+		await expect(card).toContainText('Complete · Started')
+		await expect(card).toContainText('8 pairs')
+		await card.getByRole('link', { name: 'View results' }).click()
+		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+\/results/)
 	})
 
 	test('clicking the evaluation row opens it where it is up to: its results', async ({ page }) => {

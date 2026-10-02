@@ -3,7 +3,8 @@
 // status. Shared by the workspace sidebar (src/app/[locale]/evaluations/[id]/
 // workspace.ts) and the Evaluations dashboard, so both agree on every stage.
 
-export const STAGE_KEYS = ['records', 'vendors', 'rules', 'plan', 'run', 'results'] as const
+// Runs aren't a stage: they live in the Runs centre, opened from the top bar.
+export const STAGE_KEYS = ['records', 'vendors', 'rules', 'plan', 'results'] as const
 export type StageKey = (typeof STAGE_KEYS)[number]
 
 // complete: its work is saved · available: you can open it · locked: an
@@ -42,7 +43,6 @@ function access({
 		vendors: afterRecords === 'complete' && hasUnfinishedVendors ? 'available' : afterRecords,
 		rules: afterRecords,
 		plan: hasRecords && hasVendors ? (latestRun == null ? 'available' : 'complete') : 'locked',
-		run: latestRun == null ? 'locked' : latestRun.status === 'completed' ? 'complete' : 'available',
 		results: latestRun == null ? 'locked' : 'available'
 	}
 }
@@ -54,9 +54,10 @@ export function stageStates(input: StageInput): StageSummary[] {
 	// Results open as soon as a run exists, but are only done once it completes.
 	const isDone = (key: StageKey) =>
 		byKey[key] === 'complete' || (key === 'results' && status === 'completed')
-	// The first reachable stage that isn't finished is where the work is.
+	// The first reachable stage that isn't finished is where the work is; while
+	// a run is going, that's its results, filling in.
 	const activeKey = isRunning
-		? 'run'
+		? 'results'
 		: STAGE_KEYS.find((key) => byKey[key] === 'available' && !isDone(key))
 	return STAGE_KEYS.map((key) => ({
 		key,
@@ -64,7 +65,7 @@ export function stageStates(input: StageInput): StageSummary[] {
 		state:
 			byKey[key] === 'locked'
 				? 'locked'
-				: isDone(key) && !(key === 'run' && isRunning)
+				: isDone(key)
 					? 'done'
 					: key === activeKey
 						? 'active'
@@ -91,9 +92,8 @@ export function evaluationStatus(input: StageInput): EvaluationStatus {
 	return 'complete'
 }
 
-// Each stage's page. Run and Results point at the latest run once there is one.
+// Each stage's page. Results point at the latest run once there is one.
 export function stageHref(base: string, key: StageKey, latestRunId: string | null): string {
-	if (key === 'run' && latestRunId != null) return `${base}/runs/${latestRunId}`
 	if (key === 'results' && latestRunId != null) return `${base}/runs/${latestRunId}/results`
 	return `${base}/${key}`
 }

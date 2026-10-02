@@ -8,7 +8,7 @@ import { LogoGlyph } from './wordmark'
 // hears one sentence, not the miniature UI. Its parts arrive in reading
 // order (motion.css, .rise), after the landing's --rise-base.
 
-const STAGES = ['records', 'vendors', 'rules', 'plan', 'run', 'results'] as const
+const STAGES = ['records', 'vendors', 'rules', 'plan', 'results'] as const
 const PREVIEW_THRESHOLD = 0.6
 const PREVIEW_BAR_WIDTH = 40
 // 12 both matched, 4 PairSight only, 3 vendor only: precision 80.0%,
