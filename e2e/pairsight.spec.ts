@@ -1,5 +1,12 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import {
+	exportFindings,
+	fixtureWorkbook,
+	readWorkbook,
+	workbookFromCsv,
+	XLSX_MIME
+} from './workbooks'
 
 // The PairSight vertical slice, end to end, against local Supabase and the Jev
 // stub (scripts/jev-stub.mjs). Opt in with E2E_PAIRSIGHT=1 — CI's e2e job has
@@ -29,6 +36,17 @@ test.describe('PairSight vertical slice', () => {
 		return email
 	}
 
+	// The records as a file to upload, with each email moved to its own domain
+	// (see uploadRecords).
+	function markedRecords(file: string) {
+		const marker = `e2e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+		const csv = readFileSync(`${FIXTURES}/${file}`, 'utf8').replace(
+			/@example\.com/gi,
+			`@${marker}.example.com`
+		)
+		return { marker, csv }
+	}
+
 	async function createEvaluation(page: Page, name: string) {
 		// The first evaluation's button sits in the empty state; later ones in the header.
 		await page.getByRole('button', { name: 'New evaluation' }).first().click()
@@ -42,11 +60,7 @@ test.describe('PairSight vertical slice', () => {
 	// per-pair scripts (Flaky, Retrycase) then start fresh even on a stub that
 	// outlived earlier runs, and its call counter sees this test's records only.
 	async function uploadRecords(page: Page, file: string, { save = true } = {}) {
-		const marker = `e2e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
-		const csv = readFileSync(`${FIXTURES}/${file}`, 'utf8').replace(
-			/@example\.com/gi,
-			`@${marker}.example.com`
-		)
+		const { marker, csv } = markedRecords(file)
 		await page
 			.locator('input[type=file]')
 			.setInputFiles({ name: file, mimeType: 'text/csv', buffer: Buffer.from(csv) })
@@ -195,6 +209,64 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText('No evaluations match “nothing like this”')).toBeVisible()
 	})
 
+	test('Excel in and out: a workbook’s sheet is picked, and findings export as a workbook', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Excel scenario')
+
+		// A workbook with a notes tab ahead of the records: PairSight asks which to read.
+		const { csv } = markedRecords('demo-source.csv')
+		const records = await workbookFromCsv(csv, {
+			sheet: 'Customers',
+			before: { Notes: [['Fictional records'], ['Exported for an e2e test']] }
+		})
+		await page
+			.locator('input[type=file]')
+			.setInputFiles({ name: 'demo-source.xlsx', mimeType: XLSX_MIME, buffer: records })
+		const picker = page.getByRole('region', { name: 'Choose a sheet' })
+		await expect(picker).toContainText('demo-source.xlsx has 2 sheets with data')
+		await expect(picker.getByRole('button', { name: /^Notes/ })).toContainText('1 row')
+		await picker.getByRole('button', { name: /^Customers/ }).click()
+		await expect(page.getByText('Map your columns')).toBeVisible()
+		await expect(page.getByText('Not saved yet · Excel · Sheet Customers')).toBeVisible()
+		// Dates and numbers read as written: 1990-04-12, not a serial number.
+		await expect(page.getByRole('table').first()).toContainText('1990-04-12')
+		await page.getByRole('button', { name: 'Continue to vendors' }).click()
+		await page.waitForURL('**/vendors')
+
+		await page.getByRole('button', { name: 'Add vendor' }).click()
+		await page.locator('input[type=file]').setInputFiles({
+			name: 'demo-vendor-a.xlsx',
+			mimeType: XLSX_MIME,
+			buffer: await fixtureWorkbook(`${FIXTURES}/demo-vendor-a.csv`, 'Matches')
+		})
+		await expectVendorPairs(page, 4)
+		await expect(page.getByText(/· Excel · Sheet Matches$/)).toBeVisible()
+		await page.getByRole('checkbox', { name: /^This export contains all of/ }).click()
+		await runEvaluation(page)
+
+		// The same results as the CSV upload of the same records.
+		for (const name of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
+			await expect(tile(page, name)).toContainText('2')
+		}
+
+		const download = await exportFindings(page, 1, /^Excel/)
+		expect(download.suggestedFilename()).toBe('pairsight-excel-scenario-run-1-findings.xlsx')
+		const findings = await readWorkbook(await download.path())
+		expect(findings.name).toBe('Findings')
+		expect(findings.isHeaderBold).toBe(true)
+		expect(findings.isHeaderFrozen).toBe(true)
+		expect(findings.header.slice(0, 2)).toEqual(['Record A', 'Record B'])
+		expect(findings.rows).toHaveLength(8)
+		const category = findings.header.indexOf('Vendor A: category')
+		for (const name of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
+			expect(findings.rows.filter((row) => row[category] === name)).toHaveLength(2)
+		}
+		// Jev's score is a number in Excel, not text.
+		expect(typeof findings.cell(2, findings.header.indexOf('Jev score') + 1)).toBe('number')
+	})
+
 	test('upload to comparison: all four categories, vendor pairs outside blocking, inspection', async ({
 		page
 	}) => {
@@ -226,6 +298,26 @@ test.describe('PairSight vertical slice', () => {
 		const coverage = page.getByRole('region', { name: 'Assessment coverage' })
 		await expect(coverage).toContainText(/From your rules\s*6/)
 		await expect(coverage).toContainText(/Added because a vendor matched\s*2/)
+
+		// Export: every pair in one CSV, with the vendor's decision and category
+		// beside Jev's, matching the tiles above.
+		const download = await exportFindings(page, 1, /^CSV/)
+		expect(download.suggestedFilename()).toBe('pairsight-demo-scenario-run-1-findings.csv')
+		// trim() also drops the byte-order mark the file starts with.
+		const csv = readFileSync(await download.path(), 'utf8')
+		const [header, ...lines] = csv.trim().split('\r\n')
+		expect(header).toContain('Record A,Record B')
+		expect(header).toContain('Vendor A: decision,Vendor A: category')
+		expect(lines).toHaveLength(8)
+		for (const category of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
+			expect(lines.filter((line) => line.endsWith(`,${category}`))).toHaveLength(2)
+		}
+		// Someone else (here, signed out) can't download it.
+		const outsider = await page.context().browser()?.newContext()
+		const runId = new URL(page.url()).pathname.split('/runs/')[1]?.split('/')[0]
+		const denied = await outsider?.request.get(`/api/runs/${runId}/findings`)
+		expect(denied?.status()).toBe(404)
+		await outsider?.close()
 
 		await tile(page, 'Vendor only').click()
 		await page.waitForURL(/tab=detailed/)
@@ -701,7 +793,7 @@ test.describe('PairSight vertical slice', () => {
 			// (`run` is the old Run step's address; it lands in the same place.)
 			await page.goto(records.replace(/\/records$/, `/${step}`))
 			await page.waitForURL(records)
-			await expect(page.getByText('Drop your customer CSV here')).toBeVisible()
+			await expect(page.getByText('Drop your customer CSV or Excel file here')).toBeVisible()
 		}
 
 		// With records but no vendor, the plan still waits for one.

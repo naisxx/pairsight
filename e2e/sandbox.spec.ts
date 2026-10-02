@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { exportFindings, readWorkbook } from './workbooks'
 
 // The public sandbox (/sandbox): the whole app, read-only, on the prepared
 // evaluation from `pnpm demo:seed`. Needs the local database, so it's opt-in
@@ -100,6 +101,13 @@ test.describe('Sandbox', () => {
 		for (const name of ['Both matched', 'PairSight only', 'Vendor only', 'Neither matched']) {
 			await expect(tile(name)).toBeVisible()
 		}
+
+		// Exporting needs no account here: the sandbox's data is fictional.
+		const download = await exportFindings(page, 1, /^Excel/)
+		const findings = await readWorkbook(await download.path())
+		expect(findings.header).toContain('Northwind Match: category')
+		expect(findings.header).toContain('Clearline Resolve: category')
+		expect(findings.rows).toHaveLength(8)
 
 		// The threshold previews live; a run keeps its own, so there's no Apply.
 		await page.getByRole('button', { name: /^Decision threshold/ }).click()
