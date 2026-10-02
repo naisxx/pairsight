@@ -18,6 +18,7 @@ import { ViewToggle, type ChartView } from '@/components/ui/view-toggle'
 import type { HistogramBin } from '@/lib/pairsight/metrics'
 import {
 	AXIS_TICK,
+	CHART_ANIMATION_BEGIN_MS,
 	CHART_ANIMATION_MS,
 	GRID_STROKE,
 	SERIES_A,
@@ -144,6 +145,7 @@ export function ScoreDistribution({
 								dataKey="notMatched"
 								stackId="score"
 								fill={SERIES_A}
+								animationBegin={CHART_ANIMATION_BEGIN_MS}
 								animationDuration={CHART_ANIMATION_MS}
 								animationEasing="ease-out"
 								cursor="pointer"
@@ -154,6 +156,7 @@ export function ScoreDistribution({
 								stackId="score"
 								fill={SERIES_B}
 								radius={[3, 3, 0, 0]}
+								animationBegin={CHART_ANIMATION_BEGIN_MS}
 								animationDuration={CHART_ANIMATION_MS}
 								animationEasing="ease-out"
 								cursor="pointer"

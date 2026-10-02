@@ -1,0 +1,403 @@
+/* Motion: how things arrive (DESIGN.md §7). CSS only, so server components
+   animate without becoming client ones. Every animation here lives inside
+   `prefers-reduced-motion: no-preference`; with reduced motion, everything
+   is simply there. Timings share one curve, --ease-out-soft (globals.css). */
+
+/* Stagger steps for the classes below: `rise stagger-3` arrives third. The
+   list is generated up front so an index computed at runtime still has its
+   class. */
+@source inline('stagger-{0..24}');
+
+@utility stagger-* {
+	--stagger-i: --value(integer);
+}
+
+@keyframes rise {
+	from {
+		opacity: 0;
+		transform: translateY(var(--rise-lift, 14px));
+		filter: blur(var(--rise-blur, 6px));
+	}
+}
+
+/* For inline text, which can't be moved: fade out of a blur. */
+@keyframes unblur {
+	from {
+		opacity: 0;
+		filter: blur(10px);
+	}
+}
+
+@keyframes drop {
+	from {
+		opacity: 0;
+		transform: translateY(-10px);
+	}
+}
+
+@keyframes tilt-in {
+	from {
+		opacity: 0;
+		transform: perspective(1600px) rotateX(14deg) translateY(48px) scale(0.96);
+		filter: blur(6px);
+	}
+}
+
+@keyframes hover-float {
+	50% {
+		transform: translateY(-6px);
+	}
+}
+
+@keyframes drift {
+	33% {
+		transform: translate3d(6%, -4%, 0) scale(1.08);
+	}
+	66% {
+		transform: translate3d(-4%, 3%, 0) scale(0.95);
+	}
+}
+
+@keyframes pan {
+	to {
+		background-position: 200% 50%;
+	}
+}
+
+@keyframes grow-x {
+	from {
+		transform: scaleX(0);
+	}
+}
+
+@keyframes sheen {
+	from {
+		transform: translateX(-120%) skewX(-20deg);
+	}
+	to {
+		transform: translateX(260%) skewX(-20deg);
+	}
+}
+
+@keyframes ping {
+	from {
+		box-shadow: 0 0 0 0 color-mix(in oklab, var(--action) 50%, transparent);
+	}
+	70%,
+	to {
+		box-shadow: 0 0 0 7px transparent;
+	}
+}
+
+@keyframes pop {
+	from {
+		opacity: 0;
+		transform: scale(0.3);
+	}
+	60% {
+		opacity: 1;
+		transform: scale(1.12);
+	}
+}
+
+/* Room above and below for markers that stick out of a bar. */
+@keyframes wipe {
+	from {
+		clip-path: inset(-6px 100% -6px 0);
+	}
+	to {
+		clip-path: inset(-6px 0 -6px 0);
+	}
+}
+
+@keyframes header-settle {
+	to {
+		background-color: color-mix(in oklab, var(--bg) 80%, transparent);
+		border-color: var(--border);
+	}
+}
+
+/* ---- Static looks (with or without motion) ---- */
+
+/* The product's headline colour: a deep-to-warm brand gradient, darker in
+   light mode so it keeps 3:1 against the page (--headline-*, globals.css). */
+.text-gradient {
+	background-image: linear-gradient(
+		100deg,
+		var(--headline-from),
+		var(--headline-via) 45%,
+		var(--headline-to) 70%,
+		var(--headline-from)
+	);
+	background-size: 200% auto;
+	background-clip: text;
+	-webkit-background-clip: text;
+	color: transparent;
+	/* Keeps the gradient continuous across a wrapped line. */
+	box-decoration-break: slice;
+}
+
+/* The landing's backdrop: three soft brand glows and a fading dot grid. */
+.hero-backdrop {
+	position: absolute;
+	inset: -4rem 0 0;
+	z-index: -1;
+	overflow: hidden;
+	pointer-events: none;
+}
+.hero-backdrop::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	background-image: radial-gradient(var(--border) 1px, transparent 1px);
+	background-size: 22px 22px;
+	mask-image: radial-gradient(ellipse 70% 60% at 60% 35%, black, transparent 75%);
+	opacity: 0.7;
+}
+.hero-blob {
+	position: absolute;
+	border-radius: 9999px;
+	filter: blur(72px);
+	opacity: var(--glow-strength);
+}
+.hero-blob--a {
+	top: 2%;
+	right: 4%;
+	width: 34rem;
+	height: 26rem;
+	background: var(--brand-orange);
+}
+.hero-blob--b {
+	top: 30%;
+	right: 26%;
+	width: 22rem;
+	height: 22rem;
+	background: var(--brand-amber);
+}
+.hero-blob--c {
+	top: -6%;
+	left: -8%;
+	width: 26rem;
+	height: 20rem;
+	background: var(--color-brand);
+	opacity: calc(var(--glow-strength) * 0.7);
+}
+
+/* The sign-in/up backdrop: one glow behind the form. */
+.auth-backdrop {
+	position: fixed;
+	inset: 0;
+	z-index: -1;
+	overflow: hidden;
+	pointer-events: none;
+}
+.auth-backdrop::before {
+	content: '';
+	position: absolute;
+	top: -12rem;
+	left: 50%;
+	width: 40rem;
+	height: 26rem;
+	translate: -50% 0;
+	border-radius: 9999px;
+	background: linear-gradient(100deg, var(--color-brand), var(--brand-orange), var(--brand-amber));
+	filter: blur(90px);
+	opacity: calc(var(--glow-strength) * 0.8);
+}
+
+/* The landing header stays on top as you scroll, frosted once it has
+   something under it. */
+.landing-header {
+	position: sticky;
+	top: 0;
+	z-index: 30;
+	border-bottom: 1px solid var(--border);
+	background-color: color-mix(in oklab, var(--bg) 80%, transparent);
+	backdrop-filter: blur(12px);
+}
+
+/* A light sweep across a primary button, on hover. */
+.sheen {
+	position: relative;
+	overflow: hidden;
+}
+.sheen::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	width: 40%;
+	background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
+	transform: translateX(-120%) skewX(-20deg);
+	pointer-events: none;
+}
+
+/* "How it works": after the heading, one step every 600 ms: its number pops,
+   its text follows, and the line draws on to the next number. */
+.how-steps {
+	--view-base: 200ms;
+	--view-step: 600ms;
+}
+.view-after {
+	--view-offset: 140ms;
+}
+
+/* Small things (sidebar steps): a shorter, quicker arrival. */
+.rise-gentle {
+	--rise-lift: 6px;
+	--rise-blur: 2px;
+	--rise-step: 40ms;
+}
+
+.live-dot {
+	display: inline-block;
+	width: 6px;
+	height: 6px;
+	border-radius: 9999px;
+	background: var(--action);
+}
+
+/* ---- Motion ---- */
+
+@media (prefers-reduced-motion: no-preference) {
+	/* One arrival, staggered by `stagger-*` after `--rise-base`. */
+	.rise {
+		animation: rise 760ms var(--ease-out-soft) both;
+		animation-delay: calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms));
+	}
+	.unblur {
+		animation: unblur 900ms var(--ease-out-soft) both;
+		animation-delay: calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms));
+	}
+	.drop {
+		animation: drop 600ms var(--ease-out-soft) both;
+	}
+
+	/* Headline words arrive one by one, a beat apart. */
+	.hero-words {
+		--rise-base: 160ms;
+		--rise-step: 45ms;
+		--rise-lift: 0.45em;
+		--rise-blur: 8px;
+	}
+	.hero-words .rise {
+		display: inline-block;
+	}
+	.text-gradient {
+		animation: pan 9s ease-in-out infinite alternate;
+	}
+	/* An inline gradient that also arrives: both animations together. */
+	.text-gradient.unblur {
+		animation:
+			unblur 900ms var(--ease-out-soft) both,
+			pan 9s ease-in-out 1.2s infinite alternate;
+		animation-delay:
+			calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms)), 1.2s;
+	}
+
+	/* The product preview tilts up into place, then idles. */
+	.hero-preview {
+		--rise-base: 1000ms;
+		--rise-step: 55ms;
+		--rise-lift: 8px;
+		--rise-blur: 2px;
+		animation: tilt-in 1100ms var(--ease-out-soft) 450ms both;
+		transform-origin: 50% 100%;
+	}
+	.hero-float {
+		animation: hover-float 7s ease-in-out 1.8s infinite;
+	}
+	.hero-blob {
+		animation: drift 22s ease-in-out infinite;
+	}
+	.hero-blob--b {
+		animation-duration: 28s;
+		animation-direction: reverse;
+	}
+	.hero-blob--c {
+		animation-duration: 34s;
+	}
+
+	.live-dot {
+		animation: ping 2.4s ease-out infinite;
+	}
+
+	/* The sheen runs once by itself after the hero lands, then on hover. */
+	.sheen::after {
+		animation: sheen 1100ms var(--ease-out-soft) 1.9s both;
+	}
+	.sheen:hover::after {
+		animation: sheen 900ms var(--ease-out-soft) both;
+	}
+
+	/* Bars on the Results overview wipe in from the left, once their card has
+	   arrived. */
+	.bar-wipe {
+		animation: wipe 1100ms var(--ease-out-soft) 350ms backwards;
+	}
+
+	/* Score bars fill from the left. */
+	.score-fill {
+		transform-origin: left;
+		animation: grow-x 900ms var(--ease-out-soft) both;
+		animation-delay: calc(var(--rise-base, 0ms) + 240ms);
+	}
+
+	/* App pages: each section of the page arrives just after the last. */
+	.page-frame > * {
+		--rise-lift: 10px;
+		--rise-blur: 3px;
+		animation: rise 560ms var(--ease-out-soft) both;
+	}
+	.page-frame > :nth-child(2) {
+		animation-delay: 60ms;
+	}
+	.page-frame > :nth-child(3) {
+		animation-delay: 120ms;
+	}
+	.page-frame > :nth-child(4) {
+		animation-delay: 180ms;
+	}
+	.page-frame > :nth-child(n + 5) {
+		animation-delay: 240ms;
+	}
+
+	/* Below the fold, a block plays its sequence once it scrolls into view
+	   (InView sets data-in-view). Inside it: .on-view rises, .on-view-pop
+	   pops in with a ring, .on-view-draw draws left to right; each at
+	   --view-offset plus --stagger-i steps of --view-step. */
+	[data-in-view] :is(.on-view, .on-view-pop, .on-view-draw) {
+		--at: calc(
+			var(--view-base, 0ms) + var(--view-offset, 0ms) + var(--stagger-i, 0) *
+				var(--view-step, 140ms)
+		);
+	}
+	[data-in-view='false'] :is(.on-view, .on-view-pop) {
+		opacity: 0;
+	}
+	[data-in-view='false'] .on-view-draw {
+		transform: scaleX(0);
+	}
+	[data-in-view='true'] .on-view {
+		animation: rise 820ms var(--ease-out-soft) var(--at) both;
+	}
+	[data-in-view='true'] .on-view-pop {
+		animation:
+			pop 700ms var(--ease-out-soft) var(--at) both,
+			ping 1100ms ease-out calc(var(--at) + 380ms) 1;
+	}
+	[data-in-view='true'] .on-view-draw {
+		transform-origin: left;
+		animation: grow-x 400ms ease-in-out calc(var(--at) + 200ms) both;
+	}
+
+	/* The header starts clear over the hero and frosts as the page scrolls. */
+	@supports (animation-timeline: scroll()) {
+		.landing-header {
+			border-bottom-color: transparent;
+			background-color: transparent;
+			animation: header-settle linear both;
+			animation-timeline: scroll();
+			animation-range: 0 96px;
+		}
+	}
+}

@@ -55,7 +55,7 @@ export function Pipeline({ data }: { data: PipelineData }) {
 	const currentKey = currentStageKey(data.stages, pathname)
 
 	return (
-		<ol aria-label={t('label')} className="mt-2 flex flex-col gap-0.5">
+		<ol aria-label={t('label')} className="rise-gentle mt-2 flex flex-col gap-0.5">
 			{data.stages.map((stage, index) => {
 				const label = tSteps(stage.key)
 				const isViewing = stage.key === currentKey && stage.state !== 'locked'
@@ -99,7 +99,7 @@ export function Pipeline({ data }: { data: PipelineData }) {
 					isLocked && 'cursor-not-allowed'
 				)
 				return (
-					<li key={stage.key} className="relative">
+					<li key={stage.key} className={`rise stagger-${index} relative`}>
 						{index < data.stages.length - 1 && (
 							<span
 								aria-hidden

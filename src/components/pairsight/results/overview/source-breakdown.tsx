@@ -70,7 +70,7 @@ export function SourceBreakdown({
 								</span>
 								<span
 									aria-hidden
-									className="bg-surface-muted mt-1 flex h-2 overflow-hidden rounded-full"
+									className="bar-wipe bg-surface-muted mt-1 flex h-2 overflow-hidden rounded-full"
 								>
 									{ORDER.map((category) =>
 										source.counts[category] === 0 ? null : (

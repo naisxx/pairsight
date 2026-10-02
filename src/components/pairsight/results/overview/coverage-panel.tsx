@@ -65,7 +65,7 @@ export function CoveragePanel({
 					pending: coverage.pending,
 					failed: coverage.failed
 				})}
-				className="bg-surface-muted mt-3 flex h-2 overflow-hidden rounded-full"
+				className="bar-wipe bg-surface-muted mt-3 flex h-2 overflow-hidden rounded-full"
 			>
 				<span className="bg-text h-full" style={{ width: share(coverage.assessed) }} />
 				<span className="bg-border-input h-full" style={{ width: share(coverage.pending) }} />

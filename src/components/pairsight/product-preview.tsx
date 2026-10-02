@@ -5,7 +5,8 @@ import { LogoGlyph } from './wordmark'
 
 // A still picture of the Results screen on fictional data, for the empty
 // dashboard (and the landing page). Purely illustrative: the screen reader
-// hears one sentence, not the miniature UI.
+// hears one sentence, not the miniature UI. Its parts arrive in reading
+// order (motion.css, .rise), after the landing's --rise-base.
 
 const STAGES = ['records', 'vendors', 'rules', 'plan', 'run', 'results'] as const
 const PREVIEW_THRESHOLD = 0.6
@@ -106,21 +107,21 @@ export function ProductPreview() {
 						{t.rich('meta', { n: (chunks) => <span className="font-mono">{chunks}</span> })}
 					</p>
 					<div className="border-border divide-border bg-surface mt-3 grid grid-cols-3 divide-x rounded-[6px] border">
-						{METRICS.map((metric) => (
-							<div key={metric.key} className="px-3 py-2">
+						{METRICS.map((metric, index) => (
+							<div key={metric.key} className={`rise stagger-${index} px-3 py-2`}>
 								<p className="text-text-muted text-[9px]">{t(metric.key)}</p>
 								<p className="font-mono text-[17px] font-medium">{metric.value}</p>
 							</div>
 						))}
 					</div>
 					<div className="mt-2 grid grid-cols-4 gap-1.5">
-						{COUNTS.map(({ category, count }) => {
+						{COUNTS.map(({ category, count }, index) => {
 							const isDisagreement = category === 'pairsight_only' || category === 'vendor_only'
 							return (
 								<div
 									key={category}
 									className={cn(
-										'border-border rounded-[6px] border p-2',
+										`rise stagger-${METRICS.length + index} border-border rounded-[6px] border p-2`,
 										isDisagreement ? CATEGORY_STYLES[category].badge : 'bg-surface'
 									)}
 								>
@@ -134,10 +135,10 @@ export function ProductPreview() {
 						})}
 					</div>
 					<div className="border-border bg-surface mt-2 overflow-hidden rounded-[6px] border">
-						{ROWS.map((row) => (
+						{ROWS.map((row, index) => (
 							<div
 								key={row.a}
-								className="border-border flex items-center gap-3 border-b px-2.5 py-1.5 text-[10px] last:border-0"
+								className={`rise stagger-${METRICS.length + COUNTS.length + index} border-border flex items-center gap-3 border-b px-2.5 py-1.5 text-[10px] last:border-0`}
 							>
 								<span className="w-[92px] shrink-0 origin-left scale-[0.8]">
 									<CategoryBadge category={row.category} />

@@ -21,6 +21,7 @@ import {
 } from '@/lib/pairsight/metrics'
 import {
 	AXIS_TICK,
+	CHART_ANIMATION_BEGIN_MS,
 	CHART_ANIMATION_MS,
 	formatShare,
 	GRID_STROKE,
@@ -199,6 +200,7 @@ export function ThresholdSensitivity({
 									dot={false}
 									activeDot={{ r: 3.5, strokeWidth: 0 }}
 									connectNulls
+									animationBegin={CHART_ANIMATION_BEGIN_MS}
 									animationDuration={CHART_ANIMATION_MS}
 									animationEasing="ease-out"
 								/>
