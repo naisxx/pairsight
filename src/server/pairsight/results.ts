@@ -29,7 +29,9 @@ export {
 // in memory (src/server/pairsight/result-rows.ts) is cheap and keeps one
 // definition of "the current list" for both screens.
 
-async function loadRunView({ scope, runId }: { scope: EvaluationScope; runId: string }) {
+// Everything a run's results are built from, loaded once: shared by Results and the
+// findings export (findings.ts).
+export async function loadRunView({ scope, runId }: { scope: EvaluationScope; runId: string }) {
 	const run = await getVisibleRun({ scope, runId })
 	const [dataset, records, vendors, pairs] = await Promise.all([
 		db.sourceDataset.findUniqueOrThrow({
