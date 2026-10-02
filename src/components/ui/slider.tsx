@@ -25,7 +25,7 @@ function Slider({
 			</SliderPrimitive.Track>
 			<SliderPrimitive.Thumb
 				aria-label={thumbLabel}
-				className="border-action bg-surface focus-visible:outline-ring block size-4 rounded-full border-2 shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+				className="border-action bg-surface focus-visible:outline-focus block size-4 rounded-full border-2 shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
 			/>
 		</SliderPrimitive.Root>
 	)

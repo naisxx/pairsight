@@ -100,7 +100,12 @@ test.describe('PairSight vertical slice', () => {
 		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+		// Finished: complete, or with the pairs Jev couldn't judge called out.
+		await expect(
+			page.getByText(/^(Run complete|Finished with \d+ incomplete pairs?)$/)
+		).toBeVisible({
+			timeout: 45_000
+		})
 		await expect(page.getByText(/^Elapsed \d+:\d{2}$/)).toBeVisible()
 		await page.getByRole('link', { name: 'View results' }).click()
 		await page.waitForURL('**/results')
@@ -203,7 +208,9 @@ test.describe('PairSight vertical slice', () => {
 		await reviewPlan(page)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
 		await expect(plan).toContainText(/Unique pairs to assess\s*8/)
-		await expect(plan).toContainText(/Added so every vendor match is assessed\s*\+2/)
+		// All 4 vendor pairs are assessed; 2 of them the rules already found.
+		await expect(plan).toContainText(/Pairs your vendors matched\s*\+4/)
+		await expect(plan).toContainText('2 vendor pairs your rules already found')
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
 		await page.getByRole('link', { name: 'View results' }).click()
@@ -306,8 +313,8 @@ test.describe('PairSight vertical slice', () => {
 		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
 		await page.goto(`${evaluationPath}/plan`)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
-		await expect(plan).toContainText(/Saved from an earlier run — not assessed again\s*8/)
-		await expect(plan).toContainText(/New Jev assessmentsAbout \$0\.00 at a stand-in rate[^0-9]*0/)
+		await expect(plan).toContainText(/Reused assessments\s*8/)
+		await expect(plan).toContainText(/New Jev assessments\s*0\s*About \$0\.00 at a stand-in rate/)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
 		await expect(page.getByRole('heading', { name: 'Run 2' })).toBeVisible()
 		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
@@ -385,12 +392,12 @@ test.describe('PairSight vertical slice', () => {
 		// still failed; Failcase fails again and stays incomplete.
 		await page.getByRole('list', { name: 'Pipeline' }).getByRole('link', { name: /^Run,/ }).click()
 		const failures = page.getByRole('heading', { name: 'Why pairs failed' }).locator('..')
-		await expect(failures).toContainText('Request rejected1 pair')
+		await expect(failures).toContainText('Request rejected· 1 pair')
 		const callsBefore = await jevCalls(page, marker)
 		await page.getByRole('button', { name: 'Retry 1 failed' }).click()
 		await expect.poll(() => jevCalls(page, marker), { timeout: 30_000 }).toBe(callsBefore + 1)
 		await expect(page.getByText('1 assessment is incomplete.')).toBeVisible({ timeout: 30_000 })
-		await expect(failures).toContainText('Request rejected1 pair')
+		await expect(failures).toContainText('Request rejected· 1 pair')
 	})
 
 	test('a rejected API key stops the run with the fix, and it resumes once the key works', async ({
@@ -607,10 +614,10 @@ test.describe('PairSight vertical slice', () => {
 		// Vendor B starts as a draft that survives a reload until it's finished.
 		await page.getByRole('button', { name: 'Add vendor' }).click()
 		const vendorList = page.getByRole('navigation', { name: 'Vendors' })
-		await expect(vendorList).toContainText('Needs: upload the export')
+		await expect(vendorList).toContainText('Needs: upload a valid export')
 		await page.reload()
-		await expect(vendorList).toContainText('Needs: upload the export')
-		await expect(page.getByText('Finish Vendor B: upload the export')).toBeVisible()
+		await expect(vendorList).toContainText('Needs: upload a valid export')
+		await expect(page.getByText('Finish Vendor B: upload a valid export')).toBeVisible()
 
 		// A group export: one record per row, read without choosing any columns.
 		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/demo-vendor-b-groups.csv`)
@@ -629,6 +636,33 @@ test.describe('PairSight vertical slice', () => {
 		await comparison.getByRole('button', { name: 'Show as table' }).click()
 		await expect(comparison.getByRole('rowheader')).toHaveText(['Vendor A', 'Vendor B'])
 		await expect(page.getByRole('region', { name: 'Where vendors agree' })).toBeVisible()
+	})
+
+	test('three vendors are compared side by side, and that’s the limit', async ({ page }) => {
+		await signUp(page)
+		await createEvaluation(page, 'Three vendors')
+		await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await addVendor(page, 'demo-vendor-b.csv')
+		await addVendor(page, 'demo-vendor-c.csv')
+		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText(
+			/Vendor C\s*Pair format · ready/
+		)
+		// A fourth can't be added: the button gives way to the limit.
+		await expect(page.getByRole('button', { name: 'Add vendor' })).toHaveCount(0)
+		await expect(page.getByText('You can compare up to 3 vendors.')).toBeVisible()
+		await runEvaluation(page)
+
+		await expect(page.getByRole('radio', { name: 'Vendor C' })).toBeVisible()
+		const comparison = page.getByRole('region', { name: 'Vendor comparison' })
+		await comparison.getByRole('button', { name: 'Show as table' }).click()
+		await expect(comparison.getByRole('rowheader')).toHaveText(['Vendor A', 'Vendor B', 'Vendor C'])
+		await expect(page.getByRole('region', { name: 'Where vendors agree' })).toBeVisible()
+
+		// Each vendor's own results: Vendor C's matches, judged against Jev.
+		await page.getByRole('radio', { name: 'Vendor C' }).click()
+		await expect(page).toHaveURL(/vendor=/)
+		await expect(tile(page, 'Both matched')).toBeVisible()
 	})
 
 	test('locked steps can’t be opened by URL: they land where the evaluation is up to', async ({
@@ -661,6 +695,25 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText('Page not found')).toBeVisible()
 		await page.getByRole('link', { name: 'Evaluations', exact: true }).click()
 		await page.waitForURL((url) => url.pathname === '/evaluations')
+	})
+
+	test('signing out ends the session: the app asks you to sign in again', async ({ page }) => {
+		await signUp(page)
+		await page.getByRole('button', { name: 'Account: Test Person' }).click()
+		await page.getByRole('menuitem', { name: 'Sign out' }).click()
+		await page.waitForURL((url) => !url.pathname.startsWith('/evaluations'))
+		await page.goto('/evaluations')
+		await page.waitForURL('**/sign-in**')
+		await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+	})
+
+	test('an evaluation that doesn’t exist, or isn’t a valid id, is a 404', async ({ page }) => {
+		await signUp(page)
+		for (const id of ['00000000-0000-4000-8000-000000000000', 'not-an-id']) {
+			const response = await page.goto(`/evaluations/${id}/records`)
+			expect(response?.status()).toBe(404)
+			await expect(page.getByText('Page not found')).toBeVisible()
+		}
 	})
 
 	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {

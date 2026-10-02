@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 // The public sandbox (/sandbox): the whole app, read-only, on the prepared
@@ -7,6 +8,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 const PASSWORD = 'e2e-password-123'
 const SIGN_UP = /^Sign up to /
+// WCAG 2.2 A and AA, the bar the design is held to (docs/PairSight-UX-Plan.md §12).
+const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
 test.describe('Sandbox', () => {
 	test.skip(process.env.E2E_PAIRSIGHT !== '1', 'Needs local Supabase: set E2E_PAIRSIGHT=1')
@@ -136,4 +139,33 @@ test.describe('Sandbox', () => {
 		await expect(page.getByRole('menuitem', { name: 'Delete' })).toHaveCount(0)
 		await expect(page.getByLabel(SIGN_UP)).toHaveCount(0)
 	})
+
+	// Every screen, read-only, in both themes: no WCAG A/AA violations.
+	for (const colorScheme of ['light', 'dark'] as const) {
+		test(`every screen passes an accessibility check, ${colorScheme}`, async ({ browser }) => {
+			const context = await browser.newContext({ colorScheme, reducedMotion: 'reduce' })
+			const page = await context.newPage()
+			const check = async (name: string) => {
+				const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+				expect(
+					violations.map(
+						({ id, nodes }) => `${name} ${id}: ${nodes.map((n) => n.target).join(' | ')}`
+					)
+				).toEqual([])
+			}
+			for (const path of ['', '/records', '/vendors', '/rules', '/plan', '/run']) {
+				await page.goto(`/sandbox${path}`)
+				await check(path || '/sandbox')
+			}
+			await page.goto('/sandbox/results')
+			await page.waitForURL(/\/results/)
+			await check('results overview')
+			await page.goto(`${page.url().split('?')[0]}?tab=detailed`)
+			await check('results detailed')
+			await page.locator('[data-pairs-table] a[href*="/pairs/"]').first().click()
+			await page.waitForURL(/\/pairs\//)
+			await check('pair')
+			await context.close()
+		})
+	}
 })

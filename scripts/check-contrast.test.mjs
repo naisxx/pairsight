@@ -61,6 +61,7 @@ const pairs = [
 	['diff-ink', 'diff', NON_TEXT],
 	['diff-ink', 'surface', NON_TEXT],
 	...SURFACES.map((bg) => ['ring', bg, NON_TEXT]),
+	...SURFACES.map((bg) => ['focus', bg, NON_TEXT]),
 	...SURFACES.map((bg) => ['border-input', bg, NON_TEXT]),
 	...STATUSES.flatMap((s) => [
 		[s, 'surface', TEXT],

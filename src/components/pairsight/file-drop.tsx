@@ -41,7 +41,7 @@ export function FileDrop({
 				if (file != null) onFile(file)
 			}}
 			className={cn(
-				'focus-within:outline-ring flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-12 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-2',
+				'focus-within:outline-focus flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-12 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-2',
 				isOver ? 'border-action bg-surface-hover' : 'border-border-input bg-surface',
 				isBusy && 'pointer-events-none'
 			)}
