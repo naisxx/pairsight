@@ -1,0 +1,600 @@
+{
+	"version": 1,
+	"recordedAt": "2026-10-02T09:33:15.115Z",
+	"evaluation": {
+		"name": "Customer master — vendor check",
+		"identitySame": "Both records describe the same individual person, even if details are formatted differently, misspelled, abbreviated or out of date.",
+		"identityDifferent": "The records describe different people, including relatives or people who share a household, address, phone number or email.",
+		"countryCode": "US",
+		"jevFields": [
+			"first_name",
+			"last_name",
+			"email",
+			"phone",
+			"date_of_birth",
+			"address",
+			"city",
+			"postcode"
+		],
+		"blockingRules": [
+			{
+				"id": "email",
+				"fields": ["email"]
+			},
+			{
+				"id": "phone",
+				"fields": ["phone"]
+			},
+			{
+				"id": "name_postcode",
+				"fields": ["name", "postcode"]
+			}
+		],
+		"threshold": 0.5
+	},
+	"dataset": {
+		"fileName": "sandbox-records.csv",
+		"referenceColumn": "record_id",
+		"columnRoles": {
+			"city": "city",
+			"email": "email",
+			"phone": "phone",
+			"address": "address",
+			"postcode": "postcode",
+			"last_name": "last_name",
+			"first_name": "first_name",
+			"date_of_birth": "date_of_birth"
+		},
+		"records": [
+			{
+				"reference": "R01",
+				"rowNumber": 2,
+				"values": {
+					"city": "San Francisco",
+					"email": "jane.smith@example.com",
+					"phone": "(415) 555-0101",
+					"address": "12 Oak St",
+					"postcode": "94110",
+					"last_name": "Smith",
+					"record_id": "R01",
+					"first_name": "Jane",
+					"date_of_birth": "1990-04-12"
+				}
+			},
+			{
+				"reference": "R02",
+				"rowNumber": 3,
+				"values": {
+					"city": "San Francisco",
+					"email": "Jane.Smith@Example.com",
+					"phone": "415-555-0101",
+					"address": "12 Oak Street",
+					"postcode": "94110",
+					"last_name": "SMITH",
+					"record_id": "R02",
+					"first_name": "JANE",
+					"date_of_birth": "1990-04-12"
+				}
+			},
+			{
+				"reference": "R03",
+				"rowNumber": 4,
+				"values": {
+					"city": "San Francisco",
+					"email": "jane.smith@example.com",
+					"phone": "",
+					"address": "12 Oak St",
+					"postcode": "94110",
+					"last_name": "Smyth",
+					"record_id": "R03",
+					"first_name": "Jane",
+					"date_of_birth": "1990-04-12"
+				}
+			},
+			{
+				"reference": "R04",
+				"rowNumber": 5,
+				"values": {
+					"city": "Chicago",
+					"email": "tom.brennan@example.com",
+					"phone": "(312) 555-0144",
+					"address": "88 Lake Ave",
+					"postcode": "60614",
+					"last_name": "Brennan",
+					"record_id": "R04",
+					"first_name": "Tom",
+					"date_of_birth": "1978-09-03"
+				}
+			},
+			{
+				"reference": "R05",
+				"rowNumber": 6,
+				"values": {
+					"city": "Chicago",
+					"email": "tim.b@example.net",
+					"phone": "(312) 555-0144",
+					"address": "88 Lake Ave",
+					"postcode": "60614",
+					"last_name": "Brennan",
+					"record_id": "R05",
+					"first_name": "Tim",
+					"date_of_birth": "2005-06-21"
+				}
+			},
+			{
+				"reference": "R06",
+				"rowNumber": 7,
+				"values": {
+					"city": "Los Angeles",
+					"email": "maria.garcia@example.com",
+					"phone": "(213) 555-0188",
+					"address": "400 Pine St",
+					"postcode": "90012",
+					"last_name": "Garcia",
+					"record_id": "R06",
+					"first_name": "Maria",
+					"date_of_birth": "1985-02-17"
+				}
+			},
+			{
+				"reference": "R07",
+				"rowNumber": 8,
+				"values": {
+					"city": "Los Angeles",
+					"email": "mgarcia85@example.org",
+					"phone": "(213) 555-0199",
+					"address": "17 Elm Rd",
+					"postcode": "90012",
+					"last_name": "Garcia",
+					"record_id": "R07",
+					"first_name": "Maria",
+					"date_of_birth": "1962-11-30"
+				}
+			},
+			{
+				"reference": "R08",
+				"rowNumber": 9,
+				"values": {
+					"city": "New York",
+					"email": "d.okafor@example.com",
+					"phone": "(646) 555-0123",
+					"address": "5 River Rd",
+					"postcode": "10001",
+					"last_name": "Okafor",
+					"record_id": "R08",
+					"first_name": "David",
+					"date_of_birth": "1981-07-08"
+				}
+			},
+			{
+				"reference": "R09",
+				"rowNumber": 10,
+				"values": {
+					"city": "Seattle",
+					"email": "david.okafor@example.net",
+					"phone": "(206) 555-0177",
+					"address": "900 Cedar Ave",
+					"postcode": "98101",
+					"last_name": "Okafor",
+					"record_id": "R09",
+					"first_name": "David",
+					"date_of_birth": "1981-07-08"
+				}
+			},
+			{
+				"reference": "R10",
+				"rowNumber": 11,
+				"values": {
+					"city": "Portland",
+					"email": "alan.park@example.com",
+					"phone": "(503) 555-0110",
+					"address": "31 Burnside St",
+					"postcode": "97201",
+					"last_name": "Park",
+					"record_id": "R10",
+					"first_name": "Alan",
+					"date_of_birth": "1970-01-01"
+				}
+			},
+			{
+				"reference": "R11",
+				"rowNumber": 12,
+				"values": {
+					"city": "Las Vegas",
+					"email": "nina.patel@example.com",
+					"phone": "(702) 555-0133",
+					"address": "700 Desert Way",
+					"postcode": "89101",
+					"last_name": "Patel",
+					"record_id": "R11",
+					"first_name": "Nina",
+					"date_of_birth": "1992-03-14"
+				}
+			},
+			{
+				"reference": "R12",
+				"rowNumber": 13,
+				"values": {
+					"city": "Boston",
+					"email": "bob.chen@example.com",
+					"phone": "(617) 555-0155",
+					"address": "22 Beacon St",
+					"postcode": "02108",
+					"last_name": "Chen",
+					"record_id": "R12",
+					"first_name": "Bob",
+					"date_of_birth": ""
+				}
+			},
+			{
+				"reference": "R13",
+				"rowNumber": 14,
+				"values": {
+					"city": "Boston",
+					"email": "robert.chen@example.com",
+					"phone": "(617) 555-0155",
+					"address": "22 Beacon St",
+					"postcode": "02108",
+					"last_name": "Chen",
+					"record_id": "R13",
+					"first_name": "Robert",
+					"date_of_birth": "1988-05-05"
+				}
+			},
+			{
+				"reference": "R14",
+				"rowNumber": 15,
+				"values": {
+					"city": "Atlanta",
+					"email": "",
+					"phone": "(404) 555-0166",
+					"address": "3 Peach Ln",
+					"postcode": "30303",
+					"last_name": "Nair",
+					"record_id": "R14",
+					"first_name": "Priya",
+					"date_of_birth": "1987-12-02"
+				}
+			},
+			{
+				"reference": "R15",
+				"rowNumber": 16,
+				"values": {
+					"city": "Houston",
+					"email": "samuel.adeyemi@example.com",
+					"phone": "",
+					"address": "60 Main St",
+					"postcode": "77002",
+					"last_name": "Adeyemi",
+					"record_id": "R15",
+					"first_name": "Samuel",
+					"date_of_birth": "1975-08-19"
+				}
+			},
+			{
+				"reference": "R16",
+				"rowNumber": 17,
+				"values": {
+					"city": "Denver",
+					"email": "",
+					"phone": "",
+					"address": "14 Aspen Ct",
+					"postcode": "80202",
+					"last_name": "Martin",
+					"record_id": "R16",
+					"first_name": "Chloe",
+					"date_of_birth": "1996-10-10"
+				}
+			},
+			{
+				"reference": "R17",
+				"rowNumber": 18,
+				"values": {
+					"city": "Miami",
+					"email": "lucas.silva@example.com",
+					"phone": "(305) 555-0191",
+					"address": "9 Ocean Dr",
+					"postcode": "33101",
+					"last_name": "Silva",
+					"record_id": "R17",
+					"first_name": "Lucas",
+					"date_of_birth": "1983-04-27"
+				}
+			},
+			{
+				"reference": "R18",
+				"rowNumber": 19,
+				"values": {
+					"city": "Minneapolis",
+					"email": "emma.j@example.com",
+					"phone": "(612) 555-0112",
+					"address": "210 Lake St",
+					"postcode": "55401",
+					"last_name": "Johansson",
+					"record_id": "R18",
+					"first_name": "Emma",
+					"date_of_birth": "1991-01-30"
+				}
+			},
+			{
+				"reference": "R19",
+				"rowNumber": 20,
+				"values": {
+					"city": "Detroit",
+					"email": "",
+					"phone": "(313) 555-0148",
+					"address": "45 Grand Blvd",
+					"postcode": "48201",
+					"last_name": "Haddad",
+					"record_id": "R19",
+					"first_name": "Omar",
+					"date_of_birth": "1979-06-15"
+				}
+			},
+			{
+				"reference": "R20",
+				"rowNumber": 21,
+				"values": {
+					"city": "Philadelphia",
+					"email": "grace.kim@example.com",
+					"phone": "(215) 555-0137",
+					"address": "1 Market St",
+					"postcode": "19103",
+					"last_name": "Kim",
+					"record_id": "R20",
+					"first_name": "Grace",
+					"date_of_birth": "1994-09-09"
+				}
+			},
+			{
+				"reference": "R21",
+				"rowNumber": 22,
+				"values": {
+					"city": "Boston",
+					"email": "henry.walsh@example.com",
+					"phone": "",
+					"address": "8 Tremont St",
+					"postcode": "02109",
+					"last_name": "Walsh",
+					"record_id": "R21",
+					"first_name": "Henry",
+					"date_of_birth": "1968-03-03"
+				}
+			},
+			{
+				"reference": "R22",
+				"rowNumber": 23,
+				"values": {
+					"city": "Phoenix",
+					"email": "",
+					"phone": "",
+					"address": "77 Palm Ave",
+					"postcode": "85004",
+					"last_name": "Rossi",
+					"record_id": "R22",
+					"first_name": "Sofia",
+					"date_of_birth": "1999-07-21"
+				}
+			},
+			{
+				"reference": "R23",
+				"rowNumber": 24,
+				"values": {
+					"city": "Austin",
+					"email": "daniel.cohen@example.com",
+					"phone": "(512) 555-0129",
+					"address": "500 Congress Ave",
+					"postcode": "78701",
+					"last_name": "Cohen",
+					"record_id": "R23",
+					"first_name": "Daniel",
+					"date_of_birth": "1986-11-11"
+				}
+			},
+			{
+				"reference": "R24",
+				"rowNumber": 25,
+				"values": {
+					"city": "Raleigh",
+					"email": "aisha.bello@example.com",
+					"phone": "(919) 555-0174",
+					"address": "12 Fayetteville St",
+					"postcode": "27601",
+					"last_name": "Bello",
+					"record_id": "R24",
+					"first_name": "Aisha",
+					"date_of_birth": "1993-02-14"
+				}
+			}
+		]
+	},
+	"vendors": [
+		{
+			"name": "Northwind Match",
+			"format": "pair",
+			"fileName": "sandbox-vendor-a.csv",
+			"mapping": {
+				"format": "pair",
+				"columnA": "left_id",
+				"columnB": "right_id"
+			},
+			"stats": {
+				"rows": 4,
+				"pairs": 4,
+				"groups": null,
+				"selfPairs": 0,
+				"duplicates": 0
+			},
+			"matches": [
+				["R01", "R02"],
+				["R05", "R04"],
+				["R08", "R09"],
+				["R10", "R11"]
+			]
+		},
+		{
+			"name": "Clearline Resolve",
+			"format": "group",
+			"fileName": "sandbox-vendor-b.csv",
+			"mapping": {
+				"format": "group",
+				"groupColumn": "match_id",
+				"referenceColumn": "record"
+			},
+			"stats": {
+				"rows": 6,
+				"pairs": 3,
+				"groups": 3,
+				"selfPairs": 0,
+				"duplicates": 0
+			},
+			"matches": [
+				["R01", "R02"],
+				["R06", "R07"],
+				["R13", "R12"]
+			]
+		}
+	],
+	"run": {
+		"number": 1,
+		"identitySame": "Both records describe the same individual person, even if details are formatted differently, misspelled, abbreviated or out of date.",
+		"identityDifferent": "The records describe different people, including relatives or people who share a household, address, phone number or email.",
+		"countryCode": "US",
+		"jevFields": [
+			"first_name",
+			"last_name",
+			"email",
+			"phone",
+			"date_of_birth",
+			"address",
+			"city",
+			"postcode"
+		],
+		"blockingRules": [
+			{
+				"id": "email",
+				"fields": ["email"]
+			},
+			{
+				"id": "phone",
+				"fields": ["phone"]
+			},
+			{
+				"id": "name_postcode",
+				"fields": ["name", "postcode"]
+			}
+		],
+		"judgmentKey": "f417ae16cd8923003dbc299bedc0327adba68a712ef3cebf61cda117a492c1fc",
+		"jevModel": "jev-1.13.0",
+		"threshold": 0.5,
+		"initialThreshold": 0.5,
+		"createdAt": "2026-10-02T09:33:12.941Z",
+		"completedAt": "2026-10-02T09:33:15.115Z",
+		"pairs": [
+			{
+				"records": ["R01", "R02"],
+				"ruleIds": ["email", "phone", "name_postcode"],
+				"matchedBy": [0, 1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.98,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:14.693Z"
+				}
+			},
+			{
+				"records": ["R01", "R03"],
+				"ruleIds": ["email"],
+				"matchedBy": [],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.86,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:14.134Z"
+				}
+			},
+			{
+				"records": ["R02", "R03"],
+				"ruleIds": ["email"],
+				"matchedBy": [],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.86,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:14.981Z"
+				}
+			},
+			{
+				"records": ["R05", "R04"],
+				"ruleIds": ["phone"],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.1,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:14.276Z"
+				}
+			},
+			{
+				"records": ["R13", "R12"],
+				"ruleIds": ["phone"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.92,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:14.640Z"
+				}
+			},
+			{
+				"records": ["R06", "R07"],
+				"ruleIds": ["name_postcode"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.12,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:15.095Z"
+				}
+			},
+			{
+				"records": ["R08", "R09"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.74,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:15.047Z"
+				}
+			},
+			{
+				"records": ["R10", "R11"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.01,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-02T09:33:14.125Z"
+				}
+			}
+		]
+	}
+}
