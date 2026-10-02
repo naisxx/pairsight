@@ -27,6 +27,12 @@ export type PipelineData = {
 
 export type Crumb = { label: string; href?: string }
 
+// The signed-in person the shell shows; null in the sandbox when nobody is.
+export type ShellViewer = { email: string; name: string } | null
+
+// The sidebar's one section link: the dashboard, or the sandbox's.
+export type ShellHome = { href: string; label: string }
+
 function matchLength(stage: PipelineStage, pathname: string): number {
 	const matches = [stage.href, ...(stage.alsoMatches ?? [])].filter(
 		(href) => pathname === href || pathname.startsWith(`${href}/`)

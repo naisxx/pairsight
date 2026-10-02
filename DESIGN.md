@@ -174,3 +174,25 @@ lines up:
 - Every form input has an associated `<label>` (visually hidden is fine,
   absent is not).
 - Icon-only buttons get an `aria-label`.
+
+## 7. Motion
+
+Things arrive; they don't pop. `src/app/motion.css` holds it all, in CSS,
+so server components animate without becoming client ones:
+
+- One curve, `--ease-out-soft`: fast out, gentle settle.
+- `rise` (fade, lift and a little blur) with `stagger-N` to order a group;
+  `rise-gentle` for small things like sidebar steps. App pages need nothing:
+  each section of `.page-frame` rises a beat after the one before.
+- Number tiles count up from zero on first sight (`AnimatedNumber`), and
+  score bars fill from the left.
+- The landing page is the one place for show: its headline arrives word by
+  word into a brand gradient (`text-gradient`, `--headline-*`, darker in
+  light mode to keep 3:1), the product preview tilts up into place over
+  drifting brand glows, and each section below plays its own sequence once
+  it scrolls into view (`InView` + `.on-view*`): "How it works" pops each
+  number, brings in its text and draws the line on to the next.
+- Results charts draw over a second once their card has arrived, and its
+  bars wipe in from the left (`bar-wipe`).
+- Every animation sits inside `prefers-reduced-motion: no-preference`.
+  With reduced motion, everything is simply there.

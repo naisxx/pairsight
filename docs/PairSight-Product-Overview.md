@@ -48,7 +48,7 @@ Every vendor-predicted match is included in the review, even if it falls outside
 
 ### 1. Discover PairSight
 
-The landing page explains the problem and offers two actions: **Start evaluation** or **Try demo**. The demo uses fictional records and prepared vendor results so visitors can explore the experience immediately.
+The landing page explains the problem and offers two actions: **Start evaluation** or **Explore the sandbox**. The sandbox is the whole app, read-only, on one evaluation with fictional records, two vendors and judgments recorded from Jev, so visitors can explore the experience immediately, without an account.
 
 ### 2. Create an evaluation
 

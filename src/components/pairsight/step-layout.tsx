@@ -50,9 +50,10 @@ export function ActionBar({
 }) {
 	// Docked to the bottom of the page: `mt-auto` rests it at the bottom of a
 	// short page (the transparent `pt-8` keeps a gap above it) and sticky
-	// keeps it in view on a long one. It spans <main> edge to edge — main is
-	// an inline-size container, so 50cqw is half its width — while its
-	// contents line up with the page column.
+	// keeps it in view on a long one. It spans <main> edge to edge — the page
+	// sits in an inline-size container (shell-frame.tsx) as wide as main's
+	// visible area, so 50cqw is half of it — while its contents line up with
+	// the page column.
 	return (
 		<div className="pointer-events-none sticky bottom-0 z-20 mx-[calc(50%-50cqw)] mt-auto -mb-10 pt-8">
 			<div className="border-border bg-surface pointer-events-auto border-t">

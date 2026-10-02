@@ -29,7 +29,7 @@ export function RecordsPreview({
 				</h2>
 				<p className="text-text-muted text-xs">{t('previewRows', { count: rows.length })}</p>
 			</header>
-			<div className="border-border overflow-x-auto border-t">
+			<div className="border-border relative overflow-x-auto border-t">
 				<table className="w-full border-separate border-spacing-0 text-[12.5px]">
 					<caption className="sr-only">{t('previewCaption')}</caption>
 					<thead className="bg-surface-muted">

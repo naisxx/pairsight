@@ -2,10 +2,10 @@
 
 import { motion, useReducedMotion } from 'motion/react'
 
-const STAGGER_S = 0.04
-const MAX_DELAY_S = 0.24
-const DURATION_S = 0.24
-const LIFT_PX = 6
+const STAGGER_S = 0.07
+const MAX_DELAY_S = 0.56
+const DURATION_S = 0.5
+const LIFT_PX = 10
 // The motion curve everywhere: fast out, gentle settle (globals.css
 // --ease-out-soft is the CSS twin).
 export const EASE_OUT_SOFT = [0.23, 1, 0.32, 1] as const

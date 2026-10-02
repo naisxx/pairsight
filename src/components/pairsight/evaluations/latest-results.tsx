@@ -44,7 +44,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 	const format = useFormatter()
 	const { run } = latest
 	const first = latest.vendors[0]?.metrics
-	const base = `/evaluations/${latest.evaluationId}/runs/${run.id}/results`
+	const base = latest.resultsHref
 	const disagreements = first == null ? 0 : first.counts.pairsight_only + first.counts.vendor_only
 	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
 
@@ -79,7 +79,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 				<Chip>{t('latestChip')}</Chip>
 			</div>
 
-			<div className="mt-4 overflow-x-auto px-5">
+			<div className="relative mt-4 overflow-x-auto px-5">
 				<table className="type-ui w-full min-w-[560px]">
 					<caption className="sr-only">{t('latestCaption')}</caption>
 					<thead>
@@ -96,7 +96,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 							<th scope="col" className="pb-2 text-right font-medium">
 								{t('colF1')}
 							</th>
-							<th scope="col" className="pb-2 text-right font-medium">
+							<th scope="col" className="pb-2 pl-6 text-right font-medium">
 								{t('colDisagreements')}
 							</th>
 						</tr>
@@ -125,7 +125,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 										<MetricBar value={metrics.recall} color={color} emptyLabel="—" />
 									</td>
 									<td className="py-2.5 text-right font-mono">{formatShare(metrics.f1, '—')}</td>
-									<td className="py-2.5 text-right whitespace-nowrap">
+									<td className="py-2.5 pl-6 text-right whitespace-nowrap">
 										<Link
 											href={`${base}?vendor=${id}&tab=detailed&category=disagreements`}
 											aria-label={t('disagreementsFor', { count: missed + merged, vendor: name })}

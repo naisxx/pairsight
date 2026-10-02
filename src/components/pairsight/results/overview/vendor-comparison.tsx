@@ -18,6 +18,7 @@ import type { VendorMetrics } from '@/lib/pairsight/metrics'
 import { cn } from '@/lib/cn'
 import {
 	AXIS_TICK,
+	CHART_ANIMATION_BEGIN_MS,
 	CHART_ANIMATION_MS,
 	formatShare,
 	GRID_STROKE,
@@ -164,6 +165,7 @@ export function VendorComparison({
 									name={vendor.name}
 									fill={SERIES[index]}
 									radius={[0, 3, 3, 0]}
+									animationBegin={CHART_ANIMATION_BEGIN_MS}
 									animationDuration={CHART_ANIMATION_MS}
 									animationEasing="ease-out"
 									cursor="pointer"

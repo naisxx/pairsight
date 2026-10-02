@@ -15,6 +15,8 @@ import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
 import { missingField, type Rule, type RuleLimits } from './rule-fields'
 import { RulesSummary, type RulesSummaryData } from './rules-summary'
+import { useEvaluationView } from '../evaluation-context'
+import { ReadOnlyFieldset } from '../read-only'
 
 // A change is saved once typing pauses this long.
 const AUTOSAVE_DELAY_MS = 700
@@ -80,7 +82,9 @@ export function RulesForm({
 	limits: RuleLimits
 }) {
 	const t = useTranslations('Rules')
+	const tSandbox = useTranslations('Sandbox')
 	const router = useRouter()
+	const view = useEvaluationView()
 	const mapped = new Set(mappedRoles)
 	const presets = rules.filter((rule) => !isCustomRuleId(rule.id))
 	const runnablePresets = presets.filter((rule) => missingField(rule.fields, mapped) == null)
@@ -121,7 +125,8 @@ export function RulesForm({
 				(draft.enabled.has(rule.id) && missingField(rule.fields, mapped) == null)
 		)
 	}
-	const isPending = isSaving || (isDirty && invalidReason == null)
+	// The sandbox never saves: its controls are disabled, and this makes sure.
+	const isPending = !view.isReadOnly && (isSaving || (isDirty && invalidReason == null))
 
 	function save() {
 		startSaving(async () => {
@@ -137,7 +142,7 @@ export function RulesForm({
 
 	const saveSoon = useEffectEvent(() => save())
 	const draftKey = snapshot(draft, runnablePresets)
-	const canSave = isDirty && invalidReason == null
+	const canSave = !view.isReadOnly && isDirty && invalidReason == null
 	useEffect(() => {
 		if (!canSave) return
 		const timer = setTimeout(saveSoon, AUTOSAVE_DELAY_MS)
@@ -160,8 +165,8 @@ export function RulesForm({
 
 	return (
 		<>
-			<div className="grid gap-4 lg:grid-cols-12">
-				<div className="space-y-4 lg:col-span-8">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
+				<ReadOnlyFieldset className="space-y-4 lg:col-span-8">
 					<IdentitySection
 						same={draft.same}
 						different={draft.different}
@@ -218,16 +223,21 @@ export function RulesForm({
 							}))
 						}
 					/>
-				</div>
+				</ReadOnlyFieldset>
 				<div className="lg:col-span-4">
 					<RulesSummary summary={summary} isUpdating={isPending} />
 				</div>
 			</div>
 
 			<ActionBar
-				back={{ href: `/evaluations/${evaluationId}/vendors`, label: t('back') }}
+				back={{ href: `${view.base}/vendors`, label: t('back') }}
 				hint={
-					error != null ? (
+					view.isReadOnly ? (
+						<>
+							<InfoIcon size={ICON_SIZE} className="shrink-0" />
+							<span>{tSandbox('readOnlyStatus')}</span>
+						</>
+					) : error != null ? (
 						<span role="alert" className="text-danger">
 							{t('statusFailed', { error })}
 						</span>
@@ -250,7 +260,7 @@ export function RulesForm({
 			>
 				{blockedReason == null && error == null ? (
 					<Button asChild>
-						<Link href={`/evaluations/${evaluationId}/plan`}>
+						<Link href={`${view.base}/plan`}>
 							{t('continue')}
 							<ArrowRightIcon size={ICON_SIZE} />
 						</Link>

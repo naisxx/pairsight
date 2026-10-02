@@ -156,6 +156,15 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 					{t(isSignIn ? 'toSignUp' : 'toSignIn')}
 				</Link>
 			</p>
+			<p className="type-ui text-text-muted mt-2 text-center">
+				{t.rich('orSandbox', {
+					link: (chunks) => (
+						<Link href="/sandbox" className="text-accent-ink font-medium hover:underline">
+							{chunks}
+						</Link>
+					)
+				})}
+			</p>
 		</form>
 	)
 }

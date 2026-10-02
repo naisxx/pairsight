@@ -10,8 +10,17 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { CheckIcon, MonitorIcon, MoonIcon, SignOutIcon, SunIcon } from '@/components/ui/icons'
+import {
+	CheckIcon,
+	MonitorIcon,
+	MoonIcon,
+	SignInIcon,
+	SignOutIcon,
+	SunIcon
+} from '@/components/ui/icons'
 import { Tip } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/routing'
 import { initialsOf } from '@/lib/auth/profile'
 import { cn } from '@/lib/cn'
 import { signOut } from '@/server/actions/auth'
@@ -143,5 +152,33 @@ export function SidebarAccountMenu({ email, name }: { email: string; name: strin
 				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
+	)
+}
+
+// In the sandbox, for someone who isn't signed in: the way in, where the
+// account menu would be.
+export function SidebarSignIn() {
+	const t = useTranslations('Shell')
+	const { isCollapsed } = useSidebarMode()
+	if (isCollapsed) {
+		return (
+			<Tip content={t('signIn')} side="right">
+				<Button variant="quiet" size="icon" asChild>
+					<Link href="/sign-in" aria-label={t('signIn')}>
+						<SignInIcon size={ICON_SIZE} />
+					</Link>
+				</Button>
+			</Tip>
+		)
+	}
+	return (
+		<div className="flex flex-col gap-1.5 px-0.5 py-1">
+			<Button size="sm" asChild>
+				<Link href="/sign-up">{t('signUp')}</Link>
+			</Button>
+			<Button variant="quiet" size="sm" asChild>
+				<Link href="/sign-in">{t('signIn')}</Link>
+			</Button>
+		</div>
 	)
 }

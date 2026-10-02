@@ -64,7 +64,7 @@ export function ResultsOverview({
 
 	return (
 		<div className="mt-6 flex flex-col gap-4">
-			<div className="grid gap-4 lg:grid-cols-12">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 				<Reveal index={index++} className="lg:col-span-8">
 					<MetricStrip
 						vendorName={vendorName}
@@ -86,7 +86,7 @@ export function ResultsOverview({
 			</div>
 
 			<SectionTitle title={t('sectionDecisions')} hint={t('sectionDecisionsHint')} />
-			<div className="grid gap-4 lg:grid-cols-12">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 				<Reveal index={index++} className="lg:col-span-7">
 					<ThresholdSensitivity
 						vendorName={vendorName}
@@ -108,7 +108,7 @@ export function ResultsOverview({
 				</Reveal>
 			</div>
 			{overview.byVendor.length > 1 && (
-				<div className="grid gap-4 lg:grid-cols-12">
+				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 					<Reveal index={index++} className="lg:col-span-7">
 						<VendorComparison
 							vendors={overview.byVendor.map((vendor) => ({
@@ -133,7 +133,7 @@ export function ResultsOverview({
 			)}
 
 			<SectionTitle title={t('sectionDisagreements')} hint={t('sectionDisagreementsHint')} />
-			<div className="grid gap-4 lg:grid-cols-12">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 				<Reveal index={index++} className="lg:col-span-7">
 					<FieldPatternsPanel
 						vendorName={vendorName}
@@ -153,7 +153,7 @@ export function ResultsOverview({
 					/>
 				</Reveal>
 			</div>
-			<div className="grid gap-4 lg:grid-cols-12">
+			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
 				<Reveal index={index++} className="lg:col-span-5">
 					<ScoreDistribution
 						vendorName={vendorName}

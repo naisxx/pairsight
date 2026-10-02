@@ -9,6 +9,7 @@ import {
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { CheckIcon, ChevronDownIcon } from '@/components/ui/icons'
+import { useEvaluationView } from '../evaluation-context'
 
 export type RunOption = {
 	id: string
@@ -20,17 +21,10 @@ export type RunOption = {
 
 // Moves between this evaluation's runs. Each opens that run's results
 // unfiltered, since a filter or vendor from one run may not exist in another.
-export function RunSwitcher({
-	evaluationId,
-	runId,
-	runs
-}: {
-	evaluationId: string
-	runId: string
-	runs: RunOption[]
-}) {
+export function RunSwitcher({ runId, runs }: { runId: string; runs: RunOption[] }) {
 	const t = useTranslations('Results')
 	const format = useFormatter()
+	const view = useEvaluationView()
 	const current = runs.find((run) => run.id === runId)
 	const label = (run: RunOption) =>
 		t('runOption', {
@@ -54,7 +48,7 @@ export function RunSwitcher({
 				{runs.map((run) => (
 					<DropdownMenuItem key={run.id} asChild>
 						<Link
-							href={`/evaluations/${evaluationId}/runs/${run.id}/results`}
+							href={`${view.base}/runs/${run.id}/results`}
 							aria-current={run.id === runId ? 'page' : undefined}
 							className="flex items-center gap-2"
 						>

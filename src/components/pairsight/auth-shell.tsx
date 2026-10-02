@@ -3,7 +3,8 @@ import { Link } from '@/i18n/routing'
 import { Wordmark } from './wordmark'
 
 // The single-column page sign-in, sign-up and onboarding share: the wordmark,
-// a title and one sentence, then the form.
+// a title and one sentence, then the form, arriving in that order over a
+// soft brand glow (motion.css).
 export async function AuthShell({
 	title,
 	description,
@@ -18,17 +19,18 @@ export async function AuthShell({
 }) {
 	const t = await getTranslations('Auth')
 	return (
-		<div className="bg-bg text-text flex min-h-dvh flex-col">
-			<header className="flex h-16 items-center px-5 md:px-8">
+		<div className="bg-bg text-text relative isolate flex min-h-dvh flex-col">
+			<div aria-hidden className="auth-backdrop" />
+			<header className="drop flex h-16 items-center px-5 md:px-8">
 				<Link href={homeHref} aria-label={t('home')} className="rounded-sm">
 					<Wordmark />
 				</Link>
 			</header>
 			<main id="main" className="flex flex-1 items-start justify-center px-5 pt-8 pb-16 md:pt-16">
 				<div className="w-full max-w-[400px]">
-					<h1 className="text-2xl font-semibold tracking-[-0.01em]">{title}</h1>
-					<p className="text-text-muted mt-1.5 text-sm">{description}</p>
-					{children}
+					<h1 className="rise text-2xl font-semibold tracking-[-0.01em]">{title}</h1>
+					<p className="rise stagger-1 text-text-muted mt-1.5 text-sm">{description}</p>
+					<div className="rise stagger-2">{children}</div>
 				</div>
 			</main>
 		</div>

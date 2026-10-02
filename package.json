@@ -26,6 +26,8 @@
 		"supabase": "pnpm dlx supabase@2.118.0",
 		"jev:stub": "node scripts/jev-stub.mjs",
 		"jev:check": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/jev-check.mts",
+		"demo:snapshot": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/demo-snapshot.mts",
+		"demo:seed": "node --env-file-if-exists=.env --env-file-if-exists=.env.local --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/demo-seed.mts",
 		"check:env": "node scripts/check-env-vars.mjs",
 		"check:secrets": "node scripts/check-secrets.mjs --all",
 		"check:standards": "node scripts/check-standards.mjs",

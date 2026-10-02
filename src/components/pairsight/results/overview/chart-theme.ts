@@ -15,8 +15,10 @@ export const THRESHOLD_STROKE = 'var(--ring)'
 // One colour per vendor, in upload order; a third falls back to muted.
 export const VENDOR_SERIES = [SERIES_A, SERIES_B, MUTED_SERIES]
 
-// Charts draw once, briefly: enough to read as a change, not a performance.
-export const CHART_ANIMATION_MS = 300
+// Charts draw in once their card has arrived (Reveal), slowly enough to
+// watch them build; a threshold change redraws at the same pace.
+export const CHART_ANIMATION_MS = 1000
+export const CHART_ANIMATION_BEGIN_MS = 250
 
 const PERCENT = 100
 

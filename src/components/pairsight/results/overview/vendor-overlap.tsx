@@ -86,7 +86,7 @@ export function VendorOverlap({
 								total: group.total,
 								same: group.sameIndividual
 							})}
-							className="bg-surface-muted mt-1.5 flex h-2.5 overflow-hidden rounded-full"
+							className="bar-wipe bg-surface-muted mt-1.5 flex h-2.5 overflow-hidden rounded-full"
 						>
 							<span
 								className="bg-text h-full transition-[width] duration-300 ease-out"

@@ -15,6 +15,7 @@ import { toast } from '@/lib/toast'
 import { updateThresholdAction } from '@/server/actions/pairsight/runs'
 import { CategoryDot } from './result-parts'
 import { formatShare } from './results/overview/chart-theme'
+import { ReadOnlyGate } from './read-only'
 
 const STEP = 0.01
 const PERCENT = 100
@@ -229,29 +230,31 @@ export function ThresholdControl({
 						<Button variant="secondary" size="sm" onClick={() => setIsOpen(false)}>
 							{t('cancel')}
 						</Button>
-						<Button
-							size="sm"
-							disabled={draft === threshold || isPending}
-							onClick={() =>
-								startTransition(async () => {
-									setError(null)
-									const result = await updateThresholdAction({ runId, threshold: draft })
-									if (!result.ok) {
-										setError(result.error)
-										return
-									}
-									setIsOpen(false)
-									toast({
-										title: t('thresholdSet', { value: draft.toFixed(2) }),
-										description: t('thresholdSetDescription')
+						<ReadOnlyGate action="threshold">
+							<Button
+								size="sm"
+								disabled={draft === threshold || isPending}
+								onClick={() =>
+									startTransition(async () => {
+										setError(null)
+										const result = await updateThresholdAction({ runId, threshold: draft })
+										if (!result.ok) {
+											setError(result.error)
+											return
+										}
+										setIsOpen(false)
+										toast({
+											title: t('thresholdSet', { value: draft.toFixed(2) }),
+											description: t('thresholdSetDescription')
+										})
+										router.refresh()
 									})
-									router.refresh()
-								})
-							}
-						>
-							{isPending && <SpinnerIcon />}
-							{t('thresholdApply')}
-						</Button>
+								}
+							>
+								{isPending && <SpinnerIcon />}
+								{t('thresholdApply')}
+							</Button>
+						</ReadOnlyGate>
 					</div>
 				</div>
 			</PopoverContent>

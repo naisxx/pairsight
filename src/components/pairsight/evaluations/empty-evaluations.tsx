@@ -2,6 +2,8 @@ import { useTranslations } from 'next-intl'
 import { Reveal } from '@/components/ui/reveal'
 import { ProductPreview } from '../product-preview'
 import { NewEvaluationButton } from './new-evaluation-button'
+import { Button } from '@/components/ui/button'
+import { Link } from '@/i18n/routing'
 
 const STEPS = [
 	{ title: 'step1Title', body: 'step1Body' },
@@ -14,7 +16,7 @@ const STEPS = [
 export function EmptyEvaluations() {
 	const t = useTranslations('Evaluations')
 	return (
-		<section className="border-border bg-surface mt-6 grid items-center gap-8 rounded-md border p-6 md:p-8 lg:grid-cols-12">
+		<section className="border-border bg-surface mt-6 grid grid-cols-1 items-center gap-8 rounded-md border p-6 md:p-8 lg:grid-cols-12">
 			<div className="lg:col-span-5">
 				<h2 className="text-lg font-semibold tracking-[-0.01em]">{t('emptyTitle')}</h2>
 				<p className="type-ui text-text-muted mt-1.5 leading-relaxed">{t('emptyDescription')}</p>
@@ -31,8 +33,11 @@ export function EmptyEvaluations() {
 						</Reveal>
 					))}
 				</ol>
-				<div className="mt-6">
+				<div className="mt-6 flex flex-wrap gap-2">
 					<NewEvaluationButton />
+					<Button variant="secondary" asChild>
+						<Link href="/sandbox">{t('exploreSandbox')}</Link>
+					</Button>
 				</div>
 			</div>
 			<Reveal index={2} className="lg:col-span-7">

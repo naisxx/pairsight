@@ -74,7 +74,10 @@ export function CategorySummary({
 								/>
 								<span className="text-text-muted font-mono text-xs">{share.toFixed(0)}%</span>
 							</span>
-							<span aria-hidden className="bg-surface-muted mt-2 h-1 overflow-hidden rounded-full">
+							<span
+								aria-hidden
+								className="bar-wipe bg-surface-muted mt-2 h-1 overflow-hidden rounded-full"
+							>
 								<span
 									className={cn(
 										'block h-full rounded-full transition-[width] duration-300 ease-out',

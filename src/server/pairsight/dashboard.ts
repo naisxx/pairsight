@@ -1,9 +1,12 @@
 import 'server-only'
 import { db } from '@/server/db/client'
+import { runBase, type EvaluationView } from '@/lib/pairsight/evaluation-view'
+import { evaluationWhere, type EvaluationScope } from './scope'
 import { vendorMetrics, type VendorMetrics } from '@/lib/pairsight/metrics'
 import {
 	activeStage,
 	evaluationStatus,
+	landingStage,
 	stageHref,
 	stageStates,
 	type EvaluationStatus,
@@ -19,6 +22,8 @@ import {
 
 export type DashboardRow = {
 	id: string
+	// Where opening it lands (landingStage): results, or where the work is.
+	href: string
 	name: string
 	createdAt: Date
 	updatedAt: Date
@@ -34,6 +39,8 @@ export type DashboardRow = {
 export type LatestResults = {
 	evaluationId: string
 	evaluationName: string
+	// The run's results page.
+	resultsHref: string
 	run: { id: string; number: number; completedAt: Date | null; threshold: number }
 	vendors: Array<{ id: string; name: string; metrics: VendorMetrics }>
 }
@@ -44,9 +51,17 @@ export type Dashboard = {
 	latest: LatestResults | null
 }
 
-export async function getDashboard(ownerId: string): Promise<Dashboard> {
+// `viewOf` gives each evaluation's pages: /evaluations/<id> for an owner,
+// /sandbox for the sandbox.
+export async function getDashboard({
+	scope,
+	viewOf
+}: {
+	scope: EvaluationScope
+	viewOf: (evaluationId: string) => EvaluationView
+}): Promise<Dashboard> {
 	const evaluations = await db.evaluation.findMany({
-		where: { ownerId, kind: 'live' },
+		where: evaluationWhere(scope),
 		orderBy: { updatedAt: 'desc' },
 		select: {
 			id: true,
@@ -89,8 +104,10 @@ export async function getDashboard(ownerId: string): Promise<Dashboard> {
 		}
 		const stages = stageStates(input)
 		const nextKey = activeStage(stages)
+		const { base } = viewOf(evaluation.id)
 		return {
 			id: evaluation.id,
+			href: stageHref(base, landingStage(stages), run?.id ?? null),
 			name: evaluation.name,
 			createdAt: evaluation.createdAt,
 			updatedAt: evaluation.updatedAt,
@@ -99,7 +116,10 @@ export async function getDashboard(ownerId: string): Promise<Dashboard> {
 			next:
 				nextKey == null
 					? null
-					: { key: nextKey, href: stageHref(evaluation.id, nextKey, run?.id ?? null) },
+					: {
+							key: nextKey,
+							href: stageHref(base, nextKey, run?.id ?? null)
+						},
 			recordCount: dataset?.rowCount ?? null,
 			vendorCount,
 			lastRun: run == null ? null : { id: run.id, number: run.number, createdAt: run.createdAt }
@@ -128,7 +148,8 @@ export async function getDashboard(ownerId: string): Promise<Dashboard> {
 				: await latestResults({
 						evaluationId: newest.evaluation.id,
 						evaluationName: newest.evaluation.name,
-						runId: newest.run.id
+						runId: newest.run.id,
+						resultsHref: `${runBase(viewOf(newest.evaluation.id), newest.run.id)}/results`
 					})
 	}
 }
@@ -138,11 +159,13 @@ export async function getDashboard(ownerId: string): Promise<Dashboard> {
 async function latestResults({
 	evaluationId,
 	evaluationName,
-	runId
+	runId,
+	resultsHref
 }: {
 	evaluationId: string
 	evaluationName: string
 	runId: string
+	resultsHref: string
 }): Promise<LatestResults> {
 	const run = await db.run.findUniqueOrThrow({
 		where: { id: runId },
@@ -162,6 +185,7 @@ async function latestResults({
 	return {
 		evaluationId,
 		evaluationName,
+		resultsHref,
 		run: { id: run.id, number: run.number, completedAt: run.completedAt, threshold: run.threshold },
 		vendors: vendors.map((vendor) => ({
 			id: vendor.id,

@@ -90,7 +90,7 @@ export function MetricStrip({
 								className="text-text mt-1 block font-mono text-[32px] leading-none font-medium tracking-[-0.02em]"
 							/>
 							<div className="mt-3">
-								<div aria-hidden className="bg-surface-muted relative h-1.5 rounded-full">
+								<div aria-hidden className="bar-wipe bg-surface-muted relative h-1.5 rounded-full">
 									<div
 										className="bg-text absolute inset-y-0 left-0 rounded-full transition-[width] duration-300 ease-out"
 										style={{ width: `${(value ?? 0) * PERCENT}%` }}

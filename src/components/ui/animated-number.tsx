@@ -5,9 +5,11 @@ import { animate, useReducedMotion } from 'motion/react'
 import { EASE_OUT_SOFT } from './reveal'
 
 const DURATION_S = 0.28
+const COUNT_UP_S = 1.2
 
-// Tweens from the previous value to the new one, so a threshold change reads
-// as a change rather than a jump. `format` renders every frame (and null).
+// Counts up from zero when it first appears, then tweens from the previous
+// value to the new one, so a threshold change reads as a change rather than
+// a jump. `format` renders every frame (and null).
 export function AnimatedNumber({
 	value,
 	format,
@@ -18,18 +20,22 @@ export function AnimatedNumber({
 	className?: string
 }) {
 	const isReduced = useReducedMotion() === true
-	const [shown, setShown] = useState(value)
-	const previous = useRef(value)
+	const start = value == null ? null : 0
+	const [shown, setShown] = useState(start)
+	const previous = useRef(start)
+	const isFirst = useRef(true)
 
 	useEffect(() => {
 		const from = previous.current
+		const duration = isFirst.current ? COUNT_UP_S : DURATION_S
 		previous.current = value
+		isFirst.current = false
 		if (isReduced || value == null || from == null || from === value) {
 			setShown(value)
 			return
 		}
 		const controls = animate(from, value, {
-			duration: DURATION_S,
+			duration,
 			ease: EASE_OUT_SOFT,
 			onUpdate: setShown
 		})

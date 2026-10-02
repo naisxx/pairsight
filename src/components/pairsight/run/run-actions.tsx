@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { ArrowRightIcon, PlayIcon, SpinnerIcon } from '@/components/ui/icons'
 import type { RunProgress } from '@/server/pairsight/runs'
 import { ActionBar } from '../step-layout'
+import { ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 15
 
@@ -34,18 +35,20 @@ export function RunActions({
 	return (
 		<ActionBar back={{ href: backHref, label: t('back') }}>
 			{canResume && (
-				<Button
-					variant={isComplete ? 'secondary' : 'primary'}
-					onClick={onResume}
-					disabled={isActing}
-				>
-					{t('resume')}
-					{isActing ? (
-						<SpinnerIcon size={ICON_SIZE} />
-					) : (
-						<PlayIcon size={ICON_SIZE} variant="solid" />
-					)}
-				</Button>
+				<ReadOnlyGate action="run">
+					<Button
+						variant={isComplete ? 'secondary' : 'primary'}
+						onClick={onResume}
+						disabled={isActing}
+					>
+						{t('resume')}
+						{isActing ? (
+							<SpinnerIcon size={ICON_SIZE} />
+						) : (
+							<PlayIcon size={ICON_SIZE} variant="solid" />
+						)}
+					</Button>
+				</ReadOnlyGate>
 			)}
 			{(isComplete || !canResume) && (
 				<Button asChild disabled={!isComplete}>

@@ -140,7 +140,7 @@ export function ScoreBar({
 			>
 				<span
 					className={cn(
-						'absolute inset-y-0 left-0 rounded-full',
+						'score-fill absolute inset-y-0 left-0 rounded-full',
 						score >= threshold ? 'bg-text' : 'bg-border-input'
 					)}
 					style={{ width: `${score * PERCENT}%` }}

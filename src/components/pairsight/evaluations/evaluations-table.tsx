@@ -41,6 +41,7 @@ const MAX_ROW_DELAY_S = 0.2
 
 export type TableRow = {
 	id: string
+	href: string
 	name: string
 	createdAt: Date
 	updatedAt: Date
@@ -53,8 +54,8 @@ export type TableRow = {
 }
 
 // "All evaluations": searchable by name, each row opening its evaluation,
-// with Open, Rename and Delete in a row menu.
-export function EvaluationsTable({ rows }: { rows: TableRow[] }) {
+// with Open, Rename and Delete in a row menu (Open only when read-only).
+export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isReadOnly: boolean }) {
 	const t = useTranslations('Evaluations')
 	const tSteps = useTranslations('Steps')
 	const format = useFormatter()
@@ -102,7 +103,7 @@ export function EvaluationsTable({ rows }: { rows: TableRow[] }) {
 					</Button>
 				</div>
 			) : (
-				<div className="border-border bg-surface mt-3 overflow-x-auto rounded-md border">
+				<div className="border-border bg-surface relative mt-3 overflow-x-auto rounded-md border">
 					<table className="type-ui w-full min-w-[900px] border-separate border-spacing-0">
 						<caption className="sr-only">{t('caption')}</caption>
 						<thead className="bg-surface-muted">
@@ -135,7 +136,7 @@ export function EvaluationsTable({ rows }: { rows: TableRow[] }) {
 						</thead>
 						<tbody>
 							{shown.map((row, index) => {
-								const href = `/evaluations/${row.id}`
+								const { href } = row
 								return (
 									<motion.tr
 										key={row.id}
@@ -203,15 +204,22 @@ export function EvaluationsTable({ rows }: { rows: TableRow[] }) {
 														<FolderIcon size={ICON_SIZE} />
 														{t('open')}
 													</DropdownMenuItem>
-													<DropdownMenuItem onSelect={() => setRenaming(row)}>
-														<EditIcon size={ICON_SIZE} />
-														{t('rename')}
-													</DropdownMenuItem>
-													<DropdownMenuSeparator />
-													<DropdownMenuItem variant="destructive" onSelect={() => setDeleting(row)}>
-														<TrashIcon size={ICON_SIZE} />
-														{t('delete')}
-													</DropdownMenuItem>
+													{!isReadOnly && (
+														<>
+															<DropdownMenuItem onSelect={() => setRenaming(row)}>
+																<EditIcon size={ICON_SIZE} />
+																{t('rename')}
+															</DropdownMenuItem>
+															<DropdownMenuSeparator />
+															<DropdownMenuItem
+																variant="destructive"
+																onSelect={() => setDeleting(row)}
+															>
+																<TrashIcon size={ICON_SIZE} />
+																{t('delete')}
+															</DropdownMenuItem>
+														</>
+													)}
 												</DropdownMenuContent>
 											</DropdownMenu>
 										</td>
