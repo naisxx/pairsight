@@ -1,6 +1,6 @@
 import 'server-only'
 import { db } from '@/server/db/client'
-import type { SourceRecordInput } from './csv'
+import type { SourceRecordInput } from './source-records'
 import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
 

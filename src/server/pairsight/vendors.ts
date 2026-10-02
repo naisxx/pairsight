@@ -1,4 +1,4 @@
-import type { CsvTable } from './csv'
+import type { Table } from './tabular'
 import { canonicalPair, expandGroup, pairKey, type CanonicalPair } from './pairs'
 
 // The standard pair CSV: one positive match per row, two reference columns
@@ -23,7 +23,7 @@ export function parseVendorPairs({
 	columnB,
 	recordIdByReference
 }: {
-	table: CsvTable
+	table: Table
 	columnA: string
 	columnB: string
 	recordIdByReference: ReadonlyMap<string, string>
@@ -110,7 +110,7 @@ export function parseVendorFile({
 	recordIdByReference,
 	maxPairs
 }: {
-	table: CsvTable
+	table: Table
 	columns: VendorColumns
 	recordIdByReference: ReadonlyMap<string, string>
 	maxPairs: number
@@ -156,7 +156,7 @@ function parseVendorGroups({
 	recordIdByReference,
 	maxPairs
 }: {
-	table: CsvTable
+	table: Table
 	groupColumn: string
 	referenceColumn: string
 	recordIdByReference: ReadonlyMap<string, string>
@@ -248,7 +248,7 @@ type ColumnProfile = {
 	grouped: number
 }
 
-function profileColumns(table: CsvTable, references: ReadonlySet<string>): ColumnProfile[] {
+function profileColumns(table: Table, references: ReadonlySet<string>): ColumnProfile[] {
 	return table.headers.map((header, index) => {
 		const counts = new Map<string, number>()
 		let referenceCount = 0
@@ -322,7 +322,7 @@ export function detectVendorColumns({
 	table,
 	references
 }: {
-	table: CsvTable
+	table: Table
 	references: ReadonlySet<string>
 }): VendorDetection {
 	const profiles = profileColumns(table, references)

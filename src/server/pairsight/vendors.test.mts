@@ -1,10 +1,16 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseCsv } from './csv'
+import { LIMITS } from './limits'
+import { readTable } from './tabular'
 import { detectVendorColumns, parseVendorFile } from './vendors'
 
-function table(text: string) {
-	const parsed = parseCsv(text)
+// Text through the tabular connector, as an uploaded .csv file would be read.
+async function parseCsv(text: string, maxRows = LIMITS.maxSourceRecords) {
+	return readTable({ fileName: 'test.csv', bytes: new TextEncoder().encode(text), maxRows })
+}
+
+async function table(text: string) {
+	const parsed = await parseCsv(text)
 	assert.ok(parsed.ok)
 	return parsed.table
 }
@@ -24,44 +30,44 @@ const groupFile = [
 	'3,Matched,6,94,OR,C6'
 ].join('\n')
 
-test('a group file is recognised by its reference column and the column named for groups', () => {
-	assert.deepEqual(detectVendorColumns({ table: table(groupFile), references }), {
+test('a group file is recognised by its reference column and the column named for groups', async () => {
+	assert.deepEqual(detectVendorColumns({ table: await table(groupFile), references }), {
 		columns: { format: 'group', groupColumn: 'PairId', referenceColumn: 'Account Code' }
 	})
 })
 
-test('a pair file is recognised by its two reference columns, in file order', () => {
+test('a pair file is recognised by its two reference columns, in file order', async () => {
 	const pairFile = 'score,second,first\n0.9,C2,C1\n0.8,C4,C3\n'
-	assert.deepEqual(detectVendorColumns({ table: table(pairFile), references }), {
+	assert.deepEqual(detectVendorColumns({ table: await table(pairFile), references }), {
 		columns: { format: 'pair', columnA: 'second', columnB: 'first' }
 	})
 })
 
-test('a pair file whose second column is all wrong still reads as pairs, by its column names', () => {
+test('a pair file whose second column is all wrong still reads as pairs, by its column names', async () => {
 	assert.deepEqual(
-		detectVendorColumns({ table: table('left_id,right_id\nC1,R99\n'), references }),
+		detectVendorColumns({ table: await table('left_id,right_id\nC1,R99\n'), references }),
 		{
 			columns: { format: 'pair', columnA: 'left_id', columnB: 'right_id' }
 		}
 	)
 })
 
-test('a file without the source references says so; two group-like columns ask', () => {
-	assert.deepEqual(detectVendorColumns({ table: table('a,b\nx,y\nz,w\n'), references }), {
+test('a file without the source references says so; two group-like columns ask', async () => {
+	assert.deepEqual(detectVendorColumns({ table: await table('a,b\nx,y\nz,w\n'), references }), {
 		columns: null,
 		reason: 'no_reference_column',
 		guess: null
 	})
 	const twoGroupings = 'g1,g2,ref\nA,X,C1\nA,X,C2\nB,Y,C3\nB,Y,C4\n'
-	const detection = detectVendorColumns({ table: table(twoGroupings), references })
+	const detection = detectVendorColumns({ table: await table(twoGroupings), references })
 	assert.equal(detection.columns, null)
 	assert.ok(detection.columns == null && detection.reason === 'ambiguous_group')
 })
 
-test('groups expand to every pair inside them, once each, with duplicates counted', () => {
+test('groups expand to every pair inside them, once each, with duplicates counted', async () => {
 	const text = 'group,ref\nG1,C1\nG1,C2\nG1,C3\nG1,C3\nG2,C1\nG2,C2\nG3,C4\n'
 	const result = parseVendorFile({
-		table: table(text),
+		table: await table(text),
 		columns: { format: 'group', groupColumn: 'group', referenceColumn: 'ref' },
 		recordIdByReference: ids,
 		maxPairs: 100
@@ -72,10 +78,10 @@ test('groups expand to every pair inside them, once each, with duplicates counte
 	assert.deepEqual(result.stats, { rows: 7, pairs: 3, groups: 3, duplicates: 2, selfPairs: 0 })
 })
 
-test('groups block on unknown or missing references and on expanding past the cap', () => {
+test('groups block on unknown or missing references and on expanding past the cap', async () => {
 	const text = 'group,ref\nG1,C1\nG1,C99\nG1,\nG2,C2\nG2,C3\nG2,C4\n'
 	const result = parseVendorFile({
-		table: table(text),
+		table: await table(text),
 		columns: { format: 'group', groupColumn: 'group', referenceColumn: 'ref' },
 		recordIdByReference: ids,
 		maxPairs: 2

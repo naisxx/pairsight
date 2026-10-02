@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { NAME_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
-import { parseCsv, type CsvParseError } from '@/server/pairsight/csv'
+import type { TableError } from '@/server/pairsight/tabular'
 import { recordIdsByReference } from '@/server/pairsight/datasets'
 import { LIMITS, MAX_LISTED_ISSUES } from '@/server/pairsight/limits'
 import { vendorColumnsSchema } from '@/server/pairsight/schemas'
@@ -24,7 +24,7 @@ import {
 	type VendorDetection,
 	type VendorFileStats
 } from '@/server/pairsight/vendors'
-import { fileNameSchema, fileTextSchema, idSchema, revalidateEvaluationPages } from './shared'
+import { fileSchema, idSchema, readUpload, revalidateEvaluationPages, sheetSchema } from './shared'
 
 const vendorKindSchema = z.enum(['draft', 'export'])
 const vendorNameSchema = z.string().trim().min(1).max(NAME_MAX_LENGTH)
@@ -60,10 +60,12 @@ export const deleteVendorAction = validatedAction({
 })
 
 export type VendorFileCheck =
-	| { ok: false; parseError: CsvParseError }
+	| { ok: false; parseError: TableError }
 	| {
 			ok: true
 			headers: string[]
+			// The workbook sheet read, for a file with sheets.
+			sheet: string | undefined
 			// The columns used: detected, or the ones the user chose.
 			columns: VendorColumns | null
 			// Why the columns couldn't be worked out, when they couldn't.
@@ -86,14 +88,15 @@ export type VendorFileCheck =
 export const checkVendorFileAction = validatedAction({
 	input: z.object({
 		draftId: idSchema,
-		fileName: fileNameSchema,
-		text: fileTextSchema,
+		file: fileSchema,
+		sheet: sheetSchema,
 		columns: vendorColumnsSchema.optional()
 	}),
-	handler: async ({ draftId, fileName, text, columns: chosen }): Promise<VendorFileCheck> => {
+	handler: async ({ draftId, file, sheet, columns: chosen }): Promise<VendorFileCheck> => {
 		const user = await requireUser()
 		const datasetId = await draftDatasetId(user.id, draftId)
-		const parsed = parseCsv(text, LIMITS.maxPairsPerRun)
+		const fileName = file.name.trim()
+		const parsed = await readUpload(file, LIMITS.maxPairsPerRun, sheet)
 		if (!parsed.ok) {
 			await clearDraftFile({ ownerId: user.id, draftId })
 			revalidateEvaluationPages()
@@ -110,7 +113,7 @@ export const checkVendorFileAction = validatedAction({
 			chosen != null && columnsExist(chosen)
 				? { columns: chosen }
 				: detectVendorColumns({ table, references: new Set(recordIdByReference.keys()) })
-		const base = { ok: true as const, headers: table.headers }
+		const base = { ok: true as const, headers: table.headers, sheet: parsed.sheet }
 
 		if (detected.columns == null) {
 			await clearDraftFile({ ownerId: user.id, draftId })

@@ -5,49 +5,47 @@ import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import {
 	checkColumns,
-	parseCsv,
 	validateSourceRecords,
 	type ColumnCheck,
-	type CsvParseError,
 	type ReferenceIssues
-} from '@/server/pairsight/csv'
+} from '@/server/pairsight/source-records'
+import type { TableError } from '@/server/pairsight/tabular'
 import { duplicateRoles } from '@/server/pairsight/fields'
 import { LIMITS } from '@/server/pairsight/limits'
 import { columnRolesSchema } from '@/server/pairsight/schemas'
 import { saveSourceDataset } from '@/server/pairsight/datasets'
 import {
-	fileNameSchema,
-	fileTextSchema,
+	fileSchema,
 	idSchema,
-	previewCsv,
+	sheetSchema,
+	previewTable,
+	readUpload,
 	revalidateEvaluationPages,
-	type CsvPreview
+	type FilePreview
 } from './shared'
 
 // Problem rows listed per column; the panel shows a few and counts the rest.
 const MAX_LISTED_ISSUES = 20
 
 export type SourcePreview =
-	| (Extract<CsvPreview, { ok: true }> & { columnChecks: Record<string, ColumnCheck> })
-	| Extract<CsvPreview, { ok: false }>
+	| (Extract<FilePreview, { ok: true }> & { columnChecks: Record<string, ColumnCheck> })
+	| Extract<FilePreview, { ok: false }>
 
-export const previewSourceCsv = validatedAction({
-	input: z.object({ text: fileTextSchema }),
-	handler: async ({ text }): Promise<SourcePreview> => {
+export const previewSourceFile = validatedAction({
+	input: z.object({ file: fileSchema, sheet: sheetSchema }),
+	handler: async ({ file, sheet }): Promise<SourcePreview> => {
 		await requireUser()
-		const preview = previewCsv(text, LIMITS.maxSourceRecords)
-		if (!preview.ok) return preview
-		// Parsed a second time for the checks: the file is capped (LIMITS), and
-		// keeping previewCsv shared with vendors beats threading the table out.
-		const parsed = parseCsv(text, LIMITS.maxSourceRecords)
+		const parsed = await readUpload(file, LIMITS.maxSourceRecords, sheet)
 		if (!parsed.ok) return parsed
+		const preview = previewTable(parsed)
+		if (!preview.ok) return preview
 		return { ...preview, columnChecks: checkColumns(parsed.table, MAX_LISTED_ISSUES) }
 	}
 })
 
 export type SaveSourceResult =
 	| { ok: true; rowCount: number }
-	| { ok: false; parseError: CsvParseError }
+	| { ok: false; parseError: TableError }
 	| {
 			ok: false
 			referenceIssues: ReferenceIssues
@@ -58,20 +56,20 @@ export type SaveSourceResult =
 export const saveSourceAction = validatedAction({
 	input: z.object({
 		evaluationId: idSchema,
-		fileName: fileNameSchema,
-		text: fileTextSchema,
+		file: fileSchema,
+		sheet: sheetSchema,
 		referenceColumn: z.string().min(1),
 		columnRoles: columnRolesSchema
 	}),
 	handler: async ({
 		evaluationId,
-		fileName,
-		text,
+		file,
+		sheet,
 		referenceColumn,
 		columnRoles
 	}): Promise<SaveSourceResult> => {
 		const user = await requireUser()
-		const parsed = parseCsv(text)
+		const parsed = await readUpload(file, LIMITS.maxSourceRecords, sheet)
 		if (!parsed.ok) return { ok: false, parseError: parsed.error }
 		const validation = validateSourceRecords({ table: parsed.table, referenceColumn })
 		const roles = Object.fromEntries(
@@ -91,7 +89,7 @@ export const saveSourceAction = validatedAction({
 		await saveSourceDataset({
 			ownerId: user.id,
 			evaluationId,
-			fileName,
+			fileName: file.name.trim(),
 			referenceColumn,
 			columnRoles: roles,
 			records: validation.records
