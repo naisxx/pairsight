@@ -17,6 +17,28 @@ export type AssessmentStatus = 'pending' | 'running' | 'succeeded' | 'failed'
 // likely-different pairs scored ≤ 0.11 and likely-same pairs ≥ 0.76.
 export const DEFAULT_THRESHOLD = 0.5
 
+// The thresholds Rules offers by name (docs/PairSight-UX-Plan.md, "What
+// shipped"): either side of the default, both still well inside the gap the
+// live check found. A custom value may be anything between the bounds.
+export const THRESHOLD_PRESETS = {
+	lenient: 0.35,
+	balanced: DEFAULT_THRESHOLD,
+	strict: 0.7
+} as const
+export type ThresholdPreset = keyof typeof THRESHOLD_PRESETS
+export const THRESHOLD_PRESET_NAMES = [
+	'lenient',
+	'balanced',
+	'strict'
+] as const satisfies readonly ThresholdPreset[]
+export const MIN_THRESHOLD = 0.01
+export const MAX_THRESHOLD = 0.99
+
+// The preset a threshold is, if it is one.
+export function thresholdPreset(threshold: number): ThresholdPreset | null {
+	return THRESHOLD_PRESET_NAMES.find((name) => THRESHOLD_PRESETS[name] === threshold) ?? null
+}
+
 // Width of the "low confidence" band around the threshold, well above Jev's
 // observed run-to-run noise (about ±0.01). It raises a filter, never a category.
 export const LOW_CONFIDENCE_BAND = 0.1

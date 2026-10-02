@@ -1,21 +1,18 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { useRouter } from '@/i18n/routing'
+import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { ArrowRightIcon, SlidersIcon, SpinnerIcon } from '@/components/ui/icons'
+import { ArrowRightIcon, SlidersIcon } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Slider } from '@/components/ui/slider'
-import { DEFAULT_THRESHOLD, type Category } from '@/lib/pairsight/decisions'
+import type { Category } from '@/lib/pairsight/decisions'
 import { histogram, vendorMetrics, type MetricPair } from '@/lib/pairsight/metrics'
 import { cn } from '@/lib/cn'
-import { toast } from '@/lib/toast'
-import { updateThresholdAction } from '@/server/actions/pairsight/runs'
 import { CategoryDot } from './result-parts'
 import { formatShare } from './results/overview/chart-theme'
-import { ReadOnlyGate } from './read-only'
 
 const STEP = 0.01
 const PERCENT = 100
@@ -27,34 +24,29 @@ function clampToStep(value: number): number {
 	return Math.min(1, Math.max(0, Math.round(value * PERCENT) / PERCENT))
 }
 
-// The decision threshold, behind a button showing its value. The popover
-// shows how the vendor's judged scores spread around it and previews every
-// count and metric before anything is saved. Applying re-decides from saved
-// scores; Jev is never called again (docs/PairSight-V1-Scope.md, "Runs and reuse").
+// The run's decision threshold, behind a button showing its value. The
+// popover shows how the vendor's judged scores spread around it and previews
+// every count and metric at another threshold: a "what if", never saved.
+// Each run keeps the threshold it started with; a different one is set in
+// Rules and takes a new run, which reuses every saved score
+// (docs/PairSight-UX-Plan.md, "What shipped").
 export function ThresholdControl({
-	runId,
 	threshold,
-	initialThreshold,
+	rulesHref,
 	vendorName,
 	pairs
 }: {
-	runId: string
 	threshold: number
-	// What the run started with; null for runs from before it was recorded.
-	initialThreshold: number | null
+	rulesHref: string
 	vendorName: string
 	pairs: MetricPair[]
 }) {
 	const t = useTranslations('Results')
 	const tCat = useTranslations('Categories')
 	const tOverview = useTranslations('Overview')
-	const router = useRouter()
 	const [isOpen, setIsOpen] = useState(false)
 	const [draft, setDraft] = useState(threshold)
 	const [text, setText] = useState(threshold.toFixed(2))
-	const [error, setError] = useState<string | null>(null)
-	const [isPending, startTransition] = useTransition()
-	const resetTo = initialThreshold ?? DEFAULT_THRESHOLD
 	const notAvailable = tOverview('notAvailable')
 
 	const bins = histogram(pairs)
@@ -106,10 +98,7 @@ export function ThresholdControl({
 			open={isOpen}
 			onOpenChange={(open) => {
 				setIsOpen(open)
-				if (open) {
-					setBoth(threshold)
-					setError(null)
-				}
+				if (open) setBoth(threshold)
 			}}
 		>
 			<PopoverTrigger asChild>
@@ -212,50 +201,21 @@ export function ThresholdControl({
 					</dl>
 				</div>
 
-				{error != null && (
-					<p role="alert" className="text-danger px-4 pb-2 text-xs">
-						{error}
-					</p>
-				)}
 				<div className="border-border flex items-center justify-between gap-2 border-t px-4 py-3">
 					<Button
 						variant="quiet"
 						size="sm"
-						onClick={() => setBoth(resetTo)}
-						disabled={draft === resetTo}
+						onClick={() => setBoth(threshold)}
+						disabled={draft === threshold}
 					>
-						{t('resetTo', { value: resetTo.toFixed(2) })}
+						{t('resetTo', { value: threshold.toFixed(2) })}
 					</Button>
-					<div className="flex gap-2">
-						<Button variant="secondary" size="sm" onClick={() => setIsOpen(false)}>
-							{t('cancel')}
-						</Button>
-						<ReadOnlyGate action="threshold">
-							<Button
-								size="sm"
-								disabled={draft === threshold || isPending}
-								onClick={() =>
-									startTransition(async () => {
-										setError(null)
-										const result = await updateThresholdAction({ runId, threshold: draft })
-										if (!result.ok) {
-											setError(result.error)
-											return
-										}
-										setIsOpen(false)
-										toast({
-											title: t('thresholdSet', { value: draft.toFixed(2) }),
-											description: t('thresholdSetDescription')
-										})
-										router.refresh()
-									})
-								}
-							>
-								{isPending && <SpinnerIcon />}
-								{t('thresholdApply')}
-							</Button>
-						</ReadOnlyGate>
-					</div>
+					<Button variant="secondary" size="sm" asChild>
+						<Link href={rulesHref}>
+							{t('thresholdChangeInRules')}
+							<ArrowRightIcon size={13} />
+						</Link>
+					</Button>
 				</div>
 			</PopoverContent>
 		</Popover>

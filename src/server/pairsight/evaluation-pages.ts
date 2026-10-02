@@ -21,7 +21,9 @@ import {
 	type EvaluationView
 } from '@/lib/pairsight/evaluation-view'
 import { getProfileName, getSessionUser, requireUserOrRedirect } from '@/server/auth/session'
-import { parseBlockingRules } from '@/server/pairsight/json'
+import { parseBlockingRules, parseColumnRoles } from '@/server/pairsight/json'
+import { mappedIdentityRoles, type IdentityRole } from '@/server/pairsight/fields'
+import { runnableRules } from '@/lib/pairsight/rule-fields'
 import { getVisibleRun } from '@/server/pairsight/runs'
 import { db } from '@/server/db/client'
 import {
@@ -146,9 +148,8 @@ function stageInput(workspace: Workspace): StageInput {
 export function workspaceSteps(view: EvaluationView, workspace: Workspace): Step[] {
 	const { base } = view
 	const latestRunId = workspace.runs[0]?.id ?? null
-	// Every run's pages belong to Run, and its results and pairs to Results.
+	// Every run's results and pairs belong to Results.
 	const alsoMatches: Partial<Record<StageKey, string[]>> = {
-		run: workspace.runs.map((run) => `${base}/runs/${run.id}`),
 		results: workspace.runs.flatMap((run) => [
 			`${base}/runs/${run.id}/results`,
 			`${base}/runs/${run.id}/pairs`
@@ -176,7 +177,14 @@ export async function workspacePipeline(
 	const states = new Map(stageStates(input).map((stage) => [stage.key, stage.state]))
 
 	const vendorPairs = workspace.vendorExports.reduce((sum, vendor) => sum + vendor.pairCount, 0)
-	const rulesOn = parseBlockingRules(workspace.evaluation.blockingRules).length
+	const mapped =
+		workspace.dataset == null
+			? new Set<IdentityRole>()
+			: mappedIdentityRoles(parseColumnRoles(workspace.dataset.columnRoles))
+	const rulesOn = runnableRules(
+		parseBlockingRules(workspace.evaluation.blockingRules),
+		mapped
+	).length
 	const details: Record<StageKey, string> = {
 		records:
 			workspace.dataset == null
@@ -190,20 +198,14 @@ export async function workspacePipeline(
 				: t('vendors', { count: workspace.vendorExports.length, pairs: vendorPairs }),
 		rules: t('rules', { count: rulesOn }),
 		plan: latestRun == null ? t('planReady') : t('plan', { pairs: latestRun.pairCount }),
-		run:
-			latestRun == null
-				? t('runNone')
-				: latestRun.status === 'running'
-					? t('runRunning', { number: latestRun.number })
-					: latestRun.status === 'stopped'
-						? t('runStopped', { number: latestRun.number })
-						: t('runDone', { number: latestRun.number, pairs: latestRun.pairCount }),
 		results:
 			latestRun == null
 				? t('resultsNone')
 				: latestRun.status === 'completed'
 					? t('resultsReady', { number: latestRun.number })
-					: t('resultsPending', { number: latestRun.number })
+					: latestRun.status === 'stopped'
+						? t('resultsStopped', { number: latestRun.number })
+						: t('resultsPending', { number: latestRun.number })
 	}
 
 	// What a locked stage is waiting for: records unlock vendors and rules,
@@ -212,7 +214,6 @@ export async function workspacePipeline(
 		vendors: t('lockedNeedsRecords'),
 		rules: t('lockedNeedsRecords'),
 		plan: t('lockedNeedsRecordsAndVendor'),
-		run: t('lockedNeedsPlan'),
 		results: t('lockedNeedsRun')
 	}
 
@@ -221,7 +222,7 @@ export async function workspacePipeline(
 		href: step.href,
 		alsoMatches: step.alsoMatches,
 		state: states.get(step.key) ?? 'locked',
-		isRunning: step.key === 'run' && latestRun?.status === 'running',
+		isRunning: step.key === 'results' && latestRun?.status === 'running',
 		detail: step.state === 'locked' ? t('locked') : details[step.key],
 		reason: step.state === 'locked' ? lockedReasons[step.key] : undefined
 	}))

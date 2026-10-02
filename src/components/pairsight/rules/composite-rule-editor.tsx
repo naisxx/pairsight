@@ -11,7 +11,7 @@ import { COUNTRY_CODE_PATTERN } from '@/lib/pairsight/input-limits'
 import { previewRuleAction } from '@/server/actions/pairsight/rules'
 import type { RuleStats } from '@/server/pairsight/blocking'
 import type { BlockingField } from '@/server/pairsight/normalize'
-import type { Rule, RuleLimits } from './rule-fields'
+import type { Rule, RuleLimits } from '@/lib/pairsight/rule-fields'
 import { SampleKey } from './rule-stats'
 
 const ICON_SIZE = 14

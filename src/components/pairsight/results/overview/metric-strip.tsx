@@ -72,7 +72,7 @@ export function MetricStrip({
 					)}
 				</div>
 			</header>
-			<div className="divide-border grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+			<div className="divide-border grid grid-cols-1 divide-y @2xl:grid-cols-3 @2xl:divide-x @2xl:divide-y-0">
 				{KEYS.map((key) => {
 					const value = metrics[key]
 					return (

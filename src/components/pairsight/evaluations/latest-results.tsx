@@ -51,7 +51,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 	return (
 		<section
 			aria-labelledby="latest-title"
-			className="border-border bg-surface h-full overflow-hidden rounded-md border"
+			className="border-border bg-surface flex h-full flex-col overflow-hidden rounded-md border"
 		>
 			<div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
 				<div className="min-w-0">
@@ -79,7 +79,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 				<Chip>{t('latestChip')}</Chip>
 			</div>
 
-			<div className="relative mt-4 overflow-x-auto px-5">
+			<div className="scroll-fade-x relative my-4 overflow-x-auto px-5">
 				<table className="type-ui w-full min-w-[560px]">
 					<caption className="sr-only">{t('latestCaption')}</caption>
 					<thead>
@@ -144,7 +144,8 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 				</table>
 			</div>
 
-			<div className="border-border bg-surface-muted mt-4 flex flex-wrap items-center gap-3 border-t px-5 py-3">
+			{/* Pinned to the bottom when the card is stretched to its neighbour's height. */}
+			<div className="border-border bg-surface-muted mt-auto flex flex-wrap items-center gap-3 border-t px-5 py-3">
 				<p className="type-ui text-text-muted">
 					{t.rich('latestSummary', { count: disagreements, n: mono })}
 					{first != null && first.counts.incomplete > 0 && (

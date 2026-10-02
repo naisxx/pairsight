@@ -13,7 +13,7 @@ import type { IdentityRole } from '@/server/pairsight/fields'
 import type { BlockingField } from '@/server/pairsight/normalize'
 import { CompositeRuleEditor } from './composite-rule-editor'
 import { RULE_COPY } from './rule-copy'
-import { missingField, type Rule, type RuleLimits } from './rule-fields'
+import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
 import { RuleStatColumns, SampleKey } from './rule-stats'
 
 const ICON_SIZE = 15
@@ -82,7 +82,7 @@ export function CandidateRules({
 						return (
 							<li
 								key={rule.id}
-								className="border-border flex flex-col gap-3 border-b py-3 md:flex-row md:items-center"
+								className="border-border flex flex-col gap-3 border-b py-3 @3xl:flex-row @3xl:items-center"
 							>
 								<div className="flex min-w-0 flex-1 items-start gap-3">
 									<div className="pt-0.5">
@@ -119,7 +119,7 @@ export function CandidateRules({
 										)}
 									</div>
 								</div>
-								<div className="md:w-[220px]">
+								<div className="@3xl:w-[220px]">
 									<RuleStatColumns
 										stat={missing == null ? stat : undefined}
 										bucketWarningSize={limits.bucketWarningSize}
@@ -168,7 +168,7 @@ export function CandidateRules({
 						return (
 							<li
 								key={rule.id}
-								className="border-border flex flex-col gap-3 border-b py-3 md:flex-row md:items-center"
+								className="border-border flex flex-col gap-3 border-b py-3 @3xl:flex-row @3xl:items-center"
 							>
 								<div className="min-w-0 flex-1">
 									<p className="type-ui flex flex-wrap items-center gap-1.5 font-medium">
@@ -187,7 +187,7 @@ export function CandidateRules({
 									{stat != null && <RuleWarnings stat={stat} limits={limits} />}
 								</div>
 								<div className="flex items-center gap-3">
-									<div className="md:w-[220px]">
+									<div className="@3xl:w-[220px]">
 										<RuleStatColumns stat={stat} bucketWarningSize={limits.bucketWarningSize} />
 									</div>
 									<Tip content={t('editTip')}>

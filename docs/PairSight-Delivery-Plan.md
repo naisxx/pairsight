@@ -55,7 +55,8 @@ the start, without duplicating any Jev work.
 
 - **Starting a run** freezes a snapshot and creates the run's pairs and any
   missing pending assessments.
-- **The run page** repeatedly calls `advanceRun`, which:
+- **The Runs centre** (in the app shell, so on any page) repeatedly calls
+  `advanceRun` for each run still going, which:
   - claims a batch of 10 pending assessments, plus any "running" ones older
     than 60 seconds (reclaimed after a crash or hot reload)
   - calls Jev with concurrency 4 and a 20-second timeout
@@ -120,9 +121,10 @@ migration):
   `criteria.true` and `criteria.false`. The `state` holds only the two
   records' fields and the country.
 - **Threshold:**
-  - A pair is a match when `noul ≥ threshold`. The threshold is editable
-    on the results page.
-  - The default comes from the M1 test (0.5 until then).
+  - A pair is a match when `noul ≥ threshold`. The threshold is set in
+    Rules (presets 0.35 / 0.50 / 0.70, or custom), and each run keeps its
+    own. Results preview other values but never change a run's.
+  - The default, 0.5, was confirmed by the M1 test.
   - A band around the threshold raises a "low confidence" filter, not a
     category.
 - **Sign-in:** email and password against local Supabase, through server
@@ -140,12 +142,12 @@ migration):
 | `/` landing (minimal)         | The problem, three steps, **Explore the sandbox**, **Start evaluation**                                                                                                                             | —                                                                              |
 | `/sign-in`, `/sign-up`        | Email and password                                                                                                                                                                                  | Invalid credentials, redirect on success                                       |
 | `/evaluations`                | Saved evaluations                                                                                                                                                                                   | Empty state with create and sandbox actions                                    |
-| Workspace `/evaluations/[id]` | Stepper: Records → Vendors → Rules → Plan → Run → Results                                                                                                                                           | Each step: complete or needs attention                                         |
+| Workspace `/evaluations/[id]` | Stepper: Records → Vendors → Rules → Plan → Results (runs: the Runs centre)                                                                                                                         | Each step: complete or needs attention                                         |
 | Records                       | Upload, preview of the first 10 rows, reference column, role per column                                                                                                                             | Parsing; file errors; missing or duplicate reference table; success            |
 | Vendors                       | Name, file, A/B columns, completeness checkbox, vendor list                                                                                                                                         | Unknown-reference table; self-pair and duplicate counts                        |
 | Rules                         | Identity text areas, country, fields sent to Jev, rules with live counts                                                                                                                            | Warning above 50 records per bucket; no-rules state                            |
 | Plan                          | Pair counts by source, pairs outside blocking, reduction, reused assessments, limit check, **Start evaluation**                                                                                     | Over-limit block with its cause; open validation errors block starting         |
-| Run                           | Progress and counts; note that the run pauses if the page is closed                                                                                                                                 | Running, paused/resume, config error, failures with **Retry failed**, complete |
+| Runs centre (top bar)         | Every run as a card: progress and counts, details, Retry failed, Resume                                                                                                                             | Running, paused/resume, config error, failures with **Retry failed**, complete |
 | Results                       | Vendor tabs, four category counts plus an incomplete count, threshold control, "agreement, not correctness" wording, filters (category, outside blocking, low confidence, incomplete), pairs table  | Empty filter result; incomplete-run warning                                    |
 | Pair inspection               | Records side by side with differences highlighted, each vendor's decision, Jev score/model/time, decision at the threshold, rules that produced the pair (or "added by vendor")                     | Pending and failed shown explicitly                                            |
 | `/sandbox`                    | Every screen above (dashboard to pair inspection) on one prepared evaluation, read-only, no login; banner "Sandbox · fictional data · read-only. Judgments recorded from Jev \<model\> on \<date\>" | —                                                                              |

@@ -88,7 +88,7 @@ section and its Stack/structure references too.
 _this skill's own run_. By the time you reach this step you're already
 executing it — strip items step 0–3 already cover (running this skill,
 the rename) and keep only what's still forward-looking after setup
-finishes: deleting `example.prisma`/`smoke.spec.ts` once real code exists,
+finishes: renaming `example.prisma` and replacing `smoke.spec.ts` once real code exists,
 the CI/CD secrets setup, and any open decisions (state management, Prisma
 major, i18n/Tailwind) that are still genuinely undecided for this project.
 
@@ -178,8 +178,8 @@ Regardless of internal/external, tell the user they still need to do these outsi
 - If the project tracks AI spend, tell whoever runs MOAD that this project's
   Supabase database has an `ai_usage` table to read. That is the only step,
   and no skill can do it.
-- Delete `prisma/schema/example.prisma` once real models exist.
-- Delete `e2e/smoke.spec.ts` once real e2e coverage exists (harmless to keep otherwise).
+- Rename `prisma/schema/example.prisma` once real models exist — don't delete it: it holds the real `User` model. A rename changes no schema, so it needs no migration (`pnpm prisma:migrate:generate:check` confirms).
+- Replace `e2e/smoke.spec.ts` once real e2e coverage exists, keeping its `/en` redirect check (harmless to keep otherwise).
 - Revisit the open decisions in the template's design guide (Prisma v6 vs v7, monorepo vs. flat, second AI reviewer, etc.) if this project needs to diverge from the defaults.
 
 ## Don't

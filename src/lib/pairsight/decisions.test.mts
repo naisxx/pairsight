@@ -1,6 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { categorize, isLowConfidence } from './decisions'
+import {
+	categorize,
+	DEFAULT_THRESHOLD,
+	isLowConfidence,
+	MAX_THRESHOLD,
+	MIN_THRESHOLD,
+	THRESHOLD_PRESETS,
+	thresholdPreset
+} from './decisions'
 
 test('the threshold is inclusive and all four categories are reachable', () => {
 	const threshold = 0.6
@@ -27,4 +35,15 @@ test('pending, running and failed pairs are never categorized — never a nonmat
 test('low confidence is a band around the threshold', () => {
 	assert.equal(isLowConfidence({ score: 0.55, threshold: 0.5 }), true)
 	assert.equal(isLowConfidence({ score: 0.9, threshold: 0.5 }), false)
+})
+
+test('a threshold is named by its preset, or is custom', () => {
+	assert.equal(thresholdPreset(0.35), 'lenient')
+	assert.equal(thresholdPreset(DEFAULT_THRESHOLD), 'balanced')
+	assert.equal(thresholdPreset(0.7), 'strict')
+	assert.equal(thresholdPreset(0.62), null)
+	// Every preset sits inside the bounds a custom value is held to.
+	for (const value of Object.values(THRESHOLD_PRESETS)) {
+		assert.ok(value >= MIN_THRESHOLD && value <= MAX_THRESHOLD)
+	}
 })

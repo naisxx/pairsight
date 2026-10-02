@@ -32,7 +32,7 @@ export async function ResultsScreen({
 	workspace: LoadedWorkspace['workspace']
 	rawFilters: Record<string, string | string[] | undefined>
 }) {
-	const { scope, base } = loaded
+	const { scope, base, view } = loaded
 	const runId = loaded.run.id
 	const [t, tRules, tRoles, format] = await Promise.all([
 		getTranslations('Results'),
@@ -111,9 +111,8 @@ export async function ResultsScreen({
 						<VendorSegmented vendors={results.vendors} vendorId={vendorId} hrefs={vendorHrefs} />
 					)}
 					<ThresholdControl
-						runId={run.id}
 						threshold={run.threshold}
-						initialThreshold={run.initialThreshold}
+						rulesHref={`${view.base}/rules`}
 						vendorName={vendorName}
 						pairs={results.metricPairs}
 					/>
@@ -188,7 +187,7 @@ export async function ResultsScreen({
 								pageSize={results.pageSize}
 								total={results.matching}
 							/>
-							<p className="text-text-muted mt-3 flex flex-wrap items-center gap-1 text-xs">
+							<p className="text-text-muted mt-3 flex flex-wrap items-center gap-1 text-xs [@media(pointer:coarse)]:hidden">
 								{t.rich('keyboardHint', { key: (chunks) => <Kbd>{chunks}</Kbd> })}
 							</p>
 						</div>

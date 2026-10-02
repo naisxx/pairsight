@@ -62,7 +62,7 @@ export function WorkloadPanel({
 							<span className="w-8 font-mono text-lg font-medium">{row.value}</span>
 							<span className="min-w-0 flex-1">
 								<span className="text-text type-ui block font-medium">{row.label}</span>
-								<span className="text-text-muted block truncate text-xs">{row.detail}</span>
+								<span className="text-text-muted block text-xs">{row.detail}</span>
 							</span>
 							<ArrowRightIcon
 								size={14}

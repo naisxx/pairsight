@@ -1,7 +1,6 @@
 import 'server-only'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
-import { DEFAULT_THRESHOLD } from './decisions'
 import { pairKey } from './pairs'
 import { computePlan, type PlanBlocker } from './plan'
 import { ownerScope } from './scope'
@@ -41,9 +40,10 @@ export async function startRun({
 			const last = await tx.run.findFirst({
 				where: { evaluationId },
 				orderBy: { number: 'desc' },
-				select: { number: true, threshold: true }
+				select: { number: true }
 			})
-			const threshold = last?.threshold ?? evaluation.threshold ?? DEFAULT_THRESHOLD
+			// Rules sets it; the run keeps it, so its results never shift later.
+			const threshold = evaluation.threshold
 			const run = await tx.run.create({
 				data: {
 					evaluationId,
@@ -109,6 +109,17 @@ export async function startRun({
 							]
 				})
 			})
+			// Nothing left to judge (a re-run with only a new threshold reuses every
+			// score): the run is complete from the start, not "assessing" for a beat.
+			const unjudged = await tx.assessment.count({
+				where: { runPairs: { some: { runId: run.id } }, status: { not: 'succeeded' } }
+			})
+			if (unjudged === 0) {
+				await tx.run.update({
+					where: { id: run.id },
+					data: { status: 'completed', completedAt: new Date() }
+				})
+			}
 			await tx.evaluation.update({ where: { id: evaluationId }, data: { updatedAt: new Date() } })
 			return run
 		},

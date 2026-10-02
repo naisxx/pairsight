@@ -6,6 +6,8 @@ export type ToastInput = {
 	title?: string
 	description?: string
 	variant?: 'default' | 'destructive'
+	// One follow-up, as a button on the toast ("View results").
+	action?: { label: string; onClick: () => void }
 }
 
 type ToastItem = ToastInput & { id: string }

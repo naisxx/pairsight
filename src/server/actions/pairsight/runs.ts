@@ -4,17 +4,33 @@ import { z } from 'zod'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import { advanceRun, retryPair } from '@/server/pairsight/run-engine'
-import { resumeRun, retryFailed, updateRunThreshold } from '@/server/pairsight/runs'
+import { resumeRun, retryFailed } from '@/server/pairsight/runs'
 import { startRun } from '@/server/pairsight/start-run'
-import { thresholdSchema } from '@/server/pairsight/schemas'
-import { goTo, idSchema, revalidateEvaluationPages } from './shared'
+import { ownerView, SANDBOX_VIEW } from '@/lib/pairsight/evaluation-view'
+import { listRunCards } from '@/server/pairsight/run-centre'
+import { ownerScope, SANDBOX_SCOPE } from '@/server/pairsight/scope'
+import { idSchema, revalidateEvaluationPages } from './shared'
 
+// Starts a run and stays on the page: the Runs centre opens on it, drives it
+// and takes you to its results when it's done.
 export const startRunAction = validatedAction({
 	input: z.object({ evaluationId: idSchema }),
 	handler: async ({ evaluationId }) => {
 		const user = await requireUser()
 		const run = await startRun({ ownerId: user.id, evaluationId })
-		return goTo(`/evaluations/${evaluationId}/runs/${run.id}`)
+		// The shell (pipeline, status, breadcrumb) now has a run to show.
+		revalidateEvaluationPages()
+		return { runId: run.id }
+	}
+})
+
+// The Runs centre's cards: the signed-in viewer's runs, or the sandbox's.
+export const listRunsAction = validatedAction({
+	input: z.object({ sandbox: z.boolean() }),
+	handler: async ({ sandbox }) => {
+		if (sandbox) return listRunCards({ scope: SANDBOX_SCOPE, viewOf: () => SANDBOX_VIEW })
+		const user = await requireUser()
+		return listRunCards({ scope: ownerScope(user.id), viewOf: ownerView })
 	}
 })
 
@@ -51,15 +67,5 @@ export const resumeRunAction = validatedAction({
 		const user = await requireUser()
 		await resumeRun({ ownerId: user.id, runId })
 		return { resumed: true }
-	}
-})
-
-export const updateThresholdAction = validatedAction({
-	input: z.object({ runId: idSchema, threshold: thresholdSchema }),
-	handler: async ({ runId, threshold }) => {
-		const user = await requireUser()
-		await updateRunThreshold({ ownerId: user.id, runId, threshold })
-		revalidateEvaluationPages()
-		return { threshold }
 	}
 })

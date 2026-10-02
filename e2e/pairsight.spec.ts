@@ -94,16 +94,27 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/plan')
 	}
 
+	// Start opens the Runs centre on the new run. When it's done, the centre
+	// moves it to Completed and takes you to its results; Escape closes it.
+	async function startRun(page: Page) {
+		await page.getByRole('button', { name: 'Start evaluation' }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		await expect(runs).toBeVisible()
+		await page.waitForURL(/\/runs\/[0-9a-f-]+\/results/, { timeout: 45_000 })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		// Finished: complete, or with the pairs Jev couldn't judge called out.
+		await expect(
+			runs.getByText(/^(Complete|Finished with \d+ incomplete pairs?) · Started/).first()
+		).toBeVisible()
+		await page.keyboard.press('Escape')
+		await expect(runs).toHaveCount(0)
+	}
+
 	async function runEvaluation(page: Page) {
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
-		await expect(page.getByText(/^Elapsed \d+:\d{2}$/)).toBeVisible()
-		await page.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL('**/results')
+		await startRun(page)
 	}
 
 	// The Overview's category tiles; each opens its pairs in the detailed view.
@@ -129,8 +140,7 @@ test.describe('PairSight vertical slice', () => {
 		await expectVendorPairs(page, 4)
 		await page.getByRole('link', { name: 'Continue to rules' }).click()
 		await reviewPlan(page)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
+		await startRun(page)
 
 		await page.goto('/evaluations')
 		await createEvaluation(page, 'Still in setup')
@@ -203,11 +213,10 @@ test.describe('PairSight vertical slice', () => {
 		await reviewPlan(page)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
 		await expect(plan).toContainText(/Unique pairs to assess\s*8/)
-		await expect(plan).toContainText(/Added so every vendor match is assessed\s*\+2/)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
-		await page.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL('**/results')
+		// All 4 vendor pairs are assessed; 2 of them the rules already found.
+		await expect(plan).toContainText(/Pairs your vendors matched\s*\+4/)
+		await expect(plan).toContainText('2 vendor pairs your rules already found')
+		await startRun(page)
 
 		for (const name of ['PairSight only', 'Vendor only', 'Both matched', 'Neither matched']) {
 			await expect(tile(page, name)).toContainText('2')
@@ -272,7 +281,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(matching(page)).toHaveText('8 pairs')
 	})
 
-	test('changing the threshold re-decides from saved scores; a new run reuses every assessment', async ({
+	test('the threshold is set in Rules; a new run at it reuses every saved score', async ({
 		page
 	}) => {
 		await signUp(page)
@@ -283,46 +292,58 @@ test.describe('PairSight vertical slice', () => {
 		const callsBefore = await jevCalls(page, marker)
 		expect(callsBefore).toBeGreaterThan(0)
 
-		// The popover previews the change before anything is saved.
-		await page.getByRole('button', { name: /^Decision threshold/ }).click()
+		// Results preview another threshold, but a run keeps its own: no Apply.
+		await page.getByRole('button', { name: /^Decision threshold 0\.50/ }).click()
 		const thresholdValue = page.getByLabel('Threshold value')
 		await thresholdValue.fill('0.40')
 		await thresholdValue.press('Enter')
-		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*2\s*becomes\s*3/)
-		await page.getByRole('button', { name: 'Apply' }).click()
-		// The borderline Bob/Robert Chen pair (stub score 0.45) crosses the new threshold.
+		const popover = page.getByRole('dialog')
+		await expect(popover).toContainText(/PairSight only\s*2\s*becomes\s*3/)
+		await expect(popover.getByRole('button', { name: 'Apply' })).toHaveCount(0)
+		await popover.getByRole('button', { name: 'Reset to 0.50' }).click()
+		await expect(thresholdValue).toHaveValue('0.50')
+		await popover.getByRole('link', { name: 'Change in Rules' }).click()
+		await page.waitForURL('**/rules')
+
+		// Rules: a custom value, then a preset; either saves itself.
+		const threshold = page.getByRole('radiogroup', { name: 'Match threshold' })
+		await expect(threshold.getByRole('radio', { name: /^Balanced/ })).toBeChecked()
+		await threshold.getByRole('radio', { name: 'Custom' }).click()
+		const custom = page.getByLabel('Threshold', { exact: true })
+		await custom.fill('0.62')
+		await custom.press('Enter')
+		await expect(
+			page.getByText('Pairs Jev scores at or above 0.62 count as a match.')
+		).toBeVisible()
+		await threshold.getByRole('radio', { name: /^Lenient/ }).click()
+		await expect(threshold.getByRole('radio', { name: /^Lenient/ })).toBeChecked()
+
+		// The plan shows it, and nothing needs Jev again.
+		await reviewPlan(page)
+		const side = page.getByRole('region', { name: 'Match threshold' })
+		await expect(side).toContainText(/0\.35\s*Lenient/)
+		const plan = page.getByRole('region', { name: 'From records to pairs' })
+		await expect(plan).toContainText(/Reused assessments\s*8/)
+		await expect(plan).toContainText(/New Jev assessments\s*0\s*About \$0\.00 at a stand-in rate/)
+		// Every score was reused, so it's complete at once: straight to its results.
+		await startRun(page)
+
+		// The borderline Bob/Robert Chen pair (stub score 0.45) is a match at 0.35,
+		// decided from the saved scores: Jev wasn't asked again.
+		await expect(page.getByRole('button', { name: /^Decision threshold 0\.35/ })).toBeVisible()
 		await expect(tile(page, 'PairSight only')).toContainText('3')
 		await expect(tile(page, 'Neither matched')).toContainText('1')
-		// Re-decided from the saved scores: Jev wasn't asked again.
 		expect(await jevCalls(page, marker)).toBe(callsBefore)
-		// The run remembers what it started with, and can preview going back.
-		await expect(page.locator('#main')).toContainText('Run started at 0.50')
-		await page.getByRole('button', { name: /^Decision threshold/ }).click()
-		await page.getByRole('button', { name: 'Reset to 0.50' }).click()
-		await expect(page.getByLabel('Threshold value')).toHaveValue('0.50')
-		await expect(page.getByRole('dialog')).toContainText(/PairSight only\s*3\s*becomes\s*2/)
-		await page.keyboard.press('Escape')
 
-		const evaluationPath = new URL(page.url()).pathname.split('/runs/')[0]
-		await page.goto(`${evaluationPath}/plan`)
-		const plan = page.getByRole('region', { name: 'From records to pairs' })
-		await expect(plan).toContainText(/Saved from an earlier run — not assessed again\s*8/)
-		await expect(plan).toContainText(/New Jev assessmentsAbout \$0\.00 at a stand-in rate[^0-9]*0/)
-		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await expect(page.getByRole('heading', { name: 'Run 2' })).toBeVisible()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
-
-		// Results say which run they are, and switch to an earlier one.
-		await page.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL('**/results')
+		// Results say which run they are; the first still decides at its own 0.50.
 		const main = page.locator('#main')
 		await expect(main.getByText('Run complete', { exact: true })).toBeVisible()
 		await expect(main).toContainText('Run 2 ·')
 		await page.getByRole('button', { name: 'Choose a run' }).click()
 		await page.getByRole('menuitem', { name: /^Run 1 ·/ }).click()
 		await expect(main).toContainText('Run 1 ·')
-		await expect(page.getByRole('button', { name: /^Decision threshold 0\.40/ })).toBeVisible()
-		await expect(main).toContainText('Run started at 0.50')
+		await expect(page.getByRole('button', { name: /^Decision threshold 0\.50/ })).toBeVisible()
+		await expect(tile(page, 'PairSight only')).toContainText('2')
 	})
 
 	test('a failed pair stays incomplete — never a nonmatch — and a retry can judge it', async ({
@@ -381,16 +402,19 @@ test.describe('PairSight vertical slice', () => {
 		await expect(tile(page, 'Incomplete')).toContainText('1')
 		await expect(tile(page, 'Both matched')).toContainText('2')
 
-		// Retry failed on the Run page asks Jev again about the pair that's
-		// still failed; Failcase fails again and stays incomplete.
-		await page.getByRole('list', { name: 'Pipeline' }).getByRole('link', { name: /^Run,/ }).click()
-		const failures = page.getByRole('heading', { name: 'Why pairs failed' }).locator('..')
-		await expect(failures).toContainText('Request rejected1 pair')
+		// Retry failed from the run's card in the Runs centre asks Jev again about
+		// the pair that's still failed; Failcase fails again and stays incomplete.
+		await page.getByRole('button', { name: 'Runs', exact: true }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		const card = runs.getByRole('article', { name: 'Run 1 · Failures' })
+		await card.getByRole('button', { name: 'Details' }).click()
+		await expect(card).toContainText('Request rejected · 1')
 		const callsBefore = await jevCalls(page, marker)
-		await page.getByRole('button', { name: 'Retry 1 failed' }).click()
+		await card.getByRole('button', { name: 'Retry 1 failed' }).click()
 		await expect.poll(() => jevCalls(page, marker), { timeout: 30_000 }).toBe(callsBefore + 1)
-		await expect(page.getByText('1 assessment is incomplete.')).toBeVisible({ timeout: 30_000 })
-		await expect(failures).toContainText('Request rejected1 pair')
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked({ timeout: 30_000 })
+		await expect(card).toContainText('Finished with 1 incomplete pair')
 	})
 
 	test('a rejected API key stops the run with the fix, and it resumes once the key works', async ({
@@ -407,18 +431,25 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start evaluation' }).click()
-		await page.waitForURL(/\/runs\/[0-9a-f-]+$/)
-		const stopped = page.getByRole('alert').filter({ hasText: 'The run stopped' })
-		await expect(stopped).toContainText('TypeSafe rejected the API key', { timeout: 30_000 })
+		// A stopped run is in Completed, marked as failed, with the reason and the fix.
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		const card = runs.getByRole('article', { name: 'Run 1 · Key problem' })
+		await expect(card.getByRole('alert')).toContainText('TypeSafe rejected the API key', {
+			timeout: 30_000
+		})
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		await expect(card).toContainText('Stopped · Started')
 		// Stopped, the one way forward is Resume; results wait for a finished run.
-		await expect(page.getByRole('link', { name: 'View results' })).toHaveCount(0)
+		await expect(card.getByRole('link', { name: 'View results' })).toHaveCount(0)
+		await expect(page).toHaveURL(/\/plan$/)
 
 		// The key is fixed; resuming judges every pair.
 		await page.request.post(`${JEV_STUB}/accept?marker=${marker}`)
-		await page.getByRole('button', { name: 'Resume' }).click()
-		await expect(page.getByText(/Run complete/)).toBeVisible({ timeout: 45_000 })
-		await expect(stopped).toHaveCount(0)
-		await expect(page.getByText('8 / 8', { exact: true })).toBeVisible()
+		await card.getByRole('button', { name: 'Resume' }).click()
+		await expect(card).toContainText(/^Run 1 · Key problemComplete · Started/, { timeout: 45_000 })
+		await expect(card.getByRole('alert')).toHaveCount(0)
+		await expect(card).toContainText('8 pairs')
+		await expect(card.getByRole('link', { name: 'View results' })).toBeVisible()
 	})
 
 	test('invalid references are blocked with row numbers', async ({ page }) => {
@@ -607,10 +638,10 @@ test.describe('PairSight vertical slice', () => {
 		// Vendor B starts as a draft that survives a reload until it's finished.
 		await page.getByRole('button', { name: 'Add vendor' }).click()
 		const vendorList = page.getByRole('navigation', { name: 'Vendors' })
-		await expect(vendorList).toContainText('Needs: upload the export')
+		await expect(vendorList).toContainText('Needs: upload a valid export')
 		await page.reload()
-		await expect(vendorList).toContainText('Needs: upload the export')
-		await expect(page.getByText('Finish Vendor B: upload the export')).toBeVisible()
+		await expect(vendorList).toContainText('Needs: upload a valid export')
+		await expect(page.getByText('Finish Vendor B: upload a valid export')).toBeVisible()
 
 		// A group export: one record per row, read without choosing any columns.
 		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/demo-vendor-b-groups.csv`)
@@ -631,6 +662,33 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('region', { name: 'Where vendors agree' })).toBeVisible()
 	})
 
+	test('three vendors are compared side by side, and that’s the limit', async ({ page }) => {
+		await signUp(page)
+		await createEvaluation(page, 'Three vendors')
+		await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await addVendor(page, 'demo-vendor-b.csv')
+		await addVendor(page, 'demo-vendor-c.csv')
+		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText(
+			/Vendor C\s*Pair format · ready/
+		)
+		// A fourth can't be added: the button gives way to the limit.
+		await expect(page.getByRole('button', { name: 'Add vendor' })).toHaveCount(0)
+		await expect(page.getByText('You can compare up to 3 vendors.')).toBeVisible()
+		await runEvaluation(page)
+
+		await expect(page.getByRole('radio', { name: 'Vendor C' })).toBeVisible()
+		const comparison = page.getByRole('region', { name: 'Vendor comparison' })
+		await comparison.getByRole('button', { name: 'Show as table' }).click()
+		await expect(comparison.getByRole('rowheader')).toHaveText(['Vendor A', 'Vendor B', 'Vendor C'])
+		await expect(page.getByRole('region', { name: 'Where vendors agree' })).toBeVisible()
+
+		// Each vendor's own results: Vendor C's matches, judged against Jev.
+		await page.getByRole('radio', { name: 'Vendor C' }).click()
+		await expect(page).toHaveURL(/vendor=/)
+		await expect(tile(page, 'Both matched')).toBeVisible()
+	})
+
 	test('locked steps can’t be opened by URL: they land where the evaluation is up to', async ({
 		page
 	}) => {
@@ -640,6 +698,7 @@ test.describe('PairSight vertical slice', () => {
 		await createEvaluation(page, 'Locked steps')
 		const records = page.url()
 		for (const step of ['vendors', 'rules', 'plan', 'run', 'results']) {
+			// (`run` is the old Run step's address; it lands in the same place.)
 			await page.goto(records.replace(/\/records$/, `/${step}`))
 			await page.waitForURL(records)
 			await expect(page.getByText('Drop your customer CSV here')).toBeVisible()
@@ -663,6 +722,25 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL((url) => url.pathname === '/evaluations')
 	})
 
+	test('signing out ends the session: the app asks you to sign in again', async ({ page }) => {
+		await signUp(page)
+		await page.getByRole('button', { name: 'Account: Test Person' }).click()
+		await page.getByRole('menuitem', { name: 'Sign out' }).click()
+		await page.waitForURL((url) => !url.pathname.startsWith('/evaluations'))
+		await page.goto('/evaluations')
+		await page.waitForURL('**/sign-in**')
+		await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+	})
+
+	test('an evaluation that doesn’t exist, or isn’t a valid id, is a 404', async ({ page }) => {
+		await signUp(page)
+		for (const id of ['00000000-0000-4000-8000-000000000000', 'not-an-id']) {
+			const response = await page.goto(`/evaluations/${id}/records`)
+			expect(response?.status()).toBe(404)
+			await expect(page.getByText('Page not found')).toBeVisible()
+		}
+	})
+
 	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Shell')
@@ -681,7 +759,7 @@ test.describe('PairSight vertical slice', () => {
 		).toBeVisible()
 		// Locked stages say what they're waiting for.
 		await expect(
-			pipeline.getByRole('link', { name: /^Run, locked\. Start a run from the plan first/ })
+			pipeline.getByRole('link', { name: /^Results, locked\. Start a run from the Plan first/ })
 		).toBeVisible()
 
 		const shell = page.locator('.app-shell')

@@ -51,7 +51,7 @@ export function IdentitySection({
 				</h2>
 				<p className="type-ui text-text-muted mt-1">{t('identityDescription')}</p>
 			</header>
-			<div className="grid gap-4 px-5 pt-2 pb-5 md:grid-cols-2">
+			<div className="grid gap-4 px-5 pt-2 pb-5 @3xl:grid-cols-2">
 				<div>
 					<label htmlFor="identity-same" className="type-ui font-medium">
 						{t('identitySame')}
@@ -104,7 +104,7 @@ export function IdentitySection({
 				<fieldset>
 					<legend className="type-ui font-medium">{t('jevFieldsLegend')}</legend>
 					<p className="text-text-muted text-xs">{t('jevFieldsHint')}</p>
-					<div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 sm:grid-cols-3">
+					<div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 @2xl:grid-cols-3">
 						{mappedRoles.map((role) => (
 							<label key={role} className="type-ui flex items-center gap-2">
 								<Checkbox

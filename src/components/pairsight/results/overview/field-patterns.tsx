@@ -75,7 +75,7 @@ export function FieldPatternsPanel({
 			className={className}
 			bodyClassName="p-0 pt-2"
 		>
-			<div className="relative overflow-x-auto">
+			<div className="scroll-fade-x relative overflow-x-auto">
 				<table className="type-ui w-full min-w-[520px] border-separate border-spacing-0">
 					<caption className="sr-only">{t('patternsCaption')}</caption>
 					<thead>

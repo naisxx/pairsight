@@ -39,7 +39,7 @@ export function RunSkeleton() {
 					<Skeleton className="h-4 w-full" />
 					<Skeleton className="h-2 w-full" />
 				</div>
-				<div className="border-border mt-4 grid grid-cols-2 border-t sm:grid-cols-4">
+				<div className="border-border mt-4 grid grid-cols-2 border-t @2xl:grid-cols-4">
 					{Array.from({ length: 4 }, (_, index) => (
 						<div key={index} className="flex flex-col gap-2 px-5 py-3">
 							<Skeleton className="h-3 w-16" />
@@ -56,7 +56,7 @@ export function ResultsSkeleton() {
 	return (
 		<Loading>
 			<HeaderSkeleton />
-			<div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-5">
+			<div className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @6xl:grid-cols-5">
 				{Array.from({ length: TILE_COUNT }, (_, index) => (
 					<Skeleton key={index} className="h-24 rounded-lg" />
 				))}
@@ -86,7 +86,7 @@ export function PairSkeleton() {
 		<Loading>
 			<Skeleton className="mb-4 h-8 w-64" />
 			<Skeleton className="mb-6 h-16 w-full rounded-lg" />
-			<div className="grid grid-cols-[minmax(0,1fr)] gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
+			<div className="grid grid-cols-[minmax(0,1fr)] gap-6 @6xl:grid-cols-[minmax(0,1fr)_22rem]">
 				<div className="border-border bg-surface flex flex-col rounded-lg border">
 					{Array.from({ length: FIELD_ROWS }, (_, index) => (
 						<div key={index} className="border-border flex h-11 items-center gap-6 border-b px-4">

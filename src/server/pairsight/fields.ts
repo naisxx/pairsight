@@ -67,6 +67,11 @@ export function mapRecordFields({
 	return fields
 }
 
+// The identity fields a mapping provides.
+export function mappedIdentityRoles(columnRoles: Record<string, FieldRole>): Set<IdentityRole> {
+	return new Set(Object.values(columnRoles).filter(isIdentityRole))
+}
+
 // Roles mapped to more than one column — ambiguous, so the mapping is invalid.
 export function duplicateRoles(columnRoles: Record<string, FieldRole>): IdentityRole[] {
 	const roles = Object.values(columnRoles).filter(isIdentityRole)

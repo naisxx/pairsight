@@ -78,7 +78,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 				<h2 id="all-title" className="text-[15px] font-semibold">
 					{t('allTitle')}
 				</h2>
-				<div className="relative w-full sm:w-[300px]">
+				<div className="relative w-full @2xl:w-[300px]">
 					<SearchIcon
 						size={ICON_SIZE}
 						className="text-text-muted pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
@@ -103,7 +103,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 					</Button>
 				</div>
 			) : (
-				<div className="border-border bg-surface relative mt-3 overflow-x-auto rounded-md border">
+				<div className="border-border bg-surface scroll-fade-x relative mt-3 overflow-x-auto rounded-md border">
 					<table className="type-ui w-full min-w-[900px] border-separate border-spacing-0">
 						<caption className="sr-only">{t('caption')}</caption>
 						<thead className="bg-surface-muted">

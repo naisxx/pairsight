@@ -256,7 +256,7 @@ export function ThresholdSensitivity({
 					</table>
 				</div>
 			)}
-			<dl className="border-border mt-3 grid gap-x-4 gap-y-2 border-t pt-3 text-xs sm:grid-cols-3">
+			<dl className="border-border mt-3 grid gap-x-4 gap-y-2 border-t pt-3 text-xs @2xl:grid-cols-3">
 				{lower != null && (
 					<div>
 						<dt className="text-text-muted">

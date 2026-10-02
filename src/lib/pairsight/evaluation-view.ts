@@ -32,3 +32,7 @@ export const SANDBOX_VIEW: EvaluationView = {
 export function runBase(view: EvaluationView, runId: string): string {
 	return `${view.base}/runs/${runId}`
 }
+
+// ?runs=<run id> opens the Runs centre on that run; a run's old page sends
+// you to its results with it.
+export const RUNS_PARAM = 'runs'

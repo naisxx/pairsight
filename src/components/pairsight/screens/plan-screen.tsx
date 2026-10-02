@@ -1,5 +1,7 @@
 import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
+import { RUNS_PARAM } from '@/lib/pairsight/evaluation-view'
+import { Button } from '@/components/ui/button'
 import { PlanBlockers } from '@/components/pairsight/plan/plan-blockers'
 import { PlanLedger } from '@/components/pairsight/plan/plan-ledger'
 import { PlanSide } from '@/components/pairsight/plan/plan-side'
@@ -12,6 +14,9 @@ import { computePlan } from '@/server/pairsight/plan'
 import { listVendors } from '@/server/pairsight/vendor-exports'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 import { ReadOnlyGate } from '@/components/pairsight/read-only'
+import { runnableRules } from '@/lib/pairsight/rule-fields'
+import { mappedIdentityRoles } from '@/server/pairsight/fields'
+import { parseColumnRoles } from '@/server/pairsight/json'
 
 const ICON_SIZE = 15
 const COST_FRACTION_DIGITS = 4
@@ -21,6 +26,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const id = view.evaluationId
 	const [t, format] = await Promise.all([getTranslations('Plan'), getFormatter()])
 	const { dataset } = workspace
+	const latestRun = workspace.runs[0]
 	const [plan, vendors] = await Promise.all([
 		computePlan({ scope, evaluationId: id }),
 		dataset == null ? Promise.resolve([]) : listVendors(id, dataset.id)
@@ -32,6 +38,11 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 		(sum, item) => (item.kind === 'rule' ? sum + item.pairCount : sum),
 		0
 	)
+	// Rules that can run on this mapping; one whose field isn't mapped finds nothing.
+	const ruleCount =
+		dataset == null
+			? 0
+			: runnableRules(plan.rules, mappedIdentityRoles(parseColumnRoles(dataset.columnRoles))).length
 	const [firstBlocker] = plan.blockers
 	const blockedReason =
 		firstBlocker == null
@@ -72,14 +83,14 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<div className="lg:col-span-7">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<div className="@5xl:col-span-7">
 					{counts != null && dataset != null && (
 						<PlanLedger
 							counts={counts}
 							fileName={dataset.fileName}
 							ruleMatches={ruleMatches}
-							ruleCount={plan.rules.length}
+							ruleCount={ruleCount}
 							cost={format.number(estimateCostUsd(counts.toEvaluate), {
 								style: 'currency',
 								currency: 'USD',
@@ -89,10 +100,12 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 						/>
 					)}
 				</div>
-				<div className="lg:col-span-5">
+				<div className="@5xl:col-span-5">
 					<PlanSide
 						jevFields={'config' in plan && plan.config != null ? plan.config.jevFields : []}
 						counts={counts}
+						threshold={workspace.evaluation.threshold}
+						rulesHref={`${view.base}/rules`}
 					/>
 				</div>
 			</div>
@@ -111,6 +124,15 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				<ReadOnlyGate action="run">
 					<StartRunButton evaluationId={id} isDisabled={plan.blockers.length > 0} />
 				</ReadOnlyGate>
+				{/* Read-only, starting is out of reach, so the way on is the run that exists. */}
+				{view.isReadOnly && latestRun != null && (
+					<Button variant="secondary" asChild>
+						<Link href={`${view.base}/runs/${latestRun.id}/results?${RUNS_PARAM}=${latestRun.id}`}>
+							{t('seeRun')}
+							<ArrowRightIcon size={ICON_SIZE} />
+						</Link>
+					</Button>
+				)}
 			</ActionBar>
 		</>
 	)

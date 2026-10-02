@@ -1,4 +1,5 @@
 import { execSync } from 'node:child_process'
+import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
 
 // The public sandbox (/sandbox): the whole app, read-only, on the prepared
@@ -7,6 +8,8 @@ import { expect, test, type Page } from '@playwright/test'
 
 const PASSWORD = 'e2e-password-123'
 const SIGN_UP = /^Sign up to /
+// WCAG 2.2 A and AA, the bar the design is held to (docs/PairSight-UX-Plan.md §12).
+const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
 
 test.describe('Sandbox', () => {
 	test.skip(process.env.E2E_PAIRSIGHT !== '1', 'Needs local Supabase: set E2E_PAIRSIGHT=1')
@@ -51,6 +54,11 @@ test.describe('Sandbox', () => {
 		await page.waitForURL('**/sandbox/rules')
 		await expect(page.getByRole('switch', { name: 'Same email rule' })).toBeDisabled()
 		await expect(page.getByLabel('Counts as the same individual')).toBeDisabled()
+		await expect(
+			page
+				.getByRole('radiogroup', { name: 'Match threshold' })
+				.getByRole('radio', { name: /^Balanced/ })
+		).toBeDisabled()
 		await expect(page.getByText('Sandbox · changes aren’t saved')).toBeVisible()
 
 		// Plan: the ledger, but starting a run needs an account.
@@ -59,11 +67,15 @@ test.describe('Sandbox', () => {
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toBeVisible()
 		await expect(page.getByLabel('Sign up to start a run')).toBeVisible()
 
-		// Run: the prepared run, complete.
-		await step(page, 'Run').click()
-		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+$/)
-		await expect(page.getByText('Run complete', { exact: true })).toBeVisible()
-		await expect(page.getByText('8 / 8', { exact: true })).toBeVisible()
+		// Runs: the prepared run, complete, in the Runs centre; nothing to retry.
+		await page.getByRole('button', { name: 'Runs', exact: true }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		const card = runs.getByRole('article', { name: /^Run 1 · / })
+		await expect(card).toContainText('Complete · Started')
+		await expect(card).toContainText('8 pairs')
+		await card.getByRole('link', { name: 'View results' }).click()
+		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+\/results/)
 	})
 
 	test('clicking the evaluation row opens it where it is up to: its results', async ({ page }) => {
@@ -89,13 +101,13 @@ test.describe('Sandbox', () => {
 			await expect(tile(name)).toBeVisible()
 		}
 
-		// The threshold previews live; saving it is for accounts.
+		// The threshold previews live; a run keeps its own, so there's no Apply.
 		await page.getByRole('button', { name: /^Decision threshold/ }).click()
 		const value = page.getByLabel('Threshold value')
 		await value.fill('0.90')
 		await value.press('Enter')
 		await expect(page.getByRole('dialog')).toContainText('becomes')
-		await expect(page.getByLabel('Sign up to save a threshold')).toBeVisible()
+		await expect(page.getByRole('dialog').getByRole('button', { name: 'Apply' })).toHaveCount(0)
 		await page.keyboard.press('Escape')
 		await page.reload()
 		await expect(page.getByRole('button', { name: /^Decision threshold 0\.50/ })).toBeVisible()
@@ -136,4 +148,33 @@ test.describe('Sandbox', () => {
 		await expect(page.getByRole('menuitem', { name: 'Delete' })).toHaveCount(0)
 		await expect(page.getByLabel(SIGN_UP)).toHaveCount(0)
 	})
+
+	// Every screen, read-only, in both themes: no WCAG A/AA violations.
+	for (const colorScheme of ['light', 'dark'] as const) {
+		test(`every screen passes an accessibility check, ${colorScheme}`, async ({ browser }) => {
+			const context = await browser.newContext({ colorScheme, reducedMotion: 'reduce' })
+			const page = await context.newPage()
+			const check = async (name: string) => {
+				const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+				expect(
+					violations.map(
+						({ id, nodes }) => `${name} ${id}: ${nodes.map((n) => n.target).join(' | ')}`
+					)
+				).toEqual([])
+			}
+			for (const path of ['', '/records', '/vendors', '/rules', '/plan', '/run']) {
+				await page.goto(`/sandbox${path}`)
+				await check(path || '/sandbox')
+			}
+			await page.goto('/sandbox/results')
+			await page.waitForURL(/\/results/)
+			await check('results overview')
+			await page.goto(`${page.url().split('?')[0]}?tab=detailed`)
+			await check('results detailed')
+			await page.locator('[data-pairs-table] a[href*="/pairs/"]').first().click()
+			await page.waitForURL(/\/pairs\//)
+			await check('pair')
+			await context.close()
+		})
+	}
 })

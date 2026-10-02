@@ -41,7 +41,7 @@ export async function DashboardScreen({
 					<Reveal index={0}>
 						<dl
 							aria-label={t('statsLabel')}
-							className="border-border bg-surface sm:divide-border mt-5 grid grid-cols-2 gap-y-3 rounded-md border py-3 sm:grid-cols-4 sm:divide-x"
+							className="border-border bg-surface @2xl:divide-border mt-5 grid grid-cols-2 gap-y-3 rounded-md border py-3 @2xl:grid-cols-4 @2xl:divide-x"
 						>
 							{statItems.map((item) => (
 								<div key={item.label} className="px-4">
@@ -57,13 +57,16 @@ export async function DashboardScreen({
 						</dl>
 					</Reveal>
 
-					<div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-12">
+					<div className="mt-4 grid grid-cols-1 gap-4 @5xl:grid-cols-12">
 						{latest != null && (
-							<Reveal index={1} className="lg:col-span-8">
+							<Reveal index={1} className="@5xl:col-span-8">
 								<LatestResults latest={latest} />
 							</Reveal>
 						)}
-						<Reveal index={2} className={cn(latest != null ? 'lg:col-span-4' : 'lg:col-span-12')}>
+						<Reveal
+							index={2}
+							className={cn(latest != null ? '@5xl:col-span-4' : '@5xl:col-span-12')}
+						>
 							<ContinueSetup
 								rows={rows.filter((row) => row.status !== 'complete')}
 								takenNames={names}

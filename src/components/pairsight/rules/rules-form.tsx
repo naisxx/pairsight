@@ -13,8 +13,9 @@ import type { IdentityRole } from '@/server/pairsight/fields'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
 import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
-import { missingField, type Rule, type RuleLimits } from './rule-fields'
+import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
 import { RulesSummary, type RulesSummaryData } from './rules-summary'
+import { ThresholdSection } from './threshold-section'
 import { useEvaluationView } from '../evaluation-context'
 import { ReadOnlyFieldset } from '../read-only'
 
@@ -29,6 +30,7 @@ type Draft = {
 	jevFields: ReadonlySet<IdentityRole>
 	enabled: ReadonlySet<string>
 	composites: Rule[]
+	threshold: number
 }
 
 // A comparable form of what would be saved, so the form is "unsaved"
@@ -41,7 +43,8 @@ function snapshot(draft: Draft, presets: Rule[]): string {
 		draft.country,
 		[...draft.jevFields].sort(),
 		presets.filter((rule) => draft.enabled.has(rule.id)).map((rule) => rule.id),
-		draft.composites.map((rule) => rule.id).sort()
+		draft.composites.map((rule) => rule.id).sort(),
+		draft.threshold
 	])
 }
 
@@ -73,6 +76,7 @@ export function RulesForm({
 		countryCode: string
 		jevFields: IdentityRole[]
 		enabledRuleIds: string[]
+		threshold: number
 	}
 	rules: Rule[]
 	mappedRoles: IdentityRole[]
@@ -94,7 +98,8 @@ export function RulesForm({
 		country: initial.countryCode,
 		jevFields: new Set(initial.jevFields.filter((field) => mapped.has(field))),
 		enabled: new Set(initial.enabledRuleIds),
-		composites: rules.filter((rule) => isCustomRuleId(rule.id))
+		composites: rules.filter((rule) => isCustomRuleId(rule.id)),
+		threshold: initial.threshold
 	}
 	const [draft, setDraft] = useState<Draft>(saved)
 	// Stats for composites added or edited here, until the server counts
@@ -118,6 +123,7 @@ export function RulesForm({
 		identity: { same: draft.same, different: draft.different },
 		countryCode: draft.country,
 		jevFields: [...draft.jevFields],
+		threshold: draft.threshold,
 		// Presets that are on and runnable, plus every composite.
 		blockingRules: allRules.filter(
 			(rule) =>
@@ -165,8 +171,8 @@ export function RulesForm({
 
 	return (
 		<>
-			<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-				<ReadOnlyFieldset className="space-y-4 lg:col-span-8">
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<ReadOnlyFieldset className="space-y-4 @5xl:col-span-8">
 					<IdentitySection
 						same={draft.same}
 						different={draft.different}
@@ -184,6 +190,10 @@ export function RulesForm({
 										: toggled(current.jevFields, field.role, field.isOn)
 							}))
 						}
+					/>
+					<ThresholdSection
+						value={draft.threshold}
+						onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
 					/>
 					<CandidateRules
 						evaluationId={evaluationId}
@@ -224,7 +234,7 @@ export function RulesForm({
 						}
 					/>
 				</ReadOnlyFieldset>
-				<div className="lg:col-span-4">
+				<div className="@5xl:col-span-4">
 					<RulesSummary summary={summary} isUpdating={isPending} />
 				</div>
 			</div>

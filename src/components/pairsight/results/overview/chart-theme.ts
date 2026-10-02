@@ -12,6 +12,10 @@ export const SERIES_A = 'var(--series-a)'
 export const SERIES_B = 'var(--series-b)'
 export const MUTED_SERIES = 'var(--text-muted)'
 export const THRESHOLD_STROKE = 'var(--ring)'
+// A vendor's matched / not-matched split, in neutrals: the series colours
+// below mean one vendor or another, never a decision.
+export const MATCHED_SERIES = 'var(--text)'
+export const UNMATCHED_SERIES = 'var(--border-input)'
 // One colour per vendor, in upload order; a third falls back to muted.
 export const VENDOR_SERIES = [SERIES_A, SERIES_B, MUTED_SERIES]
 

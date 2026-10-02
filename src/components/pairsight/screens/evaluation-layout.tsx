@@ -24,7 +24,14 @@ export async function EvaluationLayout({
 		{ label: workspace.evaluation.name, href: view.base }
 	]
 	return (
-		<AppShell viewer={viewer} home={home} pipeline={pipeline} crumbs={crumbs} banner={banner}>
+		<AppShell
+			scope={loaded.scope}
+			viewer={viewer}
+			home={home}
+			pipeline={pipeline}
+			crumbs={crumbs}
+			banner={banner}
+		>
 			<EvaluationViewProvider value={view}>{children}</EvaluationViewProvider>
 		</AppShell>
 	)

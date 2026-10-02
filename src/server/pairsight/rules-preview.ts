@@ -4,7 +4,7 @@ import { buildBlockedPairs, RULE_PRESETS, type BlockingRule, type RuleStats } fr
 import { getCurrentDataset } from './datasets'
 import { getVisibleEvaluation } from './evaluations'
 import type { EvaluationScope } from './scope'
-import { isIdentityRole, mapRecordFields } from './fields'
+import { mapRecordFields, mappedIdentityRoles } from './fields'
 import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 import type { BlockingField } from './normalize'
 
@@ -33,7 +33,7 @@ async function loadBlockingInput({
 			id: record.id,
 			fields: mapRecordFields({ values: parseRecordValues(record.values), columnRoles })
 		})),
-		mappedRoles: [...new Set(Object.values(columnRoles).filter(isIdentityRole))]
+		mappedRoles: [...mappedIdentityRoles(columnRoles)]
 	}
 }
 

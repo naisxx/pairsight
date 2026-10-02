@@ -179,7 +179,8 @@ model Run {
 	exportIds         String[]
 	judgmentKey       String
 	jevModel          String
-	// Editable after the run: changing it only re-decides from saved scores.
+	// Set in Rules and kept: a run's results never shift after they're seen.
+	// (Runs from before Rules owned it may have had it changed on Results.)
 	threshold         Float
 	// The threshold the run started with, kept when `threshold` changes. Null
 	// for runs started before it was recorded (their original is unknown).

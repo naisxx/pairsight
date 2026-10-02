@@ -6,11 +6,11 @@ import { cn } from '@/lib/cn'
 import { useIsReadOnly } from './evaluation-context'
 
 // What a sandbox visitor would need an account for, named on the tooltip.
-export type ReadOnlyAction =
-	'upload' | 'vendor' | 'rules' | 'run' | 'threshold' | 'retry' | 'turnOff'
+export type ReadOnlyAction = 'upload' | 'vendor' | 'rules' | 'run' | 'retry' | 'turnOff'
 
 // One action, in the read-only sandbox: shown, but inert, with a "Sign up to
-// …" tip on hover and focus. Outside the sandbox it renders the child as is.
+// …" tip on hover and focus, announced as a disabled button by that name.
+// Outside the sandbox it renders the child as is.
 // The server actions refuse the sandbox anyway; this keeps the UI honest.
 export function ReadOnlyGate({
 	action,
@@ -26,6 +26,7 @@ export function ReadOnlyGate({
 	return (
 		<Tip content={label}>
 			<span
+				role="button"
 				tabIndex={0}
 				aria-label={label}
 				aria-disabled

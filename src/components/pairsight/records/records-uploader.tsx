@@ -236,8 +236,8 @@ export function RecordsUploader({
 					}
 				/>
 				<ValidationPanel title={t('errorsTitle')} messages={errors} />
-				<div className="grid grid-cols-1 gap-4 lg:grid-cols-12">
-					<div className="lg:col-span-8">
+				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+					<div className="@5xl:col-span-8">
 						<FieldMapping
 							fields={fields}
 							headers={preview.headers}
@@ -251,7 +251,8 @@ export function RecordsUploader({
 							}}
 						/>
 					</div>
-					<div className="lg:col-span-4">
+					{/* In one column, the checks come first: they say why Continue is blocked. */}
+					<div className="order-first @5xl:order-none @5xl:col-span-4">
 						<SourceValidation check={check} rowCount={preview.rowCount} blanks={blanks} />
 					</div>
 				</div>

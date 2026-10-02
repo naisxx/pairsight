@@ -42,7 +42,7 @@ export function PairNav({
 				<Link href={resultsHref}>
 					<ArrowLeftIcon size={15} />
 					{t('back')}
-					<span className="hidden sm:inline-flex">
+					<span className="hidden @2xl:inline-flex">
 						<Kbd>Esc</Kbd>
 					</span>
 				</Link>
@@ -62,8 +62,8 @@ export function PairNav({
 					t('previousShortcut'),
 					<>
 						<ChevronLeftIcon size={14} />
-						<span className="hidden sm:inline">{t('previous')}</span>
-						<span className="hidden md:inline-flex">
+						<span className="hidden @2xl:inline">{t('previous')}</span>
+						<span className="hidden @3xl:inline-flex">
 							<Kbd>K</Kbd>
 						</span>
 					</>
@@ -72,8 +72,8 @@ export function PairNav({
 					nextHref,
 					t('nextShortcut'),
 					<>
-						<span className="hidden sm:inline">{t('next')}</span>
-						<span className="hidden md:inline-flex">
+						<span className="hidden @2xl:inline">{t('next')}</span>
+						<span className="hidden @3xl:inline-flex">
 							<Kbd>J</Kbd>
 						</span>
 						<ChevronRightIcon size={14} />

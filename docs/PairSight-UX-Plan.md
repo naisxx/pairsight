@@ -54,17 +54,41 @@ it redirects to where the evaluation is up to.
 - **Rules** — identity definitions (both required), country by name, at
   least two fields for Jev; preset rules with an example key and
   Buckets/Pairs/Largest; composite rules to add, edit and delete; a live
-  summary. Changes save themselves; invalid ones are held back with the reason.
-- **Plan** — the "From records to pairs" ledger (with the cost estimate),
-  What Jev sees, the vendor-pair promise, an over-limit alert with a Turn off
+  summary. The **match threshold** is set here too: Lenient 0.35 / Balanced
+  0.50 / Strict 0.70, or a custom value from 0.01 to 0.99. It's decided before
+  any results are seen, and the next run keeps it. Changes save themselves;
+  invalid ones are held back with the reason.
+- **Plan** — the "From records to pairs" ledger (with the cost estimate), the
+  match threshold the run will keep (with Change, back to Rules), What Jev
+  sees, the vendor-pair promise, an over-limit alert with a Turn off
   per rule, and a notice for unfinished vendors. Start evaluation runs it.
-- **Run** — a state card (assessing / complete / stopped) with progress,
-  counts, elapsed time, why pairs failed and Retry; a stop alert with the fix.
+- **Runs centre** (replaces the Run step; the pipeline is now Records →
+  Vendors → Rules → Plan → Results). A dialog opened from **Runs** in the top
+  bar on every app page, with a spinner and a count while something runs.
+  - **Contents:** every run across your evaluations, in two tabs. Active is
+    the default while something runs, otherwise Completed. Completed holds
+    finished runs, runs finished with failures (Retry failed on the card),
+    and stopped runs (a red card with the reason, the fix and Resume).
+  - **Cards:** the front shows run and evaluation, status, live progress or
+    pairs and threshold, and the one action that matters. Details expand to
+    everything the run was run with: threshold and preset, judgments reused
+    and new, why pairs failed, Jev model, vendors and files, rules, fields,
+    country, identity text, times and the run ID.
+  - **Starting a run:** Start opens the centre on Active. On completion the
+    run moves to Completed and you're taken to its results. Closed early,
+    the run keeps going and a toast offers its results when it's done.
+  - **Driving:** the run loop lives in the shell, so a run keeps going on any
+    page; closing the app pauses it.
+  - **Old Run page links** redirect to the run's results with the centre
+    open on it (`?runs=<id>`).
 - **Results** — Overview (metrics, coverage, categories, decision matrix,
   threshold sensitivity, vendor comparison and overlap, field patterns, top
   disagreements, score distribution, sources, workload) and Detailed
-  analysis (live filters, sortable table, retry per row). The threshold
-  popover previews precision and recall before you apply.
+  analysis (live filters, sortable table, retry per row). The run's threshold
+  is fixed: its popover previews precision and recall at another value (a
+  "what if"), with no Apply. A different threshold means changing it in Rules
+  and running again. Every saved score is reused, so that run is complete at
+  once and costs nothing.
 - **Pair** — field comparison with differences highlighted, how the pair got
   here, Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
 - **Not found / errors** — a centred page; signed in, the way back is
@@ -81,6 +105,25 @@ it redirects to where the evaluation is up to.
   your evaluations. It's reached from the landing, the auth screens and the
   empty Evaluations page. `pnpm demo:seed` loads it from
   `prisma/demo/sandbox-snapshot.json`; until then it says it isn't set up.
+
+**Design review gate (M4 sign-off, §10.7).** Every screen and state was
+captured in both themes at 1440 / 1024 / 390 and reviewed. Fixes:
+
+- Page layouts follow the page's width rather than the window's, so a 1024 px
+  window with the sidebar open gets the one-column layout instead of a
+  squeezed one.
+- The plan's ledger adds up top to bottom; rules count only when they can run.
+- A run that finished with failures says so, and Retry leads.
+- Mid-run, the shell shows the run.
+- Toasts sit above the action bar.
+- On phones, the pair's verdict and the records' checks come first.
+- Tables show they scroll.
+- Text that was cut short wraps instead.
+
+`e2e/public.spec.ts` and `e2e/sandbox.spec.ts` hold axe checks (WCAG 2.2 A/AA)
+for every public and sandbox screen in both themes. The signed-in screens and
+a keyboard-only pass were checked by hand, and every stop shows a focus
+ring.
 
 **How the open questions were settled.**
 
@@ -153,7 +196,7 @@ new tokens when M1 implements them.
 | Vendors        | Upload a pair CSV, pick A/B columns, confirm it's complete  | **Continue to rules**                           | Validated or errors           | Unknown references block. Completeness confirmation is required. Group CSV is Next. |
 | Rules          | Define "same individual" and the blocking rules             | **Review plan**                                 | Live pair counts per rule     | Warning above 50 records per bucket                                                 |
 | Plan           | Check what will be evaluated                                | **Start evaluation**                            | Limit check                   | Over the cap: blocked, with the cause                                               |
-| Run            | Watch progress, handle failures                             | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the page is closed                                                |
+| Runs centre    | Watch progress, handle failures (a dialog, not a step)      | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the app is closed                                                 |
 | Results        | See agreement per vendor, adjust threshold, filter          | Open a pair                                     | Run status, threshold, model  | Incomplete pairs are counted separately                                             |
 | Pair detail    | Understand one decision                                     | **Next pair** (J/K)                             | That pair's assessment status | Human review is Next                                                                |
 | Export         | Take findings away                                          | **Export CSV**                                  | —                             | **Next.** The button is hidden until it exists.                                     |
@@ -228,7 +271,8 @@ new tokens when M1 implements them.
     match"
   - the **score distribution chart** with the threshold line
   - a preview of how the counts change
-  - **Apply** recomputes from saved scores, with no Jev calls.
+  - no Apply: the run keeps its threshold. **Change in Rules** leads to where
+    the next run's threshold is set (see "What shipped").
 - **Filter bar** (state in the URL):
   - category (tied to the tiles)
   - source: all / from rules / added by vendor
@@ -318,7 +362,7 @@ bar.
   - The estimated calls and cost, labeled as an estimate at a stand-in rate.
   - Over the cap: an error panel naming the rule or vendor responsible, with
     fixes (turn off a rule, reduce the input).
-- **Run:**
+- **Run** (as first planned; superseded by the Runs centre, "What shipped"):
   - A progress bar with exact counts (succeeded / failed / pending of total),
     elapsed time, and a live region announcing milestones.
   - A callout: "Keep this page open — the run pauses if you leave and resumes
@@ -354,7 +398,7 @@ bar.
 | Blocking config error                        | A persistent banner with the fix; the run stops                                                                        |
 | Pair failed                                  | A status chip with the reason and **Retry**; excluded from categories and counted as Incomplete                        |
 | No results (filters)                         | "No pairs match these filters" plus **Clear filters**                                                                  |
-| Partial run                                  | Results show a banner, "86% evaluated — 164 pairs incomplete", with a link to the Run page                             |
+| Partial run                                  | Results show a banner, "86% evaluated — 164 pairs incomplete", with a link to the Runs centre                          |
 | Demo                                         | A persistent banner; editing actions hidden                                                                            |
 
 ## 6. Theme tokens (contrast checked)
@@ -394,7 +438,8 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
 | `--action-hover`              | `#AE2F19`                            | `#FF8469`             | 6.52 / 8.00 with action-ink                                                                                |
 | `--accent`                    | `#FDECE8`                            | `#2A1A24`             | Small brand chips only (step numbers, “Suggested”). Never a large area: coral over dark slate turns maroon |
 | `--accent-ink`                | `#B3321C`                            | `#FF8F79`             | Links and active text: 6.20 / 8.03 on surface                                                              |
-| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Keyboard focus: ≥ 4.33 / ≥ 6.42                                                                            |
+| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Threshold marks: ≥ 4.33 / ≥ 6.42                                                                           |
+| `--focus`                     | `#1D5FB8`                            | `#6AAEFF`             | Keyboard focus, blue so it never reads as an error: ≥ 3 on every surface                                   |
 | `--success` / `-subtle`       | `#14773A` / `#E8F6EE`                | `#4ADE9A` / `#10271D` | 5.63 / 10.36 on surface; 5.05 / 9.18 on subtle                                                             |
 | `--warning` / `-subtle`       | `#8A5A00` / `#FCF3DE`                | `#F7C04F` / `#2A2210` | 5.93 / 10.70 on surface; 5.37 / 9.45 on subtle                                                             |
 | `--danger` / `-subtle`        | `#BE1D4B` / `#FCEBF0`                | `#FF6F94` / `#2E1520` | 6.06 / 6.75 on surface; 5.27 / 6.39 on subtle                                                              |
@@ -545,17 +590,21 @@ above and listed in `docs/rules/components.md`._
      happening, what's next.
    - Fix findings before the design is called complete.
 
-## 11. Unresolved decisions (flagged, not invented)
+## 11. Decisions once flagged as open
 
-- **Low-confidence band width:** set after the M1 Jev test. The filter exists;
-  its width is configured later.
-- **Default threshold:** set after the M1 test. The UI shows whatever the run
-  stores.
+- **Low-confidence band (decided):** ±0.1 around the threshold
+  (`LOW_CONFIDENCE_BAND`). It's far wider than Jev's run-to-run noise
+  (about ±0.01). It raises a filter, never a category. Evidence:
+  `docs/PairSight-V1-Scope.md`, "Verified live".
+- **Default threshold (decided):** 0.50 (`DEFAULT_THRESHOLD`). In the live
+  check, likely-different pairs scored ≤ 0.11 and likely-same pairs ≥ 0.76,
+  so 0.50 sits in a wide gap. It's set in Rules (with Lenient 0.35 and Strict
+  0.70 beside it), and each run keeps the threshold it started with.
 - **Wordmark (decided):** a text wordmark, "PairSight" in 600 weight with a
   small `--action` coral pair glyph. It's swapped when a real logo arrives.
-- **Export, human review, metrics, multiple vendors:** placements are planned,
-  but the controls stay hidden until each is built (Next, per the delivery
-  plan).
+- **Multiple vendors (built):** up to three, compared side by side.
+- **Export and human review:** placements are planned, but the controls stay
+  hidden until each is built (Next, per the delivery plan).
 
 ## 12. Verification
 

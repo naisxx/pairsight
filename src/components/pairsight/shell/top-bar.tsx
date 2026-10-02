@@ -8,6 +8,7 @@ import { cn } from '@/lib/cn'
 import { currentStageKey, type Crumb, type PipelineData } from './pipeline-types'
 import { useShell } from './shell-frame'
 import { EvaluationStatusChip } from './status-chip'
+import { RunsTrigger } from '../runs/runs-trigger'
 
 const MENU_ICON_SIZE = 18
 const CRUMB_SEPARATOR_SIZE = 11
@@ -55,6 +56,8 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 								key={`${crumb.label}-${index}`}
 								className={cn(
 									'flex min-w-0 items-center gap-1.5',
+									// Where you are is never the part that's cut short.
+									isLast && 'shrink-0',
 									// On phones only the first and last two crumbs fit.
 									index > 0 && index < trail.length - 2 && 'hidden sm:flex'
 								)}
@@ -85,11 +88,14 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 					})}
 				</ol>
 			</nav>
-			{pipeline != null && (
-				<div className="ml-auto hidden sm:block">
-					<EvaluationStatusChip status={pipeline.status} />
-				</div>
-			)}
+			<div className="ml-auto flex items-center gap-2">
+				{pipeline != null && (
+					<div className="hidden sm:block">
+						<EvaluationStatusChip status={pipeline.status} />
+					</div>
+				)}
+				<RunsTrigger />
+			</div>
 		</header>
 	)
 }
