@@ -47,6 +47,7 @@ import {
 	Eye,
 	EyeSlash,
 	FileCsv,
+	FileXls,
 	FileText,
 	FlowArrow,
 	FolderOpen,
@@ -215,6 +216,7 @@ export const SpinnerIcon = ({ className, ...props }: IconProps) => (
 )
 export const ConnectionErrorIcon = (props: IconProps) => <Glyph source={Plugs} {...props} />
 export const CsvFileIcon = (props: IconProps) => <Glyph source={FileCsv} {...props} />
+export const XlsxFileIcon = (props: IconProps) => <Glyph source={FileXls} {...props} />
 export const ErrorIcon = (props: IconProps) => <Glyph source={WarningOctagon} {...props} />
 export const EvaluationIcon = (props: IconProps) => <Glyph source={Intersect} {...props} />
 export const FieldsIcon = (props: IconProps) => <Glyph source={ListChecks} {...props} />

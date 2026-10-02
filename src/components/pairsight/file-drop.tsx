@@ -5,11 +5,12 @@ import { useTranslations } from 'next-intl'
 import { buttonVariants } from '@/components/ui/button'
 import { SpinnerIcon, UploadIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
+import { TABULAR_ACCEPT } from '@/lib/pairsight/tabular-formats'
 
 const ICON_SIZE = 22
 
 // A dropzone that is also a plain file input (keyboard and screen-reader
-// users get the native control). Accepts one CSV.
+// users get the native control). Accepts one file in a format PairSight reads.
 export function FileDrop({
 	label,
 	hint,
@@ -63,7 +64,7 @@ export function FileDrop({
 			<input
 				id={id}
 				type="file"
-				accept=".csv,text/csv"
+				accept={TABULAR_ACCEPT}
 				className="sr-only"
 				disabled={isBusy}
 				onChange={(event) => {

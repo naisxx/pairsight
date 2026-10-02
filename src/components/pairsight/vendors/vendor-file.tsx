@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { CsvFileIcon, RetryIcon, SpinnerIcon } from '@/components/ui/icons'
+import { RetryIcon, SpinnerIcon } from '@/components/ui/icons'
 import { OptionSelect } from '@/components/ui/select'
 import { cn } from '@/lib/cn'
 import { toast } from '@/lib/toast'
@@ -17,7 +17,9 @@ import {
 import type { VendorListItem } from '@/server/pairsight/vendor-exports'
 import type { VendorColumns, VendorFormat } from '@/server/pairsight/vendors'
 import { FileDrop } from '../file-drop'
-import { readCsvFile, useCsvErrorMessage, useRowList, ValidationPanel } from '../validation'
+import { TabularFileIcon, useFileTypeLabel } from '../file-type'
+import { SheetPicker, type SheetChoice } from '../sheet-picker'
+import { checkTabularFile, useFileErrorMessage, useRowList, ValidationPanel } from '../validation'
 import { FormatExample } from './format-example'
 import { VendorStats } from './vendor-stats'
 
@@ -50,9 +52,14 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	const t = useTranslations('Vendors')
 	const format = useFormatter()
 	const router = useRouter()
-	const csvError = useCsvErrorMessage()
+	const fileError = useFileErrorMessage()
+	const fileType = useFileTypeLabel()
 	const list = useRowList()
-	const [file, setFile] = useState<{ fileName: string; text: string } | null>(null)
+	// The chosen file, kept as is so changing its columns sends it again, with
+	// the workbook sheet it's read from (`sheet`) once one is picked.
+	const [file, setFile] = useState<File | null>(null)
+	const [sheet, setSheet] = useState<string | undefined>(undefined)
+	const [sheets, setSheets] = useState<SheetChoice[] | null>(null)
 	const [checked, setChecked] = useState<Checked | null>(null)
 	const [errors, setErrors] = useState<string[]>([])
 	const [isReplacing, setIsReplacing] = useState(false)
@@ -62,18 +69,26 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	const [isConfirming, startConfirming] = useTransition()
 	const isDraft = vendor.kind === 'draft'
 
-	function check(next: { fileName: string; text: string }, columns?: VendorColumns) {
+	function check(next: File, { columns, sheet }: { columns?: VendorColumns; sheet?: string } = {}) {
 		setErrors([])
 		startChecking(async () => {
-			const result = await checkVendorFileAction({ draftId: vendor.id, ...next, columns })
+			const result = await checkVendorFileAction({
+				draftId: vendor.id,
+				file: next,
+				sheet,
+				columns
+			})
 			if (!result.ok) return setErrors([result.error])
 			if (!result.data.ok) {
+				const error = result.data.parseError
 				setChecked(null)
-				setErrors([csvError(result.data.parseError)])
+				if (error.code === 'choose_sheet') setSheets(error.sheets)
+				else setErrors([fileError(error)])
 				router.refresh()
 				return
 			}
 			const data = result.data
+			setSheets(null)
 			setChecked(data)
 			setPending(toPending(data.columns ?? data.detection?.guess ?? null))
 			// Detection decides whether the pickers open; columns the user chose
@@ -86,19 +101,24 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 
 	function onFile(chosen: File) {
 		setErrors([])
-		startChecking(async () => {
-			const read = await readCsvFile(chosen)
-			if (!read.ok) return setErrors([csvError({ code: read.code })])
-			const next = { fileName: chosen.name, text: read.text }
-			setFile(next)
-			check(next)
-		})
+		const checkedFile = checkTabularFile(chosen)
+		if (!checkedFile.ok) return setErrors([fileError({ code: checkedFile.code })])
+		setFile(chosen)
+		setSheet(undefined)
+		setSheets(null)
+		check(chosen)
+	}
+
+	function pickSheet(name: string) {
+		if (file == null) return
+		setSheet(name)
+		check(file, { sheet: name })
 	}
 
 	function choose(next: Pending) {
 		setPending(next)
 		const columns = fromPending(next)
-		if (file != null && columns != null) check(file, columns)
+		if (file != null && columns != null) check(file, { columns, sheet })
 	}
 
 	const showDrop = isDraft && (isReplacing || (file == null && vendor.fileName == null))
@@ -107,7 +127,7 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	const issues = checked?.issues ?? null
 	const hasPassingFile =
 		isDraft && vendor.fileName != null && issues == null && checked?.detection == null
-	const fileName = file?.fileName ?? vendor.fileName
+	const fileName = file?.name ?? vendor.fileName
 	const issueMessages =
 		issues == null
 			? []
@@ -160,7 +180,13 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 			) : (
 				<>
 					<div className="mt-3 flex flex-wrap items-center gap-3">
-						<CsvFileIcon size={FILE_ICON_SIZE} className="text-text-muted shrink-0" />
+						{fileName != null && (
+							<TabularFileIcon
+								fileName={fileName}
+								size={FILE_ICON_SIZE}
+								className="text-text-muted shrink-0"
+							/>
+						)}
 						<div className="min-w-0 flex-1">
 							<p className="type-ui truncate font-mono font-medium">{fileName}</p>
 							{stats != null && (
@@ -172,6 +198,7 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 												columns: checked.headers.length,
 												n: col
 											})}
+									{fileName != null && ` · ${fileType(fileName, checked?.sheet)}`}
 								</p>
 							)}
 						</div>
@@ -207,6 +234,17 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 								</Button>
 							)}
 						</p>
+					)}
+					{sheets != null && file != null && (
+						<div className="mt-3">
+							<SheetPicker
+								fileName={file.name}
+								sheets={sheets}
+								picked={sheet ?? null}
+								isBusy={isChecking}
+								onPick={pickSheet}
+							/>
+						</div>
 					)}
 					{checked?.detection != null && (
 						<p role="alert" className="bg-warning-subtle text-warning type-ui mt-3 rounded-sm p-3">

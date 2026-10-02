@@ -189,7 +189,7 @@
 		"emptyTitle": "Set up your first evaluation",
 		"emptyDescription": "Find out whether a matching tool merged different people or missed duplicates. Setup takes about ten minutes.",
 		"step1Title": "Upload records and vendor results",
-		"step1Body": "Your original customer CSV plus each vendor’s match export.",
+		"step1Body": "Your original customer records plus each vendor’s match export.",
 		"step2Title": "Define identity and candidate rules",
 		"step2Body": "What counts as the same individual, and which records are worth comparing.",
 		"step3Title": "Run and compare",
@@ -208,12 +208,12 @@
 	"Records": {
 		"title": "Original records",
 		"description": "Upload the customer records the vendors matched. PairSight shows the original values when you inspect a pair.",
-		"dropTitle": "Drop your customer CSV here",
-		"dropHint": "One row per customer record, with a header row. UTF-8, up to 500 records and 1 MB.",
+		"dropTitle": "Drop your customer CSV or Excel file here",
+		"dropHint": "One row per customer record, with a header row. CSV (UTF-8) or Excel (.xlsx), up to 500 records and 1 MB.",
 		"reading": "Reading file…",
 		"fileDetails": "File details",
-		"notSaved": "Not saved yet · CSV",
-		"savedOn": "Saved {date} · CSV",
+		"notSaved": "Not saved yet",
+		"savedOn": "Saved {date}",
 		"rows": "Rows",
 		"columns": "Columns",
 		"size": "Size",
@@ -267,7 +267,7 @@
 		"missingReferenceColumn": "Choose the record reference column.",
 		"andMore": "and {count} more"
 	},
-	"CsvErrors": {
+	"FileErrors": {
 		"empty": "The file has no data rows under the header.",
 		"too_many_rows": "The file has {found} rows; the limit is {limit}.",
 		"too_many_columns": "The file has {found} columns; the limit is {limit}.",
@@ -275,7 +275,19 @@
 		"duplicate_header": "More than one column is named: {headers}",
 		"ragged_rows": "These rows have a different number of cells than the header: {rows}",
 		"too_large": "The file is larger than 1 MB.",
-		"not_csv": "Choose a .csv file."
+		"unsupported_format": "This file type isn’t supported. Choose a .csv or .xlsx file.",
+		"unreadable": "PairSight couldn’t read this workbook. If it’s password-protected or damaged, save an unprotected copy and try again.",
+		"choose_sheet": "Choose which sheet of the workbook to read."
+	},
+	"FileType": {
+		"csv": "CSV",
+		"xlsx": "Excel",
+		"sheet": "Sheet {name}"
+	},
+	"SheetPicker": {
+		"title": "Choose a sheet",
+		"description": "<file>{fileName}</file> has {count} sheets with data. Which one should PairSight read?",
+		"rows": "{count, plural, one {# row} other {# rows}}"
 	},
 	"Roles": {
 		"full_name": "Full name",
@@ -317,7 +329,7 @@
 		"cancel": "Cancel",
 		"close": "Close",
 		"resultsTitle": "Matching results",
-		"dropTitle": "Upload {name}’s export (CSV)",
+		"dropTitle": "Upload {name}’s export (CSV or Excel)",
 		"dropHint": "One pair per row, or one record per row grouped by a match ID. PairSight works out which from your records’ references.",
 		"checking": "Checking the file against your records…",
 		"fileMeta": "<n>{rows}</n> {rows, plural, one {row} other {rows}}",
@@ -573,6 +585,10 @@
 		"columnDecision": "PairSight decision",
 		"columnFlags": "Flags",
 		"thresholdTrigger": "Threshold",
+		"export": "Export",
+		"export_csv": "CSV (.csv)",
+		"export_xlsx": "Excel (.xlsx)",
+		"exportLabel": "Export run {number}’s findings: every pair, every vendor",
 		"previewTitle": "At {threshold}",
 		"coverageHowTitle": "How this works",
 		"coverageHowRules": "PairSight compares the pairs your blocking rules find, plus every pair a vendor matched even when your rules didn’t find it.",
@@ -712,6 +728,33 @@
 	},
 	"FileDrop": {
 		"choose": "Browse files"
+	},
+	"Export": {
+		"recordA": "Record A",
+		"recordB": "Record B",
+		"field": "{side}: {field}",
+		"jevStatus": "Jev status",
+		"jevScore": "Jev score",
+		"jevModel": "Jev model",
+		"assessedAt": "Assessed at",
+		"failure": "Why it failed",
+		"decision": "PairSight decision",
+		"lowConfidence": "Low confidence",
+		"foundBy": "Found by",
+		"vendorDecision": "{vendor}: decision",
+		"vendorCategory": "{vendor}: category",
+		"status_pending": "Pending",
+		"status_running": "Running",
+		"status_succeeded": "Assessed",
+		"status_failed": "Failed",
+		"match": "Match",
+		"noMatch": "No match",
+		"incomplete": "Incomplete",
+		"yes": "Yes",
+		"no": "No",
+		"matched": "Matched",
+		"notMatched": "Not matched",
+		"addedByVendor": "Added by a vendor"
 	},
 	"Runs": {
 		"title": "Runs",
