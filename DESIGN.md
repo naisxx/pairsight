@@ -44,7 +44,8 @@ measured contrast for each is in the UX plan §6.
 | `--text` / `--text-muted`                                                         | Primary / secondary text (muted also covers placeholders; there is no fainter text token)                          |
 | `--action` / `--action-hover` / `--action-ink`                                    | The primary action: deeper coral with white ink in light, brighter coral with near-black ink in dark               |
 | `--accent` / `--accent-ink`                                                       | Small brand chips only (never a large area: coral over dark slate turns maroon) / links and active text            |
-| `--ring`                                                                          | Keyboard focus                                                                                                     |
+| `--ring`                                                                          | Coral marks: the threshold on score bars and charts                                                                |
+| `--focus`                                                                         | Keyboard focus (blue, so a focused field never reads as an error)                                                  |
 | `--success` / `--warning` / `--danger` / `--info` (+ `-subtle`)                   | Status only, never decoration; always with an icon or label. Danger's hue is kept 25° from the brand               |
 | `--cat-both` / `--cat-pairsight` / `--cat-vendor` / `--cat-neither` (+ `-subtle`) | The four comparison categories. They mean **agreement, not correctness**, so they never use brand or status colors |
 | `--brand-deep` / `--brand-orange` / `--brand-amber`                               | Decorative brand only (wordmark, landing). Never status or data                                                    |
@@ -152,8 +153,16 @@ lines up:
   sits on the left; the primary action on the right, with the reason it's
   blocked beside it (and `aria-describedby` pointing at that reason).
 - **Grids that change column count** always declare a shrinkable column at
-  every size (`grid-cols-[minmax(0,1fr)]`), or a wide table widens the page
-  instead of scrolling.
+  every size (`grid-cols-1`), or a wide table widens the page instead of
+  scrolling.
+- **Inside the app, layouts respond to the page's width, not the window's.**
+  The sidebar takes up to 248 px, so a 1024 px window leaves the page about
+  780 px. Use container variants there (`@2xl:` / `@3xl:` / `@5xl:` /
+  `@6xl:`, roughly where `sm:` / `md:` / `lg:` / `xl:` sit); keep viewport
+  ones (`md:`) for the shell itself, the landing and the auth pages.
+- **A table that scrolls sideways** gets `scroll-fade-x`, which fades the
+  edge with more to show, and a focusable wrapper so the keyboard can
+  scroll it.
 - **Cards** are hairline-bordered surfaces (`Panel`, or the same classes:
   `rounded-md border border-border bg-surface`) with a small semibold title
   and one muted line under it. Icons never get colour except for status;

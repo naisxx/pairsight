@@ -82,6 +82,25 @@ it redirects to where the evaluation is up to.
   empty Evaluations page. `pnpm demo:seed` loads it from
   `prisma/demo/sandbox-snapshot.json`; until then it says it isn't set up.
 
+**Design review gate (M4 sign-off, §10.7).** Every screen and state was
+captured in both themes at 1440 / 1024 / 390 and reviewed. Fixes:
+
+- Page layouts follow the page's width rather than the window's, so a 1024 px
+  window with the sidebar open gets the one-column layout instead of a
+  squeezed one.
+- The plan's ledger adds up top to bottom; rules count only when they can run.
+- A run that finished with failures says so, and Retry leads.
+- Mid-run, the shell shows the run.
+- Toasts sit above the action bar.
+- On phones, the pair's verdict and the records' checks come first.
+- Tables show they scroll.
+- Text that was cut short wraps instead.
+
+`e2e/public.spec.ts` and `e2e/sandbox.spec.ts` hold axe checks (WCAG 2.2 A/AA)
+for every public and sandbox screen in both themes. The signed-in screens and
+a keyboard-only pass were checked by hand, and every stop shows a focus
+ring.
+
 **How the open questions were settled.**
 
 | #   | Question                         | Decision                                                                 |
@@ -394,7 +413,8 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
 | `--action-hover`              | `#AE2F19`                            | `#FF8469`             | 6.52 / 8.00 with action-ink                                                                                |
 | `--accent`                    | `#FDECE8`                            | `#2A1A24`             | Small brand chips only (step numbers, “Suggested”). Never a large area: coral over dark slate turns maroon |
 | `--accent-ink`                | `#B3321C`                            | `#FF8F79`             | Links and active text: 6.20 / 8.03 on surface                                                              |
-| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Keyboard focus: ≥ 4.33 / ≥ 6.42                                                                            |
+| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Threshold marks: ≥ 4.33 / ≥ 6.42                                                                           |
+| `--focus`                     | `#1D5FB8`                            | `#6AAEFF`             | Keyboard focus, blue so it never reads as an error: ≥ 3 on every surface                                   |
 | `--success` / `-subtle`       | `#14773A` / `#E8F6EE`                | `#4ADE9A` / `#10271D` | 5.63 / 10.36 on surface; 5.05 / 9.18 on subtle                                                             |
 | `--warning` / `-subtle`       | `#8A5A00` / `#FCF3DE`                | `#F7C04F` / `#2A2210` | 5.93 / 10.70 on surface; 5.37 / 9.45 on subtle                                                             |
 | `--danger` / `-subtle`        | `#BE1D4B` / `#FCEBF0`                | `#FF6F94` / `#2E1520` | 6.06 / 6.75 on surface; 5.27 / 6.39 on subtle                                                              |
