@@ -1,14 +1,14 @@
 import { PairScreen } from '@/components/pairsight/screens/pair-screen'
-import { loadRun, SANDBOX_TARGET } from '@/server/pairsight/evaluation-pages'
+import { loadRun, sandboxTarget } from '@/server/pairsight/evaluation-pages'
 
 export default async function SandboxPairPage({
 	params,
 	searchParams
 }: {
-	params: Promise<{ runId: string; pairId: string }>
+	params: Promise<{ id: string; runId: string; pairId: string }>
 	searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-	const [{ runId, pairId }, rawFilters] = await Promise.all([params, searchParams])
-	const loaded = await loadRun(SANDBOX_TARGET, runId)
+	const [{ id, runId, pairId }, rawFilters] = await Promise.all([params, searchParams])
+	const loaded = await loadRun(sandboxTarget(id), runId)
 	return <PairScreen loaded={loaded} pairId={pairId} rawFilters={rawFilters} />
 }

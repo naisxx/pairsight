@@ -17,7 +17,7 @@ import { AppError } from '@/lib/errors/app-error'
 import {
 	ownerView,
 	runBase,
-	SANDBOX_VIEW,
+	sandboxView,
 	type EvaluationView
 } from '@/lib/pairsight/evaluation-view'
 import { getProfileName, getSessionUser, requireUserOrRedirect } from '@/server/auth/session'
@@ -40,10 +40,13 @@ import { getWorkspace } from '@/server/pairsight/workspace'
 // sidebar shows.
 
 // Which evaluation a page is for. An owner's page names its id and its own
-// path (to come back to after signing in); the sandbox needs neither.
-export type EvaluationTarget = { kind: 'owner'; id: string; path: string } | { kind: 'sandbox' }
+// path (to come back to after signing in); a sandbox one only its id.
+export type EvaluationTarget =
+	{ kind: 'owner'; id: string; path: string } | { kind: 'sandbox'; id: string }
 
-export const SANDBOX_TARGET: EvaluationTarget = { kind: 'sandbox' }
+export function sandboxTarget(id: string): EvaluationTarget {
+	return { kind: 'sandbox', id }
+}
 
 // The signed-in person, if any. Owner pages require one; the sandbox shows
 // the account when there is one and Sign in / Sign up when there isn't.
@@ -53,12 +56,13 @@ type Access = { viewer: Viewer; scope: EvaluationScope; view: EvaluationView }
 
 async function resolveAccess(target: EvaluationTarget): Promise<Access> {
 	if (target.kind === 'sandbox') {
+		if (!isUuid(target.id)) notFound()
 		const user = await getSessionUser()
 		const name = user == null ? null : await getProfileName(user.id)
 		return {
 			viewer: user == null ? null : { email: user.email, name: name ?? user.email },
 			scope: SANDBOX_SCOPE,
-			view: SANDBOX_VIEW
+			view: sandboxView(target.id)
 		}
 	}
 	if (!isUuid(target.id)) notFound()
@@ -231,11 +235,16 @@ export async function workspacePipeline(
 	return { evaluationName: workspace.evaluation.name, stages, status }
 }
 
-// The sandbox's prepared run, for its banner: which Jev model judged it and
-// when. Null until `pnpm demo:seed` has run on this database.
-export async function getSandboxRecording() {
+// A sandbox evaluation's prepared run (or the latest of any, for the
+// sandbox's dashboard), for the banner: which Jev model judged it and when.
+// Null until `pnpm demo:seed` has run on this database.
+export async function getSandboxRecording(evaluationId?: string) {
 	const run = await db.run.findFirst({
-		where: { evaluation: evaluationWhere(SANDBOX_SCOPE), origin: 'prepared' },
+		where: {
+			evaluation: evaluationWhere(SANDBOX_SCOPE),
+			...(evaluationId == null ? {} : { evaluationId }),
+			origin: 'prepared'
+		},
 		orderBy: { number: 'desc' },
 		select: { jevModel: true, completedAt: true }
 	})

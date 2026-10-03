@@ -6,7 +6,7 @@ import { requireUser } from '@/server/auth/session'
 import { advanceRun, retryPair } from '@/server/pairsight/run-engine'
 import { resumeRun, retryFailed } from '@/server/pairsight/runs'
 import { startRun } from '@/server/pairsight/start-run'
-import { ownerView, SANDBOX_VIEW } from '@/lib/pairsight/evaluation-view'
+import { ownerView, sandboxView } from '@/lib/pairsight/evaluation-view'
 import { listRunCards } from '@/server/pairsight/run-centre'
 import { ownerScope, SANDBOX_SCOPE } from '@/server/pairsight/scope'
 import { idSchema, revalidateEvaluationPages } from './shared'
@@ -28,7 +28,7 @@ export const startRunAction = validatedAction({
 export const listRunsAction = validatedAction({
 	input: z.object({ sandbox: z.boolean() }),
 	handler: async ({ sandbox }) => {
-		if (sandbox) return listRunCards({ scope: SANDBOX_SCOPE, viewOf: () => SANDBOX_VIEW })
+		if (sandbox) return listRunCards({ scope: SANDBOX_SCOPE, viewOf: sandboxView })
 		const user = await requireUser()
 		return listRunCards({ scope: ownerScope(user.id), viewOf: ownerView })
 	}

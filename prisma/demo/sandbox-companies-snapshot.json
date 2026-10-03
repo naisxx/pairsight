@@ -1,0 +1,673 @@
+{
+	"version": 1,
+	"recordedAt": "2026-10-03T08:44:05.048Z",
+	"evaluation": {
+		"name": "Supplier master — vendor check",
+		"entityType": "company",
+		"identitySame": "Both records describe the same organisation (the same legal entity), even if it appears under a trading name, an abbreviation, an old address or different formatting.",
+		"identityDifferent": "The records describe different organisations, including a parent and its subsidiary, branches registered separately, or unrelated companies that share an address, phone number or similar name.",
+		"countryCode": "US",
+		"jevFields": [
+			"company_name",
+			"website",
+			"registration_number",
+			"phone",
+			"address",
+			"city",
+			"postcode",
+			"industry"
+		],
+		"blockingRules": [
+			{
+				"id": "website",
+				"fields": ["website"]
+			},
+			{
+				"id": "registration_number",
+				"fields": ["registration_number"]
+			},
+			{
+				"id": "name_postcode",
+				"fields": ["name", "postcode"]
+			}
+		],
+		"threshold": 0.5
+	},
+	"dataset": {
+		"fileName": "sandbox-companies.csv",
+		"referenceColumn": "Account ID",
+		"columnRoles": {
+			"City": "city",
+			"Phone": "phone",
+			"Street": "address",
+			"Website": "website",
+			"Industry": "industry",
+			"Postcode": "postcode",
+			"Account Name": "company_name",
+			"Company Number": "registration_number"
+		},
+		"records": [
+			{
+				"reference": "O01",
+				"rowNumber": 2,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0101",
+					"Street": "1 King St",
+					"Website": "brightwater.test",
+					"Industry": "Wholesale",
+					"Postcode": "EC1A 1AA",
+					"Account ID": "O01",
+					"Account Name": "Brightwater Traders Ltd",
+					"Company Number": "09990101"
+				}
+			},
+			{
+				"reference": "O02",
+				"rowNumber": 3,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0101",
+					"Street": "1 King Street",
+					"Website": "https://www.brightwater.test",
+					"Industry": "Wholesale",
+					"Postcode": "EC1A 1AA",
+					"Account ID": "O02",
+					"Account Name": "BRIGHTWATER TRADERS LIMITED",
+					"Company Number": "09990101"
+				}
+			},
+			{
+				"reference": "O03",
+				"rowNumber": 4,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0101",
+					"Street": "1 King St",
+					"Website": "brightwater-trading.test",
+					"Industry": "Wholesale",
+					"Postcode": "EC1A 1AA",
+					"Account ID": "O03",
+					"Account Name": "Brightwater Trading Co",
+					"Company Number": "09990101"
+				}
+			},
+			{
+				"reference": "O04",
+				"rowNumber": 5,
+				"values": {
+					"City": "Leeds",
+					"Phone": "0113 496 0102",
+					"Street": "5 Mill Lane",
+					"Website": "halden.test",
+					"Industry": "Food and drink",
+					"Postcode": "LS1 4AB",
+					"Account ID": "O04",
+					"Account Name": "Halden Brewing Company Ltd",
+					"Company Number": "09990102"
+				}
+			},
+			{
+				"reference": "O05",
+				"rowNumber": 6,
+				"values": {
+					"City": "Leeds",
+					"Phone": "0113 496 0102",
+					"Street": "5 Mill Ln",
+					"Website": "www.halden.test",
+					"Industry": "Food and drink",
+					"Postcode": "LS1 4AB",
+					"Account ID": "O05",
+					"Account Name": "Halden Brewery",
+					"Company Number": "09990102"
+				}
+			},
+			{
+				"reference": "O06",
+				"rowNumber": 7,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0300",
+					"Street": "10 Bishopsgate",
+					"Website": "orbis.test",
+					"Industry": "Logistics",
+					"Postcode": "EC2A 2BB",
+					"Account ID": "O06",
+					"Account Name": "Orbis Group plc",
+					"Company Number": "09990103"
+				}
+			},
+			{
+				"reference": "O07",
+				"rowNumber": 8,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0301",
+					"Street": "10 Bishopsgate",
+					"Website": "logistics.orbis.test",
+					"Industry": "Logistics",
+					"Postcode": "EC2A 2BB",
+					"Account ID": "O07",
+					"Account Name": "Orbis Logistics Ltd",
+					"Company Number": "09990104"
+				}
+			},
+			{
+				"reference": "O08",
+				"rowNumber": 9,
+				"values": {
+					"City": "Bristol",
+					"Phone": "0117 496 0105",
+					"Street": "1 Business Park",
+					"Website": "bluepeak.test",
+					"Industry": "Consulting",
+					"Postcode": "BS1 6AA",
+					"Account ID": "O08",
+					"Account Name": "Bluepeak Consulting Ltd",
+					"Company Number": "09990105"
+				}
+			},
+			{
+				"reference": "O09",
+				"rowNumber": 10,
+				"values": {
+					"City": "Bristol",
+					"Phone": "0117 496 0106",
+					"Street": "1 Business Park",
+					"Website": "greenfield.test",
+					"Industry": "Catering",
+					"Postcode": "BS1 6AA",
+					"Account ID": "O09",
+					"Account Name": "Greenfield Catering Ltd",
+					"Company Number": "09990106"
+				}
+			},
+			{
+				"reference": "O10",
+				"rowNumber": 11,
+				"values": {
+					"City": "Manchester",
+					"Phone": "0161 496 0107",
+					"Street": "3 Deansgate",
+					"Website": "apex-solutions.test",
+					"Industry": "IT services",
+					"Postcode": "M1 1AA",
+					"Account ID": "O10",
+					"Account Name": "Apex Solutions Ltd",
+					"Company Number": "09990107"
+				}
+			},
+			{
+				"reference": "O11",
+				"rowNumber": 12,
+				"values": {
+					"City": "Manchester",
+					"Phone": "0161 496 0108",
+					"Street": "99 Oxford Rd",
+					"Website": "apexsol.test",
+					"Industry": "Recruitment",
+					"Postcode": "M1 7ED",
+					"Account ID": "O11",
+					"Account Name": "Apex Solutions Limited",
+					"Company Number": "09990108"
+				}
+			},
+			{
+				"reference": "O12",
+				"rowNumber": 13,
+				"values": {
+					"City": "Edinburgh",
+					"Phone": "0131 496 0109",
+					"Street": "4 George St",
+					"Website": "kestreldata.test",
+					"Industry": "Software",
+					"Postcode": "EH2 2AA",
+					"Account ID": "O12",
+					"Account Name": "Kestrel Data Systems Ltd",
+					"Company Number": "09990109"
+				}
+			},
+			{
+				"reference": "O13",
+				"rowNumber": 14,
+				"values": {
+					"City": "Edinburgh",
+					"Phone": "0131 496 0109",
+					"Street": "4 George Street",
+					"Website": "www.kestreldata.test",
+					"Industry": "Software",
+					"Postcode": "EH2 2AA",
+					"Account ID": "O13",
+					"Account Name": "KDS Ltd",
+					"Company Number": ""
+				}
+			},
+			{
+				"reference": "O14",
+				"rowNumber": 15,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0110",
+					"Street": "12 Market St",
+					"Website": "clearwater.test",
+					"Industry": "Analytics",
+					"Postcode": "E1 6AN",
+					"Account ID": "O14",
+					"Account Name": "Clearwater Analytics Ltd",
+					"Company Number": "09990110"
+				}
+			},
+			{
+				"reference": "O15",
+				"rowNumber": 16,
+				"values": {
+					"City": "Bristol",
+					"Phone": "0117 496 0999",
+					"Street": "400 Harbour Way",
+					"Website": "clearwater.test",
+					"Industry": "Analytics",
+					"Postcode": "BS1 5TT",
+					"Account ID": "O15",
+					"Account Name": "Clearwater Analytics Ltd",
+					"Company Number": "09990110"
+				}
+			},
+			{
+				"reference": "O16",
+				"rowNumber": 17,
+				"values": {
+					"City": "Cambridge",
+					"Phone": "01223 496 011",
+					"Street": "8 Hills Rd",
+					"Website": "summit-outdoor.test",
+					"Industry": "Retail",
+					"Postcode": "CB2 1AB",
+					"Account ID": "O16",
+					"Account Name": "Summit Outdoor Ltd",
+					"Company Number": "09990111"
+				}
+			},
+			{
+				"reference": "O17",
+				"rowNumber": 18,
+				"values": {
+					"City": "Cambridge",
+					"Phone": "01223 496 012",
+					"Street": "8 Hills Rd",
+					"Website": "summitretail.test",
+					"Industry": "Retail",
+					"Postcode": "CB2 1AB",
+					"Account ID": "O17",
+					"Account Name": "Summit Outdoor Retail Ltd",
+					"Company Number": "09990112"
+				}
+			},
+			{
+				"reference": "O18",
+				"rowNumber": 19,
+				"values": {
+					"City": "Cardiff",
+					"Phone": "029 2018 0113",
+					"Street": "2 Quay St",
+					"Website": "riversidedental.test",
+					"Industry": "Healthcare",
+					"Postcode": "CF10 1EA",
+					"Account ID": "O18",
+					"Account Name": "Riverside Dental Practice",
+					"Company Number": "09990113"
+				}
+			},
+			{
+				"reference": "O19",
+				"rowNumber": 20,
+				"values": {
+					"City": "Cardiff",
+					"Phone": "029 2018 0113",
+					"Street": "2 Quay Street",
+					"Website": "riversidedental.test",
+					"Industry": "Healthcare",
+					"Postcode": "CF10 1EA",
+					"Account ID": "O19",
+					"Account Name": "Riverside Dental Care Ltd",
+					"Company Number": "09990113"
+				}
+			},
+			{
+				"reference": "O20",
+				"rowNumber": 21,
+				"values": {
+					"City": "Newcastle",
+					"Phone": "0191 498 0114",
+					"Street": "7 Quayside",
+					"Website": "fjell.test",
+					"Industry": "Food and drink",
+					"Postcode": "NE1 3DX",
+					"Account ID": "O20",
+					"Account Name": "Fjell Foods Ltd",
+					"Company Number": "09990114"
+				}
+			},
+			{
+				"reference": "O21",
+				"rowNumber": 22,
+				"values": {
+					"City": "Birmingham",
+					"Phone": "0121 496 0115",
+					"Street": "9 Bull St",
+					"Website": "lumen.test",
+					"Industry": "Manufacturing",
+					"Postcode": "B4 6AF",
+					"Account ID": "O21",
+					"Account Name": "Lumen Lighting Ltd",
+					"Company Number": "09990115"
+				}
+			},
+			{
+				"reference": "O22",
+				"rowNumber": 23,
+				"values": {
+					"City": "Glasgow",
+					"Phone": "0141 496 0116",
+					"Street": "20 Argyle St",
+					"Website": "lumenlights.test",
+					"Industry": "Electrical",
+					"Postcode": "G2 8AG",
+					"Account ID": "O22",
+					"Account Name": "Lumen Lighting Ltd",
+					"Company Number": "09990116"
+				}
+			},
+			{
+				"reference": "O23",
+				"rowNumber": 24,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0117",
+					"Street": "3 Shoreditch High St",
+					"Website": "copperleaf.test",
+					"Industry": "Design",
+					"Postcode": "E1 6PG",
+					"Account ID": "O23",
+					"Account Name": "Copperleaf Studio Ltd",
+					"Company Number": "09990117"
+				}
+			},
+			{
+				"reference": "O24",
+				"rowNumber": 25,
+				"values": {
+					"City": "London",
+					"Phone": "020 7946 0117",
+					"Street": "3 Shoreditch High St",
+					"Website": "copperleaf.test",
+					"Industry": "Design",
+					"Postcode": "E1 6PG",
+					"Account ID": "O24",
+					"Account Name": "Copper Leaf Studio",
+					"Company Number": ""
+				}
+			}
+		]
+	},
+	"vendors": [
+		{
+			"name": "Meridian Match",
+			"format": "pair",
+			"fileName": "sandbox-companies-vendor-a.csv",
+			"mapping": {
+				"format": "pair",
+				"columnA": "record_a",
+				"columnB": "record_b"
+			},
+			"stats": {
+				"rows": 7,
+				"pairs": 7,
+				"groups": null,
+				"selfPairs": 0,
+				"duplicates": 0
+			},
+			"matches": [
+				["O01", "O02"],
+				["O05", "O04"],
+				["O06", "O07"],
+				["O08", "O09"],
+				["O18", "O19"],
+				["O21", "O22"],
+				["O17", "O16"]
+			]
+		},
+		{
+			"name": "Atlas Resolve",
+			"format": "group",
+			"fileName": "sandbox-companies-vendor-b.csv",
+			"mapping": {
+				"format": "group",
+				"groupColumn": "cluster_id",
+				"referenceColumn": "account"
+			},
+			"stats": {
+				"rows": 11,
+				"pairs": 7,
+				"groups": 5,
+				"selfPairs": 0,
+				"duplicates": 0
+			},
+			"matches": [
+				["O01", "O02"],
+				["O01", "O03"],
+				["O02", "O03"],
+				["O13", "O12"],
+				["O15", "O14"],
+				["O23", "O24"],
+				["O11", "O10"]
+			]
+		}
+	],
+	"run": {
+		"number": 1,
+		"identitySame": "Both records describe the same organisation (the same legal entity), even if it appears under a trading name, an abbreviation, an old address or different formatting.",
+		"identityDifferent": "The records describe different organisations, including a parent and its subsidiary, branches registered separately, or unrelated companies that share an address, phone number or similar name.",
+		"countryCode": "US",
+		"jevFields": [
+			"company_name",
+			"website",
+			"registration_number",
+			"phone",
+			"address",
+			"city",
+			"postcode",
+			"industry"
+		],
+		"blockingRules": [
+			{
+				"id": "website",
+				"fields": ["website"]
+			},
+			{
+				"id": "registration_number",
+				"fields": ["registration_number"]
+			},
+			{
+				"id": "name_postcode",
+				"fields": ["name", "postcode"]
+			}
+		],
+		"judgmentKey": "5bbeedd14a66777249502908aa640df99d18f571527d27757e86632bee32b830",
+		"jevModel": "jev-1.13.0",
+		"threshold": 0.5,
+		"initialThreshold": 0.5,
+		"createdAt": "2026-10-03T08:44:02.474Z",
+		"completedAt": "2026-10-03T08:44:05.048Z",
+		"pairs": [
+			{
+				"records": ["O01", "O02"],
+				"ruleIds": ["website", "registration_number", "name_postcode"],
+				"matchedBy": [0, 1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.95,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:04.292Z"
+				}
+			},
+			{
+				"records": ["O05", "O04"],
+				"ruleIds": ["website", "registration_number"],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.94,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.893Z"
+				}
+			},
+			{
+				"records": ["O13", "O12"],
+				"ruleIds": ["website"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.91,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:04.238Z"
+				}
+			},
+			{
+				"records": ["O15", "O14"],
+				"ruleIds": ["website", "registration_number"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.73,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.404Z"
+				}
+			},
+			{
+				"records": ["O18", "O19"],
+				"ruleIds": ["website", "registration_number"],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.95,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.931Z"
+				}
+			},
+			{
+				"records": ["O23", "O24"],
+				"ruleIds": ["website"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.87,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.384Z"
+				}
+			},
+			{
+				"records": ["O01", "O03"],
+				"ruleIds": ["registration_number"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.87,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:05.013Z"
+				}
+			},
+			{
+				"records": ["O02", "O03"],
+				"ruleIds": ["registration_number"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.92,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:04.164Z"
+				}
+			},
+			{
+				"records": ["O06", "O07"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.12,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.386Z"
+				}
+			},
+			{
+				"records": ["O08", "O09"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.04,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:05.039Z"
+				}
+			},
+			{
+				"records": ["O21", "O22"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.08,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:05.025Z"
+				}
+			},
+			{
+				"records": ["O17", "O16"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.16,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.791Z"
+				}
+			},
+			{
+				"records": ["O11", "O10"],
+				"ruleIds": [],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.08,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:03.790Z"
+				}
+			}
+		]
+	}
+}

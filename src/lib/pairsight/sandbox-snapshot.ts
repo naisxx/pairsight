@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { ENTITY_TYPES, type EntityType } from './entity-types'
 
 // The sandbox's prepared evaluation as a file (prisma/demo/sandbox-snapshot.json):
 // a real run recorded once against Jev, by record reference rather than by
@@ -15,6 +16,8 @@ export const sandboxSnapshotSchema = z.object({
 	recordedAt: isoDate,
 	evaluation: z.object({
 		name: z.string(),
+		// Snapshots from before entity types hold people.
+		entityType: z.enum(ENTITY_TYPES).default('person'),
 		identitySame: z.string(),
 		identityDifferent: z.string(),
 		countryCode: z.string(),
@@ -80,12 +83,23 @@ export type SandboxSnapshot = z.infer<typeof sandboxSnapshotSchema>
 
 const ID_PREFIX = '5a4db0c0'
 
-// Fixed ids for everything the seed creates: `5a4db0c0-<kind>-4000-8000-<n>`,
+// Each sandbox's snapshot file, one per entity type.
+export const SANDBOX_SNAPSHOTS: Record<EntityType, string> = {
+	person: 'prisma/demo/sandbox-snapshot.json',
+	company: 'prisma/demo/sandbox-companies-snapshot.json',
+	product: 'prisma/demo/sandbox-products-snapshot.json'
+}
+
+// The UUID variant digit tells the three sandboxes' rows apart; people keep
+// the ids they had before there were three.
+const TYPE_DIGIT: Record<EntityType, string> = { person: '8', company: '9', product: 'a' }
+
+// Fixed ids for everything the seed creates: `5a4db0c0-<kind>-4000-<t>000-<n>`,
 // so seeding twice yields the same rows and the sandbox URLs never change.
-export function sandboxId(kind: number, index: number): string {
+export function sandboxId(kind: number, index: number, type: EntityType = 'person'): string {
 	const kindHex = kind.toString(16).padStart(4, '0')
 	const indexHex = index.toString(16).padStart(12, '0')
-	return `${ID_PREFIX}-${kindHex}-4000-8000-${indexHex}`
+	return `${ID_PREFIX}-${kindHex}-4000-${TYPE_DIGIT[type]}000-${indexHex}`
 }
 
 export const SANDBOX_ID_KIND = {

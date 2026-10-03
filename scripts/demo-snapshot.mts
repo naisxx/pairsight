@@ -1,5 +1,5 @@
-// Freezes a finished evaluation as the sandbox's prepared snapshot
-// (prisma/demo/sandbox-snapshot.json). Run once after recording a real run on
+// Freezes a finished evaluation as one of the sandbox's prepared snapshots
+// (SANDBOX_SNAPSHOTS: one file per entity type, chosen by the evaluation's). Run once after recording a real run on
 // fictional data — see docs/PairSight-Delivery-Plan.md, M4.
 //
 // Usage: pnpm demo:snapshot <evaluationId>
@@ -10,12 +10,13 @@
 import { writeFileSync } from 'node:fs'
 import { PrismaClient } from '@prisma/client'
 import { format, resolveConfig } from 'prettier'
+import { entityTypeOf } from '../src/lib/pairsight/entity-types.ts'
 import {
+	SANDBOX_SNAPSHOTS,
 	sandboxSnapshotSchema,
 	type SandboxSnapshot
 } from '../src/lib/pairsight/sandbox-snapshot.ts'
 
-const OUT = 'prisma/demo/sandbox-snapshot.json'
 const evaluationId = process.argv[2]
 if (evaluationId == null) {
 	console.error('Usage: pnpm demo:snapshot <evaluationId>')
@@ -25,6 +26,8 @@ if (evaluationId == null) {
 const db = new PrismaClient()
 try {
 	const evaluation = await db.evaluation.findUniqueOrThrow({ where: { id: evaluationId } })
+	const entityType = entityTypeOf(evaluation.entityType)
+	const OUT = SANDBOX_SNAPSHOTS[entityType]
 	const run = await db.run.findFirstOrThrow({
 		where: { evaluationId, status: 'completed' },
 		orderBy: { number: 'desc' },
@@ -55,6 +58,7 @@ try {
 		recordedAt: run.completedAt.toISOString(),
 		evaluation: {
 			name: evaluation.name,
+			entityType,
 			identitySame: evaluation.identitySame,
 			identityDifferent: evaluation.identityDifferent,
 			countryCode: evaluation.countryCode,

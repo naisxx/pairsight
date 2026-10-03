@@ -1,8 +1,6 @@
-import { SANDBOX_EVALUATION_ID } from '@/lib/pairsight/sandbox'
-
 // Who is looking at an evaluation. An owner sees their own live evaluations;
-// the sandbox sees only the one prepared demo evaluation, read-only. Reads
-// take a scope; mutations keep taking an owner id (getOwnedEvaluation /
+// the sandbox sees only the prepared demo evaluations, read-only. Reads take
+// a scope; mutations keep taking an owner id (getOwnedEvaluation /
 // getOwnedRun), so no request can ever change the sandbox: a demo row never
 // matches an owner filter.
 export type EvaluationScope = { kind: 'owner'; ownerId: string } | { kind: 'sandbox' }
@@ -13,11 +11,13 @@ export function ownerScope(ownerId: string): EvaluationScope {
 
 export const SANDBOX_SCOPE: EvaluationScope = { kind: 'sandbox' }
 
-// The Prisma filter on `evaluations` for what a scope may see.
+// The Prisma filter on `evaluations` for what a scope may see. Callers spread
+// it beside an `id`, so it never sets one itself. Demo evaluations are only
+// ever made by `pnpm demo:seed`: the sandbox's, owned by no one.
 export function evaluationWhere(scope: EvaluationScope) {
 	return scope.kind === 'owner'
 		? { ownerId: scope.ownerId, kind: 'live' as const }
-		: { id: SANDBOX_EVALUATION_ID, kind: 'demo' as const }
+		: { ownerId: null, kind: 'demo' as const }
 }
 
 // A primitive key for React's per-request cache.
