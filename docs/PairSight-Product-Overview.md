@@ -127,7 +127,9 @@ Saved evaluations, the fictional demo data (a public, read-only sandbox) and the
 
 V1 focuses on customer/person records in CSV or Excel files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run.
 
-**Next:** human corrections (step 9) and exports (step 10). Their controls are hidden until they're built.
+Exports shipped too: every pair's findings as CSV or Excel, and a PDF summary report that names the vendor that matched most like Jev, shows each vendor's tradeoffs and example pairs, and records the method and scope behind the numbers.
+
+**Next:** human corrections (step 9). Its controls are hidden until it's built.
 
 **Later:** companies and products, larger-scale processing and a background worker, more vendor-specific formats, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
 

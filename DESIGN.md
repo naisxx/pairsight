@@ -25,6 +25,11 @@ custom properties. Two categories:
   in `@theme` as semantic custom properties, not literal Tailwind class
   overrides scattered through components.
 
+The one exception is the PDF summary report: a PDF can't read CSS
+variables, so `src/server/pairsight/report-pdf/styles.ts` copies the light
+theme's values as hex and uses the PDF's built-in Helvetica. Change a token
+here, change it there.
+
 ## 2. Name tokens by role, not by value
 
 `--action`, not `--coral-500`. A rename should never cascade through every

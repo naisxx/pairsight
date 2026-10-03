@@ -34,9 +34,11 @@ read-only, on clearly labeled prepared results.
 
 **Shipped beyond the loop (M2–M4):** AI-estimated precision, recall and F1 on
 evaluated pairs, group exports, up to three vendors, the match threshold set
-in Rules, the Runs centre, the sandbox and a polished landing page.
+in Rules, the Runs centre, the sandbox, a polished landing page, CSV and
+Excel import, and the findings (CSV or Excel) and summary report (PDF)
+exports.
 
-**Later:** human corrections, exports (a findings CSV and a summary), fuzzy
+**Later:** human corrections, fuzzy
 name matching, and an "uncertain" category (today borderline scores are a
 low-confidence flag and filter, not a category).
 
