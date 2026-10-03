@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import { readPdfText } from './pdf'
 import {
 	exportFindings,
 	fixtureWorkbook,
@@ -317,7 +318,20 @@ test.describe('PairSight vertical slice', () => {
 		const runId = new URL(page.url()).pathname.split('/runs/')[1]?.split('/')[0]
 		const denied = await outsider?.request.get(`/api/runs/${runId}/findings`)
 		expect(denied?.status()).toBe(404)
+		const deniedSummary = await outsider?.request.get(`/api/runs/${runId}/summary`)
+		expect(deniedSummary?.status()).toBe(404)
 		await outsider?.close()
+
+		// The summary report: the verdict for the one vendor, its scorecard and the
+		// method, with the caveats that keep the numbers honest.
+		const summary = await exportFindings(page, 1, /^Summary report/)
+		expect(summary.suggestedFilename()).toBe('pairsight-demo-scenario-run-1-summary.pdf')
+		const report = await readPdfText(await summary.path())
+		expect(report).toContain('Demo scenario · Run 1')
+		expect(report).toContain('On these 24 records, Vendor A agreed with Jev')
+		expect(report).toContain('2 wrong merges')
+		expect(report).toContain('AI-estimated · evaluated pairs only')
+		expect(report).toContain('Human review None. Every decision here is Jev’s.')
 
 		await tile(page, 'Vendor only').click()
 		await page.waitForURL(/tab=detailed/)

@@ -1,6 +1,7 @@
 import { execSync } from 'node:child_process'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { readPdfText } from './pdf'
 import { exportFindings, readWorkbook } from './workbooks'
 
 // The public sandbox (/sandbox): the whole app, read-only, on the prepared
@@ -108,6 +109,12 @@ test.describe('Sandbox', () => {
 		expect(findings.header).toContain('Northwind Match: category')
 		expect(findings.header).toContain('Clearline Resolve: category')
 		expect(findings.rows).toHaveLength(8)
+		// So is the summary report: both vendors ranked, and the one-line head to head.
+		const summary = await exportFindings(page, 1, /^Summary report/)
+		const report = await readPdfText(await summary.path())
+		expect(report).toContain('PairSight sandbox · fictional data')
+		expect(report).toMatch(/1 Clearline Resolve .* 2 Northwind Match/)
+		expect(report).toContain('Jev sided with Clearline Resolve in 3 of 5')
 
 		// The threshold previews live; a run keeps its own, so there's no Apply.
 		await page.getByRole('button', { name: /^Decision threshold/ }).click()
