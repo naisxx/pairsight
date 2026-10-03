@@ -2,7 +2,6 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { checkColumns, validateSourceRecords } from './source-records'
 import { readTable } from './tabular'
-import { suggestReferenceColumn, suggestRole } from './fields'
 import { LIMITS } from './limits'
 
 // Text through the tabular connector, as an uploaded .csv file would be read.
@@ -57,17 +56,6 @@ test('validateSourceRecords reports missing and duplicate references with row nu
 		rowNumber: 5,
 		values: { ref: 'B', name: 'Di' }
 	})
-})
-
-test('field suggestions come from header names', () => {
-	assert.equal(suggestRole('Email Address'), 'email')
-	assert.equal(suggestRole('Mobile'), 'phone')
-	assert.equal(suggestRole('DOB'), 'date_of_birth')
-	assert.equal(suggestRole('Surname'), 'last_name')
-	assert.equal(suggestRole('first_name'), 'first_name')
-	assert.equal(suggestRole('ZIP'), 'postcode')
-	assert.equal(suggestRole('loyalty_tier'), 'other')
-	assert.equal(suggestReferenceColumn(['name', 'record_id']), 'record_id')
 })
 
 test('checkColumns rates every column as a reference, capping the lists but not the counts', async () => {

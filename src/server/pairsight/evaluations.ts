@@ -2,6 +2,7 @@ import 'server-only'
 import { z } from 'zod'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
+import { defaultRules } from '@/lib/pairsight/entity-types'
 import { DEFAULT_IDENTITY } from './judgment'
 import { evaluationWhere, ownerScope, type EvaluationScope } from './scope'
 import { blockingRulesSchema, type blockingRuleSchema } from './schemas'
@@ -13,11 +14,10 @@ import { blockingRulesSchema, type blockingRuleSchema } from './schemas'
 // be probed. Datasets, vendor exports and the workspace build on
 // getOwnedEvaluation.
 
-export const DEFAULT_BLOCKING_RULES: Array<z.infer<typeof blockingRuleSchema>> = [
-	{ id: 'email', fields: ['email'] },
-	{ id: 'phone', fields: ['phone'] },
-	{ id: 'name_postcode', fields: ['name', 'postcode'] }
-]
+// A new evaluation starts as people; saving its records sets the real type
+// and that type's defaults (saveSourceDataset).
+export const DEFAULT_BLOCKING_RULES: Array<z.infer<typeof blockingRuleSchema>> =
+	defaultRules('person')
 
 export function evaluationNotFound() {
 	return new AppError('That evaluation doesn’t exist, or you don’t have access to it.', {

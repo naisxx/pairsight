@@ -24,6 +24,7 @@ import {
 	ArrowsClockwise,
 	ArrowsLeftRight,
 	ArrowSquareOut,
+	BuildingOffice,
 	Buildings,
 	Calendar,
 	CaretDown,
@@ -68,6 +69,7 @@ import {
 	MinusCircle,
 	Moon,
 	NotEquals,
+	Package,
 	PaperPlaneTilt,
 	Pause,
 	PencilSimple,
@@ -227,6 +229,8 @@ export const NoMatchesIcon = (props: IconProps) => <Glyph source={FunnelX} {...p
 export const NotFoundIcon = (props: IconProps) => <Glyph source={Compass} {...props} />
 export const SendIcon = (props: IconProps) => <Glyph source={PaperPlaneTilt} {...props} />
 export const VendorIcon = (props: IconProps) => <Glyph source={Buildings} {...props} />
+export const OrganisationIcon = (props: IconProps) => <Glyph source={BuildingOffice} {...props} />
+export const ProductIcon = (props: IconProps) => <Glyph source={Package} {...props} />
 export const WaitingIcon = (props: IconProps) => <Glyph source={HourglassMedium} {...props} />
 export const AiIcon = (props: IconProps) => <Glyph source={Robot} {...props} />
 export const ChartIcon = (props: IconProps) => <Glyph source={ChartBar} {...props} />

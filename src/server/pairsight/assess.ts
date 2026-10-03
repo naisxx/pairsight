@@ -54,7 +54,7 @@ export async function assess({
 				},
 				request
 			)
-			const answer = parseJevAnswer(body)
+			const answer = parseJevAnswer(body, config.entityType)
 			await db.assessment.update({
 				where: { id: assessmentId },
 				data: answer.ok

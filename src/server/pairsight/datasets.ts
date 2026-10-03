@@ -1,5 +1,7 @@
 import 'server-only'
+import { defaultRules, entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
+import { defaultIdentity } from './judgment'
 import type { SourceRecordInput } from './source-records'
 import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
@@ -27,7 +29,8 @@ export async function saveSourceDataset({
 	fileName,
 	referenceColumn,
 	columnRoles,
-	records
+	records,
+	entityType
 }: {
 	ownerId: string
 	evaluationId: string
@@ -35,9 +38,23 @@ export async function saveSourceDataset({
 	referenceColumn: string
 	columnRoles: Record<string, FieldRole>
 	records: SourceRecordInput[]
+	entityType: EntityType
 }) {
-	await getOwnedEvaluation({ ownerId, id: evaluationId })
+	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
 	const jevFields = [...new Set(Object.values(columnRoles).filter(isIdentityRole))]
+	// A replacement of another kind starts from the new type's identity
+	// definition and rules; the same type keeps what the user set. (A new
+	// evaluation already holds the person defaults, so a first person file
+	// changes nothing.)
+	const typeDefaults =
+		entityTypeOf(evaluation.entityType) === entityType
+			? { entityType }
+			: {
+					entityType,
+					identitySame: defaultIdentity(entityType).same,
+					identityDifferent: defaultIdentity(entityType).different,
+					blockingRules: defaultRules(entityType)
+				}
 	return db.$transaction(async (tx) => {
 		const dataset = await tx.sourceDataset.create({
 			data: { evaluationId, fileName, rowCount: records.length, referenceColumn, columnRoles },
@@ -51,7 +68,10 @@ export async function saveSourceDataset({
 				values: record.values
 			}))
 		})
-		await tx.evaluation.update({ where: { id: evaluationId }, data: { jevFields } })
+		await tx.evaluation.update({
+			where: { id: evaluationId },
+			data: { jevFields, ...typeDefaults }
+		})
 		return dataset
 	})
 }

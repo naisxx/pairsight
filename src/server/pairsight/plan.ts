@@ -1,4 +1,5 @@
 import 'server-only'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { buildBlockedPairs, type RuleStats } from './blocking'
 import { summarizePlan, type PlanBlocker } from './plan-summary'
@@ -69,6 +70,7 @@ export async function computePlan({
 	})
 
 	const config: JudgmentConfig = {
+		entityType: entityTypeOf(evaluation.entityType),
 		identity: { same: evaluation.identitySame, different: evaluation.identityDifferent },
 		jevFields,
 		country: evaluation.countryCode,

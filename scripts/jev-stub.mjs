@@ -74,6 +74,54 @@ function score(a, b) {
 	return Math.min(0.98, Math.max(0.02, Math.round(value * 100) / 100))
 }
 
+const LEGAL_FORM = /\s+(ltd|limited|inc|llc|plc|gmbh|corp|corporation|co)\.?$/
+const companyName = (value) => norm(value).replace(/[.,]/g, '').replace(LEGAL_FORM, '')
+const host = (value) =>
+	norm(value)
+		.replace(/^[a-z]+:\/\//, '')
+		.replace(/^www\./, '')
+		.split('/')[0]
+const code = (value) => norm(value).replace(/[^a-z0-9]/g, '')
+
+// Organisations: the same registration or website says same; a different
+// registration says different. Roughly what the live check showed.
+function scoreCompany(a, b) {
+	let value = 0.1
+	const both = (key) => norm(a[key]) !== '' && norm(b[key]) !== ''
+	if (both('registration_number'))
+		value += code(a.registration_number) === code(b.registration_number) ? 0.45 : -0.5
+	if (both('website') && host(a.website) === host(b.website)) value += 0.35
+	if (both('company_name') && companyName(a.company_name) === companyName(b.company_name))
+		value += 0.35
+	if (both('phone') && digits(a.phone) === digits(b.phone)) value += 0.1
+	if (both('city') && norm(a.city) === norm(b.city)) value += 0.05
+	return Math.min(0.98, Math.max(0.02, Math.round(value * 100) / 100))
+}
+
+// Products: one barcode or part number says same; another size, colour or
+// brand says different.
+function scoreProduct(a, b) {
+	let value = 0.1
+	const both = (key) => norm(a[key]) !== '' && norm(b[key]) !== ''
+	if (both('gtin'))
+		value += code(a.gtin).padStart(14, '0') === code(b.gtin).padStart(14, '0') ? 0.6 : -0.5
+	if (both('mpn') && code(a.mpn) === code(b.mpn)) value += 0.35
+	if (both('sku') && code(a.sku) === code(b.sku)) value += 0.3
+	if (both('brand')) value += norm(a.brand) === norm(b.brand) ? 0.1 : -0.4
+	if (both('product_name') && norm(a.product_name) === norm(b.product_name)) value += 0.2
+	for (const variant of ['size', 'color']) {
+		if (both(variant) && norm(a[variant]) !== norm(b[variant])) value -= 0.5
+	}
+	return Math.min(0.98, Math.max(0.02, Math.round(value * 100) / 100))
+}
+
+// The question id says what the records are (src/lib/pairsight/entity-types.ts).
+function scoreFor(questionId, a, b) {
+	if (questionId === 'same_organisation') return scoreCompany(a, b)
+	if (questionId === 'same_product') return scoreProduct(a, b)
+	return score(a, b)
+}
+
 function send(response, status, body) {
 	response.writeHead(status, { 'content-type': 'application/json' })
 	response.end(JSON.stringify(body))
@@ -132,7 +180,7 @@ const server = createServer((request, response) => {
 		}
 		send(response, 200, {
 			model: 'jev-stub',
-			answers: { [questionId]: { type: 'noul', noul: score(a, b) } },
+			answers: { [questionId]: { type: 'noul', noul: scoreFor(questionId, a, b) } },
 			usage: { input_tokens: Math.round(raw.length / 4), output_tokens: 1 }
 		})
 	})

@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { labelFor, type EntityType } from '@/lib/pairsight/entity-types'
 import { PAGE_SIZES, SEARCH_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 import { categorize, CATEGORIES, isLowConfidence, type Category } from './decisions'
 import { mapRecordFields, type FieldRole } from './fields'
@@ -100,18 +101,21 @@ const CATEGORY_ORDER: ResultCategory[] = [
 	'incomplete'
 ]
 
+// How a record is named on screen and in exports: its type's label fields
+// (a person's name, an organisation's name, a product's brand and name), or
+// its reference when those are empty.
 export function recordLabel({
 	values,
 	columnRoles,
-	reference
+	reference,
+	entityType
 }: {
 	values: Record<string, string>
 	columnRoles: Record<string, FieldRole>
 	reference: string
+	entityType: EntityType
 }): string {
-	const fields = mapRecordFields({ values, columnRoles })
-	const name = fields.full_name ?? [fields.first_name, fields.last_name].filter(Boolean).join(' ')
-	return name !== '' ? name : reference
+	return labelFor(entityType, mapRecordFields({ values, columnRoles })) ?? reference
 }
 
 // Storage keeps pairs in canonical id order; people read them in reference

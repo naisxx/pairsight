@@ -6,7 +6,14 @@ import { redirect } from '@/i18n/routing'
 import { FILE_NAME_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 import { MAX_FILE_BYTES } from '@/lib/pairsight/tabular-formats'
 import { readTable, type TableError, type TableResult } from '@/server/pairsight/tabular'
-import { suggestReferenceColumn, suggestRole } from '@/server/pairsight/fields'
+import type { EntityType } from '@/lib/pairsight/entity-types'
+import {
+	detectEntityType,
+	suggestFields,
+	suggestReferenceColumn,
+	type TypeDetection
+} from '@/lib/pairsight/field-dictionary'
+import type { FieldRole } from '@/server/pairsight/fields'
 
 // PairSight mutations. Every action requires a signed-in user and goes through
 // the owner-scoped data access in src/server/pairsight/. Validation problems
@@ -14,6 +21,8 @@ import { suggestReferenceColumn, suggestRole } from '@/server/pairsight/fields'
 // to fix — while real failures go through AppError/captureError.
 
 const PREVIEW_ROWS = 10
+// The rows whose values back up a column's suggested field and the file's type.
+const SAMPLE_ROWS = 50
 const SHEET_NAME_MAX_LENGTH = 31
 
 export const idSchema = z.string().uuid()
@@ -57,23 +66,41 @@ export type FilePreview =
 			headers: string[]
 			sampleRows: string[][]
 			rowCount: number
-			suggestedRoles: Record<string, ReturnType<typeof suggestRole>>
+			// Each type's suggested field per column, so switching type on the
+			// screen needs no round trip.
+			suggestedRoles: Record<EntityType, Record<string, FieldRole>>
 			suggestedReference: string | undefined
+			detection: Pick<TypeDetection, 'type' | 'confident'>
 			sheet: string | undefined
 	  }
 	| { ok: false; error: TableError }
 
-// The first rows plus role suggestions, for the mapping screens.
+// The first rows plus field suggestions and the detected type, for the
+// mapping screens (src/lib/pairsight/field-dictionary.ts).
 export function previewTable(parsed: TableResult): FilePreview {
 	if (!parsed.ok) return parsed
 	const { headers, rows } = parsed.table
+	const sample = rows.slice(0, SAMPLE_ROWS)
+	const reference = suggestReferenceColumn(headers)
+	const rolesAs = (type: EntityType): Record<string, FieldRole> => {
+		const fields = suggestFields({ headers, rows: sample, type, skip: reference })
+		return Object.fromEntries(
+			headers.map((header) => [header, fields.get(header)?.role ?? 'other'])
+		)
+	}
+	const { type, confident } = detectEntityType({ headers, rows: sample, skip: reference })
 	return {
 		ok: true,
 		headers,
 		sampleRows: rows.slice(0, PREVIEW_ROWS),
 		rowCount: rows.length,
-		suggestedRoles: Object.fromEntries(headers.map((header) => [header, suggestRole(header)])),
-		suggestedReference: suggestReferenceColumn(headers),
+		suggestedRoles: {
+			person: rolesAs('person'),
+			company: rolesAs('company'),
+			product: rolesAs('product')
+		},
+		suggestedReference: reference,
+		detection: { type, confident },
 		sheet: parsed.sheet
 	}
 }

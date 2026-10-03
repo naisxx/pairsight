@@ -55,13 +55,7 @@ export function SavedRecords({
 	const [isReplacing, setIsReplacing] = useState(false)
 
 	if (isReplacing) {
-		return (
-			<RecordsUploader
-				evaluationId={evaluationId}
-				roles={roles}
-				onCancel={() => setIsReplacing(false)}
-			/>
-		)
+		return <RecordsUploader evaluationId={evaluationId} onCancel={() => setIsReplacing(false)} />
 	}
 
 	const mapping = savedMapping({ referenceColumn, columnRoles })

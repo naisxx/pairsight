@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { MAX_CUSTOM_RULES, MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
 import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/pairsight/decisions'
 import { COUNTRY_CODE_PATTERN } from '@/lib/pairsight/input-limits'
-import { RULE_PRESETS } from './blocking'
+import { ENTITY_TYPES, MAX_PRESETS } from '@/lib/pairsight/entity-types'
 import { FIELD_ROLES } from './fields'
 
 // Runtime contracts for PairSight's JSON columns and action inputs. JSON read
@@ -15,7 +15,9 @@ export const identityRoleSchema = fieldRoleSchema.exclude(['other'])
 export const blockingFieldSchema = z.union([identityRoleSchema, z.literal('name')])
 
 const MAX_RULE_ID_LENGTH = 64
-const MAX_RULES = RULE_PRESETS.length + MAX_CUSTOM_RULES
+const MAX_RULES = MAX_PRESETS + MAX_CUSTOM_RULES
+
+export const entityTypeSchema = z.enum(ENTITY_TYPES)
 
 export const blockingRuleSchema = z.object({
 	id: z.string().min(1).max(MAX_RULE_ID_LENGTH),

@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto'
 import { z } from 'zod'
 import type { DecisionRequest, TypesafeFailureKind } from '@/server/ai/typesafe'
 import type { TrackedModel } from '@/server/lib/ai-usage/models'
+import { ENTITY_CONFIG, type EntityType } from '@/lib/pairsight/entity-types'
 import type { IdentityRole } from './fields'
 import type { MappedFields } from './normalize'
 
@@ -18,20 +19,21 @@ export const JEV_MODEL: TrackedModel = 'jev-1.13.0'
 export const JEV_FEATURE = 'pairsight_pair_judgment'
 
 // Bump when the request shape or wording changes: it is part of the judgment
-// key, so earlier assessments stop being reused.
+// key, so earlier assessments stop being reused. The question itself comes
+// from the entity type (src/lib/pairsight/entity-types.ts).
 export const REQUEST_TEMPLATE_VERSION = 1
-
-const QUESTION_ID = 'same_individual'
 
 export type IdentityDefinition = { same: string; different: string }
 
-export const DEFAULT_IDENTITY: IdentityDefinition = {
-	same: 'Both records describe the same individual person, even if details are formatted differently, misspelled, abbreviated or out of date.',
-	different:
-		'The records describe different people, including relatives or people who share a household, address, phone number or email.'
+// A person's default definition; each type has its own (defaultIdentity).
+export const DEFAULT_IDENTITY: IdentityDefinition = ENTITY_CONFIG.person.identity
+
+export function defaultIdentity(type: EntityType): IdentityDefinition {
+	return ENTITY_CONFIG[type].identity
 }
 
 export type JudgmentConfig = {
+	entityType: EntityType
 	identity: IdentityDefinition
 	jevFields: IdentityRole[]
 	country: string
@@ -39,10 +41,13 @@ export type JudgmentConfig = {
 }
 
 // Identical records + an identical judgment config = a reusable assessment.
-// The threshold is deliberately absent: changing it only re-decides.
+// The threshold is deliberately absent: changing it only re-decides. A
+// person's key leaves the type out, so it is exactly the key people had
+// before other types existed and their earlier judgments stay reusable.
 export function judgmentKey(config: JudgmentConfig): string {
 	const canonical = JSON.stringify({
 		version: REQUEST_TEMPLATE_VERSION,
+		...(config.entityType === 'person' ? {} : { entityType: config.entityType }),
 		identity: config.identity,
 		jevFields: [...config.jevFields].sort(),
 		country: config.country.toUpperCase(),
@@ -69,6 +74,7 @@ export function buildJevRequest({
 	recordB: MappedFields
 	config: JudgmentConfig
 }): DecisionRequest {
+	const { question } = ENTITY_CONFIG[config.entityType]
 	return {
 		state: {
 			record_1: recordState(recordA, config.jevFields),
@@ -76,9 +82,9 @@ export function buildJevRequest({
 			country: config.country.toUpperCase()
 		},
 		questions: {
-			[QUESTION_ID]: {
+			[question.id]: {
 				type: 'noul',
-				instructions: 'Do record_1 and record_2 describe the same individual person?',
+				instructions: question.instructions,
 				criteria: { true: config.identity.same, false: config.identity.different }
 			}
 		}
@@ -87,25 +93,25 @@ export function buildJevRequest({
 
 const answerSchema = z.object({
 	model: z.string().optional(),
-	answers: z.object({
-		[QUESTION_ID]: z.object({ type: z.literal('noul'), noul: z.number().min(0).max(1) })
-	})
+	answers: z.record(
+		z.string(),
+		z.object({ type: z.literal('noul'), noul: z.number().min(0).max(1) }).optional()
+	)
 })
 
 export type JevAnswer =
 	| { ok: true; score: number; modelReported: string | null }
 	| { ok: false; code: 'invalid_response' }
 
-// A response without a documented `noul` in [0, 1] is a failed evaluation,
-// never a guessed score.
-export function parseJevAnswer(body: unknown): JevAnswer {
+// A response without a documented `noul` in [0, 1] for the question asked
+// (the entity type's) is a failed evaluation, never a guessed score.
+export function parseJevAnswer(body: unknown, entityType: EntityType): JevAnswer {
 	const parsed = answerSchema.safeParse(body)
-	if (!parsed.success) return { ok: false, code: 'invalid_response' }
-	return {
-		ok: true,
-		score: parsed.data.answers[QUESTION_ID].noul,
-		modelReported: parsed.data.model ?? null
-	}
+	const answer = parsed.success
+		? parsed.data.answers[ENTITY_CONFIG[entityType].question.id]
+		: undefined
+	if (!parsed.success || answer == null) return { ok: false, code: 'invalid_response' }
+	return { ok: true, score: answer.noul, modelReported: parsed.data.model ?? null }
 }
 
 export type FailureAction = 'retry' | 'fail' | 'stop_run'

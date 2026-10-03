@@ -3,7 +3,7 @@ import { RecordsUploader } from '@/components/pairsight/records/records-uploader
 import { SavedRecords } from '@/components/pairsight/records/saved-records'
 import { StepHeader } from '@/components/pairsight/step-layout'
 import { getDatasetPreview } from '@/server/pairsight/datasets'
-import { FIELD_ROLES } from '@/server/pairsight/fields'
+import { entityTypeOf, rolesFor } from '@/lib/pairsight/entity-types'
 import { parseColumnRoles, parseRecordValues } from '@/server/pairsight/json'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 
@@ -20,19 +20,18 @@ export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 		return (
 			<>
 				{header}
-				<RecordsUploader evaluationId={id} roles={FIELD_ROLES} />
+				<RecordsUploader evaluationId={id} />
 			</>
 		)
 	}
 
 	const records = await getDatasetPreview(dataset.id, PREVIEW_ROWS)
+	const roles = rolesFor(entityTypeOf(workspace.evaluation.entityType))
 	const columnRoles = parseColumnRoles(dataset.columnRoles)
 	// Stored values don't keep the file's column order, so: the reference,
 	// then mapped fields in field order, then the rest.
 	const others = Object.keys(columnRoles)
-	const mapped = FIELD_ROLES.flatMap((role) =>
-		others.filter((column) => columnRoles[column] === role && role !== 'other')
-	)
+	const mapped = roles.flatMap((role) => others.filter((column) => columnRoles[column] === role))
 	const headers = [
 		dataset.referenceColumn,
 		...mapped,
@@ -43,7 +42,7 @@ export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 			{header}
 			<SavedRecords
 				evaluationId={id}
-				roles={FIELD_ROLES}
+				roles={roles}
 				fileName={dataset.fileName}
 				savedAt={dataset.createdAt}
 				rowCount={dataset.rowCount}
