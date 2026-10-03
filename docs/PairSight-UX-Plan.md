@@ -15,9 +15,9 @@ build order follows [PairSight-Delivery-Plan.md](PairSight-Delivery-Plan.md).
 
 The whole app was rebuilt to a finished design. Behaviour stayed ours
 (blocking, mapping, validation, runs, gating); the look, layout, copy and
-motion follow the design. Export and human review are **not built**:
-anything of theirs in the design is hidden until they are. The demo became
-the Sandbox (below).
+motion follow the design. Human review is **not built**: anything of it in
+the design is hidden until it is. The demo
+became the Sandbox (below).
 
 **Shell.** A 248 px sidebar (60 px collapsed, a 280 px drawer on phones,
 toggled with `[` and remembered in a cookie) holds the Evaluations link, the
@@ -31,9 +31,18 @@ it redirects to where the evaluation is up to.
 
 **Screens.**
 
-- **Landing (`/`, signed out only)** — hero with a static product preview,
-  How it works, Honest about what it measures, a call to action and footer.
+- **Landing (`/`, signed out only)**:
+  - A hero with the product preview.
+  - How it works: three step cards whose illustrations drift in parallax.
+  - A closer look: a pair and a run's card, layered in parallax.
+  - Honest about what it measures.
+  - A deep coral call-to-action panel, and the footer.
+
   Signed in, `/`, `/sign-in` and `/sign-up` go to `/evaluations`.
+
+- **UI style** — Classic (default) or Glass, from the Theme menu's Style
+  section; Glass makes surfaces frosted and translucent over a soft colour
+  wash (`DESIGN.md` §8).
 - **Sign in / Sign up / Welcome** — one column, the form in a card; fields
   are checked once submitted (then as you type), never on blur; a show/hide
   password toggle. Welcome asks for a full name (required, ≤ 100) before the
@@ -42,7 +51,9 @@ it redirects to where the evaluation is up to.
   precision/recall/F1 per vendor, Continue setup with stage bars, and a
   searchable table with Open / Rename / Delete. Names are unique per
   account, ignoring case.
-- **Records** — drop zone; then each PairSight field mapped to one of your
+- **Records** — drop zone (CSV or Excel `.xlsx`; a workbook with more than
+  one sheet of data shows a sheet picker, and the file bar names the sheet
+  read); then each PairSight field mapped to one of your
   columns (with suggestions and sample values), a Validation panel checking
   references as you choose, and a 10-row preview. Continue saves and goes to
   Vendors. Once saved the dataset is read-only; Replace file asks first.
@@ -93,6 +104,40 @@ it redirects to where the evaluation is up to.
   here, Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
 - **Not found / errors** — a centred page; signed in, the way back is
   Evaluations.
+- **Export** menu (Results header, beside the run picker) — the run's
+  findings as one file, CSV or Excel: every pair, with both records' mapped
+  fields, Jev's status, score, model and failure reason, PairSight's decision
+  at the run's threshold, low confidence, what found it, and each vendor's
+  decision and category. It works in the sandbox too, and is never cached. The
+  CSV is UTF-8 with a byte-order mark and formula-safe; the workbook has one
+  "Findings" sheet with a bold, frozen, filterable header, sized columns, the
+  score as a number and every other cell as text. Every file, read or
+  written, goes through one tabular connector
+  (`src/server/pairsight/tabular/`): a format is one adapter, and the checks
+  are shared.
+- **Summary report** (Export menu → "Summary report (.pdf)") — a PDF for
+  whoever has to justify a vendor choice, built for the analyst handing it to
+  their boss:
+  1. **The verdict:** which vendor matched most like Jev on these records
+     (by F1), plus the safest (fewest wrong merges) and the most complete
+     (fewest missed duplicates) when they're different vendors. Then whether
+     that lead holds at every threshold, and a scorecard that puts each
+     vendor's precision, recall and F1 in business terms.
+  2. **Tradeoffs:** what each vendor gets wrong, and which fields those
+     pairs usually share or differ on. A chart of each vendor's F1 across
+     thresholds, and a head-to-head per pair of vendors: where only one
+     matched a pair, whose side Jev took.
+  3. **Examples:** each vendor's clearest wrong merges and missed
+     duplicates, with the records' fields side by side.
+  4. **Method and scope:** the files, the fields sent to Jev, the identity
+     definition, rules, coverage (including the pairs never compared), the
+     Jev model and run times, and "Human review: none".
+
+  Every page carries the caveat that these are AI-estimated agreement with
+  Jev on evaluated pairs, not verified accuracy. It's drawn on the server
+  (`src/server/pairsight/report-pdf/`, `@react-pdf/renderer`) from a pure
+  model (`report-summary.ts`), works in the sandbox, and is never cached.
+
 - **Sandbox (`/sandbox`, M4)** — the whole app on one prepared, fictional
   evaluation (24 records, a pair-format and a group-format vendor, one run
   judged by the real Jev), with no login. Every screen is the real one,
@@ -188,18 +233,18 @@ new tokens when M1 implements them.
 
 ## 2. User journey (agreed behavior; "Next" means after Friday)
 
-| Stage          | User goal                                                   | Primary action                                  | Backend status shown          | Notes                                                                               |
-| -------------- | ----------------------------------------------------------- | ----------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------- |
-| Start          | Understand the product, try it                              | **Try demo** / **Start evaluation**             | —                             | The demo needs no login. Starting requires login.                                   |
-| New evaluation | Name it                                                     | **Create evaluation**                           | —                             | Lands on the Records step                                                           |
-| Records        | Upload the source CSV, pick the reference column, map roles | **Continue to vendors**                         | Upload → parsed → validated   | Missing or duplicate references block continuing                                    |
-| Vendors        | Upload a pair CSV, pick A/B columns, confirm it's complete  | **Continue to rules**                           | Validated or errors           | Unknown references block. Completeness confirmation is required. Group CSV is Next. |
-| Rules          | Define "same individual" and the blocking rules             | **Review plan**                                 | Live pair counts per rule     | Warning above 50 records per bucket                                                 |
-| Plan           | Check what will be evaluated                                | **Start evaluation**                            | Limit check                   | Over the cap: blocked, with the cause                                               |
-| Runs centre    | Watch progress, handle failures (a dialog, not a step)      | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the app is closed                                                 |
-| Results        | See agreement per vendor, adjust threshold, filter          | Open a pair                                     | Run status, threshold, model  | Incomplete pairs are counted separately                                             |
-| Pair detail    | Understand one decision                                     | **Next pair** (J/K)                             | That pair's assessment status | Human review is Next                                                                |
-| Export         | Take findings away                                          | **Export CSV**                                  | —                             | **Next.** The button is hidden until it exists.                                     |
+| Stage          | User goal                                                             | Primary action                                  | Backend status shown          | Notes                                                               |
+| -------------- | --------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------- | ------------------------------------------------------------------- |
+| Start          | Understand the product, try it                                        | **Try demo** / **Start evaluation**             | —                             | The demo needs no login. Starting requires login.                   |
+| New evaluation | Name it                                                               | **Create evaluation**                           | —                             | Lands on the Records step                                           |
+| Records        | Upload the source file, pick the reference column, map roles          | **Continue to vendors**                         | Upload → parsed → validated   | Missing or duplicate references block continuing                    |
+| Vendors        | Upload a pair or group file, check its columns, confirm it's complete | **Continue to rules**                           | Validated or errors           | Unknown references block. Completeness confirmation is required.    |
+| Rules          | Define "same individual" and the blocking rules                       | **Review plan**                                 | Live pair counts per rule     | Warning above 50 records per bucket                                 |
+| Plan           | Check what will be evaluated                                          | **Start evaluation**                            | Limit check                   | Over the cap: blocked, with the cause                               |
+| Runs centre    | Watch progress, handle failures (a dialog, not a step)                | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the app is closed                                 |
+| Results        | See agreement per vendor, adjust threshold, filter                    | Open a pair                                     | Run status, threshold, model  | Incomplete pairs are counted separately                             |
+| Pair detail    | Understand one decision                                               | **Next pair** (J/K)                             | That pair's assessment status | Human review is Next                                                |
+| Export         | Take findings away                                                    | **Export** (CSV, Excel, PDF)                    | —                             | Built: the findings (every pair and vendor) and the summary report. |
 
 ## 3. Navigation and hierarchy
 

@@ -1,11 +1,17 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { checkColumns, parseCsv, validateSourceRecords } from './csv'
+import { checkColumns, validateSourceRecords } from './source-records'
+import { readTable } from './tabular'
 import { suggestReferenceColumn, suggestRole } from './fields'
 import { LIMITS } from './limits'
 
-test('parseCsv strips a BOM, keeps quoted commas and newlines, trims cells', () => {
-	const result = parseCsv('﻿id,name\n1,"Smith, Jane"\n2,"Line one\nline two"\n3,  Ann  \n')
+// Text through the tabular connector, as an uploaded .csv file would be read.
+async function parseCsv(text: string, maxRows = LIMITS.maxSourceRecords) {
+	return readTable({ fileName: 'test.csv', bytes: new TextEncoder().encode(text), maxRows })
+}
+
+test('the CSV reader strips a BOM, keeps quoted commas and newlines, trims cells', async () => {
+	const result = await parseCsv('﻿id,name\n1,"Smith, Jane"\n2,"Line one\nline two"\n3,  Ann  \n')
 	assert.ok(result.ok)
 	assert.deepEqual(result.table.headers, ['id', 'name'])
 	assert.deepEqual(result.table.rows, [
@@ -15,32 +21,32 @@ test('parseCsv strips a BOM, keeps quoted commas and newlines, trims cells', () 
 	])
 })
 
-test('parseCsv rejects empty files, blank or duplicate headers and ragged rows', () => {
-	assert.deepEqual(parseCsv(''), { ok: false, error: { code: 'empty' } })
-	assert.deepEqual(parseCsv('id\n'), { ok: false, error: { code: 'empty' } })
-	assert.deepEqual(parseCsv('id,,name\n1,2,3'), {
+test('the CSV reader rejects empty files, blank or duplicate headers and ragged rows', async () => {
+	assert.deepEqual(await parseCsv(''), { ok: false, error: { code: 'empty' } })
+	assert.deepEqual(await parseCsv('id\n'), { ok: false, error: { code: 'empty' } })
+	assert.deepEqual(await parseCsv('id,,name\n1,2,3'), {
 		ok: false,
 		error: { code: 'blank_header', columns: [2] }
 	})
-	assert.deepEqual(parseCsv('id,id\n1,2'), {
+	assert.deepEqual(await parseCsv('id,id\n1,2'), {
 		ok: false,
 		error: { code: 'duplicate_header', headers: ['id'] }
 	})
-	assert.deepEqual(parseCsv('id,name\n1,Ann\n2\n3,Bo'), {
+	assert.deepEqual(await parseCsv('id,name\n1,Ann\n2\n3,Bo'), {
 		ok: false,
 		error: { code: 'ragged_rows', rows: [3] }
 	})
 })
 
-test('parseCsv enforces the row limit', () => {
+test('the CSV reader enforces the row limit', async () => {
 	const rows = Array.from({ length: LIMITS.maxSourceRecords + 1 }, (_, i) => `${i},x`).join('\n')
-	const result = parseCsv(`id,name\n${rows}`)
+	const result = await parseCsv(`id,name\n${rows}`)
 	assert.equal(result.ok, false)
 	assert.equal(!result.ok && result.error.code, 'too_many_rows')
 })
 
-test('validateSourceRecords reports missing and duplicate references with row numbers', () => {
-	const parsed = parseCsv('ref,name\nA,Ann\n,Bo\nA,Cy\nB,Di')
+test('validateSourceRecords reports missing and duplicate references with row numbers', async () => {
+	const parsed = await parseCsv('ref,name\nA,Ann\n,Bo\nA,Cy\nB,Di')
 	assert.ok(parsed.ok)
 	const result = validateSourceRecords({ table: parsed.table, referenceColumn: 'ref' })
 	assert.equal(result.isValid, false)
@@ -64,8 +70,8 @@ test('field suggestions come from header names', () => {
 	assert.equal(suggestReferenceColumn(['name', 'record_id']), 'record_id')
 })
 
-test('checkColumns rates every column as a reference, capping the lists but not the counts', () => {
-	const parsed = parseCsv('ref,name\nR1,Ann\nR1,\n,Bo\nR2,Bo\nR3,Bo\n')
+test('checkColumns rates every column as a reference, capping the lists but not the counts', async () => {
+	const parsed = await parseCsv('ref,name\nR1,Ann\nR1,\n,Bo\nR2,Bo\nR3,Bo\n')
 	assert.ok(parsed.ok)
 	const checks = checkColumns(parsed.table, 1)
 	assert.deepEqual(checks.ref, {

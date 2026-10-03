@@ -6,14 +6,10 @@ import { ThemeMenu } from '@/components/pairsight/theme-menu'
 import { Wordmark } from '@/components/pairsight/wordmark'
 import { Button } from '@/components/ui/button'
 import { InView } from '@/components/ui/in-view'
+import { CloserLook } from '@/components/pairsight/landing/closer-look'
+import { HowItWorks } from '@/components/pairsight/landing/how-it-works'
 import { ArrowRightIcon } from '@/components/ui/icons'
 import { redirectIfSignedIn } from '@/server/auth/session'
-
-const STEPS = [
-	{ title: 'step1Title', body: 'step1Body' },
-	{ title: 'step2Title', body: 'step2Body' },
-	{ title: 'step3Title', body: 'step3Body' }
-] as const
 
 const LIMITS = [
 	{ title: 'limit1Title', body: 'limit1Body' },
@@ -104,32 +100,9 @@ export default async function HomePage() {
 					</div>
 				</section>
 
-				<section aria-labelledby="how-title" className="border-border bg-surface border-y">
-					<InView className="mx-auto max-w-[1200px] px-5 py-14 md:px-8">
-						<h2 id="how-title" className="on-view text-xl font-semibold tracking-[-0.01em]">
-							{t('howTitle')}
-						</h2>
-						<ol className="how-steps mt-8 grid gap-8 md:grid-cols-3 md:gap-10">
-							{STEPS.map((step, index) => (
-								<li key={step.title} className={`stagger-${index} relative md:pt-10`}>
-									<span className="on-view-pop border-action text-accent-ink flex size-7 items-center justify-center rounded-full border-2 font-mono text-xs font-semibold md:absolute md:top-0 md:left-0">
-										{index + 1}
-									</span>
-									{index < STEPS.length - 1 && (
-										<span
-											aria-hidden
-											className="on-view-draw bg-border absolute top-3.5 right-[-24px] left-9 hidden h-px md:block"
-										/>
-									)}
-									<div className="on-view view-after">
-										<h3 className="mt-3 text-[15px] font-semibold md:mt-0">{t(step.title)}</h3>
-										<p className="text-text-muted mt-1.5 text-sm leading-relaxed">{t(step.body)}</p>
-									</div>
-								</li>
-							))}
-						</ol>
-					</InView>
-				</section>
+				<HowItWorks />
+
+				<CloserLook />
 
 				<section
 					aria-labelledby="limits-title"
@@ -156,14 +129,28 @@ export default async function HomePage() {
 					</InView>
 				</section>
 
-				<section className="border-border bg-surface border-t">
-					<InView className="mx-auto flex max-w-[1200px] flex-wrap items-center justify-between gap-4 px-5 py-10 md:px-8">
-						<p className="on-view text-[15px] font-medium">{t('ctaTitle')}</p>
-						<div className="on-view stagger-1 flex gap-3">
-							<Button className="sheen" asChild>
+				<section className="mx-auto max-w-[1200px] px-5 pb-16 md:px-8">
+					<InView className="cta-panel flex flex-wrap items-center justify-between gap-6 rounded-xl px-6 py-10 md:px-10">
+						<div className="on-view max-w-xl">
+							<p className="text-xl font-semibold tracking-[-0.01em] md:text-2xl">
+								{t('ctaTitle')}
+							</p>
+							<p className="mt-2 text-sm text-white/80">{t('ctaBody')}</p>
+						</div>
+						<div className="on-view stagger-1 flex flex-wrap gap-3">
+							<Button
+								size="lg"
+								className="sheen text-brand-deep bg-white hover:bg-white/90"
+								asChild
+							>
 								<Link href="/sign-up">{t('start')}</Link>
 							</Button>
-							<Button variant="secondary" asChild>
+							<Button
+								size="lg"
+								variant="secondary"
+								className="border-white/40 bg-transparent text-white hover:bg-white/10"
+								asChild
+							>
 								<Link href="/sandbox">{t('explore')}</Link>
 							</Button>
 						</div>

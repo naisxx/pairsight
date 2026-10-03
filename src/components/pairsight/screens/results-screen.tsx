@@ -12,6 +12,7 @@ import { hasActiveFilters, toQuery } from '@/components/pairsight/results/query'
 import { ResultsKeyboard } from '@/components/pairsight/results/results-keyboard'
 import { ResultsTabs } from '@/components/pairsight/results/results-tabs'
 import { RunStatusChip } from '@/components/pairsight/results/run-status-chip'
+import { ExportMenu } from '@/components/pairsight/results/export-menu'
 import { RunSwitcher } from '@/components/pairsight/results/run-switcher'
 import { VendorSegmented } from '@/components/pairsight/results/vendor-segmented'
 import { ruleLabel } from '@/components/pairsight/rule-label'
@@ -103,7 +104,10 @@ export async function ResultsScreen({
 							)}
 						</p>
 					</div>
-					<RunSwitcher runId={run.id} runs={workspace.runs} />
+					<div className="flex flex-wrap items-center gap-2">
+						<ExportMenu runId={run.id} runNumber={run.number} />
+						<RunSwitcher runId={run.id} runs={workspace.runs} />
+					</div>
 				</div>
 
 				<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">

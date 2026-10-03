@@ -1,8 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { parseCsv } from './csv'
+import { LIMITS } from './limits'
+import { readTable } from './tabular'
 import { buildComparisonSet, canonicalPair, expandGroup } from './pairs'
 import { parseVendorPairs } from './vendors'
+
+// Text through the tabular connector, as an uploaded .csv file would be read.
+async function parseCsv(text: string, maxRows = LIMITS.maxSourceRecords) {
+	return readTable({ fileName: 'test.csv', bytes: new TextEncoder().encode(text), maxRows })
+}
 
 test('pairs are canonical and self-pairs are excluded', () => {
 	assert.deepEqual(canonicalPair('b', 'a'), { a: 'a', b: 'b' })
@@ -40,8 +46,8 @@ test('the comparison set unions blocked and vendor pairs, once each', () => {
 	])
 })
 
-test('vendor pairs: unknown references are errors; self, repeated and reversed rows collapse', () => {
-	const parsed = parseCsv('left,right,score\nA,B,0.9\nB,A,0.8\nA,A,1\nA,Z,0.5\nC,,0.1')
+test('vendor pairs: unknown references are errors; self, repeated and reversed rows collapse', async () => {
+	const parsed = await parseCsv('left,right,score\nA,B,0.9\nB,A,0.8\nA,A,1\nA,Z,0.5\nC,,0.1')
 	assert.ok(parsed.ok)
 	const result = parseVendorPairs({
 		table: parsed.table,

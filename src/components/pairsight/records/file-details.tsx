@@ -1,5 +1,5 @@
 import { useTranslations } from 'next-intl'
-import { CsvFileIcon } from '@/components/ui/icons'
+import { TabularFileIcon } from '../file-type'
 
 const ICON_SIZE = 26
 
@@ -32,7 +32,11 @@ export function FileDetails({
 			className="border-border bg-surface flex flex-wrap items-center gap-x-6 gap-y-3 rounded-md border px-4 py-3"
 		>
 			<div className="flex min-w-0 items-center gap-3">
-				<CsvFileIcon size={ICON_SIZE} className="text-text-muted shrink-0" />
+				<TabularFileIcon
+					fileName={fileName}
+					size={ICON_SIZE}
+					className="text-text-muted shrink-0"
+				/>
 				<div className="min-w-0">
 					<p className="type-ui truncate font-mono font-medium">{fileName}</p>
 					<p className="text-text-muted text-xs">{meta}</p>

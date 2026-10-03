@@ -6,15 +6,17 @@ import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { ArrowRightIcon, InfoIcon, RetryIcon, SpinnerIcon } from '@/components/ui/icons'
 import {
-	previewSourceCsv,
+	previewSourceFile,
 	saveSourceAction,
 	type SaveSourceResult,
 	type SourcePreview
 } from '@/server/actions/pairsight/sources'
 import type { FieldRole } from '@/server/pairsight/fields'
 import { FileDrop } from '../file-drop'
+import { useFileTypeLabel } from '../file-type'
+import { SheetPicker, type SheetChoice } from '../sheet-picker'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
-import { readCsvFile, useCsvErrorMessage, useRowList, ValidationPanel } from '../validation'
+import { checkTabularFile, useFileErrorMessage, useRowList, ValidationPanel } from '../validation'
 import { FieldMapping } from './field-mapping'
 import { FileDetails } from './file-details'
 import {
@@ -30,12 +32,14 @@ import { RecordsPreview } from './records-preview'
 import { SourceValidation } from './source-validation'
 import { useEvaluationView } from '../evaluation-context'
 
+// The chosen file is kept as is and sent again on save, with the sheet it was
+// read from (preview.sheet); the server reads it.
 type Loaded = {
-	fileName: string
-	bytes: number
-	text: string
+	file: File
 	preview: Extract<SourcePreview, { ok: true }>
 }
+// A workbook with several sheets of data, waiting for the user to pick one.
+type Choosing = { file: File; sheets: SheetChoice[]; picked: string | null }
 type SaveIssues = Exclude<Extract<SaveSourceResult, { ok: false }>, { parseError: unknown }>
 
 const MAX_LISTED_DUPLICATES = 10
@@ -54,7 +58,7 @@ function formatSize(bytes: number) {
 		: `${Math.max(MIN_SHOWN_KB, kb).toFixed(1)} KB`
 }
 
-// Choose a CSV → map its columns, checked as you go → save and continue to
+// Choose a file (CSV, or an Excel sheet) → map its columns, checked as you go → save and continue to
 // vendors (validated again on the server). `roles` comes from the server page
 // so this client file never imports server modules at runtime. `onCancel`,
 // when replacing a saved file, goes back to it.
@@ -71,9 +75,11 @@ export function RecordsUploader({
 	const tRoles = useTranslations('Roles')
 	const view = useEvaluationView()
 	const router = useRouter()
-	const csvError = useCsvErrorMessage()
+	const fileError = useFileErrorMessage()
+	const fileType = useFileTypeLabel()
 	const list = useRowList()
 	const [loaded, setLoaded] = useState<Loaded | null>(null)
+	const [choosing, setChoosing] = useState<Choosing | null>(null)
 	const [mapping, setMapping] = useState<Mapping>(new Map())
 	const [suggested, setSuggested] = useState<Mapping>(new Map())
 	const [errors, setErrors] = useState<string[]>([])
@@ -106,20 +112,35 @@ export function RecordsUploader({
 			: [])
 	]
 
-	function onFile(file: File) {
+	function read(file: File, sheet?: string) {
 		setErrors([])
 		startReading(async () => {
-			const read = await readCsvFile(file)
-			if (!read.ok) return setErrors([csvError({ code: read.code })])
-			const result = await previewSourceCsv({ text: read.text })
+			const result = await previewSourceFile({ file, sheet })
 			if (!result.ok) return setErrors([result.error])
-			if (!result.data.ok) return setErrors([csvError(result.data.error)])
-			const preview = result.data
-			const suggestion = suggestedMapping(preview)
-			setLoaded({ fileName: file.name, bytes: file.size, text: read.text, preview })
+			const data = result.data
+			if (!data.ok) {
+				if (data.error.code !== 'choose_sheet') return setErrors([fileError(data.error)])
+				return setChoosing({ file, sheets: data.error.sheets, picked: null })
+			}
+			const suggestion = suggestedMapping(data)
+			setChoosing(null)
+			setLoaded({ file, preview: data })
 			setSuggested(suggestion)
 			setMapping(suggestion)
 		})
+	}
+
+	function onFile(file: File) {
+		setChoosing(null)
+		const checked = checkTabularFile(file)
+		if (!checked.ok) return setErrors([fileError({ code: checked.code })])
+		read(file)
+	}
+
+	function pickSheet(sheet: string) {
+		if (choosing == null) return
+		setChoosing({ ...choosing, picked: sheet })
+		read(choosing.file, sheet)
 	}
 
 	const reference = mapping.get('reference') ?? null
@@ -143,15 +164,15 @@ export function RecordsUploader({
 		startSaving(async () => {
 			const result = await saveSourceAction({
 				evaluationId,
-				fileName: loaded.fileName,
-				text: loaded.text,
+				file: loaded.file,
+				sheet: loaded.preview.sheet,
 				referenceColumn: reference,
 				columnRoles: toColumnRoles(mapping, loaded.preview.headers)
 			})
 			if (!result.ok) return setErrors([result.error])
 			const data = result.data
 			if (data.ok) router.push(`${view.base}/vendors`)
-			else if ('parseError' in data) setErrors([csvError(data.parseError)])
+			else if ('parseError' in data) setErrors([fileError(data.parseError)])
 			else setErrors(issueMessages(data))
 		})
 	}
@@ -192,9 +213,18 @@ export function RecordsUploader({
 						label={t('dropTitle')}
 						hint={t('dropHint')}
 						busyLabel={t('reading')}
-						isBusy={isReading}
+						isBusy={isReading && choosing == null}
 						onFile={onFile}
 					/>
+					{choosing != null && (
+						<SheetPicker
+							fileName={choosing.file.name}
+							sheets={choosing.sheets}
+							picked={choosing.picked}
+							isBusy={isReading}
+							onPick={pickSheet}
+						/>
+					)}
 					<ValidationPanel title={t('errorsTitle')} messages={errors} />
 				</div>
 				{actionBar}
@@ -218,11 +248,11 @@ export function RecordsUploader({
 		<>
 			<div className="space-y-4">
 				<FileDetails
-					fileName={loaded.fileName}
-					meta={t('notSaved')}
+					fileName={loaded.file.name}
+					meta={`${t('notSaved')} · ${fileType(loaded.file.name, preview.sheet)}`}
 					rows={preview.rowCount}
 					columns={preview.headers.length}
-					size={formatSize(loaded.bytes)}
+					size={formatSize(loaded.file.size)}
 					action={
 						<Button
 							variant="secondary"

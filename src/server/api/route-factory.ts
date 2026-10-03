@@ -58,6 +58,51 @@ export function createApiRoute<InputSchema extends z.ZodType, Output>(config: {
 	}
 }
 
+// A file to download: what a download route's handler returns.
+export type DownloadFile = { fileName: string; contentType: string; body: Uint8Array }
+
+// The file form of createApiRoute, for routes that send a download (an
+// export) rather than JSON: the same explicit input (query string plus the
+// route's own params, e.g. [runId]) and the same error handling, but the
+// handler's file goes out as an attachment. Never cached: exports carry the
+// viewer's own data.
+export function createDownloadRoute<InputSchema extends z.ZodType>(config: {
+	input: InputSchema
+	handler: (input: z.infer<InputSchema>, req: NextRequest) => Promise<DownloadFile>
+}) {
+	return async function (
+		req: NextRequest,
+		context: { params: Promise<Record<string, string | string[]>> }
+	) {
+		try {
+			const rawInput = {
+				...Object.fromEntries(req.nextUrl.searchParams),
+				...(await context.params)
+			}
+			const input = config.input.parse(rawInput)
+			const file = await config.handler(input, req)
+			// An ASCII name for older clients, and the exact one (RFC 5987).
+			const asciiName = file.fileName.replace(/[^\x20-\x7e]|"/g, '_')
+			return new NextResponse(new Blob([new Uint8Array(file.body)]), {
+				headers: {
+					'Content-Type': file.contentType,
+					'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+					'Cache-Control': 'private, no-store'
+				}
+			})
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				return NextResponse.json(
+					{ error: 'Invalid request', issues: error.flatten() },
+					{ status: 400 }
+				)
+			}
+			const { userMessage, status } = captureError(error)
+			return NextResponse.json({ error: userMessage }, { status })
+		}
+	}
+}
+
 // Cron routes check CRON_SECRET instead of a user session — wrap any route
 // under src/app/api/cron/** with this so the check can't be forgotten.
 export function createCronRoute(handler: (req: NextRequest) => Promise<Response>) {

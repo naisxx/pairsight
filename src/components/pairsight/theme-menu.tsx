@@ -9,9 +9,12 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuRadioGroup,
 	DropdownMenuRadioItem,
+	DropdownMenuSeparator,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import { MonitorIcon, MoonIcon, SunIcon } from '@/components/ui/icons'
+import { UI_STYLES, type UiStyle } from '@/lib/ui-style'
+import { useUiStyle } from './use-ui-style'
 
 const THEMES = ['light', 'dark', 'system'] as const
 const ICON_SIZE = 17
@@ -21,6 +24,7 @@ const ICON_SIZE = 17
 export function ThemeMenu() {
 	const t = useTranslations('Theme')
 	const { theme, setTheme } = useTheme()
+	const [style, setStyle] = useUiStyle()
 	return (
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
@@ -35,6 +39,18 @@ export function ThemeMenu() {
 					{THEMES.map((value) => (
 						<DropdownMenuRadioItem key={value} value={value} className="gap-2">
 							{value === 'light' ? <SunIcon /> : value === 'dark' ? <MoonIcon /> : <MonitorIcon />}
+							{t(value)}
+						</DropdownMenuRadioItem>
+					))}
+				</DropdownMenuRadioGroup>
+				<DropdownMenuSeparator />
+				<DropdownMenuLabel className="text-text-muted type-meta">{t('style')}</DropdownMenuLabel>
+				<DropdownMenuRadioGroup
+					value={style}
+					onValueChange={(value) => setStyle(UI_STYLES.find((s) => s === value) ?? 'classic')}
+				>
+					{UI_STYLES.map((value: UiStyle) => (
+						<DropdownMenuRadioItem key={value} value={value}>
 							{t(value)}
 						</DropdownMenuRadioItem>
 					))}

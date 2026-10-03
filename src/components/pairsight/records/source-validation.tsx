@@ -1,6 +1,6 @@
 import { useTranslations } from 'next-intl'
 import { InfoIcon, SuccessIcon, WarningCircleIcon } from '@/components/ui/icons'
-import type { ColumnCheck } from '@/server/pairsight/csv'
+import type { ColumnCheck } from '@/server/pairsight/source-records'
 
 const LISTED = 6
 const ICON_SIZE = 16

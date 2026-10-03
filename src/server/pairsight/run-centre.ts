@@ -16,6 +16,17 @@ import { evaluationWhere, type EvaluationScope } from './scope'
 // evaluation's run switcher.
 const RUN_LIMIT = 30
 
+// Of a run's judged pairs, how many were judged before it started: scores
+// reused from earlier runs, not judged (or paid for) again.
+export function countReusedJudgments(run: { id: string; createdAt: Date }) {
+	return db.runPair.count({
+		where: {
+			runId: run.id,
+			assessment: { status: 'succeeded', completedAt: { lt: run.createdAt } }
+		}
+	})
+}
+
 export type RunCard = {
 	id: string
 	number: number
@@ -92,12 +103,7 @@ export async function listRunCards({
 		runs.map(async (run): Promise<RunCard> => {
 			const [progress, reused, reported] = await Promise.all([
 				getRunProgress(run.id),
-				db.runPair.count({
-					where: {
-						runId: run.id,
-						assessment: { status: 'succeeded', completedAt: { lt: run.createdAt } }
-					}
-				}),
+				countReusedJudgments(run),
 				db.assessment.findFirst({
 					where: { runPairs: { some: { runId: run.id } }, modelReported: { not: null } },
 					select: { modelReported: true }

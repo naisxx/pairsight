@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import './motion.css';
+@import './glass.css';
 
 /* Dark mode is class-based (next-themes sets `.dark` on <html>) so the
    Light / Dark / System menu can override the OS preference. */

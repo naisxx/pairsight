@@ -56,7 +56,7 @@ The user names the evaluation, for example â€œCRM migration vendor comparison.â€
 
 ### 3. Upload original records
 
-The user uploads a CSV and previews its contents. They identify the unique record reference and map fields such as name, email, phone, date of birth, and address. PairSight checks for missing or repeated record references and explains any issues before continuing.
+The user uploads a CSV or Excel file and previews its contents. They identify the unique record reference and map fields such as name, email, phone, date of birth, and address. PairSight checks for missing or repeated record references and explains any issues before continuing.
 
 ### 4. Add matching results
 
@@ -97,7 +97,7 @@ The user opens a pair to view both records side by side, the vendor decision, an
 
 ### 10. Export and return
 
-The user downloads a comparison summary and a CSV of findings for further review or discussion with vendors. The report records the identity definition, evaluation scope, decision threshold, and extent of human review so the scores retain their context. Saved evaluations remain available to revisit.
+The user downloads a comparison summary and a CSV or Excel file of findings for further review or discussion with vendors. The report records the identity definition, evaluation scope, decision threshold, and extent of human review so the scores retain their context. Saved evaluations remain available to revisit.
 
 ## Understanding the scores
 
@@ -115,19 +115,23 @@ Independent, verified identity labels can provide a ground-truth reference. Corr
 
 ## Features and release scope
 
-The confirmed v1 is a complete loop:
+V1 shipped in October 2026 as a complete loop:
 
-1. Upload source records and vendor results, then map references and identity fields.
-2. Define identity and overlapping blocking rules.
-3. Combine blocked candidates with every vendor-matched pair and remove duplicates.
-4. Evaluate unique pairs with Jev and apply a consistent decision threshold.
-5. Compare vendor and PairSight decisions using the four result categories and inspect the underlying records.
+1. Upload source records and vendor results (pair or group format), then map references and identity fields.
+2. Define identity and overlapping blocking rules, and choose the match threshold (Lenient, Balanced, Strict or a custom value) before any results are seen.
+3. Combine blocked candidates with every vendor-matched pair and remove duplicates; the plan shows every count before anything is sent to Jev.
+4. Evaluate unique pairs with Jev and apply that threshold. Runs are followed in a Runs centre; failed assessments stay visibly incomplete and can be retried.
+5. Compare up to three vendors with the four result categories and AI-estimated precision, recall and F1 (on evaluated pairs only), then inspect the underlying records.
 
-V1 focuses on customer/person records and small datasets. Supported import formats, size limits, blocking operators, Jev output handling, and threshold behavior will be specified in the implementation plan.
+Saved evaluations, the fictional demo data (a public, read-only sandbox) and the landing page shipped with it.
 
-The wider user journey above also describes fictional demo data, saved evaluations, human corrections, estimated quality metrics, and exports. Their delivery order and inclusion in the initial v1 must be decided during planning rather than assumed from this overview.
+V1 focuses on customer/person records in CSV or Excel files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run.
 
-Later extensions include companies and products, larger-scale processing, more vendor-specific formats, sampling of excluded pairs, and verified-reference uploads for ground-truth scoring.
+Exports shipped too: every pair's findings as CSV or Excel, and a PDF summary report that names the vendor that matched most like Jev, shows each vendor's tradeoffs and example pairs, and records the method and scope behind the numbers.
+
+**Next:** human corrections (step 9). Its controls are hidden until it's built.
+
+**Later:** companies and products, larger-scale processing and a background worker, more vendor-specific formats, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
 
 ## What success looks like
 

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
 import { ArrowRightIcon, RetryIcon } from '@/components/ui/icons'
 import type { FieldRole } from '@/server/pairsight/fields'
+import { useFileTypeLabel } from '../file-type'
 import { ActionBar } from '../step-layout'
 import { FieldMapping } from './field-mapping'
 import { FileDetails } from './file-details'
@@ -47,6 +48,7 @@ export function SavedRecords({
 }) {
 	const t = useTranslations('Records')
 	const tRoles = useTranslations('Roles')
+	const fileType = useFileTypeLabel()
 	const view = useEvaluationView()
 	const format = useFormatter()
 	const [isConfirming, setIsConfirming] = useState(false)
@@ -69,7 +71,7 @@ export function SavedRecords({
 			<div className="space-y-4">
 				<FileDetails
 					fileName={fileName}
-					meta={t('savedOn', { date: format.dateTime(savedAt, { dateStyle: 'medium' }) })}
+					meta={`${t('savedOn', { date: format.dateTime(savedAt, { dateStyle: 'medium' }) })} · ${fileType(fileName)}`}
 					rows={rowCount}
 					columns={headers.length}
 					action={

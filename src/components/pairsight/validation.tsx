@@ -2,7 +2,8 @@
 
 import { useTranslations } from 'next-intl'
 import { AlertIcon } from '@/components/ui/icons'
-import type { CsvParseError } from '@/server/pairsight/csv'
+import { MAX_FILE_BYTES, tabularFormatOf } from '@/lib/pairsight/tabular-formats'
+import type { TableError } from '@/server/pairsight/tabular'
 
 // Validation panels (docs/PairSight-UX-Plan.md §5): a count, what to fix, and
 // the affected rows — icon and text, never color alone.
@@ -19,10 +20,12 @@ export function useRowList() {
 	}
 }
 
-export function useCsvErrorMessage() {
-	const t = useTranslations('CsvErrors')
+// What's wrong with a file, as the screens say it: from reading it as a table
+// (the server) or from checking it before upload (readTabularFile).
+export function useFileErrorMessage() {
+	const t = useTranslations('FileErrors')
 	const list = useRowList()
-	return (error: CsvParseError | { code: 'too_large' | 'not_csv' }) => {
+	return (error: TableError | { code: 'too_large' }) => {
 		switch (error.code) {
 			case 'too_many_rows':
 			case 'too_many_columns':
@@ -56,14 +59,13 @@ export function ValidationPanel({ title, messages }: { title: string; messages: 
 	)
 }
 
-export const MAX_FILE_BYTES = 1_000_000
-
-// Reads a chosen file on the client, rejecting non-CSV or oversized files
-// before any upload.
-export async function readCsvFile(
+// Checks a chosen file before upload: a format PairSight reads
+// (src/lib/pairsight/tabular-formats.ts) and within the size limit. The file
+// itself is sent as is; the server reads it.
+export function checkTabularFile(
 	file: File
-): Promise<{ ok: true; text: string } | { ok: false; code: 'too_large' | 'not_csv' }> {
-	if (!/\.csv$/i.test(file.name)) return { ok: false, code: 'not_csv' }
+): { ok: true } | { ok: false; code: 'too_large' | 'unsupported_format' } {
+	if (tabularFormatOf(file.name) == null) return { ok: false, code: 'unsupported_format' }
 	if (file.size > MAX_FILE_BYTES) return { ok: false, code: 'too_large' }
-	return { ok: true, text: await file.text() }
+	return { ok: true }
 }

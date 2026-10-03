@@ -29,11 +29,18 @@ defaults, to adjust after a real Jev integration test.
 4. Repeatable fictional demo data.
 
 **Access:** login is required to create a real saved evaluation or to run
-Jev. The demo can be explored before login, using clearly labeled prepared
-results.
+Jev. The sandbox (`/sandbox`) can be explored before login: the whole app,
+read-only, on clearly labeled prepared results.
 
-**Later:** human corrections, precision/recall/F1, polished exports, an
-elaborate landing page, fuzzy name matching, and the uncertain category.
+**Shipped beyond the loop (M2–M4):** AI-estimated precision, recall and F1 on
+evaluated pairs, group exports, up to three vendors, the match threshold set
+in Rules, the Runs centre, the sandbox, a polished landing page, CSV and
+Excel import, and the findings (CSV or Excel) and summary report (PDF)
+exports.
+
+**Later:** human corrections, fuzzy
+name matching, and an "uncertain" category (today borderline scores are a
+low-confidence flag and filter, not a category).
 
 ## Limits (configurable)
 
