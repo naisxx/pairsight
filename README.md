@@ -92,7 +92,7 @@ Create two gitignored env files:
 ```bash
 pnpm exec prisma migrate deploy   # apply the committed migrations — never `migrate dev`
 pnpm db:run-once                  # apply prisma/run-once.sql if this database hasn't had it
-pnpm demo:seed                    # load the read-only /sandbox evaluation (safe to rerun)
+pnpm demo:seed                    # load the read-only /sandbox evaluations (safe to rerun)
 pnpm dev
 ```
 
@@ -262,6 +262,6 @@ What's built, what's next and what's deferred is the roadmap in
 | `pnpm prisma:generate`                     | Regenerate the Prisma client after a schema change                                                                                                                              |
 | `pnpm prisma:migrate:generate:check`       | Dry-run what CI's migration generator would write, without writing it                                                                                                           |
 | `pnpm db:run-once`                         | Apply `prisma/run-once.sql` once to `DIRECT_URL` (else `DATABASE_URL`) — what a deploy does                                                                                     |
-| `pnpm demo:seed`                           | (Re)load the `/sandbox` evaluation from `prisma/demo/sandbox-snapshot.json`; idempotent, no Jev calls                                                                           |
+| `pnpm demo:seed`                           | (Re)load the `/sandbox` evaluations (people, organisations, products) from `prisma/demo/sandbox-*snapshot.json`; idempotent, no Jev calls                                       |
 | `pnpm demo:snapshot <evaluationId>`        | Export a finished evaluation (yours, run with the real key) as the new sandbox snapshot                                                                                         |
 | `pnpm supabase <cmd>`                      | Pinned Supabase CLI via `pnpm dlx` — `start`, `status`, `stop` for the local auth + Postgres stack                                                                              |

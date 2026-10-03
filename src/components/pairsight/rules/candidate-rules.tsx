@@ -3,7 +3,7 @@
 import { Fragment, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
-import { AlertIcon, EditIcon, PlusIcon, TrashIcon } from '@/components/ui/icons'
+import { AlertIcon, EditIcon, InfoIcon, PlusIcon, TrashIcon } from '@/components/ui/icons'
 import { Switch } from '@/components/ui/switch'
 import { Tip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
@@ -55,7 +55,9 @@ export function CandidateRules({
 	const composites = rules.filter((rule) => isCustomRuleId(rule.id))
 	const label = (rule: Rule) => {
 		const copy = RULE_COPY[rule.id]
-		return copy == null ? rule.fields.map((field) => tRoles(field)).join(' + ') : t(copy.title)
+		return copy == null
+			? rule.fields.map((field) => tRoles(field)).join(` ${t('and')} `)
+			: t(copy.title)
 	}
 
 	return (
@@ -68,72 +70,77 @@ export function CandidateRules({
 				<p className="type-ui text-text-muted mt-1 max-w-2xl leading-relaxed">
 					{t('blockingDescription')}
 				</p>
+				<HowRulesCombine />
 			</header>
 
 			<div className="px-5 pt-2">
 				<h3 className="text-text-muted text-xs font-medium">{t('presets')}</h3>
 				<ul className="mt-1">
-					{presets.map((rule) => {
+					{presets.map((rule, index) => {
 						const missing = missingField(rule.fields, mapped)
 						const isOn = enabled.has(rule.id) && missing == null
 						const stat = stats(rule.id)
 						const copy = RULE_COPY[rule.id]
 						const id = `preset-${rule.id}`
 						return (
-							<li
-								key={rule.id}
-								className="border-border flex flex-col gap-3 border-b py-3 @3xl:flex-row @3xl:items-center"
-							>
-								<div className="flex min-w-0 flex-1 items-start gap-3">
-									<div className="pt-0.5">
-										<Switch
-											id={id}
-											checked={isOn}
-											disabled={missing != null}
-											onCheckedChange={(checked) => onToggle(rule.id, checked)}
-											aria-label={t('ruleToggle', { rule: label(rule) })}
+							<Fragment key={rule.id}>
+								{index > 0 && <OrDivider />}
+								<li className="flex flex-col gap-3 py-3 @3xl:flex-row @3xl:items-center">
+									<div className="flex min-w-0 flex-1 items-start gap-3">
+										<div className="pt-0.5">
+											<Switch
+												id={id}
+												checked={isOn}
+												disabled={missing != null}
+												onCheckedChange={(checked) => onToggle(rule.id, checked)}
+												aria-label={t('ruleToggle', { rule: label(rule) })}
+											/>
+										</div>
+										<div className="min-w-0">
+											<label
+												htmlFor={id}
+												className={cn('type-ui font-medium', !isOn && 'text-text-muted')}
+											>
+												{label(rule)}
+											</label>
+											{rule.fields.length > 1 && (
+												<FieldChips fields={rule.fields} isMuted={!isOn} />
+											)}
+											{missing != null ? (
+												<p className="text-text-muted text-xs">
+													{t('ruleUnavailable', { field: tRoles(missing) })}
+												</p>
+											) : (
+												<p className="text-text-muted mt-0.5 truncate text-xs">
+													{copy != null && `${t(copy.hint)} · `}
+													{t('example')} <SampleKey parts={stat?.sampleKey ?? null} />
+													{stat != null &&
+														stat.recordsWithoutKey > 0 &&
+														` · ${t('skipped', { count: stat.recordsWithoutKey })}`}
+												</p>
+											)}
+											{missing == null && stat != null && (
+												<RuleWarnings stat={stat} limits={limits} />
+											)}
+										</div>
+									</div>
+									<div className="@3xl:w-[220px]">
+										<RuleStatColumns
+											stat={missing == null ? stat : undefined}
+											bucketWarningSize={limits.bucketWarningSize}
+											isMuted={!isOn}
 										/>
 									</div>
-									<div className="min-w-0">
-										<label
-											htmlFor={id}
-											className={cn('type-ui font-medium', !isOn && 'text-text-muted')}
-										>
-											{label(rule)}
-										</label>
-										{missing != null ? (
-											<p className="text-text-muted text-xs">
-												{t('ruleUnavailable', { field: tRoles(missing) })}
-											</p>
-										) : (
-											<p className="text-text-muted mt-0.5 truncate text-xs">
-												{copy != null && `${t(copy.hint)} · `}
-												{t('example')} <SampleKey parts={stat?.sampleKey ?? null} />
-												{stat != null &&
-													stat.recordsWithoutKey > 0 &&
-													` · ${t('skipped', { count: stat.recordsWithoutKey })}`}
-											</p>
-										)}
-										{missing == null && stat != null && (
-											<RuleWarnings stat={stat} limits={limits} />
-										)}
-									</div>
-								</div>
-								<div className="@3xl:w-[220px]">
-									<RuleStatColumns
-										stat={missing == null ? stat : undefined}
-										bucketWarningSize={limits.bucketWarningSize}
-										isMuted={!isOn}
-									/>
-								</div>
-							</li>
+								</li>
+							</Fragment>
 						)
 					})}
 				</ul>
 			</div>
 
-			<div className="px-5 pt-4 pb-5">
-				<div className="flex items-center justify-between">
+			<div className="px-5 pb-5">
+				{composites.length > 0 && <OrDivider />}
+				<div className="flex items-center justify-between pt-2">
 					<h3 className="text-text-muted text-xs font-medium">{t('composites')}</h3>
 					{editing !== 'new' && composites.length < MAX_CUSTOM_RULES && (
 						<Button variant="ghost" size="sm" onClick={() => setEditing('new')}>
@@ -143,75 +150,70 @@ export function CandidateRules({
 					)}
 				</div>
 				<ul className="mt-1">
-					{composites.map((rule) => {
+					{composites.map((rule, index) => {
 						const stat = stats(rule.id)
 						const others = rules.filter((other) => other.id !== rule.id)
+						const divider = index > 0 && <OrDivider />
 						if (editing === rule.id) {
 							return (
-								<li key={rule.id} className="py-3">
-									<CompositeRuleEditor
-										evaluationId={evaluationId}
-										country={country}
-										availableFields={availableFields}
-										otherRules={others}
-										initial={rule.fields}
-										limits={limits}
-										onCancel={() => setEditing(null)}
-										onSave={(next, nextStat) => {
-											onSaveComposite(next, nextStat, rule.id)
-											setEditing(null)
-										}}
-									/>
-								</li>
+								<Fragment key={rule.id}>
+									{divider}
+									<li className="py-3">
+										<CompositeRuleEditor
+											evaluationId={evaluationId}
+											country={country}
+											availableFields={availableFields}
+											otherRules={others}
+											initial={rule.fields}
+											limits={limits}
+											onCancel={() => setEditing(null)}
+											onSave={(next, nextStat) => {
+												onSaveComposite(next, nextStat, rule.id)
+												setEditing(null)
+											}}
+										/>
+									</li>
+								</Fragment>
 							)
 						}
 						return (
-							<li
-								key={rule.id}
-								className="border-border flex flex-col gap-3 border-b py-3 @3xl:flex-row @3xl:items-center"
-							>
-								<div className="min-w-0 flex-1">
-									<p className="type-ui flex flex-wrap items-center gap-1.5 font-medium">
-										{rule.fields.map((field, index) => (
-											<Fragment key={field}>
-												{index > 0 && <span className="text-text-muted">+</span>}
-												<span className="border-border bg-surface-muted rounded-[5px] border px-1.5 py-0.5 text-xs">
-													{tRoles(field)}
-												</span>
-											</Fragment>
-										))}
-									</p>
-									<p className="text-text-muted mt-1 text-xs">
-										{t('example')} <SampleKey parts={stat?.sampleKey ?? null} />
-									</p>
-									{stat != null && <RuleWarnings stat={stat} limits={limits} />}
-								</div>
-								<div className="flex items-center gap-3">
-									<div className="@3xl:w-[220px]">
-										<RuleStatColumns stat={stat} bucketWarningSize={limits.bucketWarningSize} />
+							<Fragment key={rule.id}>
+								{divider}
+								<li className="flex flex-col gap-3 py-3 @3xl:flex-row @3xl:items-center">
+									<div className="min-w-0 flex-1">
+										<FieldChips fields={rule.fields} />
+										<p className="text-text-muted mt-1 text-xs">
+											{t('example')} <SampleKey parts={stat?.sampleKey ?? null} />
+										</p>
+										{stat != null && <RuleWarnings stat={stat} limits={limits} />}
 									</div>
-									<Tip content={t('editTip')}>
-										<Button
-											variant="quiet"
-											size="icon"
-											aria-label={t('editRule', { rule: label(rule) })}
-											onClick={() => setEditing(rule.id)}
-										>
-											<EditIcon size={ICON_SIZE} />
-										</Button>
-									</Tip>
-									<Tip content={t('deleteTip')}>
-										<Button
-											variant="quiet"
-											size="icon"
-											aria-label={t('deleteRule', { rule: label(rule) })}
-											onClick={() => onDeleteComposite(rule.id)}
-										>
-											<TrashIcon size={ICON_SIZE} />
-										</Button>
-									</Tip>
-								</div>
-							</li>
+									<div className="flex items-center gap-3">
+										<div className="@3xl:w-[220px]">
+											<RuleStatColumns stat={stat} bucketWarningSize={limits.bucketWarningSize} />
+										</div>
+										<Tip content={t('editTip')}>
+											<Button
+												variant="quiet"
+												size="icon"
+												aria-label={t('editRule', { rule: label(rule) })}
+												onClick={() => setEditing(rule.id)}
+											>
+												<EditIcon size={ICON_SIZE} />
+											</Button>
+										</Tip>
+										<Tip content={t('deleteTip')}>
+											<Button
+												variant="quiet"
+												size="icon"
+												aria-label={t('deleteRule', { rule: label(rule) })}
+												onClick={() => onDeleteComposite(rule.id)}
+											>
+												<TrashIcon size={ICON_SIZE} />
+											</Button>
+										</Tip>
+									</div>
+								</li>
+							</Fragment>
 						)
 					})}
 				</ul>
@@ -241,6 +243,103 @@ export function CandidateRules({
 				)}
 			</div>
 		</section>
+	)
+}
+
+// How the rules combine, on hover or focus so it stays out of the way: any
+// rule is enough (OR), and every field in one rule has to match (AND).
+function HowRulesCombine() {
+	const t = useTranslations('Rules')
+	const content = (
+		<dl className="flex flex-col gap-2 py-1">
+			<div>
+				<dt className="flex items-center gap-1.5 font-medium">
+					{t('combineAnyTitle')} <OperatorTag operator="or" />
+				</dt>
+				<dd className="text-text-muted mt-0.5">{t('combineAnyBody')}</dd>
+			</div>
+			<div>
+				<dt className="flex items-center gap-1.5 font-medium">
+					{t('combineAllTitle')} <OperatorTag operator="and" />
+				</dt>
+				<dd className="text-text-muted mt-0.5">{t('combineAllBody')}</dd>
+			</div>
+		</dl>
+	)
+	return (
+		<Tip content={content} side="bottom">
+			<button
+				type="button"
+				className="text-text-muted hover:text-text type-ui mt-2 inline-flex items-center gap-1.5 rounded-xs text-xs transition-colors duration-150"
+			>
+				<InfoIcon size={SMALL_ICON_SIZE} />
+				{t('combineLabel')}
+				<OperatorTag operator="or" />
+				<OperatorTag operator="and" />
+			</button>
+		</Tip>
+	)
+}
+
+// Between two rules: either one finding a pair is enough. Decorative; the
+// combining rule is said in words above.
+function OrDivider() {
+	return (
+		<li aria-hidden className="flex items-center gap-2">
+			<span className="border-border flex-1 border-t border-dashed" />
+			<OperatorTag operator="or" />
+			<span className="border-border flex-1 border-t border-dashed" />
+		</li>
+	)
+}
+
+// OR and AND each keep one colour everywhere they appear, so the two read
+// apart at a glance.
+const OPERATOR_TONE = {
+	or: 'border-info text-info bg-info-subtle',
+	and: 'border-warning text-warning bg-warning-subtle'
+} as const
+
+function OperatorTag({ operator }: { operator: keyof typeof OPERATOR_TONE }) {
+	const t = useTranslations('Rules')
+	return (
+		<span
+			className={cn(
+				'rounded-xs border px-1 py-px font-mono text-[10px] leading-none font-semibold tracking-wide',
+				OPERATOR_TONE[operator]
+			)}
+		>
+			{t(operator)}
+		</span>
+	)
+}
+
+// A rule's fields, joined by AND: all of them must match for the rule to put
+// two records together.
+function FieldChips({
+	fields,
+	isMuted = false
+}: {
+	fields: readonly BlockingField[]
+	isMuted?: boolean
+}) {
+	const tRoles = useTranslations('Roles')
+	return (
+		<p
+			className={cn(
+				'type-ui mt-1 flex flex-wrap items-center gap-1.5 font-medium',
+				isMuted && 'opacity-70'
+			)}
+		>
+			{fields.map((field, index) => (
+				<Fragment key={field}>
+					{index > 0 && <OperatorTag operator="and" />}
+					<span className="border-border bg-surface-muted rounded-[5px] border px-1.5 py-0.5 text-xs">
+						{tRoles(field)}
+					</span>
+				</Fragment>
+			))}
+		</p>
 	)
 }
 

@@ -1,4 +1,5 @@
 import 'server-only'
+import { entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { runBase, type EvaluationView } from '@/lib/pairsight/evaluation-view'
 import { evaluationWhere, type EvaluationScope } from './scope'
@@ -25,6 +26,8 @@ export type DashboardRow = {
 	// Where opening it lands (landingStage): results, or where the work is.
 	href: string
 	name: string
+	// What its records are; null until a file is saved.
+	entityType: EntityType | null
 	createdAt: Date
 	updatedAt: Date
 	status: EvaluationStatus
@@ -66,6 +69,7 @@ export async function getDashboard({
 		select: {
 			id: true,
 			name: true,
+			entityType: true,
 			createdAt: true,
 			updatedAt: true,
 			// The current dataset is the newest; its vendor exports are the vendors.
@@ -109,6 +113,8 @@ export async function getDashboard({
 			id: evaluation.id,
 			href: stageHref(base, landingStage(stages), run?.id ?? null),
 			name: evaluation.name,
+			// Evaluations from before types existed hold people.
+			entityType: dataset == null ? null : entityTypeOf(evaluation.entityType),
 			createdAt: evaluation.createdAt,
 			updatedAt: evaluation.updatedAt,
 			status: evaluationStatus(input),

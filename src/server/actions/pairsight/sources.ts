@@ -12,7 +12,8 @@ import {
 import type { TableError } from '@/server/pairsight/tabular'
 import { duplicateRoles } from '@/server/pairsight/fields'
 import { LIMITS } from '@/server/pairsight/limits'
-import { columnRolesSchema } from '@/server/pairsight/schemas'
+import { columnRolesSchema, entityTypeSchema } from '@/server/pairsight/schemas'
+import { rolesFor } from '@/lib/pairsight/entity-types'
 import { saveSourceDataset } from '@/server/pairsight/datasets'
 import {
 	fileSchema,
@@ -59,23 +60,27 @@ export const saveSourceAction = validatedAction({
 		file: fileSchema,
 		sheet: sheetSchema,
 		referenceColumn: z.string().min(1),
-		columnRoles: columnRolesSchema
+		columnRoles: columnRolesSchema,
+		entityType: entityTypeSchema
 	}),
 	handler: async ({
 		evaluationId,
 		file,
 		sheet,
 		referenceColumn,
-		columnRoles
+		columnRoles,
+		entityType
 	}): Promise<SaveSourceResult> => {
 		const user = await requireUser()
 		const parsed = await readUpload(file, LIMITS.maxSourceRecords, sheet)
 		if (!parsed.ok) return { ok: false, parseError: parsed.error }
 		const validation = validateSourceRecords({ table: parsed.table, referenceColumn })
+		// Only this type's fields count; a role from another type is "not used".
+		const typeRoles = new Set<string>(rolesFor(entityType))
 		const roles = Object.fromEntries(
-			Object.entries(columnRoles).filter(
-				([header]) => header !== referenceColumn && parsed.table.headers.includes(header)
-			)
+			Object.entries(columnRoles)
+				.filter(([header]) => header !== referenceColumn && parsed.table.headers.includes(header))
+				.map(([header, role]) => [header, typeRoles.has(role) ? role : 'other'] as const)
 		)
 		const duplicated = duplicateRoles(roles)
 		if (!validation.isValid || duplicated.length > 0) {
@@ -92,7 +97,8 @@ export const saveSourceAction = validatedAction({
 			fileName: file.name.trim(),
 			referenceColumn,
 			columnRoles: roles,
-			records: validation.records
+			records: validation.records,
+			entityType
 		})
 		revalidateEvaluationPages()
 		return { ok: true, rowCount: validation.records.length }

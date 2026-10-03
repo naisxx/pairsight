@@ -1,29 +1,17 @@
-import type { BlockingField } from '@/server/pairsight/normalize'
+import { IDENTITY_ROLES, type BlockingField } from '@/lib/pairsight/entity-types'
 
 // Custom blocking rules, shared by the Rules screen and the server's input
 // schema. Kept outside src/server so the client builder can import it
 // without pulling in the blocking engine (and libphonenumber with it).
 
 export const MAX_RULE_FIELDS = 3
-// Fields Jev must be sent: one alone can't tell two people apart.
+// Fields Jev must be sent: one alone can't tell two records apart.
 export const MIN_JEV_FIELDS = 2
 export const MAX_CUSTOM_RULES = 5
 
 // Every field a rule can key on, in the order a custom rule's fields are
 // stored — so "postcode + email" and "email + postcode" are one rule.
-export const BLOCKING_FIELDS = [
-	'name',
-	'full_name',
-	'first_name',
-	'last_name',
-	'email',
-	'phone',
-	'date_of_birth',
-	'address',
-	'city',
-	'postcode',
-	'country'
-] as const satisfies readonly BlockingField[]
+export const BLOCKING_FIELDS: readonly BlockingField[] = ['name', ...IDENTITY_ROLES]
 
 const CUSTOM_PREFIX = 'custom_'
 

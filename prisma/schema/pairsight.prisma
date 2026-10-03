@@ -39,11 +39,22 @@ enum VendorExportFormat {
 	group
 }
 
+// What the records are (src/lib/pairsight/entity-types.ts): it decides the
+// fields, the blocking presets and how a pair is put to Jev.
+enum EntityType {
+	person
+	company
+	product
+}
+
 model Evaluation {
 	id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
 	ownerId           String?         @db.Uuid
 	name              String
 	kind              EvaluationKind  @default(live)
+	// Set when the records are saved: detected from the file, confirmed by
+	// the user. Null until then.
+	entityType        EntityType?
 	// Draft configuration; each run freezes a copy of it.
 	identitySame      String
 	identityDifferent String
@@ -168,6 +179,7 @@ model Run {
 	dataset           SourceDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
 	number            Int
 	origin            RunOrigin     @default(live)
+	entityType        EntityType    @default(person)
 	status            RunStatus     @default(running)
 	stopReason        String?
 	// Frozen snapshot of the configuration this run was evaluated with.

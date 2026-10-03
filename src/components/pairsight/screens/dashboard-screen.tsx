@@ -82,6 +82,7 @@ export async function DashboardScreen({
 								id: row.id,
 								href: row.href,
 								name: row.name,
+								entityType: row.entityType,
 								createdAt: row.createdAt,
 								updatedAt: row.updatedAt,
 								status: row.status,

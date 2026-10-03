@@ -19,5 +19,7 @@ export function ruleLabel({
 	const title = RULE_COPY[ruleId]?.title
 	if (title != null) return tRules(title)
 	const rule = rules.find((candidate) => candidate.id === ruleId)
-	return rule == null ? ruleId : rule.fields.map((field) => tRoles(field)).join(' + ')
+	return rule == null
+		? ruleId
+		: rule.fields.map((field) => tRoles(field)).join(` ${tRules('and')} `)
 }

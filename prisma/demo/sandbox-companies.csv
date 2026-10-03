@@ -1,0 +1,25 @@
+Account ID,Account Name,Website,Company Number,Phone,Street,City,Postcode,Industry
+O01,Brightwater Traders Ltd,brightwater.test,09990101,020 7946 0101,1 King St,London,EC1A 1AA,Wholesale
+O02,BRIGHTWATER TRADERS LIMITED,https://www.brightwater.test,09990101,020 7946 0101,1 King Street,London,EC1A 1AA,Wholesale
+O03,Brightwater Trading Co,brightwater-trading.test,09990101,020 7946 0101,1 King St,London,EC1A 1AA,Wholesale
+O04,Halden Brewing Company Ltd,halden.test,09990102,0113 496 0102,5 Mill Lane,Leeds,LS1 4AB,Food and drink
+O05,Halden Brewery,www.halden.test,09990102,0113 496 0102,5 Mill Ln,Leeds,LS1 4AB,Food and drink
+O06,Orbis Group plc,orbis.test,09990103,020 7946 0300,10 Bishopsgate,London,EC2A 2BB,Logistics
+O07,Orbis Logistics Ltd,logistics.orbis.test,09990104,020 7946 0301,10 Bishopsgate,London,EC2A 2BB,Logistics
+O08,Bluepeak Consulting Ltd,bluepeak.test,09990105,0117 496 0105,1 Business Park,Bristol,BS1 6AA,Consulting
+O09,Greenfield Catering Ltd,greenfield.test,09990106,0117 496 0106,1 Business Park,Bristol,BS1 6AA,Catering
+O10,Apex Solutions Ltd,apex-solutions.test,09990107,0161 496 0107,3 Deansgate,Manchester,M1 1AA,IT services
+O11,Apex Solutions Limited,apexsol.test,09990108,0161 496 0108,99 Oxford Rd,Manchester,M1 7ED,Recruitment
+O12,Kestrel Data Systems Ltd,kestreldata.test,09990109,0131 496 0109,4 George St,Edinburgh,EH2 2AA,Software
+O13,KDS Ltd,www.kestreldata.test,,0131 496 0109,4 George Street,Edinburgh,EH2 2AA,Software
+O14,Clearwater Analytics Ltd,clearwater.test,09990110,020 7946 0110,12 Market St,London,E1 6AN,Analytics
+O15,Clearwater Analytics Ltd,clearwater.test,09990110,0117 496 0999,400 Harbour Way,Bristol,BS1 5TT,Analytics
+O16,Summit Outdoor Ltd,summit-outdoor.test,09990111,01223 496 011,8 Hills Rd,Cambridge,CB2 1AB,Retail
+O17,Summit Outdoor Retail Ltd,summitretail.test,09990112,01223 496 012,8 Hills Rd,Cambridge,CB2 1AB,Retail
+O18,Riverside Dental Practice,riversidedental.test,09990113,029 2018 0113,2 Quay St,Cardiff,CF10 1EA,Healthcare
+O19,Riverside Dental Care Ltd,riversidedental.test,09990113,029 2018 0113,2 Quay Street,Cardiff,CF10 1EA,Healthcare
+O20,Fjell Foods Ltd,fjell.test,09990114,0191 498 0114,7 Quayside,Newcastle,NE1 3DX,Food and drink
+O21,Lumen Lighting Ltd,lumen.test,09990115,0121 496 0115,9 Bull St,Birmingham,B4 6AF,Manufacturing
+O22,Lumen Lighting Ltd,lumenlights.test,09990116,0141 496 0116,20 Argyle St,Glasgow,G2 8AG,Electrical
+O23,Copperleaf Studio Ltd,copperleaf.test,09990117,020 7946 0117,3 Shoreditch High St,London,E1 6PG,Design
+O24,Copper Leaf Studio,copperleaf.test,,020 7946 0117,3 Shoreditch High St,London,E1 6PG,Design

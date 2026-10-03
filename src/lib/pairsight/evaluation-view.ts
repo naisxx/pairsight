@@ -1,4 +1,4 @@
-import { SANDBOX_BASE, SANDBOX_EVALUATION_ID } from './sandbox'
+import { SANDBOX_BASE } from './sandbox'
 
 // Where an evaluation's screens live and whether they can change anything.
 // The same screens serve an owner's evaluation (/evaluations/<id>) and the
@@ -22,11 +22,13 @@ export function ownerView(evaluationId: string): EvaluationView {
 	}
 }
 
-export const SANDBOX_VIEW: EvaluationView = {
-	evaluationId: SANDBOX_EVALUATION_ID,
-	base: SANDBOX_BASE,
-	homeHref: SANDBOX_BASE,
-	isReadOnly: true
+export function sandboxView(evaluationId: string): EvaluationView {
+	return {
+		evaluationId,
+		base: `${SANDBOX_BASE}/${evaluationId}`,
+		homeHref: SANDBOX_BASE,
+		isReadOnly: true
+	}
 }
 
 export function runBase(view: EvaluationView, runId: string): string {

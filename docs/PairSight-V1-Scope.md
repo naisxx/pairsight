@@ -38,6 +38,13 @@ in Rules, the Runs centre, the sandbox, a polished landing page, CSV and
 Excel import, and the findings (CSV or Excel) and summary report (PDF)
 exports.
 
+**Record types:** people, organisations and products. The type is read from
+the uploaded file (its column names and sample values) and confirmed on
+Records; it decides the fields to map, the blocking presets, the default
+definition of "the same" and the question Jev is asked
+(`src/lib/pairsight/entity-types.ts`). People keep exactly the question
+and judgment key they always had, so earlier judgments stay reusable.
+
 **Later:** human corrections, fuzzy
 name matching, and an "uncertain" category (today borderline scores are a
 low-confidence flag and filter, not a category).
@@ -50,7 +57,7 @@ low-confidence flag and filter, not a category).
 | Vendors                        | 1 required end to end; up to 3 if the core flow is stable |
 | Unique evaluated pairs per run | 5,000                                                     |
 | Bucket size warning            | > 50 records (shows the bucket's pair count)              |
-| Import format                  | CSV only                                                  |
+| Import format                  | CSV or Excel (.xlsx)                                      |
 
 Check the limits **before any Jev call**. If the combined pair set exceeds
 the cap, explain which rules or vendors caused it and ask the user to
@@ -250,6 +257,13 @@ references.
   fictional pairs, likely-different people scored 0.01–0.11 and likely-same
   people 0.76–0.98, so 0.5 sits in a wide gap. The band is far wider than
   the run-to-run noise.
+- **Organisations and products (2026-10-03, `pnpm jev:check --types`):**
+  each asked its own question with its default definition. Likely-same
+  organisations scored 0.85–0.88 (a company that moved offices 0.63);
+  parent and subsidiary, a shared address and same-name companies in other
+  countries scored 0.05–0.08. Likely-same products scored 0.88–0.97;
+  size and colour variants, a multipack and same-name products of other
+  brands scored 0.05–0.08. The 0.5 default holds for every type.
 - **Cost:** about 510 input tokens per pair, about $0.00002 at the stand-in
   rate, so a 5,000-pair run costs about $0.10.
 

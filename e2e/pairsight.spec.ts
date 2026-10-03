@@ -123,6 +123,9 @@ test.describe('PairSight vertical slice', () => {
 		).toBeVisible()
 		await page.keyboard.press('Escape')
 		await expect(runs).toHaveCount(0)
+		// The top bar caught up too: not still "Running" behind the dialog.
+		const status = page.getByRole('banner').getByText(/^(Running|Complete|Needs attention)$/)
+		await expect(status).toHaveText(/^(Complete|Needs attention)$/)
 	}
 
 	async function runEvaluation(page: Page) {
@@ -208,6 +211,96 @@ test.describe('PairSight vertical slice', () => {
 
 		await page.getByRole('searchbox', { name: 'Search evaluations' }).fill('nothing like this')
 		await expect(page.getByText('No evaluations match “nothing like this”')).toBeVisible()
+	})
+
+	// Uploads a fixture as-is and waits for the type picker and the mapping.
+	async function uploadFile(page: Page, file: string) {
+		await page.locator('input[type=file]').setInputFiles({
+			name: file,
+			mimeType: 'text/csv',
+			buffer: readFileSync(`${FIXTURES}/${file}`)
+		})
+		await expect(page.getByText('Map your columns')).toBeVisible()
+	}
+
+	test('organisations: detected from the columns, blocked by website and registration, judged as organisations', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Supplier check')
+		await uploadFile(page, 'company-source.csv')
+		await expect(page.getByText('These look like organisations')).toBeVisible()
+		await expect(page.getByRole('radio', { name: /^Organisations/ })).toBeChecked()
+		await page.getByRole('button', { name: 'Continue to vendors' }).click()
+		await page.waitForURL('**/vendors')
+		await addVendor(page, 'company-vendor.csv')
+		await expectVendorPairs(page, 4)
+
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.waitForURL('**/rules')
+		// An organisation's own presets, on by default; no person rules.
+		await expect(page.getByRole('switch', { name: 'Same website rule' })).toBeChecked()
+		await expect(page.getByRole('switch', { name: 'Same registration number rule' })).toBeChecked()
+		await expect(page.getByRole('switch', { name: 'Same email rule' })).not.toBeChecked()
+		await expect(
+			page.getByRole('switch', { name: 'Same last name and postcode rule' })
+		).toHaveCount(0)
+		await expect(page.getByLabel('Counts as the same', { exact: true })).toHaveValue(
+			/same organisation/
+		)
+		await reviewPlan(page)
+		await startRun(page)
+
+		// A rebrand and a trading name the vendor missed; a subsidiary, a
+		// same-name company and a shared address it wrongly merged.
+		await expect(tile(page, 'Both matched')).toContainText('1')
+		await expect(tile(page, 'PairSight only')).toContainText('2')
+		await expect(tile(page, 'Vendor only')).toContainText('3')
+		await expect(tile(page, 'Neither matched')).toContainText('0')
+		await tile(page, 'Vendor only').click()
+		await page.waitForURL(/tab=detailed/)
+		// Records are named by the organisation's name.
+		await expect(page.getByRole('table').getByText('Orbis Logistics Ltd')).toBeVisible()
+	})
+
+	test('products: detected from the columns, blocked by barcode and part number, variants kept apart', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Catalogue check')
+		await uploadFile(page, 'product-source.csv')
+		await expect(page.getByText('These look like products')).toBeVisible()
+		// Switching type suggests that type's fields; switching back restores them.
+		await page.getByRole('radio', { name: /^People/ }).click()
+		await expect(page.getByRole('radio', { name: /^People/ })).toBeChecked()
+		await page.getByRole('radio', { name: /^Products/ }).click()
+		await page.getByRole('button', { name: 'Continue to vendors' }).click()
+		await page.waitForURL('**/vendors')
+		await addVendor(page, 'product-vendor.csv')
+		await expectVendorPairs(page, 3)
+
+		await page.getByRole('link', { name: 'Continue to rules' }).click()
+		await page.waitForURL('**/rules')
+		await expect(page.getByRole('switch', { name: 'Same barcode (GTIN) rule' })).toBeChecked()
+		await expect(
+			page.getByRole('switch', { name: 'Same part number and brand rule' })
+		).toBeChecked()
+		await reviewPlan(page)
+		await startRun(page)
+
+		// One duplicate both found; two the vendor missed (one item under a UPC
+		// and an EAN); a size and a brand it wrongly merged; a colour variant
+		// both kept apart.
+		await expect(tile(page, 'Both matched')).toContainText('1')
+		await expect(tile(page, 'PairSight only')).toContainText('2')
+		await expect(tile(page, 'Vendor only')).toContainText('2')
+		await expect(tile(page, 'Neither matched')).toContainText('1')
+		await tile(page, 'Both matched').click()
+		await page.waitForURL(/tab=detailed/)
+		// Products are named by brand and name.
+		await expect(
+			page.getByRole('table').getByText('Kestrel Kestrel Pro USB-C Hub').first()
+		).toBeVisible()
 	})
 
 	test('Excel in and out: a workbook’s sheet is picked, and findings export as a workbook', async ({
@@ -326,6 +419,10 @@ test.describe('PairSight vertical slice', () => {
 		// method, with the caveats that keep the numbers honest.
 		const summary = await exportFindings(page, 1, /^Summary report/)
 		expect(summary.suggestedFilename()).toBe('pairsight-demo-scenario-run-1-summary.pdf')
+		// The file is prepared first; a toast says when the download starts.
+		await expect(
+			page.getByText('pairsight-demo-scenario-run-1-summary.pdf', { exact: true })
+		).toBeVisible()
 		const report = await readPdfText(await summary.path())
 		expect(report).toContain('Demo scenario · Run 1')
 		expect(report).toContain('On these 24 records, Vendor A agreed with Jev')
@@ -649,7 +746,7 @@ test.describe('PairSight vertical slice', () => {
 		await fields.getByRole('button', { name: 'Postcode' }).click()
 		await expect(page.getByRole('button', { name: 'Save rule' })).toBeEnabled()
 		await page.getByRole('button', { name: 'Save rule' }).click()
-		await expect(page.getByRole('button', { name: 'Edit Email + Postcode' })).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Edit Email AND Postcode' })).toBeVisible()
 
 		await reviewPlan(page)
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
@@ -659,7 +756,7 @@ test.describe('PairSight vertical slice', () => {
 
 		// The composite rule was saved with the rest of the configuration.
 		await page.goto(page.url().replace(/\/plan$/, '/rules'))
-		await expect(page.getByRole('button', { name: 'Edit Email + Postcode' })).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Edit Email AND Postcode' })).toBeVisible()
 	})
 
 	test('changing the country saves itself and recounts the phone rule', async ({ page }) => {
@@ -706,12 +803,10 @@ test.describe('PairSight vertical slice', () => {
 		await expect(nameRule).toBeChecked()
 
 		// An empty definition is never saved: the reason shows, the plan waits.
-		const same = page.getByLabel('Counts as the same individual')
+		const same = page.getByLabel('Counts as the same', { exact: true })
 		const definition = await same.inputValue()
 		await same.fill('')
-		await expect(
-			page.getByText('Describe what counts as the same individual').first()
-		).toBeVisible()
+		await expect(page.getByText('Describe what counts as the same').first()).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Review comparison plan' })).toHaveCount(0)
 		await page.reload()
 		await expect(same).toHaveValue(definition)
@@ -807,7 +902,7 @@ test.describe('PairSight vertical slice', () => {
 			// (`run` is the old Run step's address; it lands in the same place.)
 			await page.goto(records.replace(/\/records$/, `/${step}`))
 			await page.waitForURL(records)
-			await expect(page.getByText('Drop your customer CSV or Excel file here')).toBeVisible()
+			await expect(page.getByText('Drop your records file here (CSV or Excel)')).toBeVisible()
 		}
 
 		// With records but no vendor, the plan still waits for one.

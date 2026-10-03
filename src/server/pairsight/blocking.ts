@@ -9,15 +9,9 @@ import { canonicalPair, groupPairCount, pairKey, type CanonicalPair } from './pa
 
 export type BlockingRule = { id: string; fields: BlockingField[] }
 
-// The rules the Rules screen offers as toggles. `last_name_postcode` is not a
-// default but helps when first names are recorded inconsistently.
-export const RULE_PRESETS = [
-	{ id: 'email', fields: ['email'] },
-	{ id: 'phone', fields: ['phone'] },
-	{ id: 'name', fields: ['name'] },
-	{ id: 'name_postcode', fields: ['name', 'postcode'] },
-	{ id: 'last_name_postcode', fields: ['last_name', 'postcode'] }
-] as const satisfies readonly BlockingRule[]
+// The rules the Rules screen offers as toggles, per entity type
+// (src/lib/pairsight/entity-types.ts).
+export { ALL_PRESETS, presetsFor } from '@/lib/pairsight/entity-types'
 
 export type BlockingRecord = { id: string; fields: MappedFields }
 

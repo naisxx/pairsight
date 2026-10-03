@@ -71,7 +71,12 @@ export async function loadRunView({ scope, runId }: { scope: EvaluationScope; ru
 	const recordsById = new Map(
 		records.map((record) => {
 			const values = parseRecordValues(record.values)
-			const label = recordLabel({ values, columnRoles, reference: record.reference })
+			const label = recordLabel({
+				values,
+				columnRoles,
+				reference: record.reference,
+				entityType: run.entityType
+			})
 			return [record.id, { id: record.id, reference: record.reference, values, label }]
 		})
 	)

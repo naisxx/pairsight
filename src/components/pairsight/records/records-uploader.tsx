@@ -11,12 +11,13 @@ import {
 	type SaveSourceResult,
 	type SourcePreview
 } from '@/server/actions/pairsight/sources'
-import type { FieldRole } from '@/server/pairsight/fields'
+import { DEFAULT_ENTITY_TYPE, rolesFor, type EntityType } from '@/lib/pairsight/entity-types'
 import { FileDrop } from '../file-drop'
 import { useFileTypeLabel } from '../file-type'
 import { SheetPicker, type SheetChoice } from '../sheet-picker'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
 import { checkTabularFile, useFileErrorMessage, useRowList, ValidationPanel } from '../validation'
+import { EntityTypePicker } from './entity-type-picker'
 import { FieldMapping } from './field-mapping'
 import { FileDetails } from './file-details'
 import {
@@ -58,17 +59,15 @@ function formatSize(bytes: number) {
 		: `${Math.max(MIN_SHOWN_KB, kb).toFixed(1)} KB`
 }
 
-// Choose a file (CSV, or an Excel sheet) → map its columns, checked as you go → save and continue to
-// vendors (validated again on the server). `roles` comes from the server page
-// so this client file never imports server modules at runtime. `onCancel`,
-// when replacing a saved file, goes back to it.
+// Choose a file (CSV, or an Excel sheet) → confirm what its records are
+// (detected from the file) → map its columns, checked as you go → save and
+// continue to vendors (validated again on the server). `onCancel`, when
+// replacing a saved file, goes back to it.
 export function RecordsUploader({
 	evaluationId,
-	roles,
 	onCancel
 }: {
 	evaluationId: string
-	roles: readonly FieldRole[]
 	onCancel?: () => void
 }) {
 	const t = useTranslations('Records')
@@ -82,10 +81,11 @@ export function RecordsUploader({
 	const [choosing, setChoosing] = useState<Choosing | null>(null)
 	const [mapping, setMapping] = useState<Mapping>(new Map())
 	const [suggested, setSuggested] = useState<Mapping>(new Map())
+	const [entityType, setEntityType] = useState<EntityType>(DEFAULT_ENTITY_TYPE)
 	const [errors, setErrors] = useState<string[]>([])
 	const [isReading, startReading] = useTransition()
 	const [isSaving, startSaving] = useTransition()
-	const fields = fieldKeys(roles)
+	const fields = fieldKeys(rolesFor(entityType))
 	const label = (key: FieldKey) => (key === 'reference' ? t('referenceField') : tRoles(key))
 
 	const issueMessages = (issues: SaveIssues) => [
@@ -122,12 +122,32 @@ export function RecordsUploader({
 				if (data.error.code !== 'choose_sheet') return setErrors([fileError(data.error)])
 				return setChoosing({ file, sheets: data.error.sheets, picked: null })
 			}
-			const suggestion = suggestedMapping(data)
+			const type = data.detection.type
+			const suggestion = suggestedMapping({
+				headers: data.headers,
+				suggestedReference: data.suggestedReference,
+				suggestedRoles: data.suggestedRoles[type]
+			})
 			setChoosing(null)
 			setLoaded({ file, preview: data })
+			setEntityType(type)
 			setSuggested(suggestion)
 			setMapping(suggestion)
 		})
+	}
+
+	// Another type: its own fields, suggested afresh; the reference stays.
+	function changeType(type: EntityType) {
+		if (loaded == null) return
+		const { preview } = loaded
+		const suggestion = suggestedMapping({
+			headers: preview.headers,
+			suggestedReference: mapping.get('reference') ?? preview.suggestedReference,
+			suggestedRoles: preview.suggestedRoles[type]
+		})
+		setEntityType(type)
+		setSuggested(suggestion)
+		setMapping(suggestion)
 	}
 
 	function onFile(file: File) {
@@ -167,6 +187,7 @@ export function RecordsUploader({
 				file: loaded.file,
 				sheet: loaded.preview.sheet,
 				referenceColumn: reference,
+				entityType,
 				columnRoles: toColumnRoles(mapping, loaded.preview.headers)
 			})
 			if (!result.ok) return setErrors([result.error])
@@ -266,6 +287,13 @@ export function RecordsUploader({
 					}
 				/>
 				<ValidationPanel title={t('errorsTitle')} messages={errors} />
+				<EntityTypePicker
+					value={entityType}
+					detected={preview.detection.type}
+					confident={preview.detection.confident}
+					onChange={changeType}
+					disabled={isSaving}
+				/>
 				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
 					<div className="@5xl:col-span-8">
 						<FieldMapping

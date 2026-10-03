@@ -1,0 +1,628 @@
+{
+	"version": 1,
+	"recordedAt": "2026-10-03T08:44:13.902Z",
+	"evaluation": {
+		"name": "Product catalogue — vendor check",
+		"entityType": "product",
+		"identitySame": "Both records describe the same product (the same item in the same variant), even if the name, description or formatting differs.",
+		"identityDifferent": "The records describe different products, including different variants (size, colour, capacity or edition), bundles or multipacks of the item, or similarly named products from different brands.",
+		"countryCode": "US",
+		"jevFields": ["product_name", "brand", "gtin", "mpn", "category", "color", "size"],
+		"blockingRules": [
+			{
+				"id": "gtin",
+				"fields": ["gtin"]
+			},
+			{
+				"id": "mpn_brand",
+				"fields": ["mpn", "brand"]
+			},
+			{
+				"id": "name_brand",
+				"fields": ["name", "brand"]
+			}
+		],
+		"threshold": 0.5
+	},
+	"dataset": {
+		"fileName": "sandbox-products.csv",
+		"referenceColumn": "Product ID",
+		"columnRoles": {
+			"MPN": "mpn",
+			"GTIN": "gtin",
+			"Size": "size",
+			"Brand": "brand",
+			"Title": "product_name",
+			"Colour": "color",
+			"Category": "category"
+		},
+		"records": [
+			{
+				"reference": "P01",
+				"rowNumber": 2,
+				"values": {
+					"MPN": "TR2-RED-42",
+					"GTIN": "4006381333931",
+					"Size": "42",
+					"Brand": "Northpeak",
+					"Title": "Trailrunner 2 Running Shoe - Red, Size 42",
+					"Colour": "Red",
+					"Category": "Footwear",
+					"Product ID": "P01"
+				}
+			},
+			{
+				"reference": "P02",
+				"rowNumber": 3,
+				"values": {
+					"MPN": "TR2RED42",
+					"GTIN": "04006381333931",
+					"Size": "42",
+					"Brand": "Northpeak",
+					"Title": "NORTHPEAK TRAILRUNNER 2 RED 42",
+					"Colour": "red",
+					"Category": "Running shoes",
+					"Product ID": "P02"
+				}
+			},
+			{
+				"reference": "P03",
+				"rowNumber": 4,
+				"values": {
+					"MPN": "TR2-RED-44",
+					"GTIN": "",
+					"Size": "44",
+					"Brand": "Northpeak",
+					"Title": "Trailrunner 2 Running Shoe - Red, Size 44",
+					"Colour": "Red",
+					"Category": "Footwear",
+					"Product ID": "P03"
+				}
+			},
+			{
+				"reference": "P04",
+				"rowNumber": 5,
+				"values": {
+					"MPN": "HB-750",
+					"GTIN": "012345678905",
+					"Size": "750 ml",
+					"Brand": "Halcyon",
+					"Title": "Halcyon Steel Bottle 750ml",
+					"Colour": "Silver",
+					"Category": "Drinkware",
+					"Product ID": "P04"
+				}
+			},
+			{
+				"reference": "P05",
+				"rowNumber": 6,
+				"values": {
+					"MPN": "",
+					"GTIN": "0012345678905",
+					"Size": "750 ml",
+					"Brand": "Halcyon",
+					"Title": "Halcyon Insulated Bottle, 0.75 L",
+					"Colour": "Silver",
+					"Category": "Bottles",
+					"Product ID": "P05"
+				}
+			},
+			{
+				"reference": "P06",
+				"rowNumber": 7,
+				"values": {
+					"MPN": "HB-500",
+					"GTIN": "",
+					"Size": "500 ml",
+					"Brand": "Halcyon",
+					"Title": "Halcyon Steel Bottle 500ml",
+					"Colour": "Silver",
+					"Category": "Drinkware",
+					"Product ID": "P06"
+				}
+			},
+			{
+				"reference": "P07",
+				"rowNumber": 8,
+				"values": {
+					"MPN": "VM-100",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Vantor",
+					"Title": "Classic Wireless Mouse",
+					"Colour": "Black",
+					"Category": "Accessories",
+					"Product ID": "P07"
+				}
+			},
+			{
+				"reference": "P08",
+				"rowNumber": 9,
+				"values": {
+					"MPN": "KM-2",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Kestrel",
+					"Title": "Classic Wireless Mouse",
+					"Colour": "Black",
+					"Category": "Accessories",
+					"Product ID": "P08"
+				}
+			},
+			{
+				"reference": "P09",
+				"rowNumber": 10,
+				"values": {
+					"MPN": "AERO30-BLK",
+					"GTIN": "",
+					"Size": "30 L",
+					"Brand": "Northpeak",
+					"Title": "Aero Backpack 30L",
+					"Colour": "Black",
+					"Category": "Bags",
+					"Product ID": "P09"
+				}
+			},
+			{
+				"reference": "P10",
+				"rowNumber": 11,
+				"values": {
+					"MPN": "AERO30-OLV",
+					"GTIN": "",
+					"Size": "30 L",
+					"Brand": "Northpeak",
+					"Title": "Aero Backpack 30L",
+					"Colour": "Olive",
+					"Category": "Bags",
+					"Product ID": "P10"
+				}
+			},
+			{
+				"reference": "P11",
+				"rowNumber": 12,
+				"values": {
+					"MPN": "KH-7C",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Kestrel",
+					"Title": "Kestrel Pro USB-C Hub 7-in-1",
+					"Colour": "Grey",
+					"Category": "Electronics",
+					"Product ID": "P11"
+				}
+			},
+			{
+				"reference": "P12",
+				"rowNumber": 13,
+				"values": {
+					"MPN": "KH-7C",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Kestrel",
+					"Title": "Kestrel Pro 7 port USB C hub",
+					"Colour": "Grey",
+					"Category": "Hubs",
+					"Product ID": "P12"
+				}
+			},
+			{
+				"reference": "P13",
+				"rowNumber": 14,
+				"values": {
+					"MPN": "FJ-SW330",
+					"GTIN": "",
+					"Size": "330 ml",
+					"Brand": "Fjell",
+					"Title": "Sparkling Water 330ml Can",
+					"Colour": "",
+					"Category": "Drinks",
+					"Product ID": "P13"
+				}
+			},
+			{
+				"reference": "P14",
+				"rowNumber": 15,
+				"values": {
+					"MPN": "FJ-SW330-6",
+					"GTIN": "",
+					"Size": "6 x 330 ml",
+					"Brand": "Fjell",
+					"Title": "Sparkling Water 330ml Can, Pack of 6",
+					"Colour": "",
+					"Category": "Drinks",
+					"Product ID": "P14"
+				}
+			},
+			{
+				"reference": "P15",
+				"rowNumber": 16,
+				"values": {
+					"MPN": "LM-DL1",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Lumen",
+					"Title": "Lumen LED Desk Lamp",
+					"Colour": "White",
+					"Category": "Lighting",
+					"Product ID": "P15"
+				}
+			},
+			{
+				"reference": "P16",
+				"rowNumber": 17,
+				"values": {
+					"MPN": "LMDL1",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Lumen",
+					"Title": "LUMEN LED DESK LAMP WHITE",
+					"Colour": "white",
+					"Category": "Lamps",
+					"Product ID": "P16"
+				}
+			},
+			{
+				"reference": "P17",
+				"rowNumber": 18,
+				"values": {
+					"MPN": "CL-A5-DOT",
+					"GTIN": "",
+					"Size": "A5",
+					"Brand": "Copperleaf",
+					"Title": "Copperleaf Notebook A5 Dotted",
+					"Colour": "Green",
+					"Category": "Stationery",
+					"Product ID": "P17"
+				}
+			},
+			{
+				"reference": "P18",
+				"rowNumber": 19,
+				"values": {
+					"MPN": "CL-A5-LIN",
+					"GTIN": "",
+					"Size": "A5",
+					"Brand": "Copperleaf",
+					"Title": "Copperleaf Notebook A5 Lined",
+					"Colour": "Green",
+					"Category": "Stationery",
+					"Product ID": "P18"
+				}
+			},
+			{
+				"reference": "P19",
+				"rowNumber": 20,
+				"values": {
+					"MPN": "ST-POLE-2",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Summit",
+					"Title": "Summit Trekking Pole Pair",
+					"Colour": "Blue",
+					"Category": "Outdoor",
+					"Product ID": "P19"
+				}
+			},
+			{
+				"reference": "P20",
+				"rowNumber": 21,
+				"values": {
+					"MPN": "ST-POLE-2",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Summit",
+					"Title": "Summit Trekking Poles (2 pack)",
+					"Colour": "Blue",
+					"Category": "Outdoor",
+					"Product ID": "P20"
+				}
+			},
+			{
+				"reference": "P21",
+				"rowNumber": 22,
+				"values": {
+					"MPN": "OR-WC15",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Orbis",
+					"Title": "Orbis Wireless Charger 15W",
+					"Colour": "Black",
+					"Category": "Electronics",
+					"Product ID": "P21"
+				}
+			},
+			{
+				"reference": "P22",
+				"rowNumber": 23,
+				"values": {
+					"MPN": "OR-WC10",
+					"GTIN": "",
+					"Size": "",
+					"Brand": "Orbis",
+					"Title": "Orbis Wireless Charger 10W",
+					"Colour": "Black",
+					"Category": "Electronics",
+					"Product ID": "P22"
+				}
+			},
+			{
+				"reference": "P23",
+				"rowNumber": 24,
+				"values": {
+					"MPN": "RV-CB1K",
+					"GTIN": "",
+					"Size": "1 kg",
+					"Brand": "Riverside",
+					"Title": "Riverside Coffee Beans 1kg",
+					"Colour": "",
+					"Category": "Coffee",
+					"Product ID": "P23"
+				}
+			},
+			{
+				"reference": "P24",
+				"rowNumber": 25,
+				"values": {
+					"MPN": "RV-CB250",
+					"GTIN": "",
+					"Size": "250 g",
+					"Brand": "Riverside",
+					"Title": "Riverside Coffee Beans 250g",
+					"Colour": "",
+					"Category": "Coffee",
+					"Product ID": "P24"
+				}
+			}
+		]
+	},
+	"vendors": [
+		{
+			"name": "Meridian Match",
+			"format": "pair",
+			"fileName": "sandbox-products-vendor-a.csv",
+			"mapping": {
+				"format": "pair",
+				"columnA": "record_a",
+				"columnB": "record_b"
+			},
+			"stats": {
+				"rows": 7,
+				"pairs": 7,
+				"groups": null,
+				"selfPairs": 0,
+				"duplicates": 0
+			},
+			"matches": [
+				["P01", "P02"],
+				["P01", "P03"],
+				["P04", "P06"],
+				["P11", "P12"],
+				["P14", "P13"],
+				["P17", "P18"],
+				["P24", "P23"]
+			]
+		},
+		{
+			"name": "Atlas Resolve",
+			"format": "group",
+			"fileName": "sandbox-products-vendor-b.csv",
+			"mapping": {
+				"format": "group",
+				"groupColumn": "cluster_id",
+				"referenceColumn": "product"
+			},
+			"stats": {
+				"rows": 10,
+				"pairs": 5,
+				"groups": 5,
+				"selfPairs": 0,
+				"duplicates": 0
+			},
+			"matches": [
+				["P05", "P04"],
+				["P16", "P15"],
+				["P20", "P19"],
+				["P07", "P08"],
+				["P21", "P22"]
+			]
+		}
+	],
+	"run": {
+		"number": 1,
+		"identitySame": "Both records describe the same product (the same item in the same variant), even if the name, description or formatting differs.",
+		"identityDifferent": "The records describe different products, including different variants (size, colour, capacity or edition), bundles or multipacks of the item, or similarly named products from different brands.",
+		"countryCode": "US",
+		"jevFields": ["product_name", "brand", "gtin", "mpn", "category", "color", "size"],
+		"blockingRules": [
+			{
+				"id": "gtin",
+				"fields": ["gtin"]
+			},
+			{
+				"id": "mpn_brand",
+				"fields": ["mpn", "brand"]
+			},
+			{
+				"id": "name_brand",
+				"fields": ["name", "brand"]
+			}
+		],
+		"judgmentKey": "42a9863fe31594eaffcbd01db0ae05f10a8923881109ec7f2a7acbbe75147853",
+		"jevModel": "jev-1.13.0",
+		"threshold": 0.5,
+		"initialThreshold": 0.5,
+		"createdAt": "2026-10-03T08:44:11.728Z",
+		"completedAt": "2026-10-03T08:44:13.902Z",
+		"pairs": [
+			{
+				"records": ["P01", "P02"],
+				"ruleIds": ["gtin", "mpn_brand"],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.97,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:13.124Z"
+				}
+			},
+			{
+				"records": ["P05", "P04"],
+				"ruleIds": ["gtin"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.86,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.489Z"
+				}
+			},
+			{
+				"records": ["P11", "P12"],
+				"ruleIds": ["mpn_brand"],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.98,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:13.870Z"
+				}
+			},
+			{
+				"records": ["P16", "P15"],
+				"ruleIds": ["mpn_brand"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.92,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:13.894Z"
+				}
+			},
+			{
+				"records": ["P20", "P19"],
+				"ruleIds": ["mpn_brand"],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.98,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.837Z"
+				}
+			},
+			{
+				"records": ["P10", "P09"],
+				"ruleIds": ["name_brand"],
+				"matchedBy": [],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.06,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.532Z"
+				}
+			},
+			{
+				"records": ["P01", "P03"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.03,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.915Z"
+				}
+			},
+			{
+				"records": ["P04", "P06"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.03,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.809Z"
+				}
+			},
+			{
+				"records": ["P14", "P13"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.06,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.444Z"
+				}
+			},
+			{
+				"records": ["P17", "P18"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.05,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.796Z"
+				}
+			},
+			{
+				"records": ["P24", "P23"],
+				"ruleIds": [],
+				"matchedBy": [0],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.04,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:13.146Z"
+				}
+			},
+			{
+				"records": ["P07", "P08"],
+				"ruleIds": [],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.06,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:12.457Z"
+				}
+			},
+			{
+				"records": ["P21", "P22"],
+				"ruleIds": [],
+				"matchedBy": [1],
+				"assessment": {
+					"status": "succeeded",
+					"score": 0.04,
+					"modelReported": "jev-1.13.0",
+					"attempts": 1,
+					"errorCode": null,
+					"completedAt": "2026-10-03T08:44:13.889Z"
+				}
+			}
+		]
+	}
+}

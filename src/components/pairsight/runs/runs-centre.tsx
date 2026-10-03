@@ -139,15 +139,18 @@ export function RunsCentreProvider({
 			return next
 		})
 		void queryClient.invalidateQueries({ queryKey: ['runs'] })
-		router.refresh()
 		const isFollowed = followed?.runId === runId
 		if (isFollowed) setFollowed(null)
 		if (isOpen) {
 			setTab('completed')
 			setFocusRunId(runId)
 			if (isFollowed && progress.status === 'completed') router.push(followed.resultsHref)
-			return
 		}
+		// After the push, never before: a navigation discards a refresh still
+		// in flight, which left the shared layout (the header's status) on
+		// "Running". Queued behind it, the refresh runs once the push lands.
+		router.refresh()
+		if (isOpen) return
 		if (isFollowed || progress.status === 'completed') {
 			toast({
 				title: progress.status === 'completed' ? t('doneTitle') : t('stoppedToast'),

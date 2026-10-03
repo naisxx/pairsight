@@ -49,6 +49,7 @@ export async function startRun({
 					evaluationId,
 					datasetId: dataset.id,
 					number: (last?.number ?? 0) + 1,
+					entityType: config.entityType,
 					identitySame: config.identity.same,
 					identityDifferent: config.identity.different,
 					countryCode: config.country,

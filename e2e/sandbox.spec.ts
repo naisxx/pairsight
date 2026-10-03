@@ -23,6 +23,18 @@ test.describe('Sandbox', () => {
 		execSync('pnpm -s demo:seed', { stdio: 'ignore' })
 	})
 
+	// The three prepared evaluations (src/lib/pairsight/sandbox.ts).
+	const SANDBOX = {
+		person: '5a4db0c0-0000-4000-8000-000000000001',
+		company: '5a4db0c0-0000-4000-9000-000000000001',
+		product: '5a4db0c0-0000-4000-a000-000000000001'
+	}
+	const NAMES = [
+		'Customer master — vendor check',
+		'Supplier master — vendor check',
+		'Product catalogue — vendor check'
+	]
+	const RESULTS = /\/sandbox\/[0-9a-f-]+\/runs\/[0-9a-f-]+\/results/
 	const pipeline = (page: Page) => page.getByRole('list', { name: 'Pipeline' })
 	const step = (page: Page, name: string) =>
 		pipeline(page).getByRole('link', { name: new RegExp(`^${name},`) })
@@ -35,16 +47,18 @@ test.describe('Sandbox', () => {
 			/fictional data · read-only\. Judgments recorded from Jev/
 		)
 		await expect(page.getByRole('link', { name: 'Sign up', exact: true })).toBeVisible()
+		await page.getByRole('link', { name: NAMES[0], exact: true }).first().click()
+		await page.waitForURL(RESULTS)
 
 		// Records: the saved file, Replace is for accounts.
 		await step(page, 'Records').click()
-		await page.waitForURL('**/sandbox/records')
+		await page.waitForURL(`**/sandbox/${SANDBOX.person}/records`)
 		await expect(page.getByRole('heading', { name: 'Column mapping' })).toBeVisible()
 		await expect(page.getByLabel('Sign up to upload your own records')).toBeVisible()
 
 		// Vendors: both vendors, viewable; adding one needs an account.
 		await step(page, 'Vendors').click()
-		await page.waitForURL('**/sandbox/vendors')
+		await page.waitForURL(`**/sandbox/${SANDBOX.person}/vendors`)
 		const vendors = page.getByRole('navigation', { name: 'Vendors' })
 		await expect(vendors).toContainText('Pair format · ready')
 		await expect(vendors).toContainText('Group format · ready')
@@ -53,9 +67,9 @@ test.describe('Sandbox', () => {
 
 		// Rules: shown, not editable, and never saved.
 		await step(page, 'Rules').click()
-		await page.waitForURL('**/sandbox/rules')
+		await page.waitForURL(`**/sandbox/${SANDBOX.person}/rules`)
 		await expect(page.getByRole('switch', { name: 'Same email rule' })).toBeDisabled()
-		await expect(page.getByLabel('Counts as the same individual')).toBeDisabled()
+		await expect(page.getByLabel('Counts as the same', { exact: true })).toBeDisabled()
 		await expect(
 			page
 				.getByRole('radiogroup', { name: 'Match threshold' })
@@ -65,7 +79,7 @@ test.describe('Sandbox', () => {
 
 		// Plan: the ledger, but starting a run needs an account.
 		await page.getByRole('link', { name: 'Review comparison plan' }).click()
-		await page.waitForURL('**/sandbox/plan')
+		await page.waitForURL(`**/sandbox/${SANDBOX.person}/plan`)
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toBeVisible()
 		await expect(page.getByLabel('Sign up to start a run')).toBeVisible()
 
@@ -73,11 +87,36 @@ test.describe('Sandbox', () => {
 		await page.getByRole('button', { name: 'Runs', exact: true }).click()
 		const runs = page.getByRole('dialog', { name: 'Runs' })
 		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
-		const card = runs.getByRole('article', { name: /^Run 1 · / })
+		const card = runs.getByRole('article', { name: /^Run 1 · Customer master/ })
 		await expect(card).toContainText('Complete · Started')
 		await expect(card).toContainText('8 pairs')
 		await card.getByRole('link', { name: 'View results' }).click()
-		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+\/results/)
+		await page.waitForURL(RESULTS)
+	})
+
+	test('people, organisations and products are three evaluations, side by side', async ({
+		page
+	}) => {
+		await page.goto('/sandbox')
+		await expect(page.getByLabel('Summary')).toContainText(/Evaluations\s*3/)
+		for (const name of NAMES) {
+			await expect(page.getByRole('link', { name, exact: true }).first()).toBeVisible()
+		}
+		// Each opens on its own: an organisation's rules, a product's fields.
+		await page
+			.getByRole('link', { name: 'Supplier master — vendor check', exact: true })
+			.first()
+			.click()
+		await page.waitForURL(RESULTS)
+		await expect(page.getByRole('radio', { name: 'Meridian Match' })).toBeVisible()
+		await step(page, 'Rules').click()
+		await page.waitForURL(`**/sandbox/${SANDBOX.company}/rules`)
+		await expect(page.getByRole('switch', { name: 'Same website rule' })).toBeDisabled()
+		await expect(page.getByLabel('Counts as the same', { exact: true })).toHaveValue(
+			/same organisation/
+		)
+		await page.goto(`/sandbox/${SANDBOX.product}/records`)
+		await expect(page.getByText('Barcode (GTIN)').first()).toBeVisible()
 	})
 
 	test('clicking the evaluation row opens it where it is up to: its results', async ({ page }) => {
@@ -87,14 +126,14 @@ test.describe('Sandbox', () => {
 		})
 		// A cell, not the name link: the whole row opens it.
 		await row.locator('td').nth(2).click()
-		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+\/results/)
+		await page.waitForURL(RESULTS)
 	})
 
 	test('results and pairs: filters and the threshold preview work, nothing is saved', async ({
 		page
 	}) => {
-		await page.goto('/sandbox/results')
-		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+\/results/)
+		await page.goto(`/sandbox/${SANDBOX.person}/results`)
+		await page.waitForURL(RESULTS)
 		const tile = (name: string) =>
 			page
 				.getByRole('region', { name: 'Pairs by category' })
@@ -131,7 +170,7 @@ test.describe('Sandbox', () => {
 		await tile('PairSight only').click()
 		await page.waitForURL(/category=pairsight_only/)
 		await page.locator('[data-pairs-table] a[href*="/pairs/"]').first().click()
-		await page.waitForURL(/\/sandbox\/runs\/[0-9a-f-]+\/pairs\//)
+		await page.waitForURL(/\/sandbox\/[0-9a-f-]+\/runs\/[0-9a-f-]+\/pairs\//)
 		await expect(page.getByRole('region', { name: 'Decisions', exact: true })).toContainText(
 			'PairSight (AI)Match'
 		)
@@ -156,9 +195,12 @@ test.describe('Sandbox', () => {
 
 		await expect(page.getByRole('button', { name: 'Account: Sandbox Visitor' })).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Your evaluations' })).toBeVisible()
-		// Only the prepared evaluation, and no way to rename or delete it.
-		await expect(page.getByLabel('Summary')).toContainText(/Evaluations\s*1/)
-		await page.getByRole('button', { name: /^Actions for / }).click()
+		// Only the prepared evaluations, and no way to rename or delete them.
+		await expect(page.getByLabel('Summary')).toContainText(/Evaluations\s*3/)
+		await page
+			.getByRole('button', { name: /^Actions for / })
+			.first()
+			.click()
 		await expect(page.getByRole('menuitem', { name: 'Open' })).toBeVisible()
 		await expect(page.getByRole('menuitem', { name: 'Delete' })).toHaveCount(0)
 		await expect(page.getByLabel(SIGN_UP)).toHaveCount(0)
@@ -177,11 +219,13 @@ test.describe('Sandbox', () => {
 					)
 				).toEqual([])
 			}
-			for (const path of ['', '/records', '/vendors', '/rules', '/plan', '/run']) {
-				await page.goto(`/sandbox${path}`)
-				await check(path || '/sandbox')
+			await page.goto('/sandbox')
+			await check('/sandbox')
+			for (const path of ['/records', '/vendors', '/rules', '/plan', '/run']) {
+				await page.goto(`/sandbox/${SANDBOX.person}${path}`)
+				await check(path)
 			}
-			await page.goto('/sandbox/results')
+			await page.goto(`/sandbox/${SANDBOX.person}/results`)
 			await page.waitForURL(/\/results/)
 			await check('results overview')
 			await page.goto(`${page.url().split('?')[0]}?tab=detailed`)

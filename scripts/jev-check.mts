@@ -13,7 +13,7 @@
 import { PrismaClient } from '@prisma/client'
 import {
 	buildJevRequest,
-	DEFAULT_IDENTITY,
+	defaultIdentity,
 	JEV_MODEL,
 	parseJevAnswer,
 	type JudgmentConfig
@@ -21,7 +21,9 @@ import {
 import { costMicroUsd, fetchRateCard } from '../src/server/lib/ai-usage/pricing.ts'
 import { openRouterSlug } from '../src/server/lib/ai-usage/models.ts'
 import { buildRow } from '../src/server/lib/ai-usage/track.ts'
-import { PAIRS } from './jev-check-pairs.mts'
+import type { EntityType } from '../src/lib/pairsight/entity-types.ts'
+import type { IdentityRole } from '../src/server/pairsight/fields.ts'
+import { PAIRS, TYPE_PAIRS } from './jev-check-pairs.mts'
 
 const BASE = process.env.TYPESAFE_API_BASE_URL || 'https://api.typesafe.ai/v1'
 const KEY = process.env.TYPESAFE_API_KEY
@@ -46,10 +48,24 @@ const FIELDS: JudgmentConfig['jevFields'] = [
 	'postcode'
 ]
 
-async function call(model: 'jev-latest' | typeof JEV_MODEL, pair: (typeof PAIRS)[number]) {
+type Pair = { a: Record<string, string>; b: Record<string, string> }
+
+function isRole(field: string): field is IdentityRole {
+	return field !== 'other'
+}
+
+async function call(
+	model: 'jev-latest' | typeof JEV_MODEL,
+	pair: Pair,
+	entityType: EntityType = 'person'
+) {
 	const config: JudgmentConfig = {
-		identity: DEFAULT_IDENTITY,
-		jevFields: FIELDS,
+		entityType,
+		identity: defaultIdentity(entityType),
+		jevFields:
+			entityType === 'person'
+				? FIELDS
+				: [...new Set([...Object.keys(pair.a), ...Object.keys(pair.b)])].filter(isRole),
 		country: 'US',
 		model
 	}
@@ -84,12 +100,32 @@ async function call(model: 'jev-latest' | typeof JEV_MODEL, pair: (typeof PAIRS)
 			latencyMs: row.latencyMs
 		}
 	})
-	const answer = response.ok ? parseJevAnswer(body) : null
+	const answer = response.ok ? parseJevAnswer(body, entityType) : null
 	const keys = body != null && typeof body === 'object' ? Object.keys(body).join(',') : '—'
 	return { status: response.status, latencyMs, answer, keys, tokens: row.inputTokens }
 }
 
 console.log(`TypeSafe endpoint: ${BASE}/systemone\n`)
+
+// Organisations and products only, each with its own question and default
+// definition: does the 0.50 threshold hold for them too?
+if (process.argv.includes('--types')) {
+	for (const type of ['company', 'product'] as const) {
+		console.log(`${type === 'company' ? 'Organisations' : 'Products'} (pinned ${JEV_MODEL})`)
+		for (const pair of TYPE_PAIRS.filter((candidate) => candidate.type === type)) {
+			const result = await call(JEV_MODEL, pair, type)
+			const score = result.answer?.ok
+				? result.answer.score.toFixed(3)
+				: `failed (HTTP ${result.status})`
+			console.log(
+				`   ${score.padEnd(8)} expected ${pair.expect.padEnd(6)} ${pair.label} · ${result.latencyMs} ms`
+			)
+		}
+	}
+	await db.$disconnect()
+	console.log('\nDone. Every call above was recorded in ai_usage (feature pairsight_jev_check).')
+	process.exit(0)
+}
 
 console.log(`1. Response shape and model (pinned ${JEV_MODEL}, what the app calls)`)
 const first = await call(JEV_MODEL, PAIRS[0])

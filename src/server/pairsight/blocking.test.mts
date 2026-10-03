@@ -1,6 +1,8 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { buildBlockedPairs, RULE_PRESETS } from './blocking'
+import { buildBlockedPairs, presetsFor } from './blocking'
+
+const EMAIL_RULE = { id: 'email', fields: ['email' as const] }
 import { LIMITS } from './limits'
 import { groupPairCount } from './pairs'
 
@@ -54,7 +56,7 @@ test('records missing a value never share a blank bucket', () => {
 	const blanks = Array.from({ length: 10 }, (_, i) => ({ id: `b${i}`, fields: { email: '' } }))
 	const { pairs, stats } = buildBlockedPairs({
 		records: blanks,
-		rules: [RULE_PRESETS[0]],
+		rules: [EMAIL_RULE],
 		country: 'US'
 	})
 	assert.equal(pairs.length, 0)
@@ -67,7 +69,7 @@ test('buckets above the warning size are reported with their pair expansion', ()
 		id: `s${i}`,
 		fields: { email: 'a@x.com' }
 	}))
-	const { stats } = buildBlockedPairs({ records: same, rules: [RULE_PRESETS[0]], country: 'US' })
+	const { stats } = buildBlockedPairs({ records: same, rules: [EMAIL_RULE], country: 'US' })
 	assert.deepEqual(stats[0].oversizedBuckets, [{ size, pairCount: groupPairCount(size) }])
 	assert.equal(stats[0].largestBucket, size)
 })
@@ -84,4 +86,54 @@ test('each rule shows a sample key, from a shared bucket when there is one', () 
 	// r1 and r3 share "smith" + "10001"; r1's own key isn't shared by first name.
 	assert.deepEqual(stats[0]?.sampleKey, ['smith', '10001'])
 	assert.equal(stats[1]?.sampleKey?.length, 1)
+})
+
+const preset = (type: Parameters<typeof presetsFor>[0], id: string) => {
+	const rule = presetsFor(type).find((candidate) => candidate.id === id)
+	assert.ok(rule)
+	return { id: rule.id, fields: [...rule.fields] }
+}
+
+test('organisations block on website domain and on names without their legal form', () => {
+	const records = [
+		{ id: 'a', fields: { company_name: 'Acme Ltd', website: 'https://www.acme.test/about' } },
+		{ id: 'b', fields: { company_name: 'ACME Limited', website: 'acme.test' } },
+		{ id: 'c', fields: { company_name: 'Acme & Sons', website: 'acmesons.test' } }
+	]
+	const byWebsite = buildBlockedPairs({
+		records,
+		rules: [preset('company', 'website')],
+		country: 'GB'
+	})
+	assert.deepEqual(
+		byWebsite.pairs.map((pair) => [pair.a, pair.b]),
+		[['a', 'b']]
+	)
+	const byName = buildBlockedPairs({ records, rules: [preset('company', 'name')], country: 'GB' })
+	assert.deepEqual(
+		byName.pairs.map((pair) => [pair.a, pair.b]),
+		[['a', 'b']]
+	)
+})
+
+test('products block on one barcode however it is written, and on part number with brand', () => {
+	const records = [
+		{ id: 'a', fields: { gtin: '012345678905', mpn: 'AB-123', brand: 'Northpeak' } },
+		{ id: 'b', fields: { gtin: '0012345678905', mpn: 'ab123', brand: 'northpeak' } },
+		{ id: 'c', fields: { gtin: '4006381333931', mpn: 'AB-123', brand: 'Other' } }
+	]
+	const byGtin = buildBlockedPairs({ records, rules: [preset('product', 'gtin')], country: 'US' })
+	assert.deepEqual(
+		byGtin.pairs.map((pair) => [pair.a, pair.b]),
+		[['a', 'b']]
+	)
+	const byPart = buildBlockedPairs({
+		records,
+		rules: [preset('product', 'mpn_brand')],
+		country: 'US'
+	})
+	assert.deepEqual(
+		byPart.pairs.map((pair) => [pair.a, pair.b]),
+		[['a', 'b']]
+	)
 })

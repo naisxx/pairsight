@@ -89,6 +89,7 @@ async function judge({
 		])
 	)
 	const config: JudgmentConfig = {
+		entityType: run.entityType,
 		identity: { same: run.identitySame, different: run.identityDifferent },
 		jevFields: parseIdentityRoles(run.jevFields),
 		country: run.countryCode,

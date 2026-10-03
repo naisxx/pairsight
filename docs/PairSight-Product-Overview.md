@@ -10,7 +10,7 @@ Users upload their original records and the matching results from one or more to
 
 The result is a comparison supported by record-level evidence, estimated quality scores, and a review workspace where users can check questionable decisions.
 
-This document describes the planned product. The first release focuses on customer/person records and small datasets; broader entity types and larger-scale evaluation are later extensions.
+This document describes the planned product. It evaluates people, organisations and products on small datasets; larger-scale evaluation is a later extension.
 
 ## The problem we solve
 
@@ -48,7 +48,7 @@ Every vendor-predicted match is included in the review, even if it falls outside
 
 ### 1. Discover PairSight
 
-The landing page explains the problem and offers two actions: **Start evaluation** or **Explore the sandbox**. The sandbox is the whole app, read-only, on one evaluation with fictional records, two vendors and judgments recorded from Jev, so visitors can explore the experience immediately, without an account.
+The landing page explains the problem and offers two actions: **Start evaluation** or **Explore the sandbox**. The sandbox is the whole app, read-only, on three evaluations (customers, suppliers and a product catalogue) with fictional records, two vendors each and judgments recorded from Jev, so visitors can explore the experience immediately, without an account.
 
 ### 2. Create an evaluation
 
@@ -125,13 +125,13 @@ V1 shipped in October 2026 as a complete loop:
 
 Saved evaluations, the fictional demo data (a public, read-only sandbox) and the landing page shipped with it.
 
-V1 focuses on customer/person records in CSV or Excel files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run.
+V1 evaluates people, organisations or products (read from the uploaded file's columns and confirmed by the user) in CSV or Excel files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run. Each type brings its own fields, blocking rules and definition of "the same", and the sandbox has a prepared evaluation of each.
 
 Exports shipped too: every pair's findings as CSV or Excel, and a PDF summary report that names the vendor that matched most like Jev, shows each vendor's tradeoffs and example pairs, and records the method and scope behind the numbers.
 
 **Next:** human corrections (step 9). Its controls are hidden until it's built.
 
-**Later:** companies and products, larger-scale processing and a background worker, more vendor-specific formats, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
+**Later:** larger-scale processing and a background worker, more vendor-specific formats, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
 
 ## What success looks like
 

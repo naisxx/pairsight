@@ -1,6 +1,7 @@
 import 'server-only'
 import { db } from '@/server/db/client'
-import { buildBlockedPairs, RULE_PRESETS, type BlockingRule, type RuleStats } from './blocking'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
+import { buildBlockedPairs, presetsFor, type BlockingRule, type RuleStats } from './blocking'
 import { getCurrentDataset } from './datasets'
 import { getVisibleEvaluation } from './evaluations'
 import type { EvaluationScope } from './scope'
@@ -48,9 +49,10 @@ export async function rulesPreview({
 }) {
 	const { evaluation, records, mappedRoles } = await loadBlockingInput({ scope, evaluationId })
 	const saved = parseBlockingRules(evaluation.blockingRules)
+	const presets = presetsFor(entityTypeOf(evaluation.entityType))
 	const rules: BlockingRule[] = [
-		...RULE_PRESETS.map((rule) => ({ id: rule.id, fields: [...rule.fields] })),
-		...saved.filter((rule) => !RULE_PRESETS.some((preset) => preset.id === rule.id))
+		...presets.map((rule) => ({ id: rule.id, fields: [...rule.fields] })),
+		...saved.filter((rule) => !presets.some((preset) => preset.id === rule.id))
 	]
 	const { stats } = buildBlockedPairs({ records, rules, country: evaluation.countryCode })
 	return { evaluation, saved, rules, mappedRoles, stats }

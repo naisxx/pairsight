@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useFormatter, useTranslations } from 'next-intl'
+import type { EntityType } from '@/lib/pairsight/entity-types'
 import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
@@ -43,6 +44,7 @@ export type TableRow = {
 	id: string
 	href: string
 	name: string
+	entityType: EntityType | null
 	createdAt: Date
 	updatedAt: Date
 	status: EvaluationStatus
@@ -58,6 +60,7 @@ export type TableRow = {
 export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isReadOnly: boolean }) {
 	const t = useTranslations('Evaluations')
 	const tSteps = useTranslations('Steps')
+	const tTypes = useTranslations('EntityTypes')
 	const format = useFormatter()
 	const router = useRouter()
 	const isReduced = useReducedMotion() === true
@@ -158,6 +161,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 												{row.name}
 											</Link>
 											<span className="text-text-muted block text-xs">
+												{row.entityType != null && `${tTypes('chip', { type: row.entityType })} · `}
 												{t('created', { date: date(row.createdAt) })}
 											</span>
 										</td>

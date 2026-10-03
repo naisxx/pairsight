@@ -47,7 +47,7 @@ export function CompositeRuleEditor({
 	const isDuplicate =
 		fields.length > 0 && otherRules.some((existing) => hasSameFields(existing.fields, fields))
 	const canPreview = fields.length > 0 && !isDuplicate && COUNTRY_CODE_PATTERN.test(country)
-	const label = fields.map((field) => tRoles(field)).join(' + ')
+	const label = fields.map((field) => tRoles(field)).join(` ${t('and')} `)
 
 	const preview = useQuery({
 		queryKey: ['pairsight', 'rule-preview', evaluationId, country.toUpperCase(), rule.id],
