@@ -2,8 +2,8 @@ import 'server-only'
 import { getTranslations } from 'next-intl/server'
 import type { TabularFormat } from '@/lib/pairsight/tabular-formats'
 import { ruleLabel } from '@/components/pairsight/rule-label'
-import { db } from '@/server/db/client'
 import { log } from '@/server/lib/logger'
+import { exportFileName } from './export-file-name'
 import { buildFindings } from './findings-table'
 import { parseBlockingRules } from './json'
 import { loadRunView } from './results'
@@ -14,18 +14,6 @@ import { adapterFor, writeTable } from './tabular'
 // columns), through the tabular connector, so other formats come for free.
 // Record values only ever go to the viewer in the file: the log line carries
 // ids and counts.
-
-const MAX_SLUG_LENGTH = 40
-
-function slug(name: string): string {
-	const cleaned = name
-		.toLowerCase()
-		.normalize('NFKD')
-		.replace(/[^a-z0-9]+/g, '-')
-		.replace(/^-+|-+$/g, '')
-		.slice(0, MAX_SLUG_LENGTH)
-	return cleaned === '' ? 'evaluation' : cleaned
-}
 
 export async function findingsExport({
 	scope,
@@ -45,10 +33,6 @@ export async function findingsExport({
 		getTranslations('Failures')
 	])
 	const { run } = view
-	const evaluation = await db.evaluation.findUniqueOrThrow({
-		where: { id: run.evaluationId },
-		select: { name: true }
-	})
 	const rules = parseBlockingRules(run.blockingRules)
 	const table = buildFindings({
 		pairs: view.pairs,
@@ -88,7 +72,12 @@ export async function findingsExport({
 	const body = await writeTable(table, format)
 	log.info('pairsight findings exported', { runId, rows: table.rows.length, format })
 	return {
-		fileName: `pairsight-${slug(evaluation.name)}-run-${run.number}-findings${adapter.extension}`,
+		fileName: exportFileName({
+			evaluation: run.evaluation.name,
+			runNumber: run.number,
+			kind: 'findings',
+			extension: adapter.extension
+		}),
 		contentType: adapter.mimeType,
 		body
 	}
