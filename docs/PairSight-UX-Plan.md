@@ -49,12 +49,19 @@ it redirects to where the evaluation is up to.
   app opens.
 - **Evaluations** — a greeting, a summary strip, the latest finished run's
   precision/recall/F1 per vendor, Continue setup with stage bars, and a
-  searchable table with Open / Rename / Delete. Names are unique per
+  searchable table with Open / Rename / Delete; each row says what its
+  records are (People, Organisations, Products). Names are unique per
   account, ignoring case.
 - **Records** — drop zone (CSV or Excel `.xlsx`; a workbook with more than
   one sheet of data shows a sheet picker, and the file bar names the sheet
-  read); then each PairSight field mapped to one of your
-  columns (with suggestions and sample values), a Validation panel checking
+  read); then **what the records are**: people, organisations or products,
+  read from the column names and sample values ("These look like
+  organisations") and confirmed with three radio cards, or asked when the
+  file is ambiguous. The type decides the fields to map, the rules Rules
+  offers and what Jev is asked; switching it suggests that type's fields.
+  Then each of the type's fields mapped to one of your
+  columns (suggested from a large dictionary of CRM, ERP and commerce column
+  names, backed by the values: emails, websites, barcodes; with sample values), a Validation panel checking
   references as you choose, and a 10-row preview. Continue saves and goes to
   Vendors. Once saved the dataset is read-only; Replace file asks first.
 - **Vendors** — a vendor list beside an editor. Each vendor is a draft until
@@ -138,9 +145,11 @@ it redirects to where the evaluation is up to.
   (`src/server/pairsight/report-pdf/`, `@react-pdf/renderer`) from a pure
   model (`report-summary.ts`), works in the sandbox, and is never cached.
 
-- **Sandbox (`/sandbox`, M4)** — the whole app on one prepared, fictional
-  evaluation (24 records, a pair-format and a group-format vendor, one run
-  judged by the real Jev), with no login. Every screen is the real one,
+- **Sandbox (`/sandbox`, M4)** — the whole app on three prepared, fictional
+  evaluations side by side: customers (people), suppliers (organisations)
+  and a product catalogue, each with 24 records, a pair-format and a
+  group-format vendor and one run judged by the real Jev, with no login.
+  `/sandbox` is their read-only dashboard; each opens at `/sandbox/<id>/…`. Every screen is the real one,
   read-only: anything that would save, upload or call Jev is shown but inert,
   with a "Sign up to …" tip; rules are disabled and never saved. What only
   reads still works: filters, tabs, sorting, the threshold preview, pairs
