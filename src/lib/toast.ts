@@ -8,6 +8,9 @@ export type ToastInput = {
 	variant?: 'default' | 'destructive'
 	// One follow-up, as a button on the toast ("View results").
 	action?: { label: string; onClick: () => void }
+	// Work in progress ("Preparing your file…"): a spinner, and it stays until
+	// dismissToast() closes it.
+	isLoading?: boolean
 }
 
 type ToastItem = ToastInput & { id: string }
@@ -35,11 +38,17 @@ function dismiss(id: string) {
 // anywhere in the app to show one. Pair with captureError/captureClientError's
 // userMessage: `toast({ title: 'Something went wrong', description: userMessage,
 // variant: 'destructive' })`. See docs/rules/error-handling.md.
-export function toast(input: ToastInput): void {
+export function toast(input: ToastInput): string {
 	const id = String(nextId++)
 	toasts = [...toasts, { id, ...input }]
 	emit()
-	setTimeout(() => dismiss(id), TOAST_DURATION_MS)
+	if (input.isLoading !== true) setTimeout(() => dismiss(id), TOAST_DURATION_MS)
+	return id
+}
+
+// Closes a toast early, such as a loading one once its work is done.
+export function dismissToast(id: string): void {
+	dismiss(id)
 }
 
 export function useToast() {
