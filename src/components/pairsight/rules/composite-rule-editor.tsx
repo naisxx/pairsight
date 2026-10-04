@@ -1,17 +1,28 @@
 'use client'
 
-import { useState } from 'react'
+import { useId, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { AlertIcon, SpinnerIcon } from '@/components/ui/icons'
+import { OptionSelect } from '@/components/ui/select'
 import { cn } from '@/lib/cn'
+import {
+	derivedField,
+	isFuzzyRule,
+	needsPartner,
+	parseRuleField,
+	transformsFor,
+	type KeyTransform
+} from '@/lib/pairsight/derived-keys'
+import type { BaseField } from '@/lib/pairsight/entity-types'
 import { customRule, hasSameFields, MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
 import { COUNTRY_CODE_PATTERN } from '@/lib/pairsight/input-limits'
 import { previewRuleAction } from '@/server/actions/pairsight/rules'
 import type { RuleStats } from '@/server/pairsight/blocking'
 import type { BlockingField } from '@/server/pairsight/normalize'
 import type { Rule, RuleLimits } from '@/lib/pairsight/rule-fields'
+import { ruleFieldLabel } from '../rule-field-label'
 import { SampleKey } from './rule-stats'
 
 const ICON_SIZE = 14
@@ -32,7 +43,7 @@ export function CompositeRuleEditor({
 }: {
 	evaluationId: string
 	country: string
-	availableFields: readonly BlockingField[]
+	availableFields: readonly BaseField[]
 	// Every rule but the one being edited, to catch duplicates.
 	otherRules: readonly Rule[]
 	initial?: readonly BlockingField[]
@@ -46,8 +57,12 @@ export function CompositeRuleEditor({
 	const rule = customRule(fields)
 	const isDuplicate =
 		fields.length > 0 && otherRules.some((existing) => hasSameFields(existing.fields, fields))
-	const canPreview = fields.length > 0 && !isDuplicate && COUNTRY_CODE_PATTERN.test(country)
-	const label = fields.map((field) => tRoles(field)).join(` ${t('and')} `)
+	const isTooBroad = needsPartner(fields)
+	const canPreview =
+		fields.length > 0 && !isDuplicate && !isTooBroad && COUNTRY_CODE_PATTERN.test(country)
+	const fieldLabel = (field: BlockingField) => ruleFieldLabel({ field, tRules: t, tRoles })
+	const label = fields.map(fieldLabel).join(` ${t('and')} `)
+	const bases = fields.map((field) => parseRuleField(field).base)
 
 	const preview = useQuery({
 		queryKey: ['pairsight', 'rule-preview', evaluationId, country.toUpperCase(), rule.id],
@@ -65,9 +80,24 @@ export function CompositeRuleEditor({
 	const stat = canPreview ? preview.data : undefined
 	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
 
-	function toggle(field: BlockingField) {
+	// A field is picked as it is; "Match on" then derives it, in place.
+	function toggle(base: BaseField) {
 		setFields((current) =>
-			current.includes(field) ? current.filter((item) => item !== field) : [...current, field]
+			current.some((field) => parseRuleField(field).base === base)
+				? current.filter((field) => parseRuleField(field).base !== base)
+				: [...current, base]
+		)
+	}
+
+	function matchOn(base: BaseField, transform: KeyTransform | null) {
+		setFields((current) =>
+			current.map((field) =>
+				parseRuleField(field).base === base
+					? transform == null
+						? base
+						: derivedField(base, transform)
+					: field
+			)
 		)
 	}
 
@@ -77,7 +107,7 @@ export function CompositeRuleEditor({
 			<p className="text-text-muted mt-0.5 text-xs">{t('editorDescription')}</p>
 			<div className="mt-3 flex flex-wrap gap-1.5" role="group" aria-label={t('editorFields')}>
 				{availableFields.map((field) => {
-					const order = fields.indexOf(field)
+					const order = bases.indexOf(field)
 					const isOn = order !== -1
 					return (
 						<button
@@ -97,9 +127,31 @@ export function CompositeRuleEditor({
 					)
 				})}
 			</div>
+			{fields.some((field) => transformsFor(parseRuleField(field).base).length > 0) && (
+				<div className="mt-3 flex flex-col gap-2">
+					{fields.map((field) => {
+						const { base, transform } = parseRuleField(field)
+						const transforms = transformsFor(base)
+						if (transforms.length === 0) return null
+						return (
+							<MatchOn
+								key={base}
+								field={tRoles(base)}
+								value={transform}
+								transforms={transforms}
+								onChange={(next) => matchOn(base, next)}
+							/>
+						)
+					})}
+				</div>
+			)}
 			<div className="border-border bg-surface mt-3 rounded-sm border p-3 text-xs">
 				{fields.length === 0 ? (
 					<p className="text-text-muted">{t('editorPick')}</p>
+				) : isTooBroad ? (
+					<p className="text-warning">
+						{t('editorNeedsPartner', { field: fields.map(fieldLabel).join(` ${t('and')} `) })}
+					</p>
 				) : isDuplicate ? (
 					<p className="text-danger">{t('customDuplicate')}</p>
 				) : preview.isError ? (
@@ -115,6 +167,7 @@ export function CompositeRuleEditor({
 					<>
 						<p>
 							<span className="font-medium">{label}</span>
+							{isFuzzyRule(rule) && <span className="text-info"> · {t('fuzzy')}</span>}
 							<span className="text-text-muted"> · {t('example')} </span>
 							{stat.sampleKey == null ? (
 								<code className="font-mono">{t('editorMissingKey')}</code>
@@ -164,6 +217,46 @@ export function CompositeRuleEditor({
 					{t('cancel')}
 				</Button>
 			</div>
+		</div>
+	)
+}
+
+// How one picked field is matched: as it is, or derived from it.
+function MatchOn({
+	field,
+	value,
+	transforms,
+	onChange
+}: {
+	field: string
+	value: KeyTransform | null
+	transforms: readonly KeyTransform[]
+	onChange: (transform: KeyTransform | null) => void
+}) {
+	const t = useTranslations('Rules')
+	const id = useId()
+	const exact = 'exact'
+	return (
+		<div className="flex flex-wrap items-center gap-2 text-xs">
+			<label htmlFor={id} className="text-text-muted min-w-[140px]">
+				{t('editorMatchOn', { field })}
+			</label>
+			<OptionSelect
+				id={id}
+				size="sm"
+				className="w-[180px]"
+				value={value ?? exact}
+				onValueChange={(next) =>
+					onChange(transforms.find((transform) => transform === next) ?? null)
+				}
+				options={[
+					{ value: exact, label: t('matchExact') },
+					...transforms.map((transform) => ({
+						value: transform,
+						label: t(`transform.${transform}`)
+					}))
+				]}
+			/>
 		</div>
 	)
 }

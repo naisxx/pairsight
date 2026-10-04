@@ -3,14 +3,17 @@
 import { Fragment, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
+import { Chip } from '@/components/ui/chip'
 import { AlertIcon, EditIcon, InfoIcon, PlusIcon, TrashIcon } from '@/components/ui/icons'
 import { Switch } from '@/components/ui/switch'
 import { Tip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/cn'
 import { isCustomRuleId, MAX_CUSTOM_RULES } from '@/lib/pairsight/custom-rules'
+import { isFuzzyRule } from '@/lib/pairsight/derived-keys'
+import { ruleFieldLabel } from '../rule-field-label'
 import type { RuleStats } from '@/server/pairsight/blocking'
 import type { IdentityRole } from '@/server/pairsight/fields'
-import type { BlockingField } from '@/server/pairsight/normalize'
+import type { BaseField, BlockingField } from '@/lib/pairsight/entity-types'
 import { CompositeRuleEditor } from './composite-rule-editor'
 import { RULE_COPY } from './rule-copy'
 import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
@@ -41,7 +44,7 @@ export function CandidateRules({
 	enabled: ReadonlySet<string>
 	stats: (ruleId: string) => RuleStats | undefined
 	mapped: ReadonlySet<IdentityRole>
-	availableFields: readonly BlockingField[]
+	availableFields: readonly BaseField[]
 	limits: RuleLimits
 	onToggle: (ruleId: string, isOn: boolean) => void
 	// `replacing` is the composite being edited, absent for a new one.
@@ -56,7 +59,9 @@ export function CandidateRules({
 	const label = (rule: Rule) => {
 		const copy = RULE_COPY[rule.id]
 		return copy == null
-			? rule.fields.map((field) => tRoles(field)).join(` ${t('and')} `)
+			? rule.fields
+					.map((field) => ruleFieldLabel({ field, tRules: t, tRoles }))
+					.join(` ${t('and')} `)
 			: t(copy.title)
 	}
 
@@ -75,6 +80,11 @@ export function CandidateRules({
 
 			<div className="px-5 pt-2">
 				<h3 className="text-text-muted text-xs font-medium">{t('presets')}</h3>
+				{presets.some(isFuzzyRule) && (
+					<p className="text-text-muted mt-1 max-w-2xl text-xs leading-relaxed">
+						<FuzzyTag /> {t('fuzzyNote')}
+					</p>
+				)}
 				<ul className="mt-1">
 					{presets.map((rule, index) => {
 						const missing = missingField(rule.fields, mapped)
@@ -103,6 +113,12 @@ export function CandidateRules({
 											>
 												{label(rule)}
 											</label>
+											{isFuzzyRule(rule) && (
+												<>
+													{' '}
+													<FuzzyTag />
+												</>
+											)}
 											{rule.fields.length > 1 && (
 												<FieldChips fields={rule.fields} isMuted={!isOn} />
 											)}
@@ -181,7 +197,7 @@ export function CandidateRules({
 								{divider}
 								<li className="flex flex-col gap-3 py-3 @3xl:flex-row @3xl:items-center">
 									<div className="min-w-0 flex-1">
-										<FieldChips fields={rule.fields} />
+										<FieldChips fields={rule.fields} isFuzzy={isFuzzyRule(rule)} />
 										<p className="text-text-muted mt-1 text-xs">
 											{t('example')} <SampleKey parts={stat?.sampleKey ?? null} />
 										</p>
@@ -318,11 +334,15 @@ function OperatorTag({ operator }: { operator: keyof typeof OPERATOR_TONE }) {
 // two records together.
 function FieldChips({
 	fields,
-	isMuted = false
+	isMuted = false,
+	isFuzzy = false
 }: {
 	fields: readonly BlockingField[]
 	isMuted?: boolean
+	// A custom rule has no title to carry the tag, so its chips do.
+	isFuzzy?: boolean
 }) {
+	const t = useTranslations('Rules')
 	const tRoles = useTranslations('Roles')
 	return (
 		<p
@@ -335,12 +355,19 @@ function FieldChips({
 				<Fragment key={field}>
 					{index > 0 && <OperatorTag operator="and" />}
 					<span className="border-border bg-surface-muted rounded-[5px] border px-1.5 py-0.5 text-xs">
-						{tRoles(field)}
+						{ruleFieldLabel({ field, tRules: t, tRoles })}
 					</span>
 				</Fragment>
 			))}
+			{isFuzzy && <FuzzyTag />}
 		</p>
 	)
+}
+
+// Marks a rule that matches on a derived key: it finds more, and adds pairs.
+function FuzzyTag() {
+	const t = useTranslations('Rules')
+	return <Chip tone="info">{t('fuzzy')}</Chip>
 }
 
 // What a rule would cost in workload: over the run's pair cap on its own, or

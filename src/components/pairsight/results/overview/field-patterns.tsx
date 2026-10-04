@@ -56,9 +56,10 @@ export function FieldPatternsPanel({
 			merged.different.length > 0
 				? t('patternMergedDiffer', {
 						shared: list(merged.shared),
-						different: list(merged.different)
+						different: list(merged.different),
+						vendor: vendorName
 					})
-				: t('patternMerged', { shared: list(merged.shared) })
+				: t('patternMerged', { shared: list(merged.shared), vendor: vendorName })
 		)
 	}
 

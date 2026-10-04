@@ -1,3 +1,4 @@
+import { parseRuleField } from '@/lib/pairsight/derived-keys'
 import { NAME_SOURCES, type BlockingField, type IdentityRole } from '@/lib/pairsight/entity-types'
 
 export type Rule = { id: string; fields: BlockingField[] }
@@ -5,14 +6,16 @@ export type RuleLimits = { bucketWarningSize: number; maxPairsPerRun: number }
 
 // The first field a rule needs that isn't mapped (a "name" rule is satisfied
 // by any of NAME_SOURCES: a full name, first + last, an organisation's or a
-// product's name), or null when the rule can run.
+// product's name; a derived field needs the field it's derived from), or
+// null when the rule can run.
 export function missingField(fields: readonly BlockingField[], mapped: ReadonlySet<IdentityRole>) {
 	for (const field of fields) {
+		const { base } = parseRuleField(field)
 		const isMissing =
-			field === 'name'
+			base === 'name'
 				? !NAME_SOURCES.some((roles) => roles.every((role) => mapped.has(role)))
-				: !mapped.has(field)
-		if (isMissing) return field
+				: !mapped.has(base)
+		if (isMissing) return base
 	}
 	return null
 }

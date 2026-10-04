@@ -9,6 +9,9 @@ import { getProfileName, getSessionUser } from '@/server/auth/session'
 import { getDashboard } from '@/server/pairsight/dashboard'
 import { getSandboxRecording } from '@/server/pairsight/evaluation-pages'
 import { SANDBOX_SCOPE } from '@/server/pairsight/scope'
+import { pageTitle } from '@/i18n/page-title'
+
+export const generateMetadata = pageTitle('Sandbox')
 
 // The sandbox's dashboard: its three prepared evaluations (people,
 // organisations, products), each opening read-only at /sandbox/<id>. Until

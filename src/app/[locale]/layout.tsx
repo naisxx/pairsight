@@ -26,7 +26,7 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-	title: 'PairSight'
+	title: { default: 'PairSight', template: '%s · PairSight' }
 }
 
 export default async function LocaleLayout({

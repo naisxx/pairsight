@@ -7,6 +7,9 @@ import { ownerView } from '@/lib/pairsight/evaluation-view'
 import { requireUserOrRedirect } from '@/server/auth/session'
 import { getDashboard } from '@/server/pairsight/dashboard'
 import { ownerScope } from '@/server/pairsight/scope'
+import { pageTitle } from '@/i18n/page-title'
+
+export const generateMetadata = pageTitle('Evaluations')
 
 export default async function EvaluationsPage() {
 	const user = await requireUserOrRedirect('/evaluations')

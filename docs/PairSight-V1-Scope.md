@@ -18,7 +18,9 @@ defaults, to adjust after a real Jev integration test.
    duplicate pairs.
 4. Evaluate each unique pair with Jev and apply our decision.
 5. Compare decisions per vendor as **both matched**, **PairSight only**,
-   **vendor only** or **neither matched**, and inspect each pair.
+   **vendor only** or **neither matched** (on screen: Both say same, Only
+   Jev says same, Only vendor says same, Both say different), and inspect
+   each pair.
 
 **Before Friday, in priority order:**
 
@@ -45,9 +47,10 @@ definition of "the same" and the question Jev is asked
 (`src/lib/pairsight/entity-types.ts`). People keep exactly the question
 and judgment key they always had, so earlier judgments stay reusable.
 
-**Later:** human corrections, fuzzy
-name matching, and an "uncertain" category (today borderline scores are a
-low-confidence flag and filter, not a category).
+**Later:** human corrections, rule suggestions learned from a run's
+confirmed duplicates, sampling of near-miss pairs outside the rules, and an
+"uncertain" category (today borderline scores are a low-confidence flag
+and filter, not a category).
 
 ## Limits (configurable)
 
@@ -95,6 +98,24 @@ The bucket warning is about workload, not accuracy.
   - **Phone:** normalize consistently using an explicit country context.
   - **Name:** trim, lowercase and collapse whitespace.
   - **Name + postcode or location:** a composite rule.
+- **Fuzzy rules** are still exact equality, on a derived key
+  (`src/lib/pairsight/derived-keys.ts`, computed in
+  `src/server/pairsight/key-transforms.ts`): how a name sounds (Double
+  Metaphone, any word order), its first 4 letters, its words in any order,
+  an email's username (`+tag` dropped) or domain, a birth year, a postcode
+  district (the UK outward code, else the first 3 characters), a phone's
+  last 7 digits. Stored as `field~transform`, so earlier rules and runs are
+  unchanged. A birth year, district, email domain or first initial only
+  counts beside another field. Each type has fuzzy presets, off by default.
+  Sounds-like is English-leaning: it misses some spellings (Thompson /
+  Thomson keeps the silent P; Sean / Shaun code differently) and nicknames
+  (Liz / Elizabeth) entirely.
+- **Measured** (`pnpm blocking:check`, a fictional file of 104 people with
+  27 planted duplicates): the default people rules find 10 (37%) in 11
+  candidate pairs; adding the fuzzy presets finds 23 (85%) in 24. A unit
+  test holds those bounds.
+- A pair found only by fuzzy rules is a **hard case**: Results and the
+  summary report say how many Jev confirmed and which vendors caught them.
 - A record with a missing value for a rule isn't bucketed by that rule, so
   blanks never form one giant shared bucket.
 - Blocking only proposes pairs worth checking. It never decides that two

@@ -24,7 +24,7 @@ export function normalizeError(error: unknown): NormalizedError {
 	}
 	if (error instanceof z.ZodError) {
 		return {
-			userMessage: 'Invalid request — check what you submitted and try again.',
+			userMessage: 'Something you entered isn’t valid. Check it and try again.',
 			status: 400,
 			isExpected: true
 		}

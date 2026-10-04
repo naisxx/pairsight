@@ -18,7 +18,7 @@ export const resultFiltersSchema = z.object({
 	vendor: z.string().uuid().optional(),
 	// `disagreements` is PairSight only and vendor only together.
 	category: z.enum([...CATEGORIES, 'incomplete', 'disagreements']).optional(),
-	source: z.enum(['rules', 'vendor']).optional(),
+	source: z.enum(['rules', 'fuzzy', 'vendor']).optional(),
 	lowConfidence: z.literal('1').optional(),
 	// Judged pairs; not judged yet or failed (incomplete); or just one of those.
 	status: z.enum(['evaluated', 'incomplete', 'pending', 'failed']).optional(),
@@ -80,6 +80,9 @@ export type ResultRow = {
 	score: number | null
 	errorCode: string | null
 	ruleIds: string[]
+	// Found only by fuzzy rules (derived-keys.ts): a duplicate exact rules
+	// would have left out.
+	isFuzzyOnly: boolean
 	isLowConfidence: boolean
 }
 
@@ -126,16 +129,39 @@ export function byReference<T extends { reference: string }>(first: T, second: T
 		: [second, first]
 }
 
+const NO_RULES: ReadonlySet<string> = new Set()
+
+// Every rule that found the pair matches on a derived key.
+export function isFuzzyOnly(ruleIds: readonly string[], fuzzyRuleIds: ReadonlySet<string>) {
+	return ruleIds.length > 0 && ruleIds.every((ruleId) => fuzzyRuleIds.has(ruleId))
+}
+
+function matchesSource(row: ResultRow, source: ResultFilters['source']): boolean {
+	switch (source) {
+		case undefined:
+			return true
+		case 'rules':
+			return row.ruleIds.length > 0
+		case 'fuzzy':
+			return row.isFuzzyOnly
+		case 'vendor':
+			return row.ruleIds.length === 0
+	}
+}
+
 export function buildRows({
 	pairs,
 	records,
 	threshold,
-	vendorId
+	vendorId,
+	fuzzyRuleIds = NO_RULES
 }: {
 	pairs: PairInput[]
 	records: ReadonlyMap<string, RecordSummary>
 	threshold: number
 	vendorId: string | undefined
+	// The run's rules with a derived field (loadRunView).
+	fuzzyRuleIds?: ReadonlySet<string>
 }): ResultRow[] {
 	const summary = (id: string): RecordSummary =>
 		records.get(id) ?? { id, reference: '—', label: '—' }
@@ -153,6 +179,7 @@ export function buildRows({
 			score,
 			errorCode,
 			ruleIds: pair.ruleIds,
+			isFuzzyOnly: isFuzzyOnly(pair.ruleIds, fuzzyRuleIds),
 			isLowConfidence:
 				status === 'succeeded' && score != null && isLowConfidence({ score, threshold })
 		}
@@ -202,11 +229,7 @@ export function applyFilters(rows: ResultRow[], filters: ResultFilters): ResultR
 	return rows
 		.filter((row) => matchesCategory(row, filters.category))
 		.filter((row) => matchesScore(row, filters.score))
-		.filter(
-			(row) =>
-				filters.source == null ||
-				(filters.source === 'rules' ? row.ruleIds.length > 0 : row.ruleIds.length === 0)
-		)
+		.filter((row) => matchesSource(row, filters.source))
 		.filter((row) => filters.lowConfidence == null || row.isLowConfidence)
 		.filter((row) => matchesStatus(row, filters.status))
 		.filter(

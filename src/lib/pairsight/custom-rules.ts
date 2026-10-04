@@ -1,4 +1,5 @@
-import { IDENTITY_ROLES, type BlockingField } from '@/lib/pairsight/entity-types'
+import { DERIVED_FIELDS } from '@/lib/pairsight/derived-keys'
+import { IDENTITY_ROLES, type BaseField, type BlockingField } from '@/lib/pairsight/entity-types'
 
 // Custom blocking rules, shared by the Rules screen and the server's input
 // schema. Kept outside src/server so the client builder can import it
@@ -9,9 +10,13 @@ export const MAX_RULE_FIELDS = 3
 export const MIN_JEV_FIELDS = 2
 export const MAX_CUSTOM_RULES = 5
 
-// Every field a rule can key on, in the order a custom rule's fields are
-// stored — so "postcode + email" and "email + postcode" are one rule.
-export const BLOCKING_FIELDS: readonly BlockingField[] = ['name', ...IDENTITY_ROLES]
+// Every field a rule can key on as it is, in the order the Rules screen
+// offers them.
+export const BLOCKING_FIELDS: readonly BaseField[] = ['name', ...IDENTITY_ROLES]
+
+// The order a custom rule's fields are stored in, derived ones included — so
+// "postcode + email" and "email + postcode" are one rule.
+const RULE_FIELD_ORDER: readonly BlockingField[] = [...BLOCKING_FIELDS, ...DERIVED_FIELDS]
 
 const CUSTOM_PREFIX = 'custom_'
 
@@ -20,7 +25,7 @@ export function isCustomRuleId(id: string): boolean {
 }
 
 function canonicalFields(fields: readonly BlockingField[]): BlockingField[] {
-	return BLOCKING_FIELDS.filter((field) => fields.includes(field))
+	return RULE_FIELD_ORDER.filter((field) => fields.includes(field))
 }
 
 export function customRule(fields: readonly BlockingField[]): {

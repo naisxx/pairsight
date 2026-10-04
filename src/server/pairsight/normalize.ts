@@ -1,5 +1,5 @@
 import { isSupportedCountry, parsePhoneNumberFromString } from 'libphonenumber-js/min'
-import type { BlockingField, IdentityRole } from '@/lib/pairsight/entity-types'
+import type { BaseField, BlockingField, IdentityRole } from '@/lib/pairsight/entity-types'
 import { isValidGtin } from '@/lib/pairsight/gtin'
 
 // Blocking-only normalization (docs/PairSight-V1-Scope.md, "Blocking").
@@ -144,7 +144,7 @@ export function normalizeField({
 	fields,
 	country
 }: {
-	field: BlockingField
+	field: BaseField
 	fields: MappedFields
 	country: string
 }): string | null {

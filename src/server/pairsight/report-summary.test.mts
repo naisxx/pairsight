@@ -181,7 +181,8 @@ test('the report ranks vendors, finds their worst disagreements and compares eac
 			{ id: 'b', name: 'B' },
 			{ id: 'c', name: 'C' }
 		],
-		pairs
+		pairs,
+		fuzzyRuleIds: new Set()
 	})
 	assert.deepEqual(
 		report.vendors.map((entry) => [entry.id, entry.rank, entry.metrics.precision]),
@@ -194,6 +195,8 @@ test('the report ranks vendors, finds their worst disagreements and compares eac
 	assert.deepEqual(report.leaders, { best: 'a', safest: 'a', mostComplete: 'a' })
 	assert.equal(report.pairs.counts.incomplete, 1)
 	assert.equal(report.fromRules, 4)
+	// No fuzzy rules in this run, so no hard cases.
+	assert.equal(report.hardCases.found, 0)
 
 	const b = report.vendors.find((entry) => entry.id === 'b')
 	const merge = b?.examples.merges[0]

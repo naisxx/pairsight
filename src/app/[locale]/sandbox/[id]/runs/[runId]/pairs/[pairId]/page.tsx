@@ -1,5 +1,8 @@
 import { PairScreen } from '@/components/pairsight/screens/pair-screen'
 import { loadRun, sandboxTarget } from '@/server/pairsight/evaluation-pages'
+import { stepTitle } from '@/i18n/page-title'
+
+export const generateMetadata = stepTitle('results')
 
 export default async function SandboxPairPage({
 	params,
