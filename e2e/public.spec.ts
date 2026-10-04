@@ -45,7 +45,7 @@ test('a chosen theme survives a reload, applied before the page paints', async (
 test('an unknown page answers 404 and says so', async ({ page }) => {
 	const response = await page.goto('/no-such-page')
 	expect(response?.status()).toBe(404)
-	await expect(page.getByText('Page not found')).toBeVisible()
+	await expect(page.getByText('We can’t find that page')).toBeVisible()
 })
 
 for (const colorScheme of ['light', 'dark'] as const) {

@@ -1,0 +1,7 @@
+record_id,first_name,last_name,email,phone,date_of_birth,address,city,postcode
+R1,Catherine,Smith,catherine.smith@example.com,,1984-03-17,4 Elm Row,Leeds,LS2 7HY
+R2,Catherine,Smyth,c.smyth@example.com,,1984-03-17,77 Quay St,Bristol,BS1 5QD
+R3,Amelia,Walker,amelia.walker@example.com,(415) 555-0141,1990-02-01,1 Park Rd,Leeds,LS1 4AP
+R4,Amelia,Walker,amelia.walker@example.com,,,,,
+R5,Daniel,Hughes,daniel.hughes@example.com,(415) 555-0142,1979-06-30,8 Mill Lane,Manchester,M1 1AE
+R6,Oliver,Green,oliver.green@example.com,(415) 555-0143,1966-11-11,2 Church St,Cardiff,CF10 1EP

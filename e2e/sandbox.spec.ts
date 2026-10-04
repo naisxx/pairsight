@@ -35,16 +35,16 @@ test.describe('Sandbox', () => {
 		'Product catalogue — vendor check'
 	]
 	const RESULTS = /\/sandbox\/[0-9a-f-]+\/runs\/[0-9a-f-]+\/results/
-	const pipeline = (page: Page) => page.getByRole('list', { name: 'Pipeline' })
+	const pipeline = (page: Page) => page.getByRole('list', { name: 'Steps' })
 	const step = (page: Page, name: string) =>
 		pipeline(page).getByRole('link', { name: new RegExp(`^${name},`) })
 
 	test('signed out, every step opens read-only, from the landing page', async ({ page }) => {
 		await page.goto('/')
-		await page.getByRole('link', { name: 'Explore the sandbox' }).first().click()
+		await page.getByRole('link', { name: 'Try the demo' }).first().click()
 		await page.waitForURL((url) => url.pathname === '/sandbox')
-		await expect(page.getByRole('note', { name: 'About the sandbox' })).toContainText(
-			/fictional data · read-only\. Judgments recorded from Jev/
+		await expect(page.getByRole('note', { name: 'About the demo' })).toContainText(
+			/sample data · look around, nothing can be changed\. Jev’s checks were recorded/
 		)
 		await expect(page.getByRole('link', { name: 'Sign up', exact: true })).toBeVisible()
 		await page.getByRole('link', { name: NAMES[0], exact: true }).first().click()
@@ -53,32 +53,32 @@ test.describe('Sandbox', () => {
 		// Records: the saved file, Replace is for accounts.
 		await step(page, 'Records').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/records`)
-		await expect(page.getByRole('heading', { name: 'Column mapping' })).toBeVisible()
+		await expect(page.getByRole('heading', { name: 'What each column holds' })).toBeVisible()
 		await expect(page.getByLabel('Sign up to upload your own records')).toBeVisible()
 
 		// Vendors: both vendors, viewable; adding one needs an account.
 		await step(page, 'Vendors').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/vendors`)
 		const vendors = page.getByRole('navigation', { name: 'Vendors' })
-		await expect(vendors).toContainText('Pair format · ready')
-		await expect(vendors).toContainText('Group format · ready')
+		await expect(vendors).toContainText('List of pairs · ready')
+		await expect(vendors).toContainText('List of groups · ready')
 		await expect(page.getByLabel('Sign up to add or change vendors')).toBeVisible()
-		await expect(page.getByLabel('Vendor name')).toBeDisabled()
+		await expect(page.getByLabel('What’s this vendor called?')).toBeDisabled()
 
 		// Rules: shown, not editable, and never saved.
 		await step(page, 'Rules').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/rules`)
 		await expect(page.getByRole('switch', { name: 'Same email rule' })).toBeDisabled()
-		await expect(page.getByLabel('Counts as the same', { exact: true })).toBeDisabled()
+		await expect(page.getByLabel('When are two records the same?', { exact: true })).toBeDisabled()
 		await expect(
 			page
-				.getByRole('radiogroup', { name: 'Match threshold' })
+				.getByRole('radiogroup', { name: 'How sure must Jev be?' })
 				.getByRole('radio', { name: /^Balanced/ })
 		).toBeDisabled()
-		await expect(page.getByText('Sandbox · changes aren’t saved')).toBeVisible()
+		await expect(page.getByText('Demo · changes aren’t saved')).toBeVisible()
 
 		// Plan: the ledger, but starting a run needs an account.
-		await page.getByRole('link', { name: 'Review comparison plan' }).click()
+		await page.getByRole('link', { name: 'Check and start', exact: true }).click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/plan`)
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toBeVisible()
 		await expect(page.getByLabel('Sign up to start a run')).toBeVisible()
@@ -112,7 +112,7 @@ test.describe('Sandbox', () => {
 		await step(page, 'Rules').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.company}/rules`)
 		await expect(page.getByRole('switch', { name: 'Same website rule' })).toBeDisabled()
-		await expect(page.getByLabel('Counts as the same', { exact: true })).toHaveValue(
+		await expect(page.getByLabel('When are two records the same?', { exact: true })).toHaveValue(
 			/same organisation/
 		)
 		await page.goto(`/sandbox/${SANDBOX.product}/records`)
@@ -136,43 +136,48 @@ test.describe('Sandbox', () => {
 		await page.waitForURL(RESULTS)
 		const tile = (name: string) =>
 			page
-				.getByRole('region', { name: 'Pairs by category' })
+				.getByRole('region', { name: 'Pairs by who says what' })
 				.getByRole('link', { name: new RegExp(`^${name}: `) })
-		for (const name of ['Both matched', 'PairSight only', 'Vendor only', 'Neither matched']) {
+		for (const name of [
+			'Both say same',
+			'Only Jev says same',
+			'Only vendor says same',
+			'Both say different'
+		]) {
 			await expect(tile(name)).toBeVisible()
 		}
 
 		// Exporting needs no account here: the sandbox's data is fictional.
 		const download = await exportFindings(page, 1, /^Excel/)
 		const findings = await readWorkbook(await download.path())
-		expect(findings.header).toContain('Northwind Match: category')
-		expect(findings.header).toContain('Clearline Resolve: category')
+		expect(findings.header).toContain('Northwind Match: group')
+		expect(findings.header).toContain('Clearline Resolve: group')
 		expect(findings.rows).toHaveLength(8)
 		// So is the summary report: both vendors ranked, and the one-line head to head.
 		const summary = await exportFindings(page, 1, /^Summary report/)
 		const report = await readPdfText(await summary.path())
-		expect(report).toContain('PairSight sandbox · fictional data')
+		expect(report).toContain('PairSight demo · sample data')
 		expect(report).toMatch(/1 Clearline Resolve .* 2 Northwind Match/)
 		expect(report).toContain('Jev sided with Clearline Resolve in 3 of 5')
 
 		// The threshold previews live; a run keeps its own, so there's no Apply.
-		await page.getByRole('button', { name: /^Decision threshold/ }).click()
-		const value = page.getByLabel('Threshold value')
+		await page.getByRole('button', { name: /^Match cut-off/ }).click()
+		const value = page.getByLabel('Cut-off', { exact: true })
 		await value.fill('0.90')
 		await value.press('Enter')
 		await expect(page.getByRole('dialog')).toContainText('becomes')
 		await expect(page.getByRole('dialog').getByRole('button', { name: 'Apply' })).toHaveCount(0)
 		await page.keyboard.press('Escape')
 		await page.reload()
-		await expect(page.getByRole('button', { name: /^Decision threshold 0\.50/ })).toBeVisible()
+		await expect(page.getByRole('button', { name: /^Match cut-off 0\.50/ })).toBeVisible()
 
 		// Filters are just the URL, so they work; a pair opens, and J moves on.
-		await tile('PairSight only').click()
+		await tile('Only Jev says same').click()
 		await page.waitForURL(/category=pairsight_only/)
 		await page.locator('[data-pairs-table] a[href*="/pairs/"]').first().click()
 		await page.waitForURL(/\/sandbox\/[0-9a-f-]+\/runs\/[0-9a-f-]+\/pairs\//)
-		await expect(page.getByRole('region', { name: 'Decisions', exact: true })).toContainText(
-			'PairSight (AI)Match'
+		await expect(page.getByRole('region', { name: 'Who says what', exact: true })).toContainText(
+			'JevSame'
 		)
 		const first = page.url()
 		await page.keyboard.press('j')
@@ -190,7 +195,7 @@ test.describe('Sandbox', () => {
 		await page.getByLabel('Full name').fill('Sandbox Visitor')
 		await page.getByRole('button', { name: 'Continue' }).click()
 		await page.waitForURL((url) => url.pathname === '/evaluations')
-		await page.getByRole('link', { name: 'Explore the sandbox' }).click()
+		await page.getByRole('link', { name: 'Try the demo' }).click()
 		await page.waitForURL((url) => url.pathname === '/sandbox')
 
 		await expect(page.getByRole('button', { name: 'Account: Sandbox Visitor' })).toBeVisible()

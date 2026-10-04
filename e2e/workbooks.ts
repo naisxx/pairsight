@@ -40,7 +40,7 @@ export function fixtureWorkbook(path: string, sheet: string): Promise<Buffer> {
 
 // The findings, downloaded from the Export menu in the chosen format.
 export async function exportFindings(page: Page, runNumber: number, item: RegExp) {
-	await page.getByRole('button', { name: `Export run ${runNumber}’s findings` }).click()
+	await page.getByRole('button', { name: `Download run ${runNumber}’s results` }).click()
 	const downloading = page.waitForEvent('download')
 	await page.getByRole('menuitem', { name: item }).click()
 	return downloading
