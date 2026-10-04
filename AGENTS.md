@@ -134,6 +134,11 @@ of one monolithic instructions file.
   $0, and counted on the dashboard as unpriced. Cost is computed at
   write time, never at query time. A project with no AI calls deletes the
   whole thing rather than leaving it dormant.
+- **[Copy](docs/rules/copy.md)** — every word on screen is plain English
+  for an analyst new to record matching: say what we need, why, and what
+  it changes; one word per thing (Jev, pairs to check, comparison rules,
+  match cut-off, vendor file, download), technical names only in hover
+  tips. `src/i18n/copy.test.mts` fails on the retired jargon.
 - **[Components](docs/rules/components.md)** — `src/components/ui/` is a
   small cva/Radix-based foundation (Button, Input, Card, toast system, ...),
   not a full suite; add to it deliberately rather than reaching for a new

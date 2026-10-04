@@ -13,12 +13,12 @@ import { ownerScope } from './scope'
 const RUN_TRANSACTION_TIMEOUT_MS = 30_000
 
 const BLOCKER_MESSAGES: Record<PlanBlocker, string> = {
-	no_dataset: 'Upload the source records first.',
-	no_vendors: 'Add at least one vendor’s results first.',
-	no_jev_fields: 'Choose at least two identity fields for Jev to compare.',
-	no_pairs: 'There are no pairs to evaluate. Turn on a blocking rule or add vendor results.',
+	no_dataset: 'Upload your records first.',
+	no_vendors: 'Add at least one vendor’s file first.',
+	no_jev_fields: 'Choose at least two values for Jev to see.',
+	no_pairs: 'There’s nothing to check yet. Turn on a comparison rule or add a vendor’s file.',
 	too_many_pairs:
-		'This plan has more pairs than one run allows. Turn off a broad rule or reduce the input.'
+		'This is more pairs than one run can check. Turn off a rule that picks a lot, or upload fewer records.'
 }
 
 export async function startRun({

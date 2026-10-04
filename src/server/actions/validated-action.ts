@@ -41,7 +41,11 @@ export function validatedAction<InputSchema extends z.ZodType, Output>(config: {
 			unstable_rethrow(error)
 
 			if (error instanceof z.ZodError) {
-				return { ok: false, error: 'Invalid request', status: 400 }
+				return {
+					ok: false,
+					error: 'Something you entered isn’t valid. Check it and try again.',
+					status: 400
+				}
 			}
 			const { userMessage, status } = captureError(error)
 			return { ok: false, error: userMessage, status }

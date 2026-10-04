@@ -2,6 +2,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Chip } from '@/components/ui/chip'
+import { InfoTip } from '@/components/ui/info-tip'
 import { ArrowRightIcon, SuccessIcon } from '@/components/ui/icons'
 import type { LatestResults as LatestResultsData } from '@/server/pairsight/dashboard'
 import { formatShare, MUTED_SERIES, VENDOR_SERIES } from '../results/overview/chart-theme'
@@ -88,13 +89,13 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 								{t('colVendor')}
 							</th>
 							<th scope="col" className="w-[28%] pb-2 font-medium">
-								{t('colPrecision')}
+								<MetricHeading metric="precision" label={t('colPrecision')} />
 							</th>
 							<th scope="col" className="w-[28%] pb-2 font-medium">
-								{t('colRecall')}
+								<MetricHeading metric="recall" label={t('colRecall')} />
 							</th>
 							<th scope="col" className="pb-2 text-right font-medium">
-								{t('colF1')}
+								<MetricHeading metric="f1" label={t('colF1')} />
 							</th>
 							<th scope="col" className="pb-2 pl-6 text-right font-medium">
 								{t('colDisagreements')}
@@ -174,5 +175,27 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 				</div>
 			</div>
 		</section>
+	)
+}
+
+// A metric's plain name, with its technical one (precision, recall, F1) and
+// what it means a hover away (docs/rules/copy.md).
+function MetricHeading({
+	metric,
+	label
+}: {
+	metric: 'precision' | 'recall' | 'f1'
+	label: string
+}) {
+	const tOverview = useTranslations('Overview')
+	const tReport = useTranslations('Report')
+	return (
+		<span className="inline-flex items-center gap-1">
+			{label}
+			<InfoTip
+				label={tOverview('whatIs', { metric: label })}
+				content={tReport(`${metric}Meaning`)}
+			/>
+		</span>
 	)
 }

@@ -1,5 +1,8 @@
 import { PlanScreen } from '@/components/pairsight/screens/plan-screen'
 import { loadWorkspace } from '@/server/pairsight/evaluation-pages'
+import { stepTitle } from '@/i18n/page-title'
+
+export const generateMetadata = stepTitle('plan')
 
 export default async function PlanPage({ params }: { params: Promise<{ id: string }> }) {
 	const { id } = await params

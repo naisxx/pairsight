@@ -16,7 +16,7 @@ import type { VendorColumns, VendorFileStats } from './vendors'
 const VENDOR_LETTERS = ['A', 'B', 'C']
 
 function noDataset() {
-	return new AppError('Upload the source records before adding vendor results.', {
+	return new AppError('Upload your records before adding a vendor’s file.', {
 		code: 'no_dataset'
 	})
 }
