@@ -2,6 +2,7 @@ import { z } from 'zod'
 import { MAX_CUSTOM_RULES, MAX_RULE_FIELDS } from '@/lib/pairsight/custom-rules'
 import { MAX_THRESHOLD, MIN_THRESHOLD } from '@/lib/pairsight/decisions'
 import { COUNTRY_CODE_PATTERN } from '@/lib/pairsight/input-limits'
+import { DERIVED_FIELDS, needsPartner, type DerivedField } from '@/lib/pairsight/derived-keys'
 import { ENTITY_TYPES, MAX_PRESETS } from '@/lib/pairsight/entity-types'
 import { FIELD_ROLES } from './fields'
 
@@ -12,16 +13,33 @@ export const fieldRoleSchema = z.enum(FIELD_ROLES)
 
 export const identityRoleSchema = fieldRoleSchema.exclude(['other'])
 
-export const blockingFieldSchema = z.union([identityRoleSchema, z.literal('name')])
+const derivedFieldSchema = z.custom<DerivedField>(
+	(value) => typeof value === 'string' && DERIVED_FIELDS.some((field) => field === value)
+)
 
-const MAX_RULE_ID_LENGTH = 64
+export const blockingFieldSchema = z.union([
+	identityRoleSchema,
+	z.literal('name'),
+	derivedFieldSchema
+])
+
+// A rule's fields: at least one that isn't too broad on its own
+// (derived-keys.ts, `needsPartner`).
+export const ruleFieldsSchema = z
+	.array(blockingFieldSchema)
+	.min(1)
+	.max(MAX_RULE_FIELDS)
+	.refine((fields) => !needsPartner(fields), 'Add a field that narrows this rule down.')
+
+// "custom_" plus three field names, derived ones included.
+const MAX_RULE_ID_LENGTH = 96
 const MAX_RULES = MAX_PRESETS + MAX_CUSTOM_RULES
 
 export const entityTypeSchema = z.enum(ENTITY_TYPES)
 
 export const blockingRuleSchema = z.object({
 	id: z.string().min(1).max(MAX_RULE_ID_LENGTH),
-	fields: z.array(blockingFieldSchema).min(1).max(MAX_RULE_FIELDS)
+	fields: ruleFieldsSchema
 })
 
 export const blockingRulesSchema = z.array(blockingRuleSchema).max(MAX_RULES)

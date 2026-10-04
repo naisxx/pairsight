@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import {
-	blockingFieldSchema,
+	ruleFieldsSchema,
 	blockingRulesSchema,
 	countryCodeSchema,
 	identityDefinitionSchema,
@@ -14,7 +14,7 @@ import {
 import { removeBlockingRule, updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import { previewRuleStats } from '@/server/pairsight/rules-preview'
 import { ownerScope } from '@/server/pairsight/scope'
-import { MAX_RULE_FIELDS, MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { idSchema, revalidateEvaluationPages } from './shared'
 
 export const saveRulesAction = validatedAction({
@@ -48,7 +48,7 @@ export const saveRulesAction = validatedAction({
 export const previewRuleAction = validatedAction({
 	input: z.object({
 		evaluationId: idSchema,
-		fields: z.array(blockingFieldSchema).min(1).max(MAX_RULE_FIELDS),
+		fields: ruleFieldsSchema,
 		countryCode: countryCodeSchema
 	}),
 	handler: async ({ evaluationId, fields, countryCode }) => {

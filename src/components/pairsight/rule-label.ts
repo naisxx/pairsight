@@ -1,4 +1,6 @@
 import type { getTranslations } from 'next-intl/server'
+import { isBlockingField } from '@/lib/pairsight/derived-keys'
+import { ruleFieldLabel } from './rule-field-label'
 import { RULE_COPY } from './rules/rule-copy'
 
 type Translator = Awaited<ReturnType<typeof getTranslations>>
@@ -21,5 +23,9 @@ export function ruleLabel({
 	const rule = rules.find((candidate) => candidate.id === ruleId)
 	return rule == null
 		? ruleId
-		: rule.fields.map((field) => tRoles(field)).join(` ${tRules('and')} `)
+		: rule.fields
+				.map((field) =>
+					isBlockingField(field) ? ruleFieldLabel({ field, tRules, tRoles }) : tRoles(field)
+				)
+				.join(` ${tRules('and')} `)
 }

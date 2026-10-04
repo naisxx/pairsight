@@ -4,6 +4,8 @@
 // Jev — so the rest of the code asks this registry instead of assuming people.
 // Client-safe: no server imports.
 
+import type { DerivedField } from './derived-keys'
+
 export const ENTITY_TYPES = ['person', 'company', 'product'] as const
 export type EntityType = (typeof ENTITY_TYPES)[number]
 
@@ -109,7 +111,9 @@ export const NAME_SOURCES: ReadonlyArray<readonly IdentityRole[]> = [
 ]
 
 // A field a blocking rule can key on: an identity field, or the composite name.
-export type BlockingField = IdentityRole | 'name'
+export type BaseField = IdentityRole | 'name'
+// ...as it is, or derived from it ("surname sounds like"): derived-keys.ts.
+export type BlockingField = BaseField | DerivedField
 
 export type RulePreset = { id: string; fields: readonly BlockingField[] }
 
@@ -136,7 +140,10 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
 			{ id: 'phone', fields: ['phone'] },
 			{ id: 'name', fields: ['name'] },
 			{ id: 'name_postcode', fields: ['name', 'postcode'] },
-			{ id: 'last_name_postcode', fields: ['last_name', 'postcode'] }
+			{ id: 'last_name_postcode', fields: ['last_name', 'postcode'] },
+			{ id: 'surname_sound_birth_year', fields: ['last_name~sound', 'date_of_birth~year'] },
+			{ id: 'name_sound_district', fields: ['name~sound', 'postcode~district'] },
+			{ id: 'email_username', fields: ['email~local'] }
 		],
 		defaultRuleIds: ['email', 'phone', 'name_postcode'],
 		labelRoles: [['full_name'], ['first_name', 'last_name'], ['first_name'], ['last_name']],
@@ -160,7 +167,9 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
 			{ id: 'email', fields: ['email'] },
 			{ id: 'name', fields: ['name'] },
 			{ id: 'name_postcode', fields: ['name', 'postcode'] },
-			{ id: 'name_city', fields: ['name', 'city'] }
+			{ id: 'name_city', fields: ['name', 'city'] },
+			{ id: 'name_words_district', fields: ['name~words', 'postcode~district'] },
+			{ id: 'name_prefix_city', fields: ['name~prefix', 'city'] }
 		],
 		defaultRuleIds: ['website', 'registration_number', 'name_postcode'],
 		labelRoles: [['company_name'], ['trading_name']],
@@ -181,7 +190,8 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
 			{ id: 'mpn_brand', fields: ['mpn', 'brand'] },
 			{ id: 'sku_brand', fields: ['sku', 'brand'] },
 			{ id: 'name_brand', fields: ['name', 'brand'] },
-			{ id: 'name', fields: ['name'] }
+			{ id: 'name', fields: ['name'] },
+			{ id: 'name_words_brand', fields: ['name~words', 'brand'] }
 		],
 		defaultRuleIds: ['gtin', 'mpn_brand', 'name_brand'],
 		labelRoles: [['brand', 'product_name'], ['product_name']],

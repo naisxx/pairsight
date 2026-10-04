@@ -14,5 +14,11 @@ export const RULE_COPY: Record<string, { title: string; hint: string }> = {
 	gtin: { title: 'ruleGtin', hint: 'ruleGtinHint' },
 	mpn_brand: { title: 'ruleMpnBrand', hint: 'ruleCodeBrandHint' },
 	sku_brand: { title: 'ruleSkuBrand', hint: 'ruleCodeBrandHint' },
-	name_brand: { title: 'ruleNameBrand', hint: 'ruleNamePostcodeHint' }
+	name_brand: { title: 'ruleNameBrand', hint: 'ruleNamePostcodeHint' },
+	surname_sound_birth_year: { title: 'ruleSurnameSoundYear', hint: 'ruleSurnameSoundYearHint' },
+	name_sound_district: { title: 'ruleNameSoundDistrict', hint: 'ruleNameSoundDistrictHint' },
+	email_username: { title: 'ruleEmailUsername', hint: 'ruleEmailUsernameHint' },
+	name_words_district: { title: 'ruleNameWordsDistrict', hint: 'ruleNameWordsDistrictHint' },
+	name_prefix_city: { title: 'ruleNamePrefixCity', hint: 'ruleNamePrefixCityHint' },
+	name_words_brand: { title: 'ruleNameWordsBrand', hint: 'ruleNameWordsBrandHint' }
 }

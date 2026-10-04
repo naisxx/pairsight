@@ -1,11 +1,13 @@
 import { LIMITS } from './limits'
-import { normalizeField, type BlockingField, type MappedFields } from './normalize'
+import { ruleFieldKey } from './key-transforms'
+import type { BlockingField, MappedFields } from './normalize'
 import { canonicalPair, groupPairCount, pairKey, type CanonicalPair } from './pairs'
 
 // Overlapping blocking buckets (docs/PairSight-V1-Scope.md, "Blocking"): each
-// rule is exact equality on one normalized field or a composite key, rules
-// combine with OR, and a record can sit in several buckets. Blocking only
-// proposes pairs worth checking — it never decides a match.
+// rule is exact equality on one normalized field or a composite key — a field
+// may be derived ("surname sounds like", key-transforms.ts) — rules combine
+// with OR, and a record can sit in several buckets. Blocking only proposes
+// pairs worth checking — it never decides a match.
 
 export type BlockingRule = { id: string; fields: BlockingField[] }
 
@@ -45,7 +47,7 @@ function blockingKey({
 }): string | null {
 	const parts: string[] = []
 	for (const field of rule.fields) {
-		const value = normalizeField({ field, fields: record.fields, country })
+		const value = ruleFieldKey({ field, fields: record.fields, country })
 		if (value == null) return null
 		parts.push(value)
 	}
