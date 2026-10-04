@@ -172,8 +172,11 @@ export function ResultsOverview({
 						ruleLabels={ruleLabels}
 						sourceHrefs={{
 							rules: asString(detailed({ source: 'rules' })),
+							fuzzy: asString(detailed({ source: 'fuzzy' })),
 							vendor: asString(detailed({ source: 'vendor' }))
 						}}
+						hardCases={overview.hardCases}
+						vendors={overview.byVendor}
 						className="h-full"
 					/>
 				</Reveal>

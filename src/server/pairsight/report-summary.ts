@@ -9,7 +9,7 @@ import {
 } from '@/lib/pairsight/metrics'
 import { compareFields, type FieldComparison } from './compare'
 import type { FieldRole, IdentityRole } from './fields'
-import { fieldPatterns, topDisagreements } from './result-overview'
+import { fieldPatterns, hardCases, topDisagreements } from './result-overview'
 import { buildRows, type AssessmentStatus, type RecordSummary } from './result-rows'
 
 // The summary report's content (docs/PairSight-UX-Plan.md, "Summary report"):
@@ -184,6 +184,8 @@ export type ReportInput = {
 	records: ReadonlyMap<string, ReportRecord>
 	vendors: Array<{ id: string; name: string }>
 	pairs: ReportPair[]
+	// The run's rules with a derived field, for the hard-cases line.
+	fuzzyRuleIds: ReadonlySet<string>
 }
 
 export function buildReport({
@@ -192,7 +194,8 @@ export function buildReport({
 	columnRoles,
 	records,
 	vendors,
-	pairs
+	pairs,
+	fuzzyRuleIds
 }: ReportInput) {
 	const metricPairs = (vendorId: string): MetricPair[] =>
 		pairs.map(({ assessment, matchedByExportIds }) => ({
@@ -233,6 +236,7 @@ export function buildReport({
 		// Where the leader's own precision and recall hold still.
 		stableRange: first == null ? null : stableRange(first.sensitivity, first.metrics),
 		headToHead: headToHead(pairs, vendors, threshold),
+		hardCases: hardCases({ pairs, fuzzyRuleIds, vendors, threshold }),
 		// The run as a whole: the same for every vendor.
 		pairs: first?.metrics ?? vendorMetrics([], threshold),
 		fromRules: pairs.filter((pair) => pair.ruleIds.length > 0).length

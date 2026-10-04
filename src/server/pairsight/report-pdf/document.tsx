@@ -210,7 +210,7 @@ function ErrorReading({ vendor, text }: { vendor: VendorDetail; text: Props['tex
 
 function TradeoffsPage({ data, text }: Props) {
 	const { t } = text
-	const { vendors, headToHead } = data.report
+	const { vendors, headToHead, hardCases } = data.report
 	const name = (id: string) => vendors.find((vendor) => vendor.id === id)?.name ?? ''
 	const hasCurve = vendors.some((vendor) => vendor.sensitivity.some((point) => point.f1 != null))
 	return (
@@ -253,6 +253,26 @@ function TradeoffsPage({ data, text }: Props) {
 										})}
 						</Text>
 					))}
+				</>
+			)}
+
+			{hardCases.found > 0 && (
+				<>
+					<Text style={styles.h2}>{t('hardCasesTitle')}</Text>
+					<Text style={[styles.paragraph, styles.muted]}>{t('hardCasesIntro')}</Text>
+					{hardCases.confirmed === 0 ? (
+						<Text style={styles.paragraph}>{t('hardCasesNone', { found: hardCases.found })}</Text>
+					) : (
+						hardCases.byVendor.map((entry) => (
+							<Text key={entry.id} style={styles.paragraph}>
+								{t('hardCasesVendor', {
+									vendor: name(entry.id),
+									caught: entry.caught,
+									confirmed: hardCases.confirmed
+								})}
+							</Text>
+						))
+					)}
 				</>
 			)}
 			<Footer data={data} text={text} />

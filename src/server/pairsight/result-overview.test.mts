@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { fieldPatterns, sourceBreakdown, topDisagreements } from './result-overview'
+import { fieldPatterns, hardCases, sourceBreakdown, topDisagreements } from './result-overview'
 import type { ResultRow } from './result-rows'
 
 function row(id: string, overrides: Partial<ResultRow>): ResultRow {
@@ -14,6 +14,7 @@ function row(id: string, overrides: Partial<ResultRow>): ResultRow {
 		score: 0.9,
 		errorCode: null,
 		ruleIds: ['email'],
+		isFuzzyOnly: false,
 		isLowConfidence: false,
 		...overrides
 	}
@@ -73,4 +74,37 @@ test('field patterns compare normalized values and skip missing ones', () => {
 	assert.deepEqual(cell('email'), { same: 2, total: 2, share: 1 })
 	assert.deepEqual(cell('full_name'), { same: 0, total: 1, share: 0 })
 	assert.deepEqual(patterns.summary.pairsight_only, { shared: ['email'], different: ['full_name'] })
+})
+
+test('hard cases: duplicates only fuzzy rules found, and who caught them', () => {
+	const judged = (score: number) => ({ status: 'succeeded' as const, score })
+	const result = hardCases({
+		pairs: [
+			// Only the fuzzy rule found it; Jev says duplicate; A caught it.
+			{ ruleIds: ['surname_sound_birth_year'], matchedByExportIds: ['a'], assessment: judged(0.9) },
+			// Fuzzy and exact both found it: not a hard case.
+			{
+				ruleIds: ['email', 'surname_sound_birth_year'],
+				matchedByExportIds: [],
+				assessment: judged(0.9)
+			},
+			// Fuzzy-only, but Jev says different people.
+			{ ruleIds: ['surname_sound_birth_year'], matchedByExportIds: ['b'], assessment: judged(0.1) },
+			// Fuzzy-only and confirmed; nobody caught it.
+			{ ruleIds: ['surname_sound_birth_year'], matchedByExportIds: [], assessment: judged(0.7) },
+			// Added by a vendor alone: no rule, not a hard case.
+			{ ruleIds: [], matchedByExportIds: ['b'], assessment: judged(0.9) }
+		],
+		fuzzyRuleIds: new Set(['surname_sound_birth_year']),
+		vendors: [{ id: 'a' }, { id: 'b' }],
+		threshold: 0.5
+	})
+	assert.deepEqual(result, {
+		found: 3,
+		confirmed: 2,
+		byVendor: [
+			{ id: 'a', caught: 1 },
+			{ id: 'b', caught: 0 }
+		]
+	})
 })

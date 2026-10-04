@@ -14,7 +14,8 @@ import {
 import { buildOverview } from './result-overview'
 import { getVisibleRun } from './runs'
 import type { EvaluationScope } from './scope'
-import { parseColumnRoles, parseRecordValues } from './json'
+import { isFuzzyRule } from '@/lib/pairsight/derived-keys'
+import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 
 export {
 	parseResultFilters,
@@ -80,7 +81,12 @@ export async function loadRunView({ scope, runId }: { scope: EvaluationScope; ru
 			return [record.id, { id: record.id, reference: record.reference, values, label }]
 		})
 	)
-	return { run, columnRoles, recordsById, vendors, pairs }
+	const fuzzyRuleIds: ReadonlySet<string> = new Set(
+		parseBlockingRules(run.blockingRules)
+			.filter(isFuzzyRule)
+			.map((rule) => rule.id)
+	)
+	return { run, columnRoles, recordsById, vendors, pairs, fuzzyRuleIds }
 }
 
 export async function getRunResults({
@@ -98,7 +104,8 @@ export async function getRunResults({
 		pairs: view.pairs,
 		records: view.recordsById,
 		threshold: view.run.threshold,
-		vendorId
+		vendorId,
+		fuzzyRuleIds: view.fuzzyRuleIds
 	})
 	const counts = countCategories(rows)
 	const filtered = applyFilters(rows, filters)
@@ -126,7 +133,8 @@ export async function getRunResults({
 			recordCount: view.recordsById.size,
 			records: view.recordsById,
 			columnRoles: view.columnRoles,
-			country: view.run.countryCode
+			country: view.run.countryCode,
+			fuzzyRuleIds: view.fuzzyRuleIds
 		}),
 		// Every pair's status, score and this vendor's decision, so the threshold
 		// control can preview a new threshold without a round trip.
@@ -184,7 +192,8 @@ export async function getPairDetail({
 		pairs: view.pairs,
 		records: view.recordsById,
 		threshold: view.run.threshold,
-		vendorId
+		vendorId,
+		fuzzyRuleIds: view.fuzzyRuleIds
 	})
 	const row = rows.find((candidate) => candidate.id === pairId)
 	if (row == null) return null

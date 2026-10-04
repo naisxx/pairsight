@@ -3,7 +3,7 @@ import { Link } from '@/i18n/routing'
 import { Panel } from '@/components/ui/panel'
 import type { ResultCategory } from '@/lib/pairsight/metrics'
 import { cn } from '@/lib/cn'
-import type { SourceRow } from '@/server/pairsight/result-overview'
+import type { HardCases, SourceRow } from '@/server/pairsight/result-overview'
 import { CATEGORY_STYLES } from '../../result-parts'
 
 const ORDER: ResultCategory[] = [
@@ -22,11 +22,15 @@ export function SourceBreakdown({
 	sources,
 	ruleLabels,
 	sourceHrefs,
+	hardCases,
+	vendors,
 	className
 }: {
 	sources: SourceRow[]
 	ruleLabels: Record<string, string>
-	sourceHrefs: { rules: string; vendor: string }
+	sourceHrefs: { rules: string; fuzzy: string; vendor: string }
+	hardCases: HardCases
+	vendors: ReadonlyArray<{ id: string; name: string }>
 	className?: string
 }) {
 	const t = useTranslations('Overview')
@@ -92,7 +96,47 @@ export function SourceBreakdown({
 					)
 				})}
 			</ul>
+			{hardCases.found > 0 && (
+				<HardCasesNote hardCases={hardCases} vendors={vendors} href={sourceHrefs.fuzzy} />
+			)}
 			<p className="text-text-muted type-caption mt-3 leading-relaxed">{t('sourcesFootnote')}</p>
 		</Panel>
+	)
+}
+
+// What only the fuzzy rules found, and who caught it: the hard cases a
+// comparison on exact rules alone would never have shown.
+function HardCasesNote({
+	hardCases,
+	vendors,
+	href
+}: {
+	hardCases: HardCases
+	vendors: ReadonlyArray<{ id: string; name: string }>
+	href: string
+}) {
+	const t = useTranslations('Overview')
+	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
+	return (
+		<div className="border-border bg-surface-muted mt-3 rounded-sm border p-3 text-xs">
+			<p className="font-medium">{t('hardCasesTitle')}</p>
+			<p className="text-text-muted mt-1 leading-relaxed">
+				{t.rich('hardCases', { confirmed: hardCases.confirmed, found: hardCases.found, n: mono })}
+				{hardCases.confirmed > 0 &&
+					vendors.map((vendor) => (
+						<span key={vendor.id}>
+							{' · '}
+							{t.rich('hardCasesVendor', {
+								vendor: vendor.name,
+								caught: hardCases.byVendor.find((entry) => entry.id === vendor.id)?.caught ?? 0,
+								n: mono
+							})}
+						</span>
+					))}
+			</p>
+			<Link href={href} className="text-action mt-1.5 inline-block font-medium hover:underline">
+				{t('hardCasesLink')}
+			</Link>
+		</div>
 	)
 }

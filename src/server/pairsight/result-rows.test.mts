@@ -76,6 +76,21 @@ test('the list puts disagreements first and filters by category, source, confide
 		applyFilters(rows, { lowConfidence: '1' }).map((row) => row.id),
 		['p2']
 	)
+	// Fuzzy-only: every rule that found the pair is a fuzzy one.
+	const fuzzyRows = buildRows({
+		pairs: [
+			pair('f1', 'R2', 'R3', { ruleIds: ['name_sound_district'] }),
+			pair('f2', 'R3', 'R4', { ruleIds: ['email', 'name_sound_district'] })
+		],
+		records,
+		threshold: 0.5,
+		vendorId: 'v1',
+		fuzzyRuleIds: new Set(['name_sound_district'])
+	})
+	assert.deepEqual(
+		applyFilters(fuzzyRows, { source: 'fuzzy' }).map((row) => row.id),
+		['f1']
+	)
 	assert.deepEqual(
 		applyFilters(rows, { category: 'incomplete' }).map((row) => row.id),
 		['p4']

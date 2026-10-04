@@ -55,7 +55,8 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 		columnRoles: view.columnRoles,
 		records: view.recordsById,
 		vendors: view.vendors,
-		pairs: view.pairs
+		pairs: view.pairs,
+		fuzzyRuleIds: view.fuzzyRuleIds
 	})
 
 	return {

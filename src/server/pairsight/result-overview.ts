@@ -11,10 +11,10 @@ import {
 	type MetricPair,
 	type ResultCategory
 } from '@/lib/pairsight/metrics'
-import type { Category } from '@/lib/pairsight/decisions'
+import { isPairsightMatch, type Category } from '@/lib/pairsight/decisions'
 import { compareFields } from './compare'
 import type { FieldRole, IdentityRole } from './fields'
-import type { AssessmentStatus, ResultRow } from './result-rows'
+import { isFuzzyOnly, type AssessmentStatus, type ResultRow } from './result-rows'
 
 // The Results overview (docs/PairSight-UX-Plan.md §4.1), built from the
 // pairs and rows getRunResults already loaded: no extra queries. Pure, so
@@ -129,6 +129,44 @@ export function sourceBreakdown(rows: ResultRow[]): SourceRow[] {
 	)
 }
 
+export type HardCases = {
+	// Pairs only fuzzy rules found, and those Jev confirmed as duplicates.
+	found: number
+	confirmed: number
+	byVendor: Array<{ id: string; caught: number }>
+}
+
+// The duplicates exact rules would have missed: found only by fuzzy rules,
+// confirmed by Jev, and how many of them each vendor caught. The fairest
+// reading of who handles hard cases (typos, a move, a new email).
+export function hardCases({
+	pairs,
+	fuzzyRuleIds,
+	vendors,
+	threshold
+}: {
+	pairs: ReadonlyArray<Pick<OverviewPair, 'ruleIds' | 'matchedByExportIds' | 'assessment'>>
+	fuzzyRuleIds: ReadonlySet<string>
+	vendors: ReadonlyArray<{ id: string }>
+	threshold: number
+}): HardCases {
+	const fuzzyOnly = pairs.filter((pair) => isFuzzyOnly(pair.ruleIds, fuzzyRuleIds))
+	const confirmed = fuzzyOnly.filter(
+		({ assessment }) =>
+			assessment.status === 'succeeded' &&
+			assessment.score != null &&
+			isPairsightMatch({ score: assessment.score, threshold })
+	)
+	return {
+		found: fuzzyOnly.length,
+		confirmed: confirmed.length,
+		byVendor: vendors.map((vendor) => ({
+			id: vendor.id,
+			caught: confirmed.filter((pair) => pair.matchedByExportIds.includes(vendor.id)).length
+		}))
+	}
+}
+
 // Where to start reviewing: the duplicates the vendor missed that Jev is
 // surest about, and the vendor's merges Jev is least sure of.
 export function topDisagreements(rows: ResultRow[]) {
@@ -153,7 +191,8 @@ export function buildOverview({
 	recordCount,
 	records,
 	columnRoles,
-	country
+	country,
+	fuzzyRuleIds
 }: {
 	pairs: OverviewPair[]
 	rows: ResultRow[]
@@ -164,6 +203,7 @@ export function buildOverview({
 	records: ReadonlyMap<string, { values: Record<string, string> }>
 	columnRoles: Record<string, FieldRole>
 	country: string
+	fuzzyRuleIds: ReadonlySet<string>
 }) {
 	const metricPairsFor = (id: string): MetricPair[] =>
 		pairs.map((pair) => ({
@@ -206,6 +246,7 @@ export function buildOverview({
 						)
 					},
 		sources: sourceBreakdown(rows),
+		hardCases: hardCases({ pairs, fuzzyRuleIds, vendors, threshold }),
 		top: topDisagreements(rows),
 		workload: workload(selected, threshold),
 		coverage: {
