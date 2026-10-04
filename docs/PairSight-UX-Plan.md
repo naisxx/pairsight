@@ -75,7 +75,29 @@ it redirects to where the evaluation is up to.
   summary. The **match threshold** is set here too: Lenient 0.35 / Balanced
   0.50 / Strict 0.70, or a custom value from 0.01 to 0.99. It's decided before
   any results are seen, and the next run keeps it. Changes save themselves;
-  invalid ones are held back with the reason.
+  invalid ones are held back with the reason. Rules show how they combine:
+  OR tags on dashed dividers between rules, AND tags between a rule's
+  fields, and a hover explainer. **Fuzzy rules** match on a derived key
+  (sounds like, first 4 letters, any word order, email username, birth
+  year, postcode district, last 7 digits): each type has fuzzy presets,
+  off by default, and the composite editor has a "Match on" choice per
+  field. They're tagged **Close match**, and a field too broad on its own
+  (a birth year, a district, an email domain) needs another field beside
+  it. On Results, "Why pairs were checked" adds **Hard-to-spot
+  duplicates**: duplicates only close-match rules picked, confirmed by
+  Jev, and how many each vendor caught, with a link to those pairs (a
+  "Picked only by close-match rules" filter). The PDF summary report
+  carries the same line.
+- **Copy** — every screen is written for an analyst new to record
+  matching, per `docs/rules/copy.md`: each step says what it needs, why,
+  and what it changes; one word per thing (Jev, pairs to check, comparison
+  rules, match cut-off, vendor file, download); precision, recall and F1
+  appear as Correct merges, Duplicates found and Overall score, with the
+  technical names in hover tips and the PDF. The result groups say who
+  says what (Both say same, Only Jev says same, Only vendor says same,
+  Both say different, Not checked yet), never who is right. The sandbox
+  is called the demo on screen. Step pages have their own tab titles.
+  `src/i18n/copy.test.mts` fails on the retired jargon.
 - **Plan** — the "From records to pairs" ledger (with the cost estimate), the
   match threshold the run will keep (with Change, back to Rules), What Jev
   sees, the vendor-pair promise, an over-limit alert with a Turn off

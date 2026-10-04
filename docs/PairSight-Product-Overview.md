@@ -78,12 +78,12 @@ The user starts the assessment and sees progress as pairs are reviewed. Jev asse
 
 The core v1 comparator places each successfully evaluated pair into one category per vendor:
 
-| Result          | Meaning                                                     |
-| --------------- | ----------------------------------------------------------- |
-| Both matched    | Vendor and PairSight classify the pair as a match.          |
-| PairSight only  | A potential duplicate the vendor missed.                    |
-| Vendor only     | A potential incorrect vendor match, or a PairSight mistake. |
-| Neither matched | Both classify an evaluated pair as different entities.      |
+| Result (as the app names it) | Meaning                                                     |
+| ---------------------------- | ----------------------------------------------------------- |
+| Both say same                | The vendor and Jev both say the pair is the same.           |
+| Only Jev says same           | A duplicate the vendor may have missed.                     |
+| Only vendor says same        | A merge the vendor may have got wrong, or a mistake by Jev. |
+| Both say different           | The vendor and Jev agree the pair is different.             |
 
 These categories show agreement, not proven correctness. Pending or failed assessments remain incomplete and are excluded from these categories.
 
@@ -127,11 +127,13 @@ Saved evaluations, the fictional demo data (a public, read-only sandbox) and the
 
 V1 evaluates people, organisations or products (read from the uploaded file's columns and confirmed by the user) in CSV or Excel files: up to 500 records and 40 columns, three vendors, and 5,000 pairs per run. Each type brings its own fields, blocking rules and definition of "the same", and the sandbox has a prepared evaluation of each.
 
+Fuzzy blocking shipped with it: rules can match on how a name sounds, its words in any order, an email username or a postcode district, so duplicates with a typo, a move or a new email reach Jev too, and Results calls out the hard cases each vendor caught or missed.
+
 Exports shipped too: every pair's findings as CSV or Excel, and a PDF summary report that names the vendor that matched most like Jev, shows each vendor's tradeoffs and example pairs, and records the method and scope behind the numbers.
 
 **Next:** human corrections (step 9). Its controls are hidden until it's built.
 
-**Later:** larger-scale processing and a background worker, more vendor-specific formats, fuzzy blocking, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
+**Later:** larger-scale processing and a background worker, more vendor-specific formats, rule suggestions learned from past runs, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
 
 ## What success looks like
 
