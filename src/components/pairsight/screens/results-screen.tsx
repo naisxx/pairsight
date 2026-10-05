@@ -17,7 +17,10 @@ import { RunSwitcher } from '@/components/pairsight/results/run-switcher'
 import { VendorSegmented } from '@/components/pairsight/results/vendor-segmented'
 import { ruleLabel } from '@/components/pairsight/rule-label'
 import { ThresholdControl } from '@/components/pairsight/threshold-control'
+import { RunNotFinished } from '@/components/pairsight/results/run-not-finished'
 import { getRunResults, parseResultFilters } from '@/server/pairsight/results'
+import { getRunProgress } from '@/server/pairsight/runs'
+import { runBase } from '@/lib/pairsight/evaluation-view'
 import { parseBlockingRules } from '@/server/pairsight/json'
 import type { LoadedWorkspace, loadRun } from '@/server/pairsight/evaluation-pages'
 
@@ -41,6 +44,33 @@ export async function ResultsScreen({
 		getTranslations('Roles'),
 		getFormatter()
 	])
+
+	// Not finished (running, paused or stopped): how far it got, no numbers.
+	if (loaded.run.status !== 'completed') {
+		const progress = await getRunProgress(runId)
+		const last = workspace.runs.find(
+			(candidate) => candidate.status === 'completed' && candidate.id !== runId
+		)
+		return (
+			<>
+				<header className="flex flex-wrap items-start justify-between gap-4">
+					<div className="flex flex-wrap items-center gap-2">
+						<h1 className="text-text type-title">{loaded.run.evaluation.name}</h1>
+						<RunStatusChip status={loaded.run.status} />
+					</div>
+					<RunSwitcher runId={runId} runs={workspace.runs} />
+				</header>
+				<RunNotFinished
+					runId={runId}
+					progress={progress}
+					lastFinished={
+						last == null ? null : { number: last.number, href: `${runBase(view, last.id)}/results` }
+					}
+				/>
+			</>
+		)
+	}
+
 	const parsed = parseResultFilters(rawFilters)
 	const results = await getRunResults({ scope, runId, filters: parsed })
 	const { run, vendorId } = results

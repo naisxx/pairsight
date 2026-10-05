@@ -7,6 +7,7 @@ import { exportFileName } from './export-file-name'
 import { buildFindings } from './findings-table'
 import { parseBlockingRules } from './json'
 import { loadRunView } from './results'
+import { runNotFinished } from './runs'
 import type { EvaluationScope } from './scope'
 import { adapterFor, writeTable } from './tabular'
 
@@ -33,6 +34,7 @@ export async function findingsExport({
 		getTranslations('Failures')
 	])
 	const { run } = view
+	if (run.status !== 'completed') throw runNotFinished()
 	const rules = parseBlockingRules(run.blockingRules)
 	const table = buildFindings({
 		pairs: view.pairs,
