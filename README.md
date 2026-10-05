@@ -97,7 +97,13 @@ pnpm dev
 ```
 
 Open http://localhost:3000. English is served unprefixed, and `/en`
-redirects back to `/`. Sentry and PostHog do nothing until their keys are
+redirects back to `/`. Runs are checked by a background worker that starts
+with the server (`RUN_WORKER_CONCURRENCY`, default 40 Jev calls at once), so
+they keep going with no page open. After changing the worker's own code,
+restart the dev server: a hot reload doesn't restart its loop. A worker only takes runs started on a server
+with the same `RUN_WORKER_POOL`; anything that runs the e2e suite against
+its own server must set `RUN_WORKER_POOL=e2e` (the Playwright config does),
+or your dev server's worker will take the suite's runs. Sentry and PostHog do nothing until their keys are
 set, and nothing needs them to run. Supabase Studio is at
 http://127.0.0.1:54323 and caught auth emails at http://127.0.0.1:54324.
 `pnpm supabase stop` shuts the containers down and keeps the data.

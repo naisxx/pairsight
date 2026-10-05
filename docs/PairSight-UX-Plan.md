@@ -108,7 +108,8 @@ it redirects to where the evaluation is up to.
   - **Contents:** every run across your evaluations, in two tabs. Active is
     the default while something runs, otherwise Completed. Completed holds
     finished runs, runs finished with failures (Retry failed on the card),
-    and stopped runs (a red card with the reason, the fix and Resume).
+    stopped runs (a red card with the reason, the fix and Resume), and
+    paused ones (a quiet card: "You paused this run", with Resume).
   - **Cards:** the front shows run and evaluation, status, live progress or
     pairs and threshold, and the one action that matters. Details expand to
     everything the run was run with: threshold and preset, judgments reused
@@ -117,8 +118,10 @@ it redirects to where the evaluation is up to.
   - **Starting a run:** Start opens the centre on Active. On completion the
     run moves to Completed and you're taken to its results. Closed early,
     the run keeps going and a toast offers its results when it's done.
-  - **Driving:** the run loop lives in the shell, so a run keeps going on any
-    page; closing the app pauses it.
+  - **Running:** a background worker on the server checks the pairs, so a
+    run keeps going with no page open. The centre only watches progress,
+    and notices runs started in another tab. **Pause run** on a running
+    card stops it after the pairs in flight; Resume carries on.
   - **Old Run page links** redirect to the run's results with the centre
     open on it (`?runs=<id>`).
 - **Results** — Overview (metrics, coverage, categories, decision matrix,
