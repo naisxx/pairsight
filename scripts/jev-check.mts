@@ -10,99 +10,16 @@
 // record contents or the key. Every call is recorded in ai_usage like the
 // app's own calls (feature `pairsight_jev_check`), priced at the stand-in rate.
 
-import { PrismaClient } from '@prisma/client'
-import {
-	buildJevRequest,
-	defaultIdentity,
-	JEV_MODEL,
-	parseJevAnswer,
-	type JudgmentConfig
-} from '../src/server/pairsight/judgment.ts'
-import { costMicroUsd, fetchRateCard } from '../src/server/lib/ai-usage/pricing.ts'
-import { openRouterSlug } from '../src/server/lib/ai-usage/models.ts'
-import { buildRow } from '../src/server/lib/ai-usage/track.ts'
-import type { EntityType } from '../src/lib/pairsight/entity-types.ts'
-import type { IdentityRole } from '../src/server/pairsight/fields.ts'
 import { PAIRS, TYPE_PAIRS } from './jev-check-pairs.mts'
+import { BASE, callJev, db, JEV_MODEL, type Pair } from './jev-client.mts'
+import type { EntityType } from '../src/lib/pairsight/entity-types.ts'
 
-const BASE = process.env.TYPESAFE_API_BASE_URL || 'https://api.typesafe.ai/v1'
-const KEY = process.env.TYPESAFE_API_KEY
 const REPEATS = 3
 const BURST = 4
+const FEATURE = 'pairsight_jev_check'
 
-if (KEY == null || KEY === '') {
-	console.error('TYPESAFE_API_KEY is not set. Add it to .env.local, then run this again.')
-	process.exit(1)
-}
-
-const db = new PrismaClient()
-const rates = await fetchRateCard().catch(() => undefined)
-
-const FIELDS: JudgmentConfig['jevFields'] = [
-	'first_name',
-	'last_name',
-	'email',
-	'phone',
-	'date_of_birth',
-	'address',
-	'postcode'
-]
-
-type Pair = { a: Record<string, string>; b: Record<string, string> }
-
-function isRole(field: string): field is IdentityRole {
-	return field !== 'other'
-}
-
-async function call(
-	model: 'jev-latest' | typeof JEV_MODEL,
-	pair: Pair,
-	entityType: EntityType = 'person'
-) {
-	const config: JudgmentConfig = {
-		entityType,
-		identity: defaultIdentity(entityType),
-		jevFields:
-			entityType === 'person'
-				? FIELDS
-				: [...new Set([...Object.keys(pair.a), ...Object.keys(pair.b)])].filter(isRole),
-		country: 'US',
-		model
-	}
-	const request = buildJevRequest({ recordA: pair.a, recordB: pair.b, config })
-	const started = Date.now()
-	const response = await fetch(`${BASE}/systemone`, {
-		method: 'POST',
-		headers: { authorization: `Bearer ${KEY}`, 'content-type': 'application/json' },
-		body: JSON.stringify({ model, ...request }),
-		signal: AbortSignal.timeout(20_000)
-	})
-	const latencyMs = Date.now() - started
-	const body: unknown = response.ok ? await response.json() : null
-	const row = buildRow({ provider: 'typesafe', feature: 'pairsight_jev_check', model }, body, {
-		status: response.ok ? 'ok' : 'error',
-		latencyMs
-	})
-	const slug = openRouterSlug(row.model)
-	const cost = slug == null ? null : costMicroUsd(row, rates?.get(slug))
-	await db.aiUsage.create({
-		data: {
-			provider: row.provider,
-			model: slug ?? row.model,
-			serviceTier: row.serviceTier,
-			feature: row.feature,
-			inputTokens: row.inputTokens,
-			outputTokens: row.outputTokens,
-			cacheWriteTokens: 0,
-			cacheReadTokens: 0,
-			costMicroUsd: cost == null ? null : BigInt(cost),
-			status: row.status,
-			latencyMs: row.latencyMs
-		}
-	})
-	const answer = response.ok ? parseJevAnswer(body, entityType) : null
-	const keys = body != null && typeof body === 'object' ? Object.keys(body).join(',') : '—'
-	return { status: response.status, latencyMs, answer, keys, tokens: row.inputTokens }
+function call(model: 'jev-latest' | typeof JEV_MODEL, pair: Pair, entityType?: EntityType) {
+	return callJev({ model, pair, entityType, feature: FEATURE })
 }
 
 console.log(`TypeSafe endpoint: ${BASE}/systemone\n`)
