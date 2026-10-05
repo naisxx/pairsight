@@ -21,6 +21,11 @@
 // containing <text> until POST /accept?marker=<text>, so a test can stop its
 // own run with a configuration error and then resume it.
 //
+// POST /slow?marker=<text> delays every answer to a call containing <text>
+// by a couple of seconds until POST /fast?marker=<text>, so a test can
+// catch its own run part-way (to pause it) on a stub that's otherwise
+// instant.
+//
 // Usage: node scripts/jev-stub.mjs   (JEV_STUB_PORT, default 4010)
 
 import { createServer } from 'node:http'
@@ -32,6 +37,9 @@ const retrySeen = new Set()
 const MAX_RECORDED_CALLS = 5_000
 const recordedCalls = []
 const rejectedMarkers = new Set()
+const slowMarkers = new Set()
+// How long a slowed answer waits.
+const SLOW_ANSWER_MS = 2_000
 
 const norm = (value) => (value ?? '').toString().trim().toLowerCase().replace(/\s+/g, ' ')
 const digits = (value) => (value ?? '').toString().replace(/\D/g, '').slice(-10)
@@ -138,6 +146,14 @@ const server = createServer((request, response) => {
 		else rejectedMarkers.delete(marker)
 		return send(response, 200, { rejected: [...rejectedMarkers].includes(marker) })
 	}
+	if (request.method === 'POST' && /^\/(slow|fast)\?/.test(request.url ?? '')) {
+		const url = new URL(request.url ?? '', 'http://stub')
+		const marker = url.searchParams.get('marker') ?? ''
+		if (marker === '') return send(response, 400, { error: 'marker_required' })
+		if (url.pathname === '/slow') slowMarkers.add(marker)
+		else slowMarkers.delete(marker)
+		return send(response, 200, { slow: slowMarkers.has(marker) })
+	}
 	if (request.method === 'GET' && request.url?.startsWith('/calls')) {
 		const marker = new URL(request.url, 'http://stub').searchParams.get('marker') ?? ''
 		const count = marker === '' ? 0 : recordedCalls.filter((raw) => raw.includes(marker)).length
@@ -152,39 +168,45 @@ const server = createServer((request, response) => {
 	let raw = ''
 	request.on('data', (chunk) => (raw += chunk))
 	request.on('end', () => {
-		recordedCalls.push(raw)
-		if (recordedCalls.length > MAX_RECORDED_CALLS) recordedCalls.shift()
-		if ([...rejectedMarkers].some((marker) => raw.includes(marker))) {
-			return send(response, 401, { error: 'invalid_api_key' })
-		}
-		let body
-		try {
-			body = JSON.parse(raw)
-		} catch {
-			return send(response, 422, { error: 'invalid_json' })
-		}
-		const a = body?.state?.record_1 ?? {}
-		const b = body?.state?.record_2 ?? {}
-		const questionId = Object.keys(body?.questions ?? {})[0]
-		if (questionId == null) return send(response, 422, { error: 'no_questions' })
-		if (norm(a.first_name) === 'failcase')
-			return send(response, 422, { error: 'validation_failed' })
-		const pairKey = JSON.stringify([a, b])
-		if (norm(a.first_name) === 'retrycase' && !retrySeen.has(pairKey)) {
-			retrySeen.add(pairKey)
-			return send(response, 422, { error: 'validation_failed' })
-		}
-		if (norm(a.first_name) === 'flaky' && !flakySeen.has(pairKey)) {
-			flakySeen.add(pairKey)
-			return send(response, 529, { error: 'overloaded' })
-		}
-		send(response, 200, {
-			model: 'jev-stub',
-			answers: { [questionId]: { type: 'noul', noul: scoreFor(questionId, a, b) } },
-			usage: { input_tokens: Math.round(raw.length / 4), output_tokens: 1 }
-		})
+		const isSlow = [...slowMarkers].some((marker) => raw.includes(marker))
+		if (isSlow) setTimeout(() => answer(raw, response), SLOW_ANSWER_MS)
+		else answer(raw, response)
 	})
 })
+
+// Answers one judgment request (after the slow delay, if any).
+function answer(raw, response) {
+	recordedCalls.push(raw)
+	if (recordedCalls.length > MAX_RECORDED_CALLS) recordedCalls.shift()
+	if ([...rejectedMarkers].some((marker) => raw.includes(marker))) {
+		return send(response, 401, { error: 'invalid_api_key' })
+	}
+	let body
+	try {
+		body = JSON.parse(raw)
+	} catch {
+		return send(response, 422, { error: 'invalid_json' })
+	}
+	const a = body?.state?.record_1 ?? {}
+	const b = body?.state?.record_2 ?? {}
+	const questionId = Object.keys(body?.questions ?? {})[0]
+	if (questionId == null) return send(response, 422, { error: 'no_questions' })
+	if (norm(a.first_name) === 'failcase') return send(response, 422, { error: 'validation_failed' })
+	const pairKey = JSON.stringify([a, b])
+	if (norm(a.first_name) === 'retrycase' && !retrySeen.has(pairKey)) {
+		retrySeen.add(pairKey)
+		return send(response, 422, { error: 'validation_failed' })
+	}
+	if (norm(a.first_name) === 'flaky' && !flakySeen.has(pairKey)) {
+		flakySeen.add(pairKey)
+		return send(response, 529, { error: 'overloaded' })
+	}
+	send(response, 200, {
+		model: 'jev-stub',
+		answers: { [questionId]: { type: 'noul', noul: scoreFor(questionId, a, b) } },
+		usage: { input_tokens: Math.round(raw.length / 4), output_tokens: 1 }
+	})
+}
 
 server.listen(PORT, '127.0.0.1', () => {
 	console.log(`Jev stub listening on http://127.0.0.1:${PORT}/v1/systemone`)
