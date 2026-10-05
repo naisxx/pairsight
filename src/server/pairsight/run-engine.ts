@@ -5,25 +5,32 @@ import { log } from '@/server/lib/logger'
 import { mapRecordFields } from './fields'
 import type { JudgmentConfig } from './judgment'
 import { assess, RunStopped } from './assess'
-import { getOwnedRun, getRunProgress, runNotFound, type RunProgress } from './runs'
+import { getOwnedRun, getRunProgress, runNotFound } from './runs'
 import { parseIdentityRoles } from './schemas'
 import { parseColumnRoles, parseRecordValues } from './json'
 
-// Advances a run by one batch (docs/PairSight-Delivery-Plan.md, "Run
-// execution"): the run page calls this in a loop while it's open, so closing
-// the page pauses the run and reopening resumes it. Work is claimed in the
-// database, one pair at a time just before it's judged, so two callers (a
-// second tab, a retried request) never judge the same pair.
-
-const BATCH_SIZE = 10
-const CONCURRENCY = 4
+// Judges a run's pairs (docs/PairSight-Delivery-Plan.md, "Run execution").
+// The background run worker (worker/run-worker.ts) calls processRunBatch in a
+// loop for every running run, so runs keep going with no page open. Work is
+// claimed in the database, one pair at a time just before it's judged, so two
+// callers (two server instances, a retried pair) never judge the same pair.
 // A claim is renewed before every Jev attempt (assess.ts), so a live claim
 // goes untouched for at most one request timeout (20 s) plus the longest
 // backoff (3 s). Anything older than this was abandoned — a crash or a
 // dev-server reload mid-call — and is claimed again.
 const STALE_CLAIM_MS = 60_000
 
-type OwnedRun = Awaited<ReturnType<typeof getOwnedRun>>
+// What judging needs from a run: its frozen configuration.
+type JudgedRun = {
+	id: string
+	datasetId: string
+	entityType: JudgmentConfig['entityType']
+	identitySame: string
+	identityDifferent: string
+	jevFields: string[]
+	countryCode: string
+	jevModel: string
+}
 type Claimable = { id: string; recordAId: string; recordBId: string }
 
 async function inPool<T>(items: T[], size: number, worker: (item: T) => Promise<void>) {
@@ -64,11 +71,14 @@ async function claim(runId: string, assessmentId: string) {
 async function judge({
 	run,
 	assessments,
-	claimFirst
+	claimFirst,
+	concurrency
 }: {
-	run: OwnedRun
+	run: JudgedRun
 	assessments: Claimable[]
 	claimFirst: boolean
+	// Jev calls at once.
+	concurrency: number
 }) {
 	if (!isTrackedModel(run.jevModel)) throw new Error(`Run ${run.id} has an unmapped Jev model`)
 	const [dataset, records] = await Promise.all([
@@ -97,7 +107,7 @@ async function judge({
 	}
 
 	let stopped = false
-	await inPool(assessments, CONCURRENCY, async (assessment) => {
+	await inPool(assessments, concurrency, async (assessment) => {
 		if (stopped) return
 		if (claimFirst && !(await claim(run.id, assessment.id))) return
 		try {
@@ -119,38 +129,52 @@ async function judge({
 	})
 }
 
-export async function advanceRun({
-	ownerId,
-	runId
+// One batch of a running run: claims up to `batchSize` of its unjudged pairs
+// and judges them, `concurrency` at a time. Returns how many it found to
+// work on, so the caller knows when the run has nothing left to claim. Not
+// scoped to an owner: only the worker calls it; actions check ownership.
+export async function processRunBatch({
+	runId,
+	batchSize,
+	concurrency
 }: {
-	ownerId: string
 	runId: string
-}): Promise<RunProgress> {
-	const run = await getOwnedRun({ ownerId, runId })
-	if (run.status !== 'running') return getRunProgress(runId)
-
+	batchSize: number
+	concurrency: number
+}): Promise<number> {
+	const run = await db.run.findUnique({ where: { id: runId } })
+	if (run == null || run.status !== 'running') return 0
 	const candidates = await db.assessment.findMany({
 		where: claimableIn(runId),
 		orderBy: { createdAt: 'asc' },
-		take: BATCH_SIZE,
+		take: batchSize,
 		select: { id: true, recordAId: true, recordBId: true }
 	})
-	if (candidates.length > 0) await judge({ run, assessments: candidates, claimFirst: true })
+	if (candidates.length > 0) {
+		await judge({ run, assessments: candidates, claimFirst: true, concurrency })
+	}
+	return candidates.length
+}
 
+// A running run with nothing pending or in flight is complete (failed pairs
+// don't hold it open; they can be tried again from its card). Returns whether
+// the run is no longer running, for whatever reason.
+export async function finishIfDone(runId: string): Promise<boolean> {
 	const progress = await getRunProgress(runId)
-	if (progress.status === 'running' && progress.pending === 0 && progress.running === 0) {
-		await db.run.update({
-			where: { id: runId },
-			data: { status: 'completed', completedAt: new Date() }
-		})
+	if (progress.status !== 'running') return true
+	if (progress.pending > 0 || progress.running > 0) return false
+	const { count } = await db.run.updateMany({
+		where: { id: runId, status: 'running' },
+		data: { status: 'completed', completedAt: new Date() }
+	})
+	if (count === 1) {
 		log.info('pairsight run completed', {
 			runId,
 			succeeded: progress.succeeded,
 			failed: progress.failed
 		})
-		return { ...progress, status: 'completed' }
 	}
-	return progress
+	return true
 }
 
 // One failed pair, judged again now from its pair page. Only a failed
@@ -176,7 +200,9 @@ export async function retryPair({
 		where: { id: pair.assessment.id, status: 'failed' },
 		data: { status: 'running', attempts: 0, errorCode: null, claimedAt: new Date() }
 	})
-	if (count === 1) await judge({ run, assessments: [pair.assessment], claimFirst: false })
+	if (count === 1) {
+		await judge({ run, assessments: [pair.assessment], claimFirst: false, concurrency: 1 })
+	}
 	const { status } = await db.assessment.findUniqueOrThrow({
 		where: { id: pair.assessment.id },
 		select: { status: true }

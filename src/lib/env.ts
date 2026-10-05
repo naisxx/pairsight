@@ -47,6 +47,15 @@ const envSchema = z.object({
 	// overridden by the e2e suite, which points it at a local stub.
 	TYPESAFE_API_KEY: z.string().optional(),
 	TYPESAFE_API_BASE_URL: z.string().url().default('https://api.typesafe.ai/v1'),
+	// How many Jev calls the background run worker makes at once, shared
+	// across running runs (src/server/pairsight/worker). Jev took 120 at once
+	// without pushing back (docs/PairSight-Scale-Roadmap.md, item 0). 0 turns
+	// the worker off, for a server that should serve pages only.
+	RUN_WORKER_CONCURRENCY: z.coerce.number().int().min(0).default(40),
+	// Which runs this server's worker takes: those started on a server with
+	// the same pool. Servers sharing one database (a dev server and the e2e
+	// server) keep apart by using different pools.
+	RUN_WORKER_POOL: z.string().min(1).default('default'),
 
 	// Required by cron routes only; an unset secret must not break unrelated pages.
 	CRON_SECRET: z.string().optional(),

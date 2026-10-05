@@ -52,7 +52,10 @@ export default defineConfig({
 						env: isPairsight
 							? {
 									TYPESAFE_API_BASE_URL: `http://127.0.0.1:${JEV_STUB_PORT}/v1`,
-									TYPESAFE_API_KEY: 'e2e-stub-key'
+									TYPESAFE_API_KEY: 'e2e-stub-key',
+									// Its own worker pool: a dev server on the same database
+									// must never take (and really check) the suite's runs.
+									RUN_WORKER_POOL: 'e2e'
 								}
 							: {}
 					}

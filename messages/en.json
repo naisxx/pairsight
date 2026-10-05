@@ -807,7 +807,18 @@
 		"previewFor": "Preview for {vendor}",
 		"becomes": "becomes",
 		"resetTo": "Reset to {value}",
-		"thresholdChangeInRules": "Change in Rules"
+		"thresholdChangeInRules": "Change in Rules",
+		"notFinishedTitle_running": "Jev is still checking this run",
+		"notFinishedBody_running": "Results appear here as soon as every pair is checked. You don’t need to keep this page open: the run carries on in the background.",
+		"notFinishedTitle_paused": "This run is paused",
+		"notFinishedBody_paused": "Resume it from Runs to finish checking. Results appear once every pair is checked.",
+		"notFinishedTitle_stopped": "This run stopped before it finished",
+		"notFinishedBody_stopped": "Open Runs to see why and resume it. Results appear once every pair is checked.",
+		"notFinishedProgress": "<n>{done}</n> of <n>{total}</n> pairs checked so far",
+		"notFinishedProgressLabel": "Pairs checked so far",
+		"notFinishedWhy": "Why no numbers yet? Pairs aren’t checked in any particular order, so scores from a half-finished run could point the wrong way. We show them once the run is complete.",
+		"notFinishedOpenRuns": "Open Runs",
+		"notFinishedLastRun": "See run {number}, the last finished one"
 	},
 	"Pair": {
 		"back": "Back to results",
@@ -935,7 +946,7 @@
 	},
 	"Runs": {
 		"title": "Runs",
-		"description": "A run is one round of Jev checking your pairs. Runs keep going while PairSight is open, on any page, so you can carry on working.",
+		"description": "A run is one round of Jev checking your pairs. Runs keep going in the background, even if you close PairSight, so you can carry on with something else.",
 		"close": "Close",
 		"tabsLabel": "Show runs",
 		"tabActive": "Active · {count}",
@@ -950,6 +961,7 @@
 		"stateComplete": "Complete",
 		"stateIncomplete": "Finished, {count, plural, one {# pair couldn’t be checked} other {# pairs couldn’t be checked}}",
 		"stateStopped": "Stopped",
+		"statePaused": "Paused",
 		"startedAt": "Started {when}",
 		"finishedAt": "finished {when}",
 		"judged": "Pairs checked",
@@ -958,9 +970,13 @@
 		"thresholdChip": "Cut-off {value} · {name}",
 		"incomplete": "{count} not checked",
 		"stoppedFix": "PairSight lost its connection to Jev. Ask whoever runs PairSight for you to check it, then press Resume. Pairs already checked are kept.",
+		"pausedTitle": "You paused this run",
+		"pausedBody": "Pairs that were already being checked finished. Resume whenever you’re ready: nothing is lost.",
 		"showDetails": "Details",
 		"hideDetails": "Hide details",
 		"resume": "Resume",
+		"pause": "Pause run",
+		"pausing": "Pausing…",
 		"retryFailed": "Try {count} again",
 		"viewResults": "View results",
 		"openRuns": "Open runs",
@@ -983,7 +999,8 @@
 		"triggerActive": "Runs: {count, plural, one {# running} other {# running}}",
 		"triggerLabel": "Runs",
 		"doneTitle": "Your run’s done",
-		"stoppedToast": "A run stopped and needs you"
+		"stoppedToast": "A run stopped and needs you",
+		"pausedToast": "Run paused. Resume it from Runs whenever you’re ready."
 	},
 	"Failures": {
 		"rejected": "Jev couldn’t read this pair",

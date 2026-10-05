@@ -14,6 +14,18 @@ export function runNotFound() {
 	})
 }
 
+// Downloads wait for a finished run: a half-checked run's numbers could point
+// the wrong way (pairs aren't checked in any particular order).
+export function runNotFinished() {
+	return new AppError(
+		'This run isn’t finished yet. Its downloads are ready once every pair is checked.',
+		{
+			status: 409,
+			code: 'run_not_finished'
+		}
+	)
+}
+
 // For changes: only a run of the owner's own live evaluation.
 export async function getOwnedRun({ ownerId, runId }: { ownerId: string; runId: string }) {
 	return getVisibleRun({ scope: ownerScope(ownerId), runId })
@@ -93,8 +105,20 @@ export async function retryFailed({ ownerId, runId }: { ownerId: string; runId: 
 	])
 }
 
-// After a configuration stop (the key was added or fixed), or when a later
-// run put some of this one's failed pairs back in the queue.
+// Why a run stopped because someone paused it, not because of a problem.
+export const PAUSED = 'paused'
+
+// The owner pauses a running run. The worker sees it before its next batch:
+// pairs already being checked finish, the rest wait until it's resumed.
+export async function pauseRun({ ownerId, runId }: { ownerId: string; runId: string }) {
+	await getOwnedRun({ ownerId, runId })
+	await db.run.updateMany({
+		where: { id: runId, status: 'running' },
+		data: { status: 'stopped', stopReason: PAUSED }
+	})
+}
+
+// After a pause, or a configuration stop (the key was added or fixed).
 export async function resumeRun({ ownerId, runId }: { ownerId: string; runId: string }) {
 	await getOwnedRun({ ownerId, runId })
 	await db.run.update({ where: { id: runId }, data: { status: 'running', stopReason: null } })

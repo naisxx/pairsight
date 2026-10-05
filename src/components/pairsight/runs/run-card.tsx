@@ -11,6 +11,7 @@ import {
 	ArrowRightIcon,
 	ChevronDownIcon,
 	FailedIcon,
+	PauseIcon,
 	PlayIcon,
 	RetryIcon,
 	SpinnerIcon,
@@ -18,7 +19,7 @@ import {
 } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
 import { thresholdPreset } from '@/lib/pairsight/decisions'
-import { resumeRunAction, retryFailedAction } from '@/server/actions/pairsight/runs'
+import { pauseRunAction, resumeRunAction, retryFailedAction } from '@/server/actions/pairsight/runs'
 import type { ActionResult } from '@/server/actions/validated-action'
 import type { RunCard as RunCardData } from '@/server/pairsight/run-centre'
 import { ReadOnlyGate } from '../read-only'
@@ -35,11 +36,14 @@ async function unwrap<T>(result: Promise<ActionResult<T>>): Promise<T> {
 	return settled.data
 }
 
-type Look = 'running' | 'complete' | 'incomplete' | 'stopped'
+type Look = 'running' | 'complete' | 'incomplete' | 'stopped' | 'paused'
+
+// Why a run stopped when someone paused it (src/server/pairsight/runs.ts).
+const PAUSED = 'paused'
 
 function lookOf(card: RunCardData): Look {
 	if (card.status === 'running') return 'running'
-	if (card.status === 'stopped') return 'stopped'
+	if (card.status === 'stopped') return card.stopReason === PAUSED ? 'paused' : 'stopped'
 	return card.progress.failed > 0 ? 'incomplete' : 'complete'
 }
 
@@ -72,7 +76,12 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 		mutationFn: () => unwrap(resumeRunAction({ runId: card.id })),
 		...restart
 	})
-	const actionError = retry.error ?? resume.error
+	// Paused, the worker finishes the pairs already being checked; the card
+	// moves to Completed once it sees the run has stopped.
+	const pause = useMutation({
+		mutationFn: () => unwrap(pauseRunAction({ runId: card.id }))
+	})
+	const actionError = retry.error ?? resume.error ?? pause.error
 
 	return (
 		<article
@@ -94,6 +103,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 							<AlertIcon size={ICON_SIZE} variant="solid" className="text-warning" />
 						)}
 						{look === 'stopped' && <FailedIcon size={ICON_SIZE} className="text-danger" />}
+						{look === 'paused' && <PauseIcon size={ICON_SIZE} className="text-text-muted" />}
 						{t('runOf', { number: card.number, evaluation: card.evaluation.name })}
 					</h3>
 					<p className="type-ui text-text-muted mt-0.5">
@@ -103,7 +113,9 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 								? t('stateComplete')
 								: look === 'incomplete'
 									? t('stateIncomplete', { count: progress.failed })
-									: t('stateStopped')}
+									: look === 'paused'
+										? t('statePaused')
+										: t('stateStopped')}
 						{' · '}
 						{t('startedAt', { when: when(card.createdAt) })}
 					</p>
@@ -153,6 +165,13 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 				</ul>
 			)}
 
+			{look === 'paused' && (
+				<div className="border-border bg-surface-muted mx-4 mb-3 rounded-sm border px-3 py-2">
+					<p className="type-ui font-medium">{t('pausedTitle')}</p>
+					<p className="text-text-muted mt-0.5 text-xs">{t('pausedBody')}</p>
+				</div>
+			)}
+
 			{look === 'stopped' && (
 				<div role="alert" className="border-danger/40 mx-4 mb-3 rounded-sm border px-3 py-2">
 					<p className="type-ui text-danger font-medium">
@@ -182,7 +201,20 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 							{actionError.message}
 						</p>
 					)}
-					{look === 'stopped' && (
+					{look === 'running' && (
+						<ReadOnlyGate action="run">
+							<Button
+								variant="secondary"
+								size="sm"
+								onClick={() => pause.mutate()}
+								disabled={pause.isPending || pause.isSuccess}
+							>
+								{pause.isPending ? <SpinnerIcon /> : <PauseIcon size={ICON_SIZE} />}
+								{pause.isSuccess ? t('pausing') : t('pause')}
+							</Button>
+						</ReadOnlyGate>
+					)}
+					{(look === 'stopped' || look === 'paused') && (
 						<ReadOnlyGate action="run">
 							<Button size="sm" onClick={() => resume.mutate()} disabled={resume.isPending}>
 								{resume.isPending ? <SpinnerIcon /> : <PlayIcon size={ICON_SIZE} />}
@@ -203,7 +235,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 							</Button>
 						</ReadOnlyGate>
 					)}
-					{look !== 'stopped' && look !== 'running' && (
+					{(look === 'complete' || look === 'incomplete') && (
 						<Button size="sm" asChild>
 							<Link href={card.resultsHref}>
 								{t('viewResults')}
