@@ -29,6 +29,10 @@ Read these before working on product features:
   (M0–M4) and verification.
 - [`docs/PairSight-UX-Plan.md`](docs/PairSight-UX-Plan.md): the UI/UX
   reference: journey, screens, states, theme tokens and components.
+- [`docs/PairSight-Scale-Roadmap.md`](docs/PairSight-Scale-Roadmap.md):
+  the agreed path past v1's limits (worker, database-side results, Splink,
+  automatic pair selection), in build order. Each item is planned and built
+  on its own, starting from the code the previous one left.
 
 Jev facts there are verified against TypeSafe's docs. Anything marked open
 must be tested against the real API; don't fill the gaps with assumptions.
