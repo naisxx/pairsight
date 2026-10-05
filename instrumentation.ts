@@ -1,4 +1,5 @@
 import * as Sentry from '@sentry/nextjs'
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 
 export async function register() {
 	if (process.env.NEXT_RUNTIME === 'nodejs') {
@@ -19,6 +20,15 @@ export async function register() {
 		// misconfigured deployment fails immediately instead of surfacing as
 		// an obscure runtime error three requests later.
 		await import('./src/lib/env')
+
+		// PairSight's background run worker: runs keep going with no page
+		// open. Started without waiting, since register() has to finish before
+		// the server takes requests, and never during `next build`, which
+		// loads this file to prerender but serves nothing.
+		if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
+			const { startRunWorker } = await import('./src/server/pairsight/worker/run-worker')
+			startRunWorker()
+		}
 	}
 	if (process.env.NEXT_RUNTIME === 'edge') {
 		await import('./sentry.edge.config')

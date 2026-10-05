@@ -674,6 +674,102 @@ test.describe('PairSight vertical slice', () => {
 		await expect(card.getByRole('link', { name: 'View results' })).toBeVisible()
 	})
 
+	// Sets up an evaluation up to its plan: records, one vendor, the default
+	// rules. Returns the upload's marker, for the stub's per-test switches.
+	async function readyToStart(page: Page, name: string) {
+		await signUp(page)
+		await createEvaluation(page, name)
+		const marker = await uploadRecords(page, 'demo-source.csv')
+		await addVendor(page, 'demo-vendor-a.csv')
+		await expectVendorPairs(page, 4)
+		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.waitForURL('**/rules')
+		await reviewPlan(page)
+		return marker
+	}
+
+	test('a run keeps going with the page closed, and is finished when you come back', async ({
+		context,
+		page
+	}) => {
+		await readyToStart(page, 'Background run')
+		const evaluation = page.url().replace(/\/plan$/, '')
+		await page.getByRole('button', { name: 'Start run' }).click()
+		await expect(page.getByRole('dialog', { name: 'Runs' })).toBeVisible()
+		// Nothing on screen follows it any more: the server runs it alone.
+		await page.close()
+
+		const later = await context.newPage()
+		// Opening the evaluation lands on its results once the run is complete.
+		await expect
+			.poll(
+				async () => {
+					await later.goto(evaluation)
+					return later.url()
+				},
+				{ timeout: 30_000, intervals: [1_000] }
+			)
+			.toMatch(/\/runs\/[0-9a-f-]+\/results/)
+		await expect(tile(later, 'Both say same')).toBeVisible()
+	})
+
+	test('a run can be paused part-way and resumed', async ({ page }) => {
+		const marker = await readyToStart(page, 'Pause and resume')
+		// Jev answers slowly for this test's records, so the run is still going.
+		await page.request.post(`${JEV_STUB}/slow?marker=${marker}`)
+		await page.getByRole('button', { name: 'Start run' }).click()
+		const runs = page.getByRole('dialog', { name: 'Runs' })
+		const card = runs.getByRole('article', { name: 'Run 1 · Pause and resume' })
+		await card.getByRole('button', { name: 'Pause run' }).click()
+		await expect(card).toContainText('You paused this run', { timeout: 15_000 })
+		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
+		await expect(card).toContainText('Paused · Started')
+		await expect(card.getByRole('link', { name: 'View results' })).toHaveCount(0)
+
+		// Results wait for a finished run: how far it got, no numbers.
+		await page.keyboard.press('Escape')
+		await page
+			.getByRole('list', { name: 'Steps' })
+			.getByRole('link', { name: /^Results,/ })
+			.click()
+		await page.waitForURL(/\/runs\/[0-9a-f-]+\/results/)
+		const notFinished = page.getByRole('region', { name: 'This run is paused' })
+		await expect(notFinished).toContainText(/pairs checked so far/)
+		await expect(page.getByText('Correct merges')).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Download' })).toHaveCount(0)
+
+		// Resumed from there, it finishes and the results replace the progress.
+		await page.request.post(`${JEV_STUB}/fast?marker=${marker}`)
+		await notFinished.getByRole('button', { name: 'Open Runs' }).click()
+		await card.getByRole('button', { name: 'Resume' }).click()
+		await expect(card).toContainText(/^Run 1 · Pause and resumeComplete · Started/, {
+			timeout: 30_000
+		})
+		await expect(card).toContainText('8 pairs')
+		await page.keyboard.press('Escape')
+		await expect(tile(page, 'Both say same')).toBeVisible()
+	})
+
+	test('another tab notices a run started elsewhere', async ({ context, page }) => {
+		const marker = await readyToStart(page, 'Two tabs')
+		await page.request.post(`${JEV_STUB}/slow?marker=${marker}`)
+		const other = await context.newPage()
+		await other.goto('/evaluations')
+		await page.getByRole('button', { name: 'Start run' }).click()
+
+		// The other tab never started anything, yet follows the run.
+		await other.getByRole('button', { name: /^Runs/ }).click()
+		const runs = other.getByRole('dialog', { name: 'Runs' })
+		await expect(runs.getByRole('article', { name: 'Run 1 · Two tabs' })).toContainText(
+			'Checking pairs'
+		)
+		await page.request.post(`${JEV_STUB}/fast?marker=${marker}`)
+		await expect(runs.getByRole('article', { name: 'Run 1 · Two tabs' })).toContainText(
+			'Complete · Started',
+			{ timeout: 30_000 }
+		)
+	})
+
 	test('invalid references are blocked with row numbers', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Validation')

@@ -51,25 +51,42 @@ the start, without duplicating any Jev work.
   `ai_usage` columns don't change.
 - Record feature `pairsight_pair_judgment`, with `meta` holding ids only.
 
-**Run execution: a client-driven loop over work claimed in the database.**
+**Run execution: a background worker over work claimed in the database.**
 
 - **Starting a run** freezes a snapshot and creates the run's pairs and any
-  missing pending assessments.
-- **The Runs centre** (in the app shell, so on any page) repeatedly calls
-  `advanceRun` for each run still going, which:
-  - claims a batch of 10 pending assessments, plus any "running" ones older
-    than 60 seconds (reclaimed after a crash or hot reload)
-  - calls Jev with concurrency 4 and a 20-second timeout
+  missing pending assessments. Only this run's own failed pairs get another
+  attempt.
+- **The run worker** (`src/server/pairsight/worker/run-worker.ts`) lives in
+  the web server, started once at boot from `instrumentation.ts`. Every
+  second it looks for runs with status `running`; for each it calls
+  `processRunBatch`, which:
+  - claims a batch of pending assessments, plus any "running" ones older
+    than 60 seconds (reclaimed after a crash or a restart)
+  - calls Jev with the run's share of `RUN_WORKER_CONCURRENCY` (default 40,
+    shared evenly across running runs) and a 20-second timeout
   - retries 429, 529, timeouts and network errors up to 3 times with
     backoff
   - marks 422 and unparseable responses as `failed` straight away
   - stops the run on 401, as a configuration error
-  - returns progress counts
-- **Closing the page pauses the run**; reopening resumes it.
-  **Retry failed** resets failed pairs to pending.
-- **Why not a background worker:** `after()` only lasts the route's maximum
-  duration, and a queue is infrastructure we don't need on localhost. A
-  background worker is deferred.
+
+  When nothing is left to claim and nothing is in flight, `finishIfDone`
+  marks the run complete.
+
+- **No queue library.** A running run is the job and each pair is claimed
+  with a compare-and-set, so loops, tabs or servers never judge one pair
+  twice. No queue tables, no second database path.
+- **The Runs centre only watches.** It polls each running run's progress
+  every second, and the runs list every few seconds while anything runs,
+  so a run started in another tab shows up too. Runs keep going with no
+  page open.
+- **Pause and resume.** Pause stops the run after the pairs already being
+  checked; Resume carries on. **Retry failed** resets failed pairs to
+  pending.
+- **Why in the web server, not its own process:** almost every server module
+  is `server-only`, so a separate Node process can't load the engine, the
+  Jev client or the AI-cost tracker as they are. Jev calls wait on the
+  network rather than the CPU, so they don't slow pages. `RUN_WORKER_CONCURRENCY=0`
+  turns the worker off on a server that should serve pages only.
 
 **Data model** (`prisma/schema/pairsight.prisma`; every table gets an RLS
 migration):
@@ -236,6 +253,10 @@ stubbed e2e, not in the demo data.
 | Analytics events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Next                        |
 | Background worker, rule suggestions learned from past runs, vendor-specific adapters, legacy `.xls`, sampling excluded pairs, verified ground-truth labels, more entity types, larger scale                                                                                                                                                                                                                                                                                                                                                                     | Deferred                    |
 | Live deployment: on-premises, with Jev on the customer's own infrastructure, so their data never leaves it                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Deferred                    |
+
+The scaling work (background worker, results from the database, large
+uploads, Jev throughput, Splink, automatic pair selection) is ordered and
+explained in [`PairSight-Scale-Roadmap.md`](PairSight-Scale-Roadmap.md).
 
 ## Risks to check early (M1)
 

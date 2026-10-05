@@ -1,0 +1,281 @@
+# PairSight: scaling and smarter pair selection
+
+The agreed direction after v1 (PRs #3–#10), from the design discussions of
+2026-10-05. Each item below is **planned, built and tested on its own**, in
+this order. Each plan starts from the code as the previous item left it, so
+it builds on how things actually work, not on this document's guesses.
+Update this file when an item ships or a decision changes.
+
+## Why
+
+v1 caps an evaluation at **500 records and 5,000 pairs per run**. These are
+safety limits from how v1 runs, not limits of Jev or the database:
+
+- **Runs are driven by the browser tab.** There's no background worker. The
+  page asks the server to check the next 10 pairs, so a run only moves while
+  PairSight is open (`src/components/pairsight/runs/runs-centre.tsx`,
+  `RunDriver`).
+- **Jev's throughput.** About 0.3–0.45 s per call, 4 calls at once
+  (`run-engine.ts`: `CONCURRENCY = 4`), so about 10 pairs a second. The real
+  rate limit is unknown. Cost is not the issue: about $0.00002 a pair at the
+  stand-in rate, so a million pairs is about $20.
+- **Everything loads into memory per request.**
+  - Uploads: a 2 MB server-action limit, the whole file parsed at once, every
+    record inserted in one go.
+  - Results, Overview, downloads and the PDF: each load the whole run (every
+    pair and record) into the Node process and count in JavaScript. The
+    computing is already on the server; the problem is that it isn't in the
+    database.
+- **Comparing everything with everything stops scaling.** 500 records is
+  125k possible pairs; 10k is 50M; 100k is 5B.
+
+**Target:** 10,000 records first, designed so the same architecture reaches
+100k and 1M+ without another rethink.
+
+|                                    | Today   | 10,000 records | 100,000 records |
+| ---------------------------------- | ------- | -------------- | --------------- |
+| Possible pairs                     | 125k    | 50M            | 5B              |
+| Pairs from rules (1–10 per record) | ≤ 5,000 | ~10k–100k      | ~100k–1M        |
+| Vendor-matched pairs               | small   | ~1k–10k        | ~10k–100k       |
+| Jev time at ~10/s                  | ~8 min  | 20 min – 3 h   | 3 – 28 h        |
+| Jev cost (stand-in rate)           | ~$0.10  | ~$0.20 – $2    | ~$2 – $20       |
+
+## Decisions so far
+
+- **Keep Next.js for the web app.** It came from the 8x template, not a
+  PairSight choice. It suits sign-in, uploads, settings, pages and downloads.
+  It doesn't suit long-running jobs or heavy number-crunching, so those move
+  to a worker. No other web stack is needed.
+- **Add a background worker, in TypeScript.**
+  - Runs continue with the browser closed.
+  - TypeScript because:
+    - every Jev call must go through `src/server/ai/` + `trackAiCall`
+      (`docs/rules/ai-usage.md`, an ESLint-enforced, cross-repo cost
+      contract that only exists in TypeScript);
+    - the run engine (Jev requests per record type, judgment reuse, retries,
+      run states, the e2e Jev stub) already exists and is tested in
+      TypeScript;
+    - the database schema has one definition, in Prisma.
+  - It shares the repo, the Prisma models and the matching code.
+- **Use Splink for candidate pairs and scoring**: Python, on **DuckDB**.
+  - Splink is the Fellegi–Sunter model with EM training. It needs no
+    labels, does term-frequency adjustment, has graded comparisons
+    (Jaro-Winkler, Levenshtein, Double Metaphone…) and explains every
+    score per field. The same code scales from DuckDB to Spark.
+  - Building this in TypeScript means re-deriving subtle statistics. The
+    worst trap: a field used to block can't be estimated from those blocked
+    pairs. Mistakes there don't crash anything; they make results quietly
+    wrong.
+  - **Why DuckDB rather than Postgres:** Splink's work is a few huge
+    analytical joins and aggregations. DuckDB is columnar, multi-core and
+    has the similarity functions built in. Running this on the app's
+    Postgres would be slower and would slow the app. DuckDB is a library
+    inside the Python process (like SQLite), not another server.
+    **Postgres stays the single source of truth.**
+  - **The service boundary is narrow:** records in, scored pairs (and the
+    model's per-field explanation) out. Python never calls Jev, never
+    touches runs, and writes nothing but the scored pairs. TypeScript owns
+    everything else.
+  - Not dedupe or Zingg: they need people to label example pairs, which
+    is friction. Not fastLink: R is harder to package and scale.
+- **Jev is the only judge.**
+  - Splink decides _which pairs are worth checking_, never _whether a pair
+    is a duplicate_. Splink is itself a matcher, like the vendors (some may
+    use the same method), and it can't read the user's "what counts as the
+    same" (relatives, subsidiaries).
+  - **Every vendor-matched pair is always checked by Jev**: that's what
+    vendors are graded on.
+- **Reduce pairs by being smarter, not by sampling the answers.**
+  - The funnel: a wide net (high recall), then weigh what each pair shares
+    (meta-blocking), then Splink's score, then a low floor.
+  - Jev checks a small safety sample below the floor, so the report can
+    say how many duplicates might have been left out.
+- **Results become database queries.** Paging, filters, counts and
+  aggregates are done in Postgres and exposed as small server queries; the
+  web server only handles the rows on screen and the totals.
+- **Copy:** everything new follows `docs/rules/copy.md` (plain,
+  conversational; "vendor" stays).
+
+## The items, in build order
+
+Each item gets its own plan, build, local review, e2e and PR. Dependencies
+are noted; the later items assume the earlier ones exist.
+
+### 0. Measure first (done, 2026-10-05)
+
+- **Jev speed test (`pnpm jev:speed`, live, about 3 cents in all):**
+
+  | Calls at once | Calls | Rate-limited or overloaded | Pairs/s | p50 latency |
+  | ------------- | ----- | -------------------------- | ------- | ----------- |
+  | 4             | 40    | 0                          | 9.8     | 335 ms      |
+  | 10            | 50    | 0                          | 25.4    | 341 ms      |
+  | 20            | 100   | 0                          | 48.4    | 339 ms      |
+  | 40            | 200   | 0                          | 97.3    | 336 ms      |
+  | 80            | 400   | 0                          | 162.2   | 345 ms      |
+  | 120           | 600   | 0                          | 277.1   | 344 ms      |
+
+  Throughput scales almost linearly, latency stays flat, and there were no
+  429s or 529s even at 120 at once. **Jev is not the bottleneck; today's
+  engine (4 at once, driven by the browser) is.** The ceiling hasn't been
+  found yet.
+
+- **10,000 synthetic people (`pnpm scale:measure`, no Jev, no database):**
+  989 planted duplicates, 40% of them hard (a typo, a new email provider,
+  swapped names, a nickname after a move).
+  - **The file is 1.00 MB:** exactly today's upload limit (2 MB server-action
+    limit). 100k would be about 10 MB. Item 3 is needed.
+  - **Reading took 15 ms; blocking 0.4 s; the heap stayed under 100 MB.**
+    Computing isn't the problem at 10k.
+  - **Default rules:** 1,188 pairs, 70.6% of planted duplicates.
+  - **Default + close-match presets:** 12,888 pairs (over the 5,000 cap), but
+    only 76.5%. `surname_sound_birth_year` alone makes 11,760 pairs, because
+    common surnames ("Smith" sounds) share birth years at this size. It
+    catches about 60 more duplicates for 11,000 more pairs. On the 104-person
+    file the same preset was the star (37% → 85%).
+  - **The lesson for items 5–6:** hand-picked keys that work on small files
+    get noisy at scale. That's the case for weighing what pairs share (term
+    frequency: sharing "Smith" means little) rather than adding rules.
+  - **Jev time** for the 12,888 pairs: 21 minutes today, about 2 minutes at
+    40 at once, under a minute at 120.
+  - Caveat: the generator's phone numbers are random within a small range,
+    so the phone rule picks up some chance collisions (781 pairs).
+
+### 1. Background worker (done, 2026-10-05)
+
+- **Built:**
+  - A run worker inside the web server, started at boot from
+    `instrumentation.ts`. In the web server rather than its own process
+    because almost every server module is `server-only`.
+  - No queue library: a running run is the job, pairs are claimed with a
+    compare-and-set (`run-engine.ts`), and stale claims are reclaimed after
+    60 s.
+  - `RUN_WORKER_CONCURRENCY` (default 40) is shared across running runs; `0`
+    turns the worker off.
+  - The Runs centre watches instead of drives, and sees runs started
+    elsewhere.
+  - Pause and Resume.
+  - Indexes `runs(status)` and `assessments(status, claimedAt)`.
+  - Fix: starting a run no longer re-queues other runs' failed pairs.
+- **Measured:** a live run of 40 pairs at 40 at once finished in 2.4 s, every
+  Jev call recorded and priced in `ai_usage`. The full e2e suite passes
+  (44), including runs finishing with the tab closed, pause and resume, and a
+  second tab noticing a run.
+- **Left for later items:** the pair cap and the 500-record limit (items 3
+  and 8); telling someone a run finished when no page is open (in-app only
+  for now).
+
+### 2. Results from the database
+
+- **What:**
+  - Results, the pairs list, filters, counts, Overview charts, the PDF and
+    the downloads read through database queries (paged lists, grouped
+    counts, per-vendor aggregates), not by loading a whole run.
+  - Downloads stream (CSV for very large runs; Excel stops at 1,048,576
+    rows per sheet).
+- **Depends on:** nothing strictly. It can run alongside item 1 but is
+  planned after it.
+
+### 3. Large uploads
+
+- **What:**
+  - Stream-parse the upload and insert records in batches. That replaces
+    the single 2 MB server action.
+  - A streaming Excel reader, or a clear "use CSV for very large files".
+  - Validation stays row-numbered.
+  - Raise the record limit (10,000 first).
+- **Depends on:** item 1, for processing big files in the background.
+
+### 4. Jev throughput
+
+- **What:**
+  - Raise concurrency to what item 0 measured.
+  - Adaptive backoff on 429/529.
+  - Keep the per-run cost and time estimate honest.
+- **Depends on:** items 0 and 1.
+
+### 5. Splink scoring service
+
+- **Spike first:**
+  - Run Splink on the planted-duplicate file and the synthetic 10k/100k
+    files. Measure duplicates caught, pairs produced and speed against
+    today's yardstick (`pnpm blocking:check`: exact rules 37%, close-match
+    presets 85%).
+  - Ship only if it beats that with fewer pairs.
+- **Then the service:**
+  - A Python + DuckDB process with the narrow boundary above, a pinned
+    Splink version, and its own lint, tests and build added to
+    `local-review` and CI.
+  - Runs as a job from the worker.
+  - Packaging for local dev and on-prem.
+
+### 6. Automatic pair selection: works on the first run
+
+- **What:**
+  - The funnel replaces hand-built rules as the default: wide net,
+    weights, Splink score, floor.
+  - Jev checks a safety sample below the floor, and the report says what
+    it found.
+  - No second run needed: Splink learns from the records themselves.
+- **Rules screen:**
+  - "We picked these for your data": what's checked and why, in plain
+    words from Splink's per-field explanation.
+  - A pre-run check: "these would also find 19 of the 21 pairs your
+    vendors matched". Vendor pairs are used only for this check, never to
+    choose.
+  - Manual rules stay as an option.
+- **Afterwards:** Jev's answers can sharpen the next run. Once nothing
+  uses the TypeScript blocking code, it goes, so two engines can't
+  disagree.
+- **Depends on:** item 5. It supersedes the earlier "rule suggestions
+  learned from past runs" idea, which needed a second run.
+
+### 7. Big-run shortcuts: verified auto-accept (only above a size)
+
+- **What:** Fellegi–Sunter's three zones, with Jev as the reviewer.
+  - Pairs Splink is certain about (above an upper threshold) skip Jev,
+    **except a random sample Jev checks, measured per vendor**.
+  - If Jev disagrees too often, the threshold rises automatically.
+  - The middle zone always goes to Jev.
+  - Below the floor, only our own pairs are dropped; never a vendor pair.
+  - The report says plainly which numbers rest on a verified sample.
+- **Why careful:** Splink's "certain" can include pairs your definition
+  says are different (a father and son at one address). And a vendor that
+  matches like Splink would otherwise go unchecked. The per-vendor sample
+  keeps the grading fair.
+- **When:** only for runs big enough that time matters (tens of thousands
+  of pairs). Small runs keep checking everything exactly.
+- **Depends on:** items 4–6.
+
+### 8. Replace the pair cap with an estimate
+
+- **What:** the 5,000 wall becomes "about 25 minutes, ~$0.60. Start?".
+  Guardrails stay for runaway groups (a loose key making one group of
+  thousands of records).
+- **Depends on:** items 1 and 4. It can come earlier if useful.
+
+### 9. Splink as a free baseline vendor (optional)
+
+- **What:** Splink's own matches appear in the comparison like a vendor's,
+  judged by Jev the same way. For example: "Vendor A beats the free
+  open-source baseline by 12 points". Strong evidence for the
+  buy-or-not decision.
+- **Depends on:** item 5.
+
+### Later
+
+- **On-prem packaging:** web, worker, Splink service and Postgres as
+  containers, with the customer's local Jev.
+- **Rerun item 0's scale files** at 100k and 1M once items 1–6 exist.
+- Human review, analytics events, the prompt-audit fixes, vendor-specific
+  file formats and legacy `.xls`, verified ground-truth uploads and an
+  "uncertain" result group: see `docs/PairSight-Delivery-Plan.md`,
+  "Roadmap".
+
+## Open questions
+
+- Jev's rate limit: none hit at 120 calls at once (item 0). TypeSafe's own
+  price is still unknown.
+- Queue tables versus the migrations and RLS rules (item 1).
+- What file sizes customers will actually bring. It decides when items 7
+  and 8 matter.
+- Python in CI: the runner, and caching Splink's dependencies (item 5).

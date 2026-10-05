@@ -1,4 +1,5 @@
 import 'server-only'
+import { env } from '@/lib/env'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
 import { pairKey } from './pairs'
@@ -60,7 +61,8 @@ export async function startRun({
 					jevModel: config.model,
 					threshold,
 					initialThreshold: threshold,
-					pairCount: comparison.length
+					pairCount: comparison.length,
+					workerPool: env.RUN_WORKER_POOL
 				},
 				select: { id: true }
 			})
@@ -81,11 +83,19 @@ export async function startRun({
 					judgmentKey: key
 				}))
 			})
-			// A failure from an earlier run gets another attempt in this one.
-			await tx.assessment.updateMany({
-				where: { datasetId: dataset.id, judgmentKey: key, status: 'failed' },
-				data: { status: 'pending', attempts: 0, errorCode: null }
+			// A failure from an earlier run gets another attempt in this one: only
+			// the pairs this run compares, so an older run's failed pairs stay
+			// failed there instead of waiting forever as "not checked yet".
+			const retried = comparison.flatMap((pair) => {
+				const row = byPair.get(pairKey(pair))
+				return row?.status === 'failed' ? [row.id] : []
 			})
+			if (retried.length > 0) {
+				await tx.assessment.updateMany({
+					where: { id: { in: retried }, status: 'failed' },
+					data: { status: 'pending', attempts: 0, errorCode: null }
+				})
+			}
 			const all = await tx.assessment.findMany({
 				where: { datasetId: dataset.id, judgmentKey: key },
 				select: { id: true, recordAId: true, recordBId: true }

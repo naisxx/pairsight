@@ -4,7 +4,7 @@ import { db } from '@/server/db/client'
 import { parseBlockingRules, parseVendorStats } from './json'
 import { buildReport } from './report-summary'
 import { loadRunView } from './results'
-import { getRunProgress } from './runs'
+import { getRunProgress, runNotFinished } from './runs'
 import { countReusedJudgments } from './run-centre'
 import type { EvaluationScope } from './scope'
 
@@ -15,6 +15,7 @@ import type { EvaluationScope } from './scope'
 export async function reportData({ scope, runId }: { scope: EvaluationScope; runId: string }) {
 	const view = await loadRunView({ scope, runId })
 	const { run } = view
+	if (run.status !== 'completed') throw runNotFinished()
 	const [dataset, exports, progress, reused, reported, preparedBy] = await Promise.all([
 		db.sourceDataset.findUniqueOrThrow({
 			where: { id: run.datasetId },

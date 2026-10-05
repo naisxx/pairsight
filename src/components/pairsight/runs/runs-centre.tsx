@@ -1,20 +1,24 @@
 'use client'
 
 import { createContext, use, useEffect, useState } from 'react'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { useRouter } from '@/i18n/routing'
 import { RUNS_PARAM } from '@/lib/pairsight/evaluation-view'
 import { toast } from '@/lib/toast'
-import { advanceRunAction, listRunsAction } from '@/server/actions/pairsight/runs'
+import { listRunsAction, runProgressAction } from '@/server/actions/pairsight/runs'
 import type { ActionResult } from '@/server/actions/validated-action'
 import type { RunProgress } from '@/server/pairsight/runs'
 import type { RunCard } from '@/server/pairsight/run-centre'
 import { RunsDialog } from './runs-dialog'
 
-const PAUSE_BETWEEN_BATCHES_MS = 250
-const RETRY_AFTER_ERROR_MS = 3_000
+// How often a watched run's progress is read, and how often the runs list
+// refreshes while anything runs (to notice runs started in another tab).
+const PROGRESS_POLL_MS = 1_000
+const LIST_POLL_MS = 3_000
+// Why a run stopped when someone paused it (src/server/pairsight/runs.ts).
+const PAUSED = 'paused'
 
 export type RunsTab = 'active' | 'completed'
 
@@ -28,7 +32,7 @@ type RunsCentre = {
 	isSandbox: boolean
 	activeCount: number
 	open: (options?: { tab?: RunsTab; focusRunId?: string }) => void
-	// A run just started (or resumed, or retried): drive it, and when it was
+	// A run just started (or resumed, or retried): follow it, and when it was
 	// started here, take the viewer to its results once it's done.
 	track: (runId: string, options?: { resultsHref?: string }) => void
 }
@@ -41,11 +45,11 @@ export function useRunsCentre(): RunsCentre {
 	return centre
 }
 
-// Drives one run (docs/PairSight-Delivery-Plan.md, "Run execution"): each
-// successful advance schedules the next batch; a failed call waits and tries
-// again. It lives in the shell, so the run keeps going on any page; closing
-// the app pauses it until someone comes back. Every number is the backend's.
-function RunDriver({
+// Follows one run (docs/PairSight-Delivery-Plan.md, "Run execution"). The
+// background worker on the server does the work; this only reads how far it
+// has got, every second, until the run stops running. Every number is the
+// backend's.
+function RunWatcher({
 	runId,
 	onProgress,
 	onSettled
@@ -54,27 +58,25 @@ function RunDriver({
 	onProgress: (runId: string, progress: RunProgress) => void
 	onSettled: (runId: string, progress: RunProgress) => void
 }) {
-	const advance = useMutation({
-		mutationFn: () => unwrap(advanceRunAction({ runId })),
-		onSuccess: (next) => {
-			onProgress(runId, next)
-			if (next.status !== 'running') onSettled(runId, next)
-		}
+	useQuery({
+		queryKey: ['run-progress', runId],
+		queryFn: async () => {
+			const progress = await unwrap(runProgressAction({ runId }))
+			onProgress(runId, progress)
+			if (progress.status !== 'running') onSettled(runId, progress)
+			return progress
+		},
+		refetchInterval: (query) =>
+			query.state.data == null || query.state.data.status === 'running' ? PROGRESS_POLL_MS : false,
+		refetchIntervalInBackground: true,
+		gcTime: 0
 	})
-	const { mutate, isPending, isError, submittedAt, data } = advance
-	const isRunning = data == null || data.status === 'running'
-	useEffect(() => {
-		if (!isRunning || isPending) return
-		const delay = isError ? RETRY_AFTER_ERROR_MS : submittedAt === 0 ? 0 : PAUSE_BETWEEN_BATCHES_MS
-		const timer = setTimeout(() => mutate(), delay)
-		return () => clearTimeout(timer)
-	}, [isRunning, isPending, isError, submittedAt, mutate])
 	return null
 }
 
 // The Runs centre's state, for the whole shell: whether the dialog is open
-// and on which tab, the cards, and a driver for every run still going. The
-// sandbox only shows its prepared run; nothing there is ever driven.
+// and on which tab, the cards, and a watcher for every run still going. The
+// sandbox only shows its prepared run; nothing there is ever watched.
 export function RunsCentreProvider({
 	isSandbox,
 	initialActiveIds,
@@ -95,6 +97,9 @@ export function RunsCentreProvider({
 	const [activeIds, setActiveIds] = useState<ReadonlySet<string>>(
 		() => new Set(isSandbox ? [] : initialActiveIds)
 	)
+	// Runs this page has seen finish: a list fetched a moment earlier may still
+	// say they're running, and they shouldn't be followed again.
+	const [settledIds, setSettledIds] = useState<ReadonlySet<string>>(new Set())
 	const [followed, setFollowed] = useState<{ runId: string; resultsHref: string } | null>(null)
 	// What a driver last reported, and when: newer than the list, it's what
 	// the card shows; once the list is fetched again, the list wins.
@@ -102,10 +107,12 @@ export function RunsCentreProvider({
 		new Map()
 	)
 
+	const isWatching = !isSandbox && (activeIds.size > 0 || isOpen)
 	const runs = useQuery({
 		queryKey: ['runs', isSandbox],
 		queryFn: () => unwrap(listRunsAction({ sandbox: isSandbox })),
-		enabled: isOpen
+		enabled: isOpen || isWatching,
+		refetchInterval: isWatching ? LIST_POLL_MS : false
 	})
 	// Opening always shows the runs as they are now: a pair retried on Results
 	// since the last look changes its run's counts.
@@ -120,7 +127,17 @@ export function RunsCentreProvider({
 				? card
 				: { ...card, status: latest.progress.status, progress: latest.progress }
 		}) ?? null
-	const shownTab: RunsTab = tab ?? (activeIds.size > 0 ? 'active' : 'completed')
+	// Every run to follow: those started or resumed here, plus any the list
+	// shows running that this page hasn't seen finish (another tab started it).
+	const watchedIds: ReadonlySet<string> = isSandbox
+		? new Set()
+		: new Set([
+				...activeIds,
+				...(runs.data ?? [])
+					.filter((card) => card.status === 'running' && !settledIds.has(card.id))
+					.map((card) => card.id)
+			])
+	const shownTab: RunsTab = tab ?? (watchedIds.size > 0 ? 'active' : 'completed')
 
 	function open(options?: { tab?: RunsTab; focusRunId?: string }) {
 		setTab(options?.tab ?? null)
@@ -138,6 +155,7 @@ export function RunsCentreProvider({
 			next.delete(runId)
 			return next
 		})
+		setSettledIds((current) => new Set(current).add(runId))
 		void queryClient.invalidateQueries({ queryKey: ['runs'] })
 		const isFollowed = followed?.runId === runId
 		if (isFollowed) setFollowed(null)
@@ -151,9 +169,14 @@ export function RunsCentreProvider({
 		// "Running". Queued behind it, the refresh runs once the push lands.
 		router.refresh()
 		if (isOpen) return
-		if (isFollowed || progress.status === 'completed') {
+		if (isFollowed || progress.status === 'completed' || progress.stopReason === PAUSED) {
 			toast({
-				title: progress.status === 'completed' ? t('doneTitle') : t('stoppedToast'),
+				title:
+					progress.status === 'completed'
+						? t('doneTitle')
+						: progress.stopReason === PAUSED
+							? t('pausedToast')
+							: t('stoppedToast'),
 				action:
 					followed != null && isFollowed
 						? {
@@ -168,6 +191,11 @@ export function RunsCentreProvider({
 	function track(runId: string, options?: { resultsHref?: string }) {
 		if (isSandbox) return
 		setActiveIds((current) => new Set(current).add(runId))
+		setSettledIds((current) => {
+			const next = new Set(current)
+			next.delete(runId)
+			return next
+		})
 		setLive((current) => {
 			const next = new Map(current)
 			next.delete(runId)
@@ -178,12 +206,12 @@ export function RunsCentreProvider({
 		open({ tab: 'active', focusRunId: runId })
 	}
 
-	const centre: RunsCentre = { isSandbox, activeCount: activeIds.size, open, track }
+	const centre: RunsCentre = { isSandbox, activeCount: watchedIds.size, open, track }
 	return (
 		<RunsCentreContext value={centre}>
 			{children}
-			{[...activeIds].map((runId) => (
-				<RunDriver key={runId} runId={runId} onProgress={onProgress} onSettled={onSettled} />
+			{[...watchedIds].map((runId) => (
+				<RunWatcher key={runId} runId={runId} onProgress={onProgress} onSettled={onSettled} />
 			))}
 			<RunsDialog
 				open={isOpen}
@@ -194,7 +222,7 @@ export function RunsCentreProvider({
 				isLoading={runs.isPending}
 				hasError={runs.isError}
 				focusRunId={focusRunId}
-				activeIds={activeIds}
+				activeIds={watchedIds}
 			/>
 		</RunsCentreContext>
 	)

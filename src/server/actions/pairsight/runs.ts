@@ -3,16 +3,23 @@
 import { z } from 'zod'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
-import { advanceRun, retryPair } from '@/server/pairsight/run-engine'
-import { resumeRun, retryFailed } from '@/server/pairsight/runs'
+import { retryPair } from '@/server/pairsight/run-engine'
+import {
+	getOwnedRun,
+	getRunProgress,
+	pauseRun,
+	resumeRun,
+	retryFailed
+} from '@/server/pairsight/runs'
 import { startRun } from '@/server/pairsight/start-run'
 import { ownerView, sandboxView } from '@/lib/pairsight/evaluation-view'
 import { listRunCards } from '@/server/pairsight/run-centre'
 import { ownerScope, SANDBOX_SCOPE } from '@/server/pairsight/scope'
 import { idSchema, revalidateEvaluationPages } from './shared'
 
-// Starts a run and stays on the page: the Runs centre opens on it, drives it
-// and takes you to its results when it's done.
+// Starts a run and stays on the page: the background worker checks its pairs,
+// and the Runs centre opens on it, follows it and takes you to its results
+// when it's done.
 export const startRunAction = validatedAction({
 	input: z.object({ evaluationId: idSchema }),
 	handler: async ({ evaluationId }) => {
@@ -34,11 +41,22 @@ export const listRunsAction = validatedAction({
 	}
 })
 
-export const advanceRunAction = validatedAction({
+// How far a run has got: what the Runs centre polls while the worker runs it.
+export const runProgressAction = validatedAction({
 	input: z.object({ runId: idSchema }),
 	handler: async ({ runId }) => {
 		const user = await requireUser()
-		return advanceRun({ ownerId: user.id, runId })
+		await getOwnedRun({ ownerId: user.id, runId })
+		return getRunProgress(runId)
+	}
+})
+
+export const pauseRunAction = validatedAction({
+	input: z.object({ runId: idSchema }),
+	handler: async ({ runId }) => {
+		const user = await requireUser()
+		await pauseRun({ ownerId: user.id, runId })
+		return { paused: true }
 	}
 })
 
