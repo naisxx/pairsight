@@ -1,10 +1,14 @@
 import { MAX_FILE_BYTES } from '@/lib/pairsight/tabular-formats'
 
-// Initial v1 limits (docs/PairSight-V1-Scope.md). Adjust after the real Jev
-// integration test; every check reads from here.
+// The limits every check reads from here (docs/PairSight-V1-Scope.md, raised
+// by docs/PairSight-Scale-Roadmap.md item 3: files are read and saved a batch
+// at a time, so these are product limits, not memory ones).
 export const LIMITS = {
 	maxFileBytes: MAX_FILE_BYTES,
-	maxSourceRecords: 500,
+	maxSourceRecords: 10_000,
+	// Rows in a vendor's file: its own limit, not the pair cap, since a run's
+	// pairs are mostly what the comparison rules find.
+	maxVendorRows: 100_000,
 	maxColumns: 40,
 	maxVendors: 3,
 	maxPairsPerRun: 5_000,

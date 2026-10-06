@@ -7,11 +7,15 @@ import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
 import { recordKeys } from './record-keys'
 
-// The current dataset is the latest one; older datasets stay only for the
-// runs that used them.
+// Records written per statement.
+const SAVE_BATCH = 5_000
+
+// The current dataset is the latest fully saved one; older datasets stay
+// only for the runs that used them, and one still being written is never
+// current.
 export async function getCurrentDataset(evaluationId: string) {
 	return db.sourceDataset.findFirst({
-		where: { evaluationId },
+		where: { evaluationId, savedAt: { not: null } },
 		orderBy: { createdAt: 'desc' },
 		select: {
 			id: true,
@@ -24,13 +28,19 @@ export async function getCurrentDataset(evaluationId: string) {
 	})
 }
 
+// Saves a file's records as the evaluation's new dataset. `readRecords`
+// reads the (already checked) file and hands its records over a batch at a
+// time; they're written as they come, so a file of any size is saved in
+// flat memory. The dataset only becomes current once every record is in,
+// and a save that fails part-way leaves nothing behind.
 export async function saveSourceDataset({
 	ownerId,
 	evaluationId,
 	fileName,
 	referenceColumn,
 	columnRoles,
-	records,
+	rowCount,
+	readRecords,
 	entityType
 }: {
 	ownerId: string
@@ -38,7 +48,8 @@ export async function saveSourceDataset({
 	fileName: string
 	referenceColumn: string
 	columnRoles: Record<string, FieldRole>
-	records: SourceRecordInput[]
+	rowCount: number
+	readRecords: (write: (records: SourceRecordInput[]) => Promise<void>) => Promise<void>
 	entityType: EntityType
 }) {
 	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
@@ -56,31 +67,40 @@ export async function saveSourceDataset({
 					identityDifferent: defaultIdentity(entityType).different,
 					blockingRules: defaultRules(entityType)
 				}
-	return db.$transaction(async (tx) => {
-		const dataset = await tx.sourceDataset.create({
-			data: { evaluationId, fileName, rowCount: records.length, referenceColumn, columnRoles },
-			select: { id: true }
-		})
-		await tx.sourceRecord.createMany({
-			data: records.map((record) => ({
-				datasetId: dataset.id,
-				reference: record.reference,
-				rowNumber: record.rowNumber,
-				values: record.values,
-				...recordKeys({
-					reference: record.reference,
-					values: record.values,
-					columnRoles,
-					entityType
-				})
-			}))
-		})
-		await tx.evaluation.update({
-			where: { id: evaluationId },
-			data: { jevFields, ...typeDefaults }
-		})
-		return dataset
+	const dataset = await db.sourceDataset.create({
+		data: { evaluationId, fileName, rowCount, referenceColumn, columnRoles, savedAt: null },
+		select: { id: true }
 	})
+	const write = async (records: SourceRecordInput[]) => {
+		for (let at = 0; at < records.length; at += SAVE_BATCH) {
+			await db.sourceRecord.createMany({
+				data: records.slice(at, at + SAVE_BATCH).map((record) => ({
+					datasetId: dataset.id,
+					reference: record.reference,
+					rowNumber: record.rowNumber,
+					values: record.values,
+					...recordKeys({
+						reference: record.reference,
+						values: record.values,
+						columnRoles,
+						entityType
+					})
+				}))
+			})
+		}
+	}
+	try {
+		await readRecords(write)
+		await db.$transaction([
+			db.sourceDataset.update({ where: { id: dataset.id }, data: { savedAt: new Date() } }),
+			db.evaluation.update({ where: { id: evaluationId }, data: { jevFields, ...typeDefaults } })
+		])
+	} catch (error) {
+		// Its records go with it (cascade).
+		await db.sourceDataset.deleteMany({ where: { id: dataset.id } })
+		throw error
+	}
+	return dataset
 }
 
 export async function recordIdsByReference(datasetId: string): Promise<Map<string, string>> {

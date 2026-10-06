@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl'
 import { AlertIcon } from '@/components/ui/icons'
 import { MAX_FILE_BYTES, tabularFormatOf } from '@/lib/pairsight/tabular-formats'
 import type { TableError } from '@/server/pairsight/tabular'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
 // Validation panels (docs/PairSight-UX-Plan.md §5): a count, what to fix, and
 // the affected rows — icon and text, never color alone.
@@ -12,11 +13,12 @@ const MAX_LISTED = 20
 
 export function useRowList() {
 	const t = useTranslations('Records')
-	return (rows: Array<number | string>) => {
+	// `of`: how many there are when `rows` is only the first of them.
+	return (rows: Array<number | string>, of?: number) => {
+		const total = of ?? rows.length
 		const listed = rows.slice(0, MAX_LISTED).join(', ')
-		return rows.length > MAX_LISTED
-			? `${listed} ${t('andMore', { count: rows.length - MAX_LISTED })}`
-			: listed
+		const shown = Math.min(rows.length, MAX_LISTED)
+		return total > shown ? `${listed} ${t('andMore', { count: total - shown })}` : listed
 	}
 }
 
@@ -50,11 +52,13 @@ export function ValidationPanel({ title, messages }: { title: string; messages: 
 				<AlertIcon />
 				{title}
 			</p>
-			<ul className="text-text type-body mt-2 ml-6 list-disc space-y-1">
-				{messages.map((message) => (
-					<li key={message}>{message}</li>
-				))}
-			</ul>
+			<ScrollArea label={title} className="mt-2 max-h-64">
+				<ul className="text-text type-body ml-6 list-disc space-y-1 break-words">
+					{messages.map((message) => (
+						<li key={message}>{message}</li>
+					))}
+				</ul>
+			</ScrollArea>
 		</div>
 	)
 }

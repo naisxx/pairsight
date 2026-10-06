@@ -17,8 +17,9 @@ export type TabularFormat = (typeof TABULAR_FORMATS)[number]['format']
 // a bigger download is CSV only.
 export const XLSX_MAX_ROWS = 1_048_575
 
-// The largest file a user can upload.
-export const MAX_FILE_BYTES = 1_000_000
+// The largest file a user can upload: uploads are read and saved a batch at
+// a time, so this is about upload time, not memory.
+export const MAX_FILE_BYTES = 10_000_000
 
 // The <input accept> value: every extension and MIME type above.
 export const TABULAR_ACCEPT = TABULAR_FORMATS.flatMap((entry) => [

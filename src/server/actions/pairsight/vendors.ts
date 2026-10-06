@@ -24,7 +24,7 @@ import {
 	type VendorDetection,
 	type VendorFileStats
 } from '@/server/pairsight/vendors'
-import { fileSchema, idSchema, readUpload, revalidateEvaluationPages, sheetSchema } from './shared'
+import { idSchema, readUploadTable, revalidateEvaluationPages, sheetSchema } from './shared'
 
 const vendorKindSchema = z.enum(['draft', 'export'])
 const vendorNameSchema = z.string().trim().min(1).max(NAME_MAX_LENGTH)
@@ -88,15 +88,21 @@ export type VendorFileCheck =
 export const checkVendorFileAction = validatedAction({
 	input: z.object({
 		draftId: idSchema,
-		file: fileSchema,
+		uploadId: idSchema,
 		sheet: sheetSchema,
 		columns: vendorColumnsSchema.optional()
 	}),
-	handler: async ({ draftId, file, sheet, columns: chosen }): Promise<VendorFileCheck> => {
+	handler: async ({ draftId, uploadId, sheet, columns: chosen }): Promise<VendorFileCheck> => {
 		const user = await requireUser()
 		const datasetId = await draftDatasetId(user.id, draftId)
-		const fileName = file.name.trim()
-		const parsed = await readUpload(file, LIMITS.maxPairsPerRun, sheet)
+		const parsed = await readUploadTable({
+			ownerId: user.id,
+			uploadId,
+			kind: 'vendor',
+			maxRows: LIMITS.maxVendorRows,
+			sheet
+		})
+		const fileName = parsed.fileName.trim()
 		if (!parsed.ok) {
 			await clearDraftFile({ ownerId: user.id, draftId })
 			revalidateEvaluationPages()
@@ -132,7 +138,7 @@ export const checkVendorFileAction = validatedAction({
 			table,
 			columns,
 			recordIdByReference,
-			maxPairs: LIMITS.maxPairsPerRun
+			maxPairs: LIMITS.maxVendorRows
 		})
 		if (result.isValid) {
 			await setDraftFile({

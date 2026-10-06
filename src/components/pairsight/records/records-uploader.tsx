@@ -13,6 +13,7 @@ import {
 } from '@/server/actions/pairsight/sources'
 import { DEFAULT_ENTITY_TYPE, rolesFor, type EntityType } from '@/lib/pairsight/entity-types'
 import { FileDrop } from '../file-drop'
+import { uploadFile } from '../upload-file'
 import { useFileTypeLabel } from '../file-type'
 import { SheetPicker, type SheetChoice } from '../sheet-picker'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
@@ -33,14 +34,15 @@ import { RecordsPreview } from './records-preview'
 import { SourceValidation } from './source-validation'
 import { useEvaluationView } from '../evaluation-context'
 
-// The chosen file is kept as is and sent again on save, with the sheet it was
-// read from (preview.sheet); the server reads it.
+// The chosen file is uploaded once (upload-file.ts); the preview and the
+// save name it by id, with the sheet it was read from (preview.sheet).
 type Loaded = {
 	file: File
+	uploadId: string
 	preview: Extract<SourcePreview, { ok: true }>
 }
 // A workbook with several sheets of data, waiting for the user to pick one.
-type Choosing = { file: File; sheets: SheetChoice[]; picked: string | null }
+type Choosing = { file: File; uploadId: string; sheets: SheetChoice[]; picked: string | null }
 type SaveIssues = Exclude<Extract<SaveSourceResult, { ok: false }>, { parseError: unknown }>
 
 const MAX_LISTED_DUPLICATES = 10
@@ -79,6 +81,8 @@ export function RecordsUploader({
 	const list = useRowList()
 	const [loaded, setLoaded] = useState<Loaded | null>(null)
 	const [choosing, setChoosing] = useState<Choosing | null>(null)
+	// While the file goes up: how much of it has.
+	const [uploadPercent, setUploadPercent] = useState<number | null>(null)
 	const [mapping, setMapping] = useState<Mapping>(new Map())
 	const [suggested, setSuggested] = useState<Mapping>(new Map())
 	const [entityType, setEntityType] = useState<EntityType>(DEFAULT_ENTITY_TYPE)
@@ -90,19 +94,20 @@ export function RecordsUploader({
 
 	const issueMessages = (issues: SaveIssues) => [
 		...(issues.missingReferenceColumn ? [t('missingReferenceColumn')] : []),
-		...(issues.referenceIssues.missing.length > 0
+		...(issues.referenceCheck.blank > 0
 			? [
 					t('missingReferences', {
-						count: issues.referenceIssues.missing.length,
-						rows: list(issues.referenceIssues.missing)
+						count: issues.referenceCheck.blank,
+						rows: list(issues.referenceCheck.missing, issues.referenceCheck.blank)
 					})
 				]
 			: []),
-		...issues.referenceIssues.duplicates
-			.slice(0, MAX_LISTED_DUPLICATES)
-			.map((duplicate) =>
-				t('duplicateReference', { reference: duplicate.reference, rows: list(duplicate.rows) })
-			),
+		...issues.referenceCheck.duplicates.slice(0, MAX_LISTED_DUPLICATES).map((duplicate) =>
+			t('duplicateReference', {
+				reference: duplicate.reference,
+				rows: list(duplicate.rows, duplicate.count)
+			})
+		),
 		...(issues.duplicateRoles.length > 0
 			? [
 					t('duplicateRoles', {
@@ -112,15 +117,15 @@ export function RecordsUploader({
 			: [])
 	]
 
-	function read(file: File, sheet?: string) {
+	function read(file: File, uploadId: string, sheet?: string) {
 		setErrors([])
 		startReading(async () => {
-			const result = await previewSourceFile({ file, sheet })
+			const result = await previewSourceFile({ uploadId, sheet })
 			if (!result.ok) return setErrors([result.error])
 			const data = result.data
 			if (!data.ok) {
 				if (data.error.code !== 'choose_sheet') return setErrors([fileError(data.error)])
-				return setChoosing({ file, sheets: data.error.sheets, picked: null })
+				return setChoosing({ file, uploadId, sheets: data.error.sheets, picked: null })
 			}
 			const type = data.detection.type
 			const suggestion = suggestedMapping({
@@ -129,7 +134,7 @@ export function RecordsUploader({
 				suggestedRoles: data.suggestedRoles[type]
 			})
 			setChoosing(null)
-			setLoaded({ file, preview: data })
+			setLoaded({ file, uploadId, preview: data })
 			setEntityType(type)
 			setSuggested(suggestion)
 			setMapping(suggestion)
@@ -152,15 +157,34 @@ export function RecordsUploader({
 
 	function onFile(file: File) {
 		setChoosing(null)
+		setErrors([])
 		const checked = checkTabularFile(file)
 		if (!checked.ok) return setErrors([fileError({ code: checked.code })])
-		read(file)
+		startReading(async () => {
+			setUploadPercent(0)
+			const uploaded = await uploadFile({
+				evaluationId,
+				kind: 'records',
+				file,
+				onProgress: setUploadPercent
+			})
+			setUploadPercent(null)
+			if (!uploaded.ok) {
+				return setErrors([
+					uploaded.tooLarge
+						? fileError({ code: 'too_large' })
+						: (uploaded.message ?? t('uploadFailed'))
+				])
+			}
+			read(file, uploaded.uploadId)
+		})
 	}
 
+	// Another sheet of the same upload: nothing is sent again.
 	function pickSheet(sheet: string) {
 		if (choosing == null) return
 		setChoosing({ ...choosing, picked: sheet })
-		read(choosing.file, sheet)
+		read(choosing.file, choosing.uploadId, sheet)
 	}
 
 	const reference = mapping.get('reference') ?? null
@@ -184,7 +208,7 @@ export function RecordsUploader({
 		startSaving(async () => {
 			const result = await saveSourceAction({
 				evaluationId,
-				file: loaded.file,
+				uploadId: loaded.uploadId,
 				sheet: loaded.preview.sheet,
 				referenceColumn: reference,
 				entityType,
@@ -233,7 +257,9 @@ export function RecordsUploader({
 					<FileDrop
 						label={t('dropTitle')}
 						hint={t('dropHint')}
-						busyLabel={t('reading')}
+						busyLabel={
+							uploadPercent == null ? t('reading') : t('uploading', { percent: uploadPercent })
+						}
 						isBusy={isReading && choosing == null}
 						onFile={onFile}
 					/>

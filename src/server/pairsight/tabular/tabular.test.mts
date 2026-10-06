@@ -2,7 +2,8 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import ExcelJS from 'exceljs'
 import { LIMITS } from '../limits'
-import { readTable, writeTable, type Table } from './index'
+import { readTable, scanTable, writeTable, type Table } from './index'
+import { metadataFirst } from './xlsx'
 import { streamTable } from './stream'
 
 const BOM = '﻿'
@@ -255,4 +256,50 @@ test('a streamed file is the same as one written whole', async () => {
 		streamTable({ headers: table.headers, pages: inPages([], 3), format: 'csv' })
 	)
 	assert.equal(decode(empty), `${BOM}ref,score,note\r\n`)
+})
+
+test('a big workbook is read a batch at a time, the same as whole', async () => {
+	const rows = Array.from({ length: 5_000 }, (_, index) => [`R${index}`, `Name ${index}`])
+	const bytes = await workbook({ People: [['ref', 'name'], ...rows] })
+	const batches: number[] = []
+	const scan = await scanTable({
+		fileName: 'people.xlsx',
+		bytes,
+		maxRows: 10_000,
+		onRows: (batch, firstRowNumber) => {
+			batches.push(firstRowNumber)
+		}
+	})
+	assert.deepEqual(scan, { ok: true, headers: ['ref', 'name'], rowCount: 5_000, sheet: 'People' })
+	assert.ok(batches.length > 1)
+	assert.equal(batches[0], 2)
+	const whole = await readTable({ fileName: 'people.xlsx', bytes, maxRows: 10_000 })
+	assert.ok(whole.ok)
+	assert.deepEqual(whole.table.rows, rows)
+})
+
+test('reordering a workbook’s zip moves its metadata first and changes nothing else', async () => {
+	const bytes = await workbook({
+		Records: [
+			['ref', 'name'],
+			['R1', 'Ann']
+		]
+	})
+	const reordered = metadataFirst(bytes)
+	assert.ok(reordered != null)
+	assert.equal(reordered.length, bytes.length)
+	// ExcelJS writes the sheet list last; reordered, it comes first.
+	const names = (zip: Uint8Array) => {
+		const text = new TextDecoder('latin1').decode(zip)
+		return ['xl/workbook.xml', 'xl/worksheets/sheet1.xml'].map((name) => text.indexOf(name))
+	}
+	const [listBefore = 0, sheetBefore = 0] = names(bytes)
+	const [listAfter = 0, sheetAfter = 0] = names(reordered)
+	assert.ok(listBefore > sheetBefore)
+	assert.ok(listAfter < sheetAfter)
+	// Still a workbook any reader opens the same.
+	const book = new ExcelJS.Workbook()
+	await book.xlsx.load(new Uint8Array(reordered).buffer)
+	assert.equal(book.getWorksheet('Records')?.getCell('B2').value, 'Ann')
+	assert.equal(metadataFirst(new TextEncoder().encode('not a zip')), null)
 })
