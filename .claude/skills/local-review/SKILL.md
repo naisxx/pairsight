@@ -1,6 +1,6 @@
 ---
 name: local-review
-description: Run the full local pre-push gate (lint, typecheck, format, env-var check, unit tests, build) and a manual review pass against this repo's AGENTS.md/docs/rules rules — the mechanism that makes the no-over-committing rule work by catching problems before a paid CI run does. Use when the user says "/local-review", "review this before I push", "is this ready", or has finished a change and wants it validated locally before CI sees it.
+description: Run the full local pre-push gate (lint, typecheck, format, env-var check, unit tests, the Python service's checks, build) and a manual review pass against this repo's AGENTS.md/docs/rules rules — the mechanism that makes the no-over-committing rule work by catching problems before a paid CI run does. Use when the user says "/local-review", "review this before I push", "is this ready", or has finished a change and wants it validated locally before CI sees it.
 ---
 
 # Local review
@@ -23,6 +23,7 @@ pnpm check:standards
 pnpm check:ai-models   # skip if the project deleted AI usage tracking
 pnpm test
 DATABASE_URL="postgresql://<your local database>" pnpm check:rls   # needs the migrations applied
+pnpm python:check   # the Splink service: ruff, format, pytest (pnpm splink:setup once first)
 ```
 
 `check:rls` reads the database rather than the migration files, so it needs

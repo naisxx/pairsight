@@ -1,0 +1,16 @@
+[project]
+name = "pairsight-splink"
+version = "0.1.0"
+description = "Picks the pairs of records worth checking, with Splink on DuckDB. Never judges a pair."
+requires-python = ">=3.13"
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+
+[tool.ruff.lint]
+# Errors, pyflakes, imports, naming, bugbear, simplifications, upgrades.
+select = ["E", "F", "I", "N", "B", "SIM", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

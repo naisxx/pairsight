@@ -89,10 +89,26 @@ const LOGGER_IMPORTS = {
 		"Import log from '@/server/lib/logger' instead — the shared Pino wrapper owns correlation and redaction. See docs/rules/logging.md."
 }
 
+const CHILD_PROCESS_IMPORTS = {
+	group: ['/child_process', 'node:child_process'],
+	message:
+		'Only the Splink service runner (src/server/pairsight/splink/service.ts) starts a process: no shell, fixed arguments. See docs/rules/splink-service.md.'
+}
+
 const eslintConfig = defineConfig([
 	...nextVitals,
 	...nextTypescript,
-	globalIgnores(['.next/**', 'out/**', 'build/**', 'next-env.d.ts', 'src/generated/**']),
+	globalIgnores([
+		'.next/**',
+		'out/**',
+		'build/**',
+		'next-env.d.ts',
+		'src/generated/**',
+		// Python virtual environments ship JS of their own (Splink's charts).
+		'**/.venv/**',
+		'**/.venv-*/**',
+		'**/__pycache__/**'
+	]),
 	{
 		// See docs/rules/code-quality.md for the rationale behind both rules.
 		rules: {
@@ -137,7 +153,8 @@ const eslintConfig = defineConfig([
 						AI_SDK_IMPORTS,
 						DATA_ACCESS_IMPORTS,
 						SUPABASE_IMPORTS,
-						LOGGER_IMPORTS
+						LOGGER_IMPORTS,
+						CHILD_PROCESS_IMPORTS
 					]
 				}
 			]
@@ -148,7 +165,15 @@ const eslintConfig = defineConfig([
 		rules: {
 			'no-restricted-imports': [
 				'error',
-				{ patterns: [AI_SDK_IMPORTS, DATA_ACCESS_IMPORTS, SUPABASE_IMPORTS, LOGGER_IMPORTS] }
+				{
+					patterns: [
+						AI_SDK_IMPORTS,
+						DATA_ACCESS_IMPORTS,
+						SUPABASE_IMPORTS,
+						LOGGER_IMPORTS,
+						CHILD_PROCESS_IMPORTS
+					]
+				}
 			]
 		}
 	},
@@ -159,7 +184,15 @@ const eslintConfig = defineConfig([
 		rules: {
 			'no-restricted-imports': [
 				'error',
-				{ patterns: [ICON_PROVIDER_IMPORTS, DATA_ACCESS_IMPORTS, SUPABASE_IMPORTS, LOGGER_IMPORTS] }
+				{
+					patterns: [
+						ICON_PROVIDER_IMPORTS,
+						DATA_ACCESS_IMPORTS,
+						SUPABASE_IMPORTS,
+						LOGGER_IMPORTS,
+						CHILD_PROCESS_IMPORTS
+					]
+				}
 			]
 		}
 	},
@@ -169,7 +202,15 @@ const eslintConfig = defineConfig([
 		rules: {
 			'no-restricted-imports': [
 				'error',
-				{ patterns: [ICON_PROVIDER_IMPORTS, AI_SDK_IMPORTS, SUPABASE_IMPORTS, LOGGER_IMPORTS] }
+				{
+					patterns: [
+						ICON_PROVIDER_IMPORTS,
+						AI_SDK_IMPORTS,
+						SUPABASE_IMPORTS,
+						LOGGER_IMPORTS,
+						CHILD_PROCESS_IMPORTS
+					]
+				}
 			]
 		}
 	},
@@ -180,7 +221,33 @@ const eslintConfig = defineConfig([
 		rules: {
 			'no-restricted-imports': [
 				'error',
-				{ patterns: [ICON_PROVIDER_IMPORTS, AI_SDK_IMPORTS, DATA_ACCESS_IMPORTS, LOGGER_IMPORTS] }
+				{
+					patterns: [
+						ICON_PROVIDER_IMPORTS,
+						AI_SDK_IMPORTS,
+						DATA_ACCESS_IMPORTS,
+						LOGGER_IMPORTS,
+						CHILD_PROCESS_IMPORTS
+					]
+				}
+			]
+		}
+	},
+	{
+		// The one place a process is started: the Splink service, no shell.
+		files: ['src/server/pairsight/splink/service.ts'],
+		rules: {
+			'no-restricted-imports': [
+				'error',
+				{
+					patterns: [
+						ICON_PROVIDER_IMPORTS,
+						AI_SDK_IMPORTS,
+						DATA_ACCESS_IMPORTS,
+						SUPABASE_IMPORTS,
+						LOGGER_IMPORTS
+					]
+				}
 			]
 		}
 	},
@@ -189,7 +256,15 @@ const eslintConfig = defineConfig([
 		rules: {
 			'no-restricted-imports': [
 				'error',
-				{ patterns: [ICON_PROVIDER_IMPORTS, AI_SDK_IMPORTS, DATA_ACCESS_IMPORTS, SUPABASE_IMPORTS] }
+				{
+					patterns: [
+						ICON_PROVIDER_IMPORTS,
+						AI_SDK_IMPORTS,
+						DATA_ACCESS_IMPORTS,
+						SUPABASE_IMPORTS,
+						CHILD_PROCESS_IMPORTS
+					]
+				}
 			]
 		}
 	},
