@@ -1,7 +1,10 @@
 import 'server-only'
+import { z } from 'zod'
+import { env } from '@/lib/env'
 import { db } from '@/server/db/client'
 import { LIMITS } from '../limits'
 import type { CanonicalPair } from '../pairs'
+import { isSuggestionReason, type SuggestionReason } from './reasons'
 
 // The pairs Splink picked for a dataset, for the Plan (plan.ts): those it
 // scored at or above the floor, best first. One indexed read of
@@ -21,6 +24,21 @@ export type SplinkPicks = {
 	// Why it was skipped (too few records, a type it doesn't do yet, or not
 	// set up on this server), when it was.
 	reason: string | null
+	// Of the pairs it suggests, how many share each reason, most common first
+	// (worked out once when the dataset was scored).
+	suggested: number
+	reasons: Array<{ reason: SuggestionReason; count: number }>
+}
+
+const tallySchema = z.array(z.object({ reason: z.string(), count: z.number().int() }))
+
+function reasonTally(summary: unknown): SplinkPicks['reasons'] {
+	if (typeof summary !== 'object' || summary == null || !('reasons' in summary)) return []
+	const parsed = tallySchema.safeParse(summary.reasons)
+	if (!parsed.success) return []
+	return parsed.data.flatMap(({ reason, count }) =>
+		isSuggestionReason(reason) ? [{ reason, count }] : []
+	)
 }
 
 const REASONS = ['too_few_records', 'not_people', 'not_set_up'] as const
@@ -42,7 +60,9 @@ export async function splinkPicks({
 	const none = (state: SplinkState, reason: string | null = null): SplinkPicks => ({
 		state,
 		pairs: [],
-		reason
+		reason,
+		suggested: 0,
+		reasons: []
 	})
 	if (!isOn) return none('off')
 	const dataset = await db.sourceDataset.findUniqueOrThrow({
@@ -54,7 +74,7 @@ export async function splinkPicks({
 			// Saved before Splink: asked for now, by the first plan that wants it.
 			await db.sourceDataset.updateMany({
 				where: { id: datasetId, scoreStatus: null },
-				data: { scoreStatus: 'pending' }
+				data: { scoreStatus: 'pending', scorePool: env.RUN_WORKER_POOL }
 			})
 			return none('waiting')
 		case 'pending':
@@ -74,8 +94,30 @@ export async function splinkPicks({
 			return {
 				state: 'done',
 				pairs: rows.map((row) => ({ a: row.recordAId, b: row.recordBId })),
-				reason: null
+				reason: null,
+				suggested: rows.length,
+				reasons: reasonTally(dataset.scoreSummary)
 			}
 		}
 	}
+}
+
+// Why PairSight suggested one pair: its reasons, for the pair page. One
+// lookup by the table's key. Empty when it wasn't suggested, or was scored
+// before reasons were kept.
+export async function suggestionReasons({
+	datasetId,
+	recordAId,
+	recordBId
+}: {
+	datasetId: string
+	recordAId: string
+	recordBId: string
+}): Promise<SuggestionReason[]> {
+	const [a, b] = recordAId < recordBId ? [recordAId, recordBId] : [recordBId, recordAId]
+	const row = await db.pairScore.findUnique({
+		where: { datasetId_recordAId_recordBId: { datasetId, recordAId: a, recordBId: b } },
+		select: { reasons: true }
+	})
+	return (row?.reasons ?? []).filter(isSuggestionReason)
 }

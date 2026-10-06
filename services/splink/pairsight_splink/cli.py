@@ -21,6 +21,7 @@ import pandas as pd
 import splink
 
 from .model import score
+from .reasons import reasons
 
 # Pairs scoring below this aren't kept: on the benchmark (scripts/splink-spike/)
 # no planted duplicate was found below it, at 10K or 100K records. The Plan's
@@ -57,6 +58,9 @@ def run(records_path: Path, out_path: Path, max_pairs: int, memory_limit: str) -
         .sort_values("match_weight", ascending=False)
         .head(max_pairs)
     )
+    kept = kept.assign(reasons=reasons(kept))[
+        ["a", "b", "match_weight", "match_probability", "reasons"]
+    ]
     kept.to_csv(out_path, index=False)
     return {
         **scored.summary,
