@@ -1,6 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/cn'
 import type { PlanCounts } from '@/server/pairsight/plan'
+import type { RunDuration } from '@/server/pairsight/run-estimate'
+import { InfoTip } from '@/components/ui/info-tip'
 import { Count } from '@/components/ui/count'
 
 const PERCENT = 100
@@ -13,6 +15,7 @@ export async function PlanLedger({
 	ruleMatches,
 	ruleCount,
 	cost,
+	duration,
 	isOverLimit
 }: {
 	counts: PlanCounts
@@ -21,6 +24,8 @@ export async function PlanLedger({
 	ruleMatches: number
 	ruleCount: number
 	cost: string
+	// How long its new checks should take, padded (run-estimate.ts).
+	duration: RunDuration
 	isOverLimit: boolean
 }) {
 	const t = await getTranslations('Plan')
@@ -86,6 +91,7 @@ export async function PlanLedger({
 						)}
 					>
 						<Count value={counts.uniquePairs} />
+						{!counts.isExact && '+'}
 					</dd>
 				</div>
 				<div className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3">
@@ -101,8 +107,24 @@ export async function PlanLedger({
 					<dt className="type-ui font-medium">{t('rowNew')}</dt>
 					<dd className="font-mono text-[15px] font-semibold">
 						<Count value={counts.toEvaluate} />
+						{!counts.isExact && '+'}
 					</dd>
-					<dd className="text-text-muted text-xs">{t('rowNewNote', { cost })}</dd>
+					<dd className="text-text-muted flex min-w-0 items-center gap-1 text-xs">
+						<span className="truncate">
+							{t('rowNewNote', { cost })}
+							{counts.isExact && duration.unit !== 'none' && (
+								<>
+									{' · '}
+									{duration.unit === 'underMinute'
+										? t('takesUnderMinute')
+										: duration.unit === 'minutes'
+											? t('takesMinutes', { count: duration.value })
+											: t('takesHours', { count: duration.value })}
+								</>
+							)}
+						</span>
+						<InfoTip label={t('estimateInfoLabel')} content={t('estimateInfo')} />
+					</dd>
 				</div>
 			</dl>
 			<div className="border-border border-t px-5 py-4">

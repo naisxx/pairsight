@@ -728,6 +728,8 @@ test.describe('PairSight vertical slice', () => {
 	test('a rejected API key stops the run with the fix, and it resumes once the key works', async ({
 		page
 	}) => {
+		// A refused key is tried for about a minute (a gateway can blip) first.
+		test.slow()
 		await signUp(page)
 		await createEvaluation(page, 'Key problem')
 		const marker = await uploadRecords(page, 'demo-source.csv')
@@ -743,7 +745,7 @@ test.describe('PairSight vertical slice', () => {
 		const runs = page.getByRole('dialog', { name: 'Runs' })
 		const card = runs.getByRole('article', { name: 'Run 1 · Key problem' })
 		await expect(card.getByRole('alert')).toContainText('its access key was refused', {
-			timeout: 30_000
+			timeout: 120_000
 		})
 		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
 		await expect(card).toContainText('Stopped · Started')
@@ -895,39 +897,43 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText('Acme Match')
 	})
 
-	test('an over-cap plan is blocked with its cause, and a custom rule brings it under', async ({
+	test('a plan over the limit is blocked with its cause, and a custom rule brings it under', async ({
 		page
 	}) => {
 		await signUp(page)
 		await createEvaluation(page, 'Over the cap')
+		// 460 people sharing a name and postcode: one group making 105,570
+		// pairs, more than one run can check. It's counted, never built.
 		await uploadRecords(page, 'over-cap-source.csv')
 		await expect(
 			page
 				.getByRole('list', { name: 'Steps' })
-				.getByRole('link', { name: /^Records, completed\. 105 records/ })
+				.getByRole('link', { name: /^Records, completed\. 460 records/ })
 		).toBeVisible()
 		await addVendor(page, 'over-cap-vendor.csv')
 		await expectVendorPairs(page, 1)
 
 		await page.getByRole('link', { name: 'Next: rules' }).click()
 		await page.waitForURL('**/rules')
-		await expect(page.getByText('This rule alone picks 5.46K pairs').first()).toBeVisible()
+		await expect(page.getByText(/This rule alone picks 10\dK pairs/).first()).toBeVisible()
 		// The live summary and the action bar say it before the plan does.
 		await expect(
 			page.getByText(
-				'460 pairs over the limit. Turn off a rule, or add a value to one, so it picks fewer.'
+				'Well over the limit. Turn off a rule, or add a value to one, so it picks fewer.'
 			)
 		).toBeVisible()
-		await expect(page.getByText('Bring the pairs down to 5K or fewer (now 5.46K)')).toBeVisible()
+		await expect(
+			page.getByText('Bring the pairs down to 100K or fewer (now well over)')
+		).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Check and start', exact: true })).toHaveCount(0)
 		await page.goto(page.url().replace(/\/rules$/, '/plan'))
 		const overLimit = page.getByRole('heading', {
-			name: '5.46K pairs is more than one run can check (5K)'
+			name: 'These rules pick far more pairs than one run can check (100K)'
 		})
 		await expect(overLimit).toBeVisible()
 		await expect(
 			page.getByRole('listitem').filter({ hasText: 'Same name and postcode' })
-		).toContainText('5.46K pairs · biggest group 105')
+		).toContainText(/10\dK pairs · biggest group 460/)
 		await expect(page.getByRole('button', { name: 'Start run' })).toBeDisabled()
 
 		// Turning the rule off from the plan brings it under the limit.
@@ -956,6 +962,31 @@ test.describe('PairSight vertical slice', () => {
 		// The composite rule was saved with the rest of the configuration.
 		await page.goto(page.url().replace(/\/plan$/, '/rules'))
 		await expect(page.getByRole('button', { name: 'Edit Email AND Postcode' })).toBeVisible()
+	})
+
+	test('a run over the old 5,000 limit plans, starts and finishes', async ({ page }) => {
+		test.slow()
+		await signUp(page)
+		await createEvaluation(page, 'Big run')
+		// 110 people sharing a name and postcode: 5,995 pairs.
+		await uploadRecords(page, 'big-run-source.csv')
+		await addVendor(page, 'big-run-vendor.csv')
+		await expectVendorPairs(page, 1)
+		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.waitForURL('**/rules')
+		await reviewPlan(page)
+		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
+			/Pairs Jev will check\s*6K/
+		)
+		await expect(page.getByText(/takes (under a minute|about)/)).toBeVisible()
+		await expect(page.getByText(/more than one run can check/)).toHaveCount(0)
+		await expect(page.getByRole('button', { name: 'Start run' })).toBeEnabled()
+		await page.getByRole('button', { name: 'Start run' }).click()
+		const card = page
+			.getByRole('dialog', { name: 'Runs' })
+			.getByRole('article', { name: 'Run 1 · Big run' })
+		await expect(card).toContainText(/^Run 1 · Big runComplete · Started/, { timeout: 120_000 })
+		await expect(card).toContainText('6K pairs')
 	})
 
 	test('a fuzzy rule finds the duplicate exact rules miss, and Results calls it a hard case', async ({
@@ -1318,5 +1349,125 @@ test.describe('PairSight vertical slice', () => {
 		await signUp(other)
 		await other.goto(privateUrl)
 		await expect(other.getByText('We can’t find that page')).toBeVisible()
+	})
+	test('a key refused for a few seconds is a blip: the run carries on and completes', async ({
+		page
+	}) => {
+		const marker = await readyToStart(page, 'Key blip')
+		await page.request.post(`${JEV_STUB}/reject?marker=${marker}&status=403`)
+		await page.getByRole('button', { name: 'Start run' }).click()
+		const card = page
+			.getByRole('dialog', { name: 'Runs' })
+			.getByRole('article', { name: 'Run 1 · Key blip' })
+		await expect.poll(() => jevCalls(page, marker), { timeout: 15_000 }).toBeGreaterThan(0)
+		await page.request.post(`${JEV_STUB}/accept?marker=${marker}`)
+		await expect(card).toContainText(/^Run 1 · Key blipComplete · Started/, { timeout: 45_000 })
+		await expect(card.getByRole('alert')).toHaveCount(0)
+		await expect(card).toContainText('8 pairs')
+		await expect(card).not.toContainText('couldn’t')
+	})
+
+	// Jev pushing back slows every call this server makes (one shared limit,
+	// worker/jev-limiter.ts), so these run one at a time, after everything else
+	// (playwright.config.ts, the `pushback` project).
+	test.describe('when Jev pushes back @pushback', () => {
+		test.describe.configure({ mode: 'serial' })
+
+		// Starts the run with Jev having a bad day (one of the stub's switches),
+		// and expects it to finish complete anyway: every pair checked, none failed.
+		async function expectFinishesComplete(page: Page, name: string, trouble: string) {
+			const marker = await readyToStart(page, name)
+			await expect(page.getByText(/takes (under a minute|about)/)).toBeVisible()
+			await page.request.post(
+				`${JEV_STUB}/${trouble}${trouble.includes('?') ? '&' : '?'}marker=${marker}`
+			)
+			await page.getByRole('button', { name: 'Start run' }).click()
+			const card = page
+				.getByRole('dialog', { name: 'Runs' })
+				.getByRole('article', { name: `Run 1 · ${name}` })
+			return {
+				card,
+				marker,
+				finished: async () => {
+					await expect(card).toContainText(new RegExp(`^Run 1 · ${name}Complete · Started`), {
+						timeout: 120_000
+					})
+					await expect(card).toContainText('8 pairs')
+					await expect(card).not.toContainText('couldn’t')
+					await page.request.post(`${JEV_STUB}/calm?marker=${marker}`)
+				}
+			}
+		}
+
+		test('one call that never answers holds up only itself, not the rest of the run', async ({
+			page
+		}) => {
+			test.slow()
+			await signUp(page)
+			await createEvaluation(page, 'Stuck call')
+			// 30 people sharing one phone number (an office line): 435 pairs,
+			// more than one round of calls.
+			const marker = await uploadRecords(page, 'crowd-source.csv')
+			await addVendor(page, 'crowd-vendor.csv')
+			await page.getByRole('link', { name: 'Next: rules' }).click()
+			await page.waitForURL('**/rules')
+			await reviewPlan(page)
+			// The first call never answers (it times out after 10 s here).
+			await page.request.post(`${JEV_STUB}/hang?marker=${marker}&count=1`)
+			await page.getByRole('button', { name: 'Start run' }).click()
+			const card = page
+				.getByRole('dialog', { name: 'Runs' })
+				.getByRole('article', { name: 'Run 1 · Stuck call' })
+			// Every other pair is checked well before that call gives up.
+			const progress = card.getByRole('progressbar')
+			await expect(progress).toHaveAttribute('aria-valuemax', '435')
+			await expect
+				.poll(
+					async () =>
+						Number(await progress.getAttribute('aria-valuemax')) -
+						Number(await progress.getAttribute('aria-valuenow')),
+					{ timeout: 6_000, intervals: [250] }
+				)
+				.toBe(1)
+			await expect(card).toContainText(/^Run 1 · Stuck callComplete · Started/, {
+				timeout: 60_000
+			})
+			await expect(card).not.toContainText('couldn’t')
+		})
+
+		test('rate limited at first: it waits as asked and finishes with nothing failed', async ({
+			page
+		}) => {
+			test.slow()
+			const run = await expectFinishesComplete(
+				page,
+				'Rate limited',
+				'busy?status=429&retryAfter=2&count=6'
+			)
+			await run.finished()
+		})
+
+		test('an outage: the run says it’s waiting, then carries on by itself', async ({ page }) => {
+			test.slow()
+			const run = await expectFinishesComplete(page, 'Outage', 'outage?seconds=12')
+			await expect(run.card).toContainText('Jev is busy right now, so we’re waiting', {
+				timeout: 30_000
+			})
+			await expect(run.card).toContainText('Waiting for Jev')
+			await run.finished()
+			await expect(run.card).not.toContainText('so we’re waiting')
+		})
+
+		test('calls that never answer time out and are tried again', async ({ page }) => {
+			test.slow()
+			const run = await expectFinishesComplete(page, 'No answer', 'hang?count=2')
+			await run.finished()
+		})
+
+		test('an answer that isn’t Jev’s is tried again', async ({ page }) => {
+			test.slow()
+			const run = await expectFinishesComplete(page, 'Garbled', 'garbage?count=3')
+			await run.finished()
+		})
 	})
 })

@@ -54,7 +54,8 @@ test('counts: overlapping rules and vendor pairs are counted once, reuse is subt
 		uniquePairs: 3,
 		allPossiblePairs: 10,
 		reusable: 1,
-		toEvaluate: 2
+		toEvaluate: 2,
+		isExact: true
 	})
 	assert.deepEqual(blockers, [])
 })
@@ -135,4 +136,43 @@ test('exactly at the cap is allowed', () => {
 		jevFieldCount: 2
 	})
 	assert.deepEqual(blockers, [])
+})
+
+test('rules too big to build: blocked as far over, counts are a floor, the rule is named', () => {
+	const huge = 12_497_500
+	const comparison = [pair('v1', 'v2', [], ['vendor'])]
+	const { counts, blockers, contributors } = summarizePlan({
+		recordCount: 5_000,
+		rules,
+		ruleStats: [stat('email', huge, 5_000), stat('phone', 10)],
+		isComplete: false,
+		blockedPairCount: 0,
+		comparison,
+		vendorPairs: [{ a: 'v1', b: 'v2' }],
+		reusableKeys: new Set(),
+		vendorCount: 1,
+		jevFieldCount: 2
+	})
+	assert.deepEqual(blockers, ['too_many_pairs'])
+	assert.equal(counts.isExact, false)
+	assert.equal(counts.uniquePairs, huge)
+	assert.equal(counts.reusable, 0)
+	assert.equal(contributors[0]?.kind === 'rule' && contributors[0].ruleId, 'email')
+})
+
+test('rules too big to build, none over on its own: still over the limit', () => {
+	const { counts, blockers } = summarizePlan({
+		recordCount: 5_000,
+		rules,
+		ruleStats: [stat('email', 60_000), stat('phone', 60_000)],
+		isComplete: false,
+		blockedPairCount: 0,
+		comparison: [],
+		vendorPairs: [],
+		reusableKeys: new Set(),
+		vendorCount: 1,
+		jevFieldCount: 2
+	})
+	assert.deepEqual(blockers, ['too_many_pairs'])
+	assert.equal(counts.uniquePairs, LIMITS.maxPairsPerRun + 1)
 })

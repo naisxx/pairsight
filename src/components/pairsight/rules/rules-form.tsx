@@ -164,7 +164,9 @@ export function RulesForm({
 	const blockedReason =
 		invalidReason ??
 		(summary.total > summary.limit
-			? t('blockedOver', { limit: summary.limit, total: summary.total })
+			? summary.isExact
+				? t('blockedOver', { limit: summary.limit, total: summary.total })
+				: t('blockedOverMany', { limit: summary.limit })
 			: isPending
 				? t('blockedSaving')
 				: null)

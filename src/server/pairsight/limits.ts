@@ -11,7 +11,11 @@ export const LIMITS = {
 	maxVendorRows: 100_000,
 	maxColumns: 40,
 	maxVendors: 3,
-	maxPairsPerRun: 5_000,
+	// Pairs one run may check (docs/PairSight-Scale-Roadmap.md, item 8): about
+	// 10 minutes of Jev at today's speed. The Rules and Plan pages build a
+	// plan's pairs on every view, which stays quick up to here; going past it
+	// waits for pairs worked out once and stored (item 6).
+	maxPairsPerRun: 100_000,
 	bucketWarningSize: 50
 } as const
 

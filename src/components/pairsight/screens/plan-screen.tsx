@@ -9,6 +9,8 @@ import { StartRunButton } from '@/components/pairsight/start-run-button'
 import { ActionBar, StepHeader } from '@/components/pairsight/step-layout'
 import { AlertIcon, ArrowRightIcon, InfoIcon } from '@/components/ui/icons'
 import { estimateCostUsd } from '@/server/pairsight/cost'
+import { estimateRunDuration } from '@/server/pairsight/run-estimate'
+import { recentCheckRate } from '@/server/pairsight/run-speed'
 import { LIMITS } from '@/server/pairsight/limits'
 import { computePlan } from '@/server/pairsight/plan'
 import { listVendors } from '@/server/pairsight/vendor-exports'
@@ -27,9 +29,10 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const [t, format] = await Promise.all([getTranslations('Plan'), getFormatter()])
 	const { dataset } = workspace
 	const latestRun = workspace.runs[0]
-	const [plan, vendors] = await Promise.all([
+	const [plan, vendors, pairsPerSecond] = await Promise.all([
 		computePlan({ scope, evaluationId: id }),
-		dataset == null ? Promise.resolve([]) : listVendors(id, dataset.id)
+		dataset == null ? Promise.resolve([]) : listVendors(id, dataset.id),
+		recentCheckRate()
 	])
 	const counts = ('counts' in plan ? plan.counts : undefined) ?? null
 	const contributors = ('contributors' in plan ? plan.contributors : undefined) ?? []
@@ -48,7 +51,9 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 		firstBlocker == null
 			? null
 			: firstBlocker === 'too_many_pairs'
-				? t('blockedOver', { count: (counts?.uniquePairs ?? 0) - LIMITS.maxPairsPerRun })
+				? counts?.isExact === false
+					? t('blockedOverMany')
+					: t('blockedOver', { count: (counts?.uniquePairs ?? 0) - LIMITS.maxPairsPerRun })
 				: t(firstBlocker)
 
 	return (
@@ -78,6 +83,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 						contributors={contributors}
 						rules={plan.rules}
 						uniquePairs={counts?.uniquePairs ?? 0}
+						isExact={counts?.isExact ?? true}
 						maxPairsPerRun={LIMITS.maxPairsPerRun}
 					/>
 				</div>
@@ -96,6 +102,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 								currency: 'USD',
 								maximumFractionDigits: COST_FRACTION_DIGITS
 							})}
+							duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
 							isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
 						/>
 					)}
@@ -122,7 +129,11 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				}
 			>
 				<ReadOnlyGate action="run">
-					<StartRunButton evaluationId={id} isDisabled={plan.blockers.length > 0} />
+					<StartRunButton
+						evaluationId={id}
+						pairCount={counts?.uniquePairs ?? 0}
+						isDisabled={plan.blockers.length > 0}
+					/>
 				</ReadOnlyGate>
 				{/* Read-only, starting is out of reach, so the way on is the run that exists. */}
 				{view.isReadOnly && latestRun != null && (

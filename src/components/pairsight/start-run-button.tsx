@@ -8,13 +8,19 @@ import { startRunAction } from '@/server/actions/pairsight/runs'
 import { useEvaluationView } from './evaluation-context'
 import { useRunsCentre } from './runs/runs-centre'
 
+// Past this many pairs, getting a run ready takes long enough (about 25 s
+// at 100K, docs/PairSight-Scale-Roadmap.md item 8) to say what's happening.
+const MANY_PAIRS = 10_000
+
 // Starts a run and hands it to the Runs centre, which opens on it, drives it
 // and takes you to its results when it's done.
 export function StartRunButton({
 	evaluationId,
+	pairCount,
 	isDisabled
 }: {
 	evaluationId: string
+	pairCount: number
 	isDisabled: boolean
 }) {
 	const t = useTranslations('Plan')
@@ -46,7 +52,11 @@ export function StartRunButton({
 				}
 			>
 				{isPending ? <SpinnerIcon /> : <PlayIcon />}
-				{isPending ? t('starting') : t('start')}
+				{!isPending
+					? t('start')
+					: pairCount > MANY_PAIRS
+						? t('startingMany', { count: pairCount })
+						: t('starting')}
 			</Button>
 		</>
 	)

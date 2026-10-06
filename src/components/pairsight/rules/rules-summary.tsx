@@ -10,6 +10,9 @@ export type RulesSummaryData = {
 	fromRules: number
 	vendorOnly: number
 	total: number
+	// False when the saved rules pick too many to build: `total` is then a
+	// floor, and all that's known is that it's over the limit.
+	isExact: boolean
 	limit: number
 	raw: number
 	largest: number
@@ -60,6 +63,7 @@ export function RulesSummary({
 					<dt className="font-medium">{t('summaryTotal')}</dt>
 					<dd className={cn('font-mono font-semibold', isOver && 'text-danger')}>
 						<Count value={summary.total} />
+						{!summary.isExact && '+'}
 					</dd>
 				</div>
 			</dl>
@@ -83,7 +87,8 @@ export function RulesSummary({
 				<p className="text-text-muted mt-1.5 flex justify-between text-xs">
 					<span>{t('summaryLimit')}</span>
 					<span className="font-mono">
-						<Count value={summary.total} /> / <Count value={summary.limit} />
+						<Count value={summary.total} />
+						{!summary.isExact && '+'} / <Count value={summary.limit} />
 					</span>
 				</p>
 			</div>
@@ -113,7 +118,9 @@ export function RulesSummary({
 							className="bg-danger-subtle text-danger flex gap-2 rounded-sm p-2.5 text-xs"
 						>
 							<WarningCircleIcon size={ICON_SIZE} className="mt-px shrink-0" />
-							{t('summaryOver', { count: summary.total - summary.limit })}
+							{summary.isExact
+								? t('summaryOver', { count: summary.total - summary.limit })
+								: t('summaryOverMany')}
 						</p>
 					)}
 					{summary.oversized.map((item) => (

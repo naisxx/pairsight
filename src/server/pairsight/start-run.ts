@@ -2,6 +2,7 @@ import 'server-only'
 import { env } from '@/lib/env'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
+import { chunks } from './chunks'
 import { pairKey } from './pairs'
 import { computePlan, type PlanBlocker } from './plan'
 import { recountRun } from './runs'
@@ -12,7 +13,21 @@ import { ownerScope } from './scope'
 // to the assessment that judges it. Succeeded assessments with the same
 // records and judgment key are reused; only new pairs go to Jev.
 
-const RUN_TRANSACTION_TIMEOUT_MS = 30_000
+// Starting writes every pair of the run in one transaction, so a failed
+// start leaves nothing behind: in batches (one statement per batch), with
+// time to match its size. Measured locally: 99.7K pairs started in about
+// 25 s (docs/PairSight-Scale-Roadmap.md, item 8); this allows about 80 s.
+const INSERT_BATCH = 5_000
+const START_TIMEOUT_MIN_MS = 30_000
+const START_TIMEOUT_MS_PER_PAIR = 0.5
+const START_TIMEOUT_MAX_MS = 180_000
+
+function startTimeoutMs(pairCount: number): number {
+	return Math.min(
+		START_TIMEOUT_MAX_MS,
+		START_TIMEOUT_MIN_MS + Math.ceil(pairCount * START_TIMEOUT_MS_PER_PAIR)
+	)
+}
 
 const BLOCKER_MESSAGES: Record<PlanBlocker, string> = {
 	no_dataset: 'Upload your records first.',
@@ -68,74 +83,82 @@ export async function startRun({
 				select: { id: true }
 			})
 
+			// Scores already given for these records and settings, read once.
 			const existing = await tx.assessment.findMany({
 				where: { datasetId: dataset.id, judgmentKey: key },
 				select: { id: true, recordAId: true, recordBId: true, status: true }
 			})
-			const byPair = new Map(
-				existing.map((row) => [pairKey({ a: row.recordAId, b: row.recordBId }), row])
-			)
-			const missing = comparison.filter((pair) => !byPair.has(pairKey(pair)))
-			await tx.assessment.createMany({
-				data: missing.map((pair) => ({
-					datasetId: dataset.id,
-					recordAId: pair.a,
-					recordBId: pair.b,
-					judgmentKey: key
-				}))
+			const idByPair = new Map<string, string>()
+			const retried: string[] = []
+			let succeeded = 0
+			for (const row of existing) {
+				idByPair.set(pairKey({ a: row.recordAId, b: row.recordBId }), row.id)
+			}
+			const statusById = new Map(existing.map((row) => [row.id, row.status]))
+			const missing = comparison.filter((pair) => {
+				const id = idByPair.get(pairKey(pair))
+				if (id == null) return true
+				// A failure from an earlier run gets another attempt in this one: only
+				// the pairs this run compares, so an older run's failed pairs stay
+				// failed there instead of waiting forever as "not checked yet".
+				const status = statusById.get(id)
+				if (status === 'failed') retried.push(id)
+				if (status === 'succeeded') succeeded++
+				return false
 			})
-			// A failure from an earlier run gets another attempt in this one: only
-			// the pairs this run compares, so an older run's failed pairs stay
-			// failed there instead of waiting forever as "not checked yet".
-			const retried = comparison.flatMap((pair) => {
-				const row = byPair.get(pairKey(pair))
-				return row?.status === 'failed' ? [row.id] : []
-			})
-			if (retried.length > 0) {
+			for (const chunk of chunks(missing, INSERT_BATCH)) {
+				const created = await tx.assessment.createManyAndReturn({
+					data: chunk.map((pair) => ({
+						datasetId: dataset.id,
+						recordAId: pair.a,
+						recordBId: pair.b,
+						judgmentKey: key
+					})),
+					select: { id: true, recordAId: true, recordBId: true }
+				})
+				for (const row of created) {
+					idByPair.set(pairKey({ a: row.recordAId, b: row.recordBId }), row.id)
+				}
+			}
+			for (const chunk of chunks(retried, INSERT_BATCH)) {
 				await tx.assessment.updateMany({
-					where: { id: { in: retried }, status: 'failed' },
-					data: { status: 'pending', attempts: 0, errorCode: null }
+					where: { id: { in: chunk }, status: 'failed' },
+					data: { status: 'pending', attempts: 0, errorCode: null, nextTryAt: null }
 				})
 			}
-			const all = await tx.assessment.findMany({
-				where: { datasetId: dataset.id, judgmentKey: key },
-				select: { id: true, recordAId: true, recordBId: true }
+			const runPairs = comparison.flatMap((pair) => {
+				const assessmentId = idByPair.get(pairKey(pair))
+				return assessmentId == null
+					? []
+					: [
+							{
+								runId: run.id,
+								recordAId: pair.a,
+								recordBId: pair.b,
+								ruleIds: pair.ruleIds,
+								matchedByExportIds: pair.matchedByExportIds,
+								assessmentId
+							}
+						]
 			})
-			const idByPair = new Map(
-				all.map((row) => [pairKey({ a: row.recordAId, b: row.recordBId }), row.id])
-			)
-			await tx.runPair.createMany({
-				data: comparison.flatMap((pair) => {
-					const assessmentId = idByPair.get(pairKey(pair))
-					return assessmentId == null
-						? []
-						: [
-								{
-									runId: run.id,
-									recordAId: pair.a,
-									recordBId: pair.b,
-									ruleIds: pair.ruleIds,
-									matchedByExportIds: pair.matchedByExportIds,
-									assessmentId
-								}
-							]
-				})
-			})
-			// Nothing left to judge (a re-run with only a new threshold reuses every
-			// score): the run is complete from the start, not "assessing" for a beat.
-			const unjudged = await tx.assessment.count({
-				where: { runPairs: { some: { runId: run.id } }, status: { not: 'succeeded' } }
-			})
-			if (unjudged === 0) {
-				await tx.run.update({
-					where: { id: run.id },
-					data: { status: 'completed', completedAt: new Date() }
-				})
+			for (const chunk of chunks(runPairs, INSERT_BATCH)) {
+				await tx.runPair.createMany({ data: chunk })
 			}
+			// What it sends to Jev: everything without a score yet. Nothing left
+			// (a re-run with only a new threshold reuses every score): the run is
+			// complete from the start, not "checking" for a beat.
+			const unjudged = runPairs.length - succeeded
+			await tx.run.update({
+				where: { id: run.id },
+				data:
+					unjudged === 0
+						? { newChecks: 0, status: 'completed', completedAt: new Date() }
+						: { newChecks: unjudged }
+			})
 			await tx.evaluation.update({ where: { id: evaluationId }, data: { updatedAt: new Date() } })
 			return run
 		},
-		{ timeout: RUN_TRANSACTION_TIMEOUT_MS }
+		{ timeout: startTimeoutMs(comparison.length) }
 	)
 	// Counted from the start: pairs already checked in earlier runs count.
 	await recountRun(run.id)

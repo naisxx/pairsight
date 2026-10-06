@@ -7,6 +7,7 @@ import { parseCanonicalPairs, parseVendorColumns, parseVendorStats } from './jso
 import { LIMITS } from './limits'
 import type { CanonicalPair } from './pairs'
 import type { VendorColumns, VendorFileStats } from './vendors'
+import { chunks } from './chunks'
 
 // Vendors for the current dataset, in two states. A draft is being set up:
 // named, maybe with a checked file. Confirming it complete turns it into an
@@ -226,9 +227,9 @@ export async function confirmVendorDraft({
 			},
 			select: { id: true }
 		})
-		for (let at = 0; at < pairs.length; at += CONFIRM_BATCH) {
+		for (const batch of chunks(pairs, CONFIRM_BATCH)) {
 			await tx.vendorMatch.createMany({
-				data: pairs.slice(at, at + CONFIRM_BATCH).map((pair) => ({
+				data: batch.map((pair) => ({
 					exportId: vendorExport.id,
 					recordAId: pair.a,
 					recordBId: pair.b
