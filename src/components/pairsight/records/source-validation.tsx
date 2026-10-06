@@ -1,6 +1,7 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { InfoIcon, SuccessIcon, WarningCircleIcon } from '@/components/ui/icons'
 import type { ColumnCheck } from '@/server/pairsight/source-records'
+import { cn } from '@/lib/cn'
 import { useRowList } from '../validation'
 
 const LISTED = 6
@@ -9,12 +10,16 @@ const NOTE_ICON_SIZE = 15
 
 // Problems with the chosen reference column, as they'll block saving: each
 // missing or repeated reference with its rows. Fixing happens in the file;
-// this only says where to look.
+// this only says where to look. `bare`: inside the records file card, which
+// shows the all-clear as a chip, so only the problems (and the note on empty
+// values) are left to say.
 export function SourceValidation({
 	check,
 	rowCount,
-	blanks
+	blanks,
+	bare = false
 }: {
+	bare?: boolean
 	// The chosen reference column's check; undefined while none is chosen.
 	check: ColumnCheck | undefined
 	rowCount: number
@@ -43,18 +48,20 @@ export function SourceValidation({
 					}))
 				].sort((a, b) => (a.rows[0] ?? 0) - (b.rows[0] ?? 0))
 
+	const isClear = check != null && problemCount === 0
+	if (bare && isClear && blanks.length === 0) return null
 	return (
 		<section
 			aria-labelledby="validation-title"
-			className="border-border bg-surface rounded-md border"
+			className={cn(bare ? 'border-border border-t' : 'border-border bg-surface rounded-md border')}
 		>
-			<header className="px-4 py-3">
+			<header className={cn('px-4 py-3', bare && isClear && 'sr-only')}>
 				<h2 id="validation-title" className="text-sm font-semibold">
 					{t('validationTitle')}
 				</h2>
 			</header>
-			<div className="space-y-3 px-4 pb-4">
-				{check == null ? (
+			<div className={cn('space-y-3 px-4 pb-4', bare && isClear && 'pt-3')}>
+				{bare && isClear ? null : check == null ? (
 					<div className="bg-danger-subtle text-danger type-ui flex gap-2 rounded-sm p-3">
 						<WarningCircleIcon size={ICON_SIZE} className="mt-0.5 shrink-0" />
 						<p>{t('noReference')}</p>

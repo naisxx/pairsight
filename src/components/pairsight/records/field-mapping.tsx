@@ -12,18 +12,21 @@ const SPARKLE_SIZE = 14
 
 // Each PairSight field and the column that holds it, with a few sample
 // values. Editable while choosing a file; read-only once it's saved (the
-// dataset is fixed then, and replacing the file is how it changes).
+// dataset is fixed then, and replacing the file is how it changes). `bare`:
+// inside the records file card, which gives it its border and title.
 export function FieldMapping({
 	fields,
 	headers,
 	sampleRows,
 	mapping,
+	bare = false,
 	edit
 }: {
 	fields: FieldKey[]
 	headers: string[]
 	sampleRows: string[][]
 	mapping: Mapping
+	bare?: boolean
 	edit?: {
 		suggested: Mapping
 		onChange: (key: FieldKey, column: string | null) => void
@@ -41,9 +44,12 @@ export function FieldMapping({
 	]
 
 	return (
-		<section aria-labelledby="mapping-title" className="border-border bg-surface rounded-md border">
+		<section
+			aria-labelledby="mapping-title"
+			className={cn(!bare && 'border-border bg-surface rounded-md border')}
+		>
 			<header className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
-				<div>
+				<div className={cn(bare && 'sr-only')}>
 					<h2 id="mapping-title" className="text-sm font-semibold">
 						{edit == null ? t('savedMappingTitle') : t('mappingTitle')}
 					</h2>

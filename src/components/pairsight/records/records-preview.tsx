@@ -6,13 +6,16 @@ const CELL_ICON_SIZE = 13
 
 // The first rows as they are in the file, each column headed by the field
 // it's mapped to. Rows whose reference has a problem are marked in place.
+// `bare`: inside the records file card, which gives it its border.
 export function RecordsPreview({
 	headers,
 	rows,
 	fieldLabels,
 	referenceColumn,
-	problemRows
+	problemRows,
+	bare = false
 }: {
+	bare?: boolean
 	headers: string[]
 	rows: Array<{ rowNumber: number; cells: string[] }>
 	fieldLabels: Record<string, string | null>
@@ -22,7 +25,10 @@ export function RecordsPreview({
 	const t = useTranslations('Records')
 	const referenceIndex = referenceColumn == null ? -1 : headers.indexOf(referenceColumn)
 	return (
-		<section aria-labelledby="preview-title" className="border-border bg-surface rounded-md border">
+		<section
+			aria-labelledby="preview-title"
+			className={cn(!bare && 'border-border bg-surface rounded-md border')}
+		>
 			<header className="flex items-center justify-between px-4 py-3">
 				<h2 id="preview-title" className="text-sm font-semibold">
 					{t('previewTitle')}

@@ -20,7 +20,7 @@ import { ACTION_HINT_ID, ActionBar } from '../step-layout'
 import { checkTabularFile, useFileErrorMessage, useRowList, ValidationPanel } from '../validation'
 import { EntityTypePicker } from './entity-type-picker'
 import { FieldMapping } from './field-mapping'
-import { FileDetails } from './file-details'
+import { RecordsFileCard } from './records-file-card'
 import {
 	assignColumn,
 	fieldFor,
@@ -33,6 +33,7 @@ import {
 import { RecordsPreview } from './records-preview'
 import { SourceValidation } from './source-validation'
 import { useEvaluationView } from '../evaluation-context'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 
 // The chosen file is uploaded once (upload-file.ts); the preview and the
 // save name it by id, with the sheet it was read from (preview.sheet).
@@ -191,6 +192,10 @@ export function RecordsUploader({
 	const check =
 		loaded == null || reference == null ? undefined : loaded.preview.columnChecks[reference]
 	const problemCount = check == null ? 0 : check.blank + check.duplicateCount
+	// The mapping opens by itself when something needs you: no ID column, ID
+	// problems, or too few values for Jev to compare records by.
+	const valuesMapped = [...mapping.keys()].filter((key) => key !== 'reference').length
+	const needsReview = reference == null || problemCount > 0 || valuesMapped < MIN_JEV_FIELDS
 	const blockedReason =
 		loaded == null
 			? isReading
@@ -294,12 +299,12 @@ export function RecordsUploader({
 	return (
 		<>
 			<div className="space-y-4">
-				<FileDetails
+				<ValidationPanel title={t('errorsTitle')} messages={errors} />
+				<RecordsFileCard
 					fileName={loaded.file.name}
-					meta={`${t('notSaved')} · ${fileType(loaded.file.name, preview.sheet)}`}
+					meta={`${t('notSaved')} · ${fileType(loaded.file.name, preview.sheet)} · ${formatSize(loaded.file.size)}`}
 					rows={preview.rowCount}
 					columns={preview.headers.length}
-					size={formatSize(loaded.file.size)}
 					action={
 						<Button
 							variant="secondary"
@@ -311,49 +316,65 @@ export function RecordsUploader({
 							{t('replace')}
 						</Button>
 					}
+					idStatus={
+						check == null
+							? { kind: 'missing' }
+							: problemCount > 0
+								? { kind: 'problems', count: problemCount }
+								: { kind: 'good', count: preview.rowCount }
+					}
+					matchedFields={fields.filter((key) => mapping.get(key) != null).map(label)}
+					needsReview={needsReview}
+					problems={
+						check == null || problemCount > 0 ? (
+							<SourceValidation check={check} rowCount={preview.rowCount} blanks={[]} bare />
+						) : null
+					}
+					columnsPanel={
+						<>
+							<FieldMapping
+								fields={fields}
+								headers={preview.headers}
+								sampleRows={preview.sampleRows}
+								mapping={mapping}
+								bare
+								edit={{
+									suggested,
+									onChange: (key, column) =>
+										setMapping((current) => assignColumn(current, key, column)),
+									onUseAll: () => setMapping(suggested)
+								}}
+							/>
+							{check != null && problemCount === 0 && (
+								<SourceValidation check={check} rowCount={preview.rowCount} blanks={blanks} bare />
+							)}
+						</>
+					}
+					previewPanel={
+						<RecordsPreview
+							headers={preview.headers}
+							rows={preview.sampleRows.map((cells, index) => ({
+								rowNumber: index + FIRST_DATA_ROW,
+								cells
+							}))}
+							fieldLabels={Object.fromEntries(
+								preview.headers.map((header) => {
+									const field = fieldFor(mapping, header)
+									return [header, field == null ? null : label(field)]
+								})
+							)}
+							referenceColumn={reference}
+							problemRows={problemRows}
+							bare
+						/>
+					}
 				/>
-				<ValidationPanel title={t('errorsTitle')} messages={errors} />
 				<EntityTypePicker
 					value={entityType}
 					detected={preview.detection.type}
 					confident={preview.detection.confident}
 					onChange={changeType}
 					disabled={isSaving}
-				/>
-				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-					<div className="@5xl:col-span-8">
-						<FieldMapping
-							fields={fields}
-							headers={preview.headers}
-							sampleRows={preview.sampleRows}
-							mapping={mapping}
-							edit={{
-								suggested,
-								onChange: (key, column) =>
-									setMapping((current) => assignColumn(current, key, column)),
-								onUseAll: () => setMapping(suggested)
-							}}
-						/>
-					</div>
-					{/* In one column, the checks come first: they say why Continue is blocked. */}
-					<div className="order-first @5xl:order-none @5xl:col-span-4">
-						<SourceValidation check={check} rowCount={preview.rowCount} blanks={blanks} />
-					</div>
-				</div>
-				<RecordsPreview
-					headers={preview.headers}
-					rows={preview.sampleRows.map((cells, index) => ({
-						rowNumber: index + FIRST_DATA_ROW,
-						cells
-					}))}
-					fieldLabels={Object.fromEntries(
-						preview.headers.map((header) => {
-							const field = fieldFor(mapping, header)
-							return [header, field == null ? null : label(field)]
-						})
-					)}
-					referenceColumn={reference}
-					problemRows={problemRows}
 				/>
 			</div>
 			{actionBar}

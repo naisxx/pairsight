@@ -10,17 +10,15 @@ import type { FieldRole } from '@/server/pairsight/fields'
 import { useFileTypeLabel } from '../file-type'
 import { ActionBar } from '../step-layout'
 import { FieldMapping } from './field-mapping'
-import { FileDetails } from './file-details'
+import { RecordsFileCard } from './records-file-card'
 import { fieldFor, fieldKeys, savedMapping, type FieldKey } from './mapping'
 import { RecordsPreview } from './records-preview'
 import { RecordsUploader } from './records-uploader'
-import { SourceValidation } from './source-validation'
 import { useEvaluationView } from '../evaluation-context'
 import { ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 15
 const SMALL_ICON_SIZE = 14
-const NO_PROBLEMS = { blank: 0, missing: [], duplicates: [], duplicateCount: 0 }
 
 // The saved records file: what it holds and how its columns are mapped,
 // read-only (a saved dataset is fixed). Replacing it asks first, then shows
@@ -60,10 +58,11 @@ export function SavedRecords({
 
 	const mapping = savedMapping({ referenceColumn, columnRoles })
 	const label = (key: FieldKey) => (key === 'reference' ? t('referenceField') : tRoles(key))
+	const fields = fieldKeys(roles)
 	return (
 		<>
 			<div className="space-y-4">
-				<FileDetails
+				<RecordsFileCard
 					fileName={fileName}
 					meta={`${t('savedOn', { date: format.dateTime(savedAt, { dateStyle: 'medium' }) })} · ${fileType(fileName)}`}
 					rows={rowCount}
@@ -76,31 +75,35 @@ export function SavedRecords({
 							</Button>
 						</ReadOnlyGate>
 					}
-				/>
-				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-					<div className="@5xl:col-span-8">
+					// Saved, every ID was there and unique: it couldn't be saved otherwise.
+					idStatus={{ kind: 'good', count: rowCount }}
+					matchedFields={fields.filter((key) => mapping.get(key) != null).map(label)}
+					needsReview={false}
+					problems={null}
+					columnsPanel={
 						<FieldMapping
-							fields={fieldKeys(roles)}
+							fields={fields}
 							headers={headers}
 							sampleRows={rows.map((row) => row.cells)}
 							mapping={mapping}
+							bare
 						/>
-					</div>
-					<div className="@5xl:col-span-4">
-						<SourceValidation check={NO_PROBLEMS} rowCount={rowCount} blanks={[]} />
-					</div>
-				</div>
-				<RecordsPreview
-					headers={headers}
-					rows={rows}
-					fieldLabels={Object.fromEntries(
-						headers.map((header) => {
-							const field = fieldFor(mapping, header)
-							return [header, field == null ? null : label(field)]
-						})
-					)}
-					referenceColumn={referenceColumn}
-					problemRows={new Set()}
+					}
+					previewPanel={
+						<RecordsPreview
+							headers={headers}
+							rows={rows}
+							fieldLabels={Object.fromEntries(
+								headers.map((header) => {
+									const field = fieldFor(mapping, header)
+									return [header, field == null ? null : label(field)]
+								})
+							)}
+							referenceColumn={referenceColumn}
+							problemRows={new Set()}
+							bare
+						/>
+					}
 				/>
 			</div>
 
