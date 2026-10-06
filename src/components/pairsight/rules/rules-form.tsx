@@ -15,6 +15,7 @@ import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
 import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
 import { RulesSummary, type RulesSummaryData } from './rules-summary'
+import { SplinkSwitch } from './splink-switch'
 import { ThresholdSection } from './threshold-section'
 import { useEvaluationView } from '../evaluation-context'
 import { ReadOnlyFieldset } from '../read-only'
@@ -31,6 +32,7 @@ type Draft = {
 	enabled: ReadonlySet<string>
 	composites: Rule[]
 	threshold: number
+	splinkPicks: boolean
 }
 
 // A comparable form of what would be saved, so the form is "unsaved"
@@ -44,7 +46,8 @@ function snapshot(draft: Draft, presets: Rule[]): string {
 		[...draft.jevFields].sort(),
 		presets.filter((rule) => draft.enabled.has(rule.id)).map((rule) => rule.id),
 		draft.composites.map((rule) => rule.id).sort(),
-		draft.threshold
+		draft.threshold,
+		draft.splinkPicks
 	])
 }
 
@@ -77,6 +80,7 @@ export function RulesForm({
 		jevFields: IdentityRole[]
 		enabledRuleIds: string[]
 		threshold: number
+		splinkPicks: boolean
 	}
 	rules: Rule[]
 	mappedRoles: IdentityRole[]
@@ -99,7 +103,8 @@ export function RulesForm({
 		jevFields: new Set(initial.jevFields.filter((field) => mapped.has(field))),
 		enabled: new Set(initial.enabledRuleIds),
 		composites: rules.filter((rule) => isCustomRuleId(rule.id)),
-		threshold: initial.threshold
+		threshold: initial.threshold,
+		splinkPicks: initial.splinkPicks
 	}
 	const [draft, setDraft] = useState<Draft>(saved)
 	// Stats for composites added or edited here, until the server counts
@@ -124,6 +129,7 @@ export function RulesForm({
 		countryCode: draft.country,
 		jevFields: [...draft.jevFields],
 		threshold: draft.threshold,
+		splinkPicks: draft.splinkPicks,
 		// Presets that are on and runnable, plus every composite.
 		blockingRules: allRules.filter(
 			(rule) =>
@@ -196,6 +202,10 @@ export function RulesForm({
 					<ThresholdSection
 						value={draft.threshold}
 						onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
+					/>
+					<SplinkSwitch
+						isOn={draft.splinkPicks}
+						onChange={(splinkPicks) => setDraft((current) => ({ ...current, splinkPicks }))}
 					/>
 					<CandidateRules
 						evaluationId={evaluationId}

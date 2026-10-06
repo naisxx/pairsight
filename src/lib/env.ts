@@ -65,6 +65,16 @@ const envSchema = z.object({
 	// server) keep apart by using different pools.
 	RUN_WORKER_POOL: z.string().min(1).default('default'),
 
+	// The Splink service (services/splink, docs/rules/splink-service.md): the
+	// Python that runs it. Unset, the worker uses services/splink/.venv when
+	// `pnpm splink:setup` has made one; with neither, Splink is off and plans
+	// use rules and vendor pairs only. On-prem, a wrapper that runs the image.
+	SPLINK_PYTHON: z.string().optional(),
+	// DuckDB's memory cap inside the service; past it, it spills to disk.
+	SPLINK_MEMORY_LIMIT: z.string().min(1).default('1500MB'),
+	// How long scoring one dataset may take before it's stopped as failed.
+	SPLINK_TIMEOUT_MS: z.coerce.number().int().min(1).default(300_000),
+
 	// Required by cron routes only; an unset secret must not break unrelated pages.
 	CRON_SECRET: z.string().optional(),
 

@@ -39,7 +39,8 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					countryCode: evaluation.countryCode,
 					jevFields: parseIdentityRoles(evaluation.jevFields),
 					enabledRuleIds: preview.saved.map((rule) => rule.id),
-					threshold: evaluation.threshold
+					threshold: evaluation.threshold,
+					splinkPicks: evaluation.splinkPicks
 				}}
 				rules={preview.rules}
 				mappedRoles={preview.mappedRoles}

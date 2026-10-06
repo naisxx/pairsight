@@ -13,6 +13,8 @@ import { getVisibleEvaluation } from './evaluations'
 import type { EvaluationScope } from './scope'
 import { parseBlockingRules, parseColumnRoles } from './json'
 import { LIMITS } from './limits'
+import { splinkPicks } from './splink/picks'
+import { SPLINK_RULE_ID } from './plan-summary'
 
 // The comparison plan: what a run *would* evaluate right now. Shared by the
 // Plan screen and by startRun, so what the user reviews is exactly what runs.
@@ -35,7 +37,7 @@ export async function computePlan({
 	}
 
 	const columnRoles = parseColumnRoles(dataset.columnRoles)
-	const [records, exports] = await Promise.all([
+	const [records, exports, splink] = await Promise.all([
 		loadBlockingRecords(dataset.id),
 		db.vendorExport.findMany({
 			where: { evaluationId, datasetId: dataset.id },
@@ -46,7 +48,8 @@ export async function computePlan({
 				pairCount: true,
 				matches: { select: { recordAId: true, recordBId: true } }
 			}
-		})
+		}),
+		splinkPicks({ datasetId: dataset.id, isOn: evaluation.splinkPicks })
 	])
 
 	const mappedRoles = mappedIdentityRoles(columnRoles)
@@ -60,8 +63,13 @@ export async function computePlan({
 		country: evaluation.countryCode,
 		maxPairs: LIMITS.maxPairsPerRun
 	})
+	// Splink's picks join the rules' pairs as one more source (`splink` among
+	// a pair's reasons), so overlaps, the limit and runs treat them alike.
 	const comparison: ComparisonPair[] = buildComparisonSet({
-		blocked: blocking.pairs,
+		blocked: [
+			...blocking.pairs,
+			...splink.pairs.map((pair) => ({ ...pair, ruleIds: [SPLINK_RULE_ID] }))
+		],
 		vendorPairs: exports.map((vendorExport) => ({
 			exportId: vendorExport.id,
 			pairs: vendorExport.matches.map((match) => ({ a: match.recordAId, b: match.recordBId }))
@@ -88,7 +96,7 @@ export async function computePlan({
 		rules,
 		ruleStats: blocking.stats,
 		isComplete: blocking.isComplete,
-		blockedPairCount: blocking.pairs.length,
+		splinkPairCount: splink.pairs.length,
 		comparison,
 		vendorPairs: exports.flatMap((vendorExport) =>
 			vendorExport.matches.map((match) => ({ a: match.recordAId, b: match.recordBId }))
@@ -109,6 +117,7 @@ export async function computePlan({
 		judgmentKey: key,
 		counts,
 		blockers,
-		contributors
+		contributors,
+		splink: { state: splink.state, reason: splink.reason }
 	} as const
 }

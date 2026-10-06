@@ -93,7 +93,11 @@ export async function saveSourceDataset({
 	try {
 		await readRecords(write)
 		await db.$transaction([
-			db.sourceDataset.update({ where: { id: dataset.id }, data: { savedAt: new Date() } }),
+			// Current now, and queued for Splink (splink/score-dataset.ts).
+			db.sourceDataset.update({
+				where: { id: dataset.id },
+				data: { savedAt: new Date(), scoreStatus: 'pending' }
+			}),
 			db.evaluation.update({ where: { id: evaluationId }, data: { jevFields, ...typeDefaults } })
 		])
 	} catch (error) {

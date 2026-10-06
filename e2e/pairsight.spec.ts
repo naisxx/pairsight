@@ -964,6 +964,43 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('button', { name: 'Edit Email AND Postcode' })).toBeVisible()
 	})
 
+	test('Splink picks likely duplicates the rules miss, and they show as picked by Splink', async ({
+		page
+	}) => {
+		test.slow()
+		await signUp(page)
+		await createEvaluation(page, 'Splink picks')
+		// 2,000 fictional people with planted duplicates, some with first and
+		// last names swapped or a typo: pairs the default rules never pick.
+		await uploadRecords(page, 'splink-source.csv')
+		await addVendor(page, 'splink-vendor.csv')
+		await expectVendorPairs(page, 1)
+		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.waitForURL('**/rules')
+		const splinkSwitch = page.getByRole('switch', { name: 'Let Splink suggest pairs too' })
+		await expect(splinkSwitch).toBeChecked()
+
+		await reviewPlan(page)
+		// Splink looks at the records in the background; the plan fills in by itself.
+		const ledger = page.getByRole('region', { name: 'From records to pairs' })
+		await expect(ledger).toContainText(/Pairs Splink picked\s*\+\d+/, { timeout: 60_000 })
+		await expect(ledger).toContainText('Likely duplicates, including ones your rules miss')
+
+		await startRun(page)
+		await expect(page.getByRole('region', { name: 'Why was each pair checked?' })).toContainText(
+			'Picked by Splink'
+		)
+
+		// Switched off, the plan goes back to the rules and the vendor's pairs.
+		await page.goto(page.url().replace(/\/runs\/[0-9a-f-]+\/results.*$/, '/rules'))
+		await splinkSwitch.click()
+		await expect(splinkSwitch).not.toBeChecked()
+		await reviewPlan(page)
+		await expect(page.getByRole('region', { name: 'From records to pairs' })).not.toContainText(
+			'Pairs Splink picked'
+		)
+	})
+
 	test('a run over the old 5,000 limit plans, starts and finishes', async ({ page }) => {
 		test.slow()
 		await signUp(page)
@@ -979,6 +1016,11 @@ test.describe('PairSight vertical slice', () => {
 			/Pairs Jev will check\s*6K/
 		)
 		await expect(page.getByText(/takes (under a minute|about)/)).toBeVisible()
+		// 110 records are too few for Splink to learn from; the plan goes on without it.
+		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
+			'Splink needs at least 200 records to learn from',
+			{ timeout: 30_000 }
+		)
 		await expect(page.getByText(/more than one run can check/)).toHaveCount(0)
 		await expect(page.getByRole('button', { name: 'Start run' })).toBeEnabled()
 		await page.getByRole('button', { name: 'Start run' }).click()

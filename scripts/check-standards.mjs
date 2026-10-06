@@ -72,6 +72,17 @@ const CI_GATES = [
 	'check:standards',
 	'check:rls'
 ]
+// A repo with a Python project (a tracked pyproject.toml, e.g. a service
+// beside the app) also runs its gates — lint, format, tests — through this
+// package script, in CI and in local-review, like every other gate.
+const PYTHON_GATE = 'python:check'
+const PYTHON_PROJECT = /(^|\/)pyproject\.toml$/
+
+function gatesFor(ctx) {
+	return ctx.trackedFiles.some((path) => PYTHON_PROJECT.test(path))
+		? [...CI_GATES, PYTHON_GATE]
+		: CI_GATES
+}
 const CI_WORKFLOW = '.github/workflows/ci.yml'
 const LOCAL_REVIEW_SKILL = '.claude/skills/local-review/SKILL.md'
 
@@ -115,7 +126,11 @@ const MUST_BE_IGNORED = [
 	'nested/node_modules/x.js',
 	'.DS_Store',
 	'nested/.DS_Store',
-	'supabase/.temp/project-ref'
+	'supabase/.temp/project-ref',
+	// Python projects' virtual environments and caches.
+	'.venv/bin/python',
+	'nested/.venv/bin/python',
+	'nested/__pycache__/x.pyc'
 ]
 const MUST_NOT_BE_TRACKED = [
 	{ label: 'a .vercel/ directory', pattern: /(^|\/)\.vercel\// },
@@ -458,7 +473,10 @@ export const CHECKS = [
 			if (scripts == null || Object.keys(scripts).length === 0) {
 				return fail('package.json has no "scripts" — or is missing or unparseable')
 			}
-			const missing = REQUIRED_SCRIPTS.filter((name) => typeof scripts[name] !== 'string')
+			const required = gatesFor(ctx).includes(PYTHON_GATE)
+				? [...REQUIRED_SCRIPTS, PYTHON_GATE]
+				: REQUIRED_SCRIPTS
+			const missing = required.filter((name) => typeof scripts[name] !== 'string')
 			if (missing.length > 0) return fail(`package.json scripts missing: ${missing.join(', ')}`)
 			if (
 				!scripts.lint.includes('--max-warnings=0') &&
@@ -484,7 +502,7 @@ export const CHECKS = [
 			if (invoked.size === 0) {
 				return fail(`${CI_WORKFLOW} invokes no package.json script at all`)
 			}
-			const missing = CI_GATES.filter((gate) => !invoked.has(gate))
+			const missing = gatesFor(ctx).filter((gate) => !invoked.has(gate))
 			if (missing.length > 0) return fail(`${CI_WORKFLOW} never runs: ${missing.join(', ')}`)
 			return pass()
 		}
@@ -500,7 +518,7 @@ export const CHECKS = [
 				return fail(`${LOCAL_REVIEW_SKILL} has no fenced command block, so it runs nothing`)
 			}
 			const invoked = scriptsInvokedIn(commands)
-			const missing = CI_GATES.filter((gate) => !invoked.has(gate))
+			const missing = gatesFor(ctx).filter((gate) => !invoked.has(gate))
 			if (missing.length > 0) {
 				return fail(
 					`${LOCAL_REVIEW_SKILL} does not run: ${missing.join(', ')} — CI would be the first to`

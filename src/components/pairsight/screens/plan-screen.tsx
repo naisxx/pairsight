@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { PlanBlockers } from '@/components/pairsight/plan/plan-blockers'
 import { PlanLedger } from '@/components/pairsight/plan/plan-ledger'
 import { PlanSide } from '@/components/pairsight/plan/plan-side'
+import { RefreshWhile } from '@/components/pairsight/refresh-while'
 import { StartRunButton } from '@/components/pairsight/start-run-button'
 import { ActionBar, StepHeader } from '@/components/pairsight/step-layout'
 import { AlertIcon, ArrowRightIcon, InfoIcon } from '@/components/ui/icons'
@@ -36,6 +37,10 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	])
 	const counts = ('counts' in plan ? plan.counts : undefined) ?? null
 	const contributors = ('contributors' in plan ? plan.contributors : undefined) ?? []
+	const splink = ('splink' in plan ? plan.splink : undefined) ?? {
+		state: 'off' as const,
+		reason: null
+	}
 	const drafts = vendors.filter((vendor) => vendor.kind === 'draft').map((vendor) => vendor.name)
 	const ruleMatches = contributors.reduce(
 		(sum, item) => (item.kind === 'rule' ? sum + item.pairCount : sum),
@@ -59,6 +64,8 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
+			{/* Splink is still looking: the plan fills in by itself when it's done. */}
+			<RefreshWhile isActive={splink.state === 'waiting'} />
 
 			{drafts.length > 0 && (
 				<p className="bg-warning-subtle text-warning type-ui mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-sm p-3">
@@ -103,6 +110,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 								maximumFractionDigits: COST_FRACTION_DIGITS
 							})}
 							duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
+							splink={splink}
 							isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
 						/>
 					)}

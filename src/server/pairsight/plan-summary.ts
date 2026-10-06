@@ -19,6 +19,9 @@ export type PlanCounts = {
 	allPossiblePairs: number
 	reusable: number
 	toEvaluate: number
+	// Pairs Splink picked, and of those, the ones no rule picked.
+	splinkPairs: number
+	addedBySplinkOnly: number
 	// False when the rules pick more pairs than one run can check and they
 	// weren't all built (blocking.ts): the pair counts are then "at least",
 	// and the plan is blocked.
@@ -37,20 +40,24 @@ export type PlanContributor =
 			largestBucket: number
 	  }
 	| { kind: 'vendors'; pairCount: number }
+	| { kind: 'splink'; pairCount: number }
 
 type VendorPair = { a: string; b: string }
+
+// Among a pair's reasons for being checked: Splink picked it (splink/picks.ts).
+export const SPLINK_RULE_ID = 'splink'
 
 export function summarizePlan({
 	recordCount,
 	rules,
 	ruleStats,
-	blockedPairCount,
 	comparison,
 	vendorPairs,
 	reusableKeys,
 	vendorCount,
 	jevFieldCount,
-	isComplete = true
+	isComplete = true,
+	splinkPairCount = 0
 }: {
 	recordCount: number
 	rules: BlockingRule[]
@@ -58,7 +65,8 @@ export function summarizePlan({
 	// Whether blocking built every pair; when not, `comparison` holds only
 	// the vendors' pairs and the rules' total is known to be over the limit.
 	isComplete?: boolean
-	blockedPairCount: number
+	// Pairs Splink picked; they're among `comparison`, with SPLINK_RULE_ID.
+	splinkPairCount?: number
 	comparison: ComparisonPair[]
 	vendorPairs: VendorPair[]
 	reusableKeys: ReadonlySet<string>
@@ -76,6 +84,11 @@ export function summarizePlan({
 		? comparison.filter((pair) => pair.ruleIds.length === 0).length
 		: 0
 	const uniquePairs = isComplete ? comparison.length : atLeast
+	// Picked by a rule or by Splink, counted once.
+	const blockedPairCount = comparison.filter((pair) => pair.ruleIds.length > 0).length
+	const addedBySplinkOnly = comparison.filter(
+		(pair) => pair.ruleIds.length === 1 && pair.ruleIds[0] === SPLINK_RULE_ID
+	).length
 	const counts: PlanCounts = {
 		records: recordCount,
 		blockedPairs: isComplete ? blockedPairCount : atLeast,
@@ -85,6 +98,8 @@ export function summarizePlan({
 		allPossiblePairs: groupPairCount(recordCount),
 		reusable,
 		toEvaluate: uniquePairs - reusable,
+		splinkPairs: splinkPairCount,
+		addedBySplinkOnly,
 		isExact: isComplete
 	}
 
@@ -110,7 +125,8 @@ export function summarizePlan({
 	})
 	const contributors = [
 		...ruleContributors,
-		...(addedByVendorOnly > 0 ? [{ kind: 'vendors' as const, pairCount: addedByVendorOnly }] : [])
+		...(addedByVendorOnly > 0 ? [{ kind: 'vendors' as const, pairCount: addedByVendorOnly }] : []),
+		...(splinkPairCount > 0 ? [{ kind: 'splink' as const, pairCount: splinkPairCount }] : [])
 	].sort((first, second) => second.pairCount - first.pairCount)
 
 	return { counts, blockers, contributors }

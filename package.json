@@ -25,6 +25,8 @@
 		"db:run-once": "node --env-file-if-exists=.env scripts/run-once-sql.mjs",
 		"supabase": "pnpm dlx supabase@2.118.0",
 		"jev:stub": "node scripts/jev-stub.mjs",
+		"splink:setup": "node scripts/splink-setup.mjs",
+		"python:check": "node scripts/python-check.mjs",
 		"blocking:check": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/blocking-check.mts",
 		"scale:measure": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/scale/measure.mts",
 		"scale:datasets": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./scripts/register-ts.mjs scripts/scale/datasets.mts",

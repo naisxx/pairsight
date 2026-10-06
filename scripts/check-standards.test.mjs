@@ -637,3 +637,27 @@ test('rls-check-wired fails when CI runs the check before the migrations are app
 	assert.equal(results['rls-check-wired'].ok, false)
 	assert.match(results['rls-check-wired'].detail, /before the migrations are applied/)
 })
+
+test('a tracked Python project makes python:check a gate, in CI and in local-review', () => {
+	const ids = ['ci-gates-every-pr', 'local-review-mirrors-ci']
+	const results = withFixture((root) => {
+		mkdirSync(join(root, 'services/x'), { recursive: true })
+		writeFileSync(join(root, 'services/x/pyproject.toml'), '[project]\nname = "x"\n')
+		edit(root, '.github/workflows/ci.yml', (text) =>
+			text.replace('      - run: pnpm python:check\n', '')
+		)
+		edit(root, '.claude/skills/local-review/SKILL.md', (text) =>
+			text.replace(/^pnpm python:check.*\n/m, '')
+		)
+		git(root, 'add', '-A')
+	}, ids)
+	assert.match(results['ci-gates-every-pr'].detail, /never runs: python:check/)
+	assert.match(results['local-review-mirrors-ci'].detail, /does not run: python:check/)
+	// Without a Python project, neither asks for it.
+	const without = withFixture((root) => {
+		edit(root, '.github/workflows/ci.yml', (text) =>
+			text.replace('      - run: pnpm python:check\n', '')
+		)
+	}, ids)
+	assert.equal(without['ci-gates-every-pr'].ok, true)
+})

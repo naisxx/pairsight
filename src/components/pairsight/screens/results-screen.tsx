@@ -23,6 +23,7 @@ import { getRunProgress } from '@/server/pairsight/runs'
 import { runBase } from '@/lib/pairsight/evaluation-view'
 import { parseBlockingRules } from '@/server/pairsight/json'
 import type { LoadedWorkspace, loadRun } from '@/server/pairsight/evaluation-pages'
+import { SPLINK_RULE_ID } from '@/server/pairsight/plan-summary'
 
 // Results (docs/PairSight-UX-Plan.md §4.1): the run's header, the vendor and
 // threshold controls, then the Overview or the Detailed analysis. Everything
@@ -79,8 +80,12 @@ export async function ResultsScreen({
 	const isFiltered = hasActiveFilters(filters)
 	const vendorName = results.vendors.find((vendor) => vendor.id === vendorId)?.name ?? ''
 	const rules = parseBlockingRules(run.blockingRules)
+	// The run's rules, and Splink's picks among a pair's reasons.
 	const ruleLabels = Object.fromEntries(
-		rules.map((rule) => [rule.id, ruleLabel({ ruleId: rule.id, rules, tRules, tRoles })])
+		[...rules.map((rule) => rule.id), SPLINK_RULE_ID].map((ruleId) => [
+			ruleId,
+			ruleLabel({ ruleId, rules, tRules, tRoles })
+		])
 	)
 	const incomplete = results.overview.metrics.counts.incomplete
 

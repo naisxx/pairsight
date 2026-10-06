@@ -97,8 +97,9 @@ when either changes. Only the tool conventions differ:
    change. Skip purely stylistic suggestions that don't violate a project rule.
 7. Run every CI gate locally before committing — `pnpm lint`, `pnpm typecheck`,
    `pnpm format:check`, `pnpm check:env`, `pnpm check:standards`, `pnpm test`,
-   `pnpm build`, and `pnpm check:rls` against a local database with the
-   migrations applied.
+   `pnpm build`, `pnpm python:check` (the Splink service, after
+   `pnpm splink:setup`), and `pnpm check:rls` against a local database with
+   the migrations applied.
    `format:check` is the easiest to forget and fails CI on its own. If
    `prisma/schema/**` changed, `pnpm prisma generate` first.
 8. Commit with a Conventional Commits message

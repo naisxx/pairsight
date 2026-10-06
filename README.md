@@ -74,6 +74,7 @@ Docker Desktop running.
 pnpm install              # also installs the git hooks + generates the Prisma client
 pnpm supabase start       # local Supabase in Docker (first run pulls images)
 pnpm supabase status      # prints the local URLs and keys used below
+pnpm splink:setup         # optional: the Splink service (Python 3.13) that picks extra pairs
 ```
 
 Create two gitignored env files:
