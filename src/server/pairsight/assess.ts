@@ -2,6 +2,7 @@ import 'server-only'
 import { captureError } from '@/lib/observability/capture-error'
 import { requestDecision, TypesafeError } from '@/server/ai/typesafe'
 import { db } from '@/server/db/client'
+import { countAnswer } from './runs'
 import {
 	buildJevRequest,
 	classifyFailure,
@@ -67,6 +68,7 @@ export async function assess({
 						}
 					: { status: 'failed', errorCode: answer.code, completedAt: new Date() }
 			})
+			await countAnswer({ assessmentId, isFailed: !answer.ok })
 			return
 		} catch (error) {
 			if (!(error instanceof TypesafeError)) {
@@ -99,4 +101,5 @@ async function markFailed(assessmentId: string, errorCode: string) {
 		where: { id: assessmentId },
 		data: { status: 'failed', errorCode, completedAt: new Date() }
 	})
+	await countAnswer({ assessmentId, isFailed: true })
 }

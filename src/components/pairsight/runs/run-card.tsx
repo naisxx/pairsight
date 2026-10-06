@@ -109,7 +109,10 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 					</h3>
 					<p className="type-ui text-text-muted mt-0.5">
 						{look === 'running'
-							? t('stateRunning')
+							? // Every pair checked; the results are being worked out.
+								card.completedAt == null
+								? t('stateRunning')
+								: t('stateFinishing')
 							: look === 'complete'
 								? t('stateComplete')
 								: look === 'incomplete'

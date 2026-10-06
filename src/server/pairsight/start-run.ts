@@ -4,6 +4,7 @@ import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
 import { pairKey } from './pairs'
 import { computePlan, type PlanBlocker } from './plan'
+import { recountRun } from './runs'
 import { ownerScope } from './scope'
 
 // Starting a run freezes the configuration (docs/PairSight-V1-Scope.md, "Runs
@@ -36,7 +37,7 @@ export async function startRun({
 	}
 	const { evaluation, dataset, comparison, config, judgmentKey: key, rules, exports } = plan
 
-	return db.$transaction(
+	const run = await db.$transaction(
 		async (tx) => {
 			const last = await tx.run.findFirst({
 				where: { evaluationId },
@@ -136,4 +137,7 @@ export async function startRun({
 		},
 		{ timeout: RUN_TRANSACTION_TIMEOUT_MS }
 	)
+	// Counted from the start: pairs already checked in earlier runs count.
+	await recountRun(run.id)
+	return run
 }

@@ -4,6 +4,7 @@ import { isFuzzyRule } from '@/lib/pairsight/derived-keys'
 import type { Category } from '@/lib/pairsight/decisions'
 import type { EntityType } from '@/lib/pairsight/entity-types'
 import { log } from '@/server/lib/logger'
+import { recountRun } from './runs'
 import { compareFields } from './compare'
 import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 import { ensureRecordKeys } from './record-keys'
@@ -232,5 +233,7 @@ export async function refreshRunSummaries({
 			where: { id: run.id, status: 'completed', summary: { equals: Prisma.DbNull } },
 			data: summaryColumns(summary)
 		})
+		// Its progress counts shift with the same judgments.
+		await recountRun(run.id)
 	}
 }

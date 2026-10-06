@@ -125,7 +125,12 @@ export function RunsCentreProvider({
 			const latest = live.get(card.id)
 			return latest == null || latest.at < runs.dataUpdatedAt
 				? card
-				: { ...card, status: latest.progress.status, progress: latest.progress }
+				: {
+						...card,
+						status: latest.progress.status,
+						completedAt: latest.progress.completedAt,
+						progress: latest.progress
+					}
 		}) ?? null
 	// Every run to follow: those started or resumed here, plus any the list
 	// shows running that this page hasn't seen finish (another tab started it).
