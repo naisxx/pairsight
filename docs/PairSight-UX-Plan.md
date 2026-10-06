@@ -146,7 +146,11 @@ it redirects to where the evaluation is up to.
   score as a number and every other cell as text. Every file, read or
   written, goes through one tabular connector
   (`src/server/pairsight/tabular/`): a format is one adapter, and the checks
-  are shared.
+  are shared. Both files are plain links that stream as they're written, so
+  any size downloads with the browser's own progress. Past Excel's
+  1,048,575 rows the Excel option is greyed out and the menu says to take
+  the CSV. Only the summary report is fetched by the menu, with its
+  "getting it ready" toast.
 - **Summary report** (Export menu → "Summary report (.pdf)") — a PDF for
   whoever has to justify a vendor choice, built for the analyst handing it to
   their boss:

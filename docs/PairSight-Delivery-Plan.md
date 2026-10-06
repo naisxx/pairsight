@@ -88,20 +88,59 @@ the start, without duplicating any Jev work.
   network rather than the CPU, so they don't slow pages. `RUN_WORKER_CONCURRENCY=0`
   turns the worker off on a server that should serve pages only.
 
+**Reading results: from the database, never the whole run** (Scale Roadmap
+item 2).
+
+- **The Overview is worked out once.** When a run finishes, `finishIfDone`
+  builds its summary (`run-summary.ts`) before marking it complete and
+  stores it on the run (`runs.summary`, `summaryVersion`). It holds:
+  - a count table: pairs grouped by status, 0.01 score bin, Jev's decision
+    and close call at the run's cut-off, which vendors matched (a bitmask)
+    and why it was checked. Every Overview number, the dashboard's and the
+    report's come from it exactly (`src/lib/pairsight/stats.ts`), including
+    the 0.05 cut-off sweep and the threshold preview's 0.01 steps.
+  - pairs per rule, the field patterns per vendor over **every** judged pair
+    (walked a page at a time), each vendor's top disagreements, the Jev
+    versions and the record count.
+    Results read it in milliseconds whatever the run's size. A run finished
+    before summaries existed builds one on its first read.
+- **Kept current.** Judgments are shared between runs of the same records and
+  settings, so when a run finishes or a pair page re-checks a pair, the
+  summaries of the other finished runs sharing them are cleared and rebuilt.
+  Unfinished runs show progress, never numbers.
+- **Detailed analysis is live SQL** (`results-query.ts`, `$queryRaw` because
+  it needs array tests, grouped counts and window functions): the same
+  filters, search and order as before, a page at a time with an exact count,
+  and a pair's position and neighbours for J/K.
+- **Requests stay bounded** (`docs/rules/database.md`, "Bounded queries"): a
+  request reads `run_pairs` alone, joining records and judgments only for
+  the rows it shows. Building the summary copies each pair's status, score,
+  sort key (`least` of its records' `sortKey`) and search text onto it, a
+  chunk of records at a time, so a summary and its pages always agree.
+  Records carry `label`, `sortKey` (the reference as a natural-order key,
+  hex so the index serves it) and `searchText`, filled when saved.
+- **Downloads stream.** The findings CSV and Excel files are written a page at
+  a time, walking records in natural order through their index, so memory
+  stays flat. Excel stops at 1,048,575 rows; past that the menu offers CSV
+  only.
+- `pnpm scale:check-results` compares all of this against the pair-by-pair
+  results on the local database's runs; `pnpm scale:seed-run` and
+  `pnpm scale:measure-results` time it at 200k and 1M pairs.
+
 **Data model** (`prisma/schema/pairsight.prisma`; every table gets an RLS
 migration):
 
-| Model                | Key fields                                                                                                                                                                                                        |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Evaluation`         | `ownerId?` (null for the demo), `name`, `kind` (live or demo). Draft configuration: `identitySame`, `identityDifferent`, `countryCode`, `jevFields[]`, `blockingRules` (JSON), `threshold`                        |
-| `SourceDataset`      | `evaluationId`, `fileName`, `rowCount`, `referenceColumn`, `columnRoles`. Immutable: replacing the file creates a new dataset.                                                                                    |
-| `SourceRecord`       | `datasetId`, `reference` (unique per dataset), `rowNumber`, `values` (original values, JSON)                                                                                                                      |
-| `VendorExport`       | `evaluationId`, `datasetId`, `name`, `format` (pair, later group), `mapping`, `confirmedCompleteAt`, `pairCount`                                                                                                  |
-| `VendorMatch`        | `exportId`, `recordAId`, `recordBId` (canonical order, unique)                                                                                                                                                    |
-| `Run`                | `evaluationId`, `datasetId`, `number`, `origin` (live or prepared), `status`, and a frozen snapshot: identity definition, `jevFields`, country, rules, `exportIds[]`, `judgmentKey`, requested model, `threshold` |
-| `RunPair`            | `runId`, `recordAId`, `recordBId`, `ruleIds[]`, `matchedByExportIds[]`, `assessmentId`                                                                                                                            |
-| `Assessment`         | `datasetId`, record A/B, `judgmentKey`, `status` (pending, running, succeeded or failed), `score?`, `modelReported`, `requestId`, `attempts`, `errorCode`, `claimedAt`, `completedAt`, `origin`                   |
-| `HumanReview` (next) | `runPairId`, `reviewerId`, `verdict` (same, different or unsure), `note`. Kept separate from AI judgments.                                                                                                        |
+| Model                | Key fields                                                                                                                                                                                                                                                 |
+| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Evaluation`         | `ownerId?` (null for the demo), `name`, `kind` (live or demo). Draft configuration: `identitySame`, `identityDifferent`, `countryCode`, `jevFields[]`, `blockingRules` (JSON), `threshold`                                                                 |
+| `SourceDataset`      | `evaluationId`, `fileName`, `rowCount`, `referenceColumn`, `columnRoles`. Immutable: replacing the file creates a new dataset.                                                                                                                             |
+| `SourceRecord`       | `datasetId`, `reference` (unique per dataset), `rowNumber`, `values` (original values, JSON), and for reading results `label`, `sortKey`, `searchText`                                                                                                     |
+| `VendorExport`       | `evaluationId`, `datasetId`, `name`, `format` (pair, later group), `mapping`, `confirmedCompleteAt`, `pairCount`                                                                                                                                           |
+| `VendorMatch`        | `exportId`, `recordAId`, `recordBId` (canonical order, unique)                                                                                                                                                                                             |
+| `Run`                | `evaluationId`, `datasetId`, `number`, `origin` (live or prepared), `status`, and a frozen snapshot: identity definition, `jevFields`, country, rules, `exportIds[]`, `judgmentKey`, requested model, `threshold`; `summary` (the Overview, once finished) |
+| `RunPair`            | `runId`, `recordAId`, `recordBId`, `ruleIds[]`, `matchedByExportIds[]`, `assessmentId`, and as of the summary `status`, `score`, `sortKey`, `searchText`                                                                                                   |
+| `Assessment`         | `datasetId`, record A/B, `judgmentKey`, `status` (pending, running, succeeded or failed), `score?`, `modelReported`, `requestId`, `attempts`, `errorCode`, `claimedAt`, `completedAt`, `origin`                                                            |
+| `HumanReview` (next) | `runPairId`, `reviewerId`, `verdict` (same, different or unsure), `note`. Kept separate from AI judgments.                                                                                                                                                 |
 
 - **Reuse:** `judgmentKey` is a hash of the identity definition,
   `jevFields`, country, requested model and request-template version. The
