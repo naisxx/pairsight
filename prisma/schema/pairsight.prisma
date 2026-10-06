@@ -70,6 +70,7 @@ model Evaluation {
 	vendorExports     VendorExport[]
 	vendorDrafts      VendorDraft[]
 	runs              Run[]
+	uploads           Upload[]
 
 	@@index([ownerId, updatedAt])
 	@@map("evaluations")
@@ -87,6 +88,9 @@ model SourceDataset {
 	// { [header]: FieldRole }
 	columnRoles     Json
 	createdAt       DateTime       @default(now()) @db.Timestamptz(6)
+	// Set once every record is in: records are written in batches, and a
+	// dataset still being written (or left half-written) is never used.
+	savedAt         DateTime?      @default(now()) @db.Timestamptz(6)
 	records         SourceRecord[]
 	vendorExports   VendorExport[]
 	vendorDrafts    VendorDraft[]
@@ -168,6 +172,30 @@ model VendorDraft {
 	@@map("vendor_drafts")
 }
 
+enum UploadKind {
+	records
+	vendor
+}
+
+// A file as uploaded, kept while it's checked (columns, sheet, vendor
+// columns) so it's sent once, not on every change. Deleted once its records
+// or pairs are saved, when another file replaces it, or after a day.
+model Upload {
+	id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+	ownerId      String     @db.Uuid
+	evaluationId String     @db.Uuid
+	evaluation   Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+	kind         UploadKind
+	fileName     String
+	size         Int
+	bytes        Bytes
+	createdAt    DateTime   @default(now()) @db.Timestamptz(6)
+
+	@@index([evaluationId, kind])
+	@@index([createdAt])
+	@@map("uploads")
+}
+
 // One vendor-matched pair, record ids in canonical order (recordAId < recordBId).
 model VendorMatch {
 	exportId  String       @db.Uuid
@@ -217,6 +245,13 @@ model Run {
 	// load the whole run. Null until built; the version marks its format.
 	summary           Json?
 	summaryVersion    Int?
+	// Its pairs with a final answer (checked or couldn't be), and those that
+	// failed: kept as pairs are checked, so following a run never counts its
+	// pairs (runs.ts getRunProgress). Recounted exactly when they can shift
+	// otherwise (start, retries, finishing); null `countedAt` = never counted.
+	checkedCount      Int           @default(0)
+	failedCount       Int           @default(0)
+	countedAt         DateTime?     @db.Timestamptz(6)
 	pairs             RunPair[]
 
 	@@unique([evaluationId, number])

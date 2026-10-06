@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "runs" ADD COLUMN     "checkedCount" INTEGER NOT NULL DEFAULT 0,
+ADD COLUMN     "countedAt" TIMESTAMPTZ(6),
+ADD COLUMN     "failedCount" INTEGER NOT NULL DEFAULT 0;
