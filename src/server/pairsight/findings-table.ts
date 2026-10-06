@@ -6,6 +6,7 @@ import {
 	type Category
 } from '@/lib/pairsight/decisions'
 import { failureReason, type FailureReason } from '@/lib/pairsight/failure-reasons'
+import { compareNatural } from '@/lib/pairsight/natural-key'
 import {
 	FIELD_ROLES,
 	isIdentityRole,
@@ -63,21 +64,21 @@ export type FindingsLabels = {
 	rule: (ruleId: string) => string
 }
 
-export function buildFindings({
-	pairs,
-	records,
+export type FindingsRecord = { reference: string; values: Record<string, string> }
+
+// The findings file's header and how one pair becomes a row: shared by the
+// whole-table build below and the streamed download (findings.ts).
+export function findingsColumns({
 	columnRoles,
 	vendors,
 	threshold,
 	labels
 }: {
-	pairs: FindingsPair[]
-	records: ReadonlyMap<string, { reference: string; values: Record<string, string> }>
 	columnRoles: Record<string, FieldRole>
 	vendors: Array<{ id: string; name: string }>
 	threshold: number
 	labels: FindingsLabels
-}): Table {
+}) {
 	// Only the fields this dataset maps, in the usual field order.
 	const mapped = new Set(Object.values(columnRoles))
 	const roles = FIELD_ROLES.filter(isIdentityRole).filter((role) => mapped.has(role))
@@ -98,25 +99,19 @@ export function buildFindings({
 			labels.vendorCategory(vendor.name)
 		])
 	]
-
-	const reference = (id: string) => records.get(id)?.reference ?? ''
-	const fields = (id: string) =>
-		mapRecordFields({ values: records.get(id)?.values ?? {}, columnRoles })
-	const sorted = [...pairs].sort(
-		(a, b) =>
-			reference(a.recordAId).localeCompare(reference(b.recordAId), undefined, { numeric: true }) ||
-			reference(a.recordBId).localeCompare(reference(b.recordBId), undefined, { numeric: true })
-	)
-
-	const rows = sorted.map((pair) => {
+	const row = (
+		pair: FindingsPair,
+		recordA: FindingsRecord | undefined,
+		recordB: FindingsRecord | undefined
+	): string[] => {
 		const status = pair.assessment?.status ?? 'pending'
 		const score = pair.assessment?.score ?? null
 		const isJudged = status === 'succeeded' && score != null
-		const fieldsA = fields(pair.recordAId)
-		const fieldsB = fields(pair.recordBId)
+		const fieldsA = mapRecordFields({ values: recordA?.values ?? {}, columnRoles })
+		const fieldsB = mapRecordFields({ values: recordB?.values ?? {}, columnRoles })
 		return [
-			reference(pair.recordAId),
-			reference(pair.recordBId),
+			recordA?.reference ?? '',
+			recordB?.reference ?? '',
 			...roles.flatMap((role) => [fieldsA[role] ?? '', fieldsB[role] ?? '']),
 			labels.status(status),
 			isJudged ? score.toFixed(SCORE_DIGITS) : '',
@@ -138,6 +133,36 @@ export function buildFindings({
 				]
 			})
 		]
-	})
-	return { headers, rows }
+	}
+	return { headers, row }
+}
+
+// The whole findings table at once, in the download's order: by record A's
+// reference, then record B's, naturally (R2 before R10).
+export function buildFindings({
+	pairs,
+	records,
+	columnRoles,
+	vendors,
+	threshold,
+	labels
+}: {
+	pairs: FindingsPair[]
+	records: ReadonlyMap<string, FindingsRecord>
+	columnRoles: Record<string, FieldRole>
+	vendors: Array<{ id: string; name: string }>
+	threshold: number
+	labels: FindingsLabels
+}): Table {
+	const { headers, row } = findingsColumns({ columnRoles, vendors, threshold, labels })
+	const reference = (id: string) => records.get(id)?.reference ?? ''
+	const sorted = [...pairs].sort(
+		(a, b) =>
+			compareNatural(reference(a.recordAId), reference(b.recordAId)) ||
+			compareNatural(reference(a.recordBId), reference(b.recordBId))
+	)
+	return {
+		headers,
+		rows: sorted.map((pair) => row(pair, records.get(pair.recordAId), records.get(pair.recordBId)))
+	}
 }

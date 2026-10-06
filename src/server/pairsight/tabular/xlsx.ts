@@ -2,7 +2,7 @@ import ExcelJS from 'exceljs'
 import type { DecodeResult, TabularAdapter } from './format'
 import type { Table } from './table'
 
-const SHEET_NAME = 'Findings'
+export const SHEET_NAME = 'Findings'
 const MIN_COLUMN_WIDTH = 8
 const MAX_COLUMN_WIDTH = 50
 const COLUMN_PADDING = 2
@@ -153,12 +153,23 @@ function chooseSheet(sheets: Sheet[], wanted: string | undefined): DecodeResult 
 	}
 }
 
-function columnWidth(table: Table, index: number): number {
+export function columnWidth(table: Table, index: number): number {
 	const longest = Math.max(
 		table.headers[index]?.length ?? 0,
 		...table.rows.map((row) => row[index]?.length ?? 0)
 	)
 	return Math.min(MAX_COLUMN_WIDTH, Math.max(MIN_COLUMN_WIDTH, longest + COLUMN_PADDING))
+}
+
+// Decimal cells (scores) written as numbers showing the same decimals.
+export function applyDecimals(row: ExcelJS.Row, values: string[]) {
+	values.forEach((value, index) => {
+		const decimals = DECIMAL.exec(value)?.[2]
+		if (decimals == null) return
+		const cell = row.getCell(index + 1)
+		cell.value = Number(value)
+		cell.numFmt = `0.${'0'.repeat(decimals.length)}`
+	})
 }
 
 // Excel workbooks (.xlsx). Reading unpacks the workbook and picks a sheet: the only
@@ -190,14 +201,7 @@ export const xlsxAdapter: TabularAdapter = {
 			to: { row: 1, column: table.headers.length }
 		}
 		for (const values of table.rows) {
-			const row = worksheet.addRow(values)
-			values.forEach((value, index) => {
-				const decimals = DECIMAL.exec(value)?.[2]
-				if (decimals == null) return
-				const cell = row.getCell(index + 1)
-				cell.value = Number(value)
-				cell.numFmt = `0.${'0'.repeat(decimals.length)}`
-			})
+			applyDecimals(worksheet.addRow(values), values)
 		}
 		return new Uint8Array(await workbook.xlsx.writeBuffer())
 	}

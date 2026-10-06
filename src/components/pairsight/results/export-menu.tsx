@@ -1,7 +1,8 @@
 'use client'
 
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { XLSX_MAX_ROWS } from '@/lib/pairsight/tabular-formats'
 import { captureClientError } from '@/lib/observability/capture-client-error'
 import { dismissToast, toast } from '@/lib/toast'
 import { Button } from '@/components/ui/button'
@@ -22,15 +23,15 @@ import {
 } from '@/components/ui/icons'
 
 const ICON_SIZE = 15
-// The findings (every pair, every vendor) as a table, then the summary report.
-const DOWNLOADS = [
-	[
-		{ key: 'export_csv', path: 'findings?format=csv', Icon: CsvFileIcon },
-		{ key: 'export_xlsx', path: 'findings?format=xlsx', Icon: XlsxFileIcon }
-	],
-	[{ key: 'export_pdf', path: 'summary', Icon: PdfFileIcon }]
+// The findings (every pair, every vendor) as a table: linked directly, so a
+// file of any size streams to disk with the browser's own progress.
+const FINDINGS = [
+	{ key: 'export_csv', format: 'csv', Icon: CsvFileIcon },
+	{ key: 'export_xlsx', format: 'xlsx', Icon: XlsxFileIcon }
 ] as const
-type DownloadKey = (typeof DOWNLOADS)[number][number]['key']
+// The summary report takes a few seconds to build, so the menu fetches it
+// itself and says so.
+const REPORT = { key: 'export_pdf', path: 'summary' } as const
 // Long enough for the browser to take the file before its URL is released.
 const RELEASE_URL_AFTER_MS = 1000
 
@@ -69,23 +70,33 @@ function saveFile(blob: Blob, fileName: string) {
 	setTimeout(() => URL.revokeObjectURL(url), RELEASE_URL_AFTER_MS)
 }
 
-// A run's downloads. A file can take a few seconds to build (the PDF most),
-// so the menu fetches it itself: the button spins and a toast says it's being
+// A run's downloads. The findings files are plain links; the summary report
+// is fetched by the menu: the button spins and a toast says it's being
 // prepared until the download starts, or says why it couldn't.
-export function ExportMenu({ runId, runNumber }: { runId: string; runNumber: number }) {
+export function ExportMenu({
+	runId,
+	runNumber,
+	pairCount
+}: {
+	runId: string
+	runNumber: number
+	pairCount: number
+}) {
 	const t = useTranslations('Results')
-	const [preparing, setPreparing] = useState<DownloadKey | null>(null)
+	const [isPreparing, setIsPreparing] = useState(false)
+	const isTooBigForExcel = pairCount > XLSX_MAX_ROWS
 
-	async function download(key: DownloadKey, path: string) {
-		setPreparing(key)
+	async function downloadReport() {
+		const { key, path } = REPORT
+		setIsPreparing(true)
 		const toastId = toast({
-			title: t('exportPreparing', { format: key }),
+			title: t('exportPreparing'),
 			description: t('exportPreparingHint'),
 			isLoading: true
 		})
 		const result = await fetchFile(`/api/runs/${runId}/${path}`, `pairsight-run-${runNumber}`)
 		dismissToast(toastId)
-		setPreparing(null)
+		setIsPreparing(false)
 		if (result.ok) {
 			saveFile(result.blob, result.fileName)
 			toast({ title: t('exportReady'), description: result.fileName })
@@ -102,26 +113,48 @@ export function ExportMenu({ runId, runNumber }: { runId: string; runNumber: num
 					variant="secondary"
 					size="sm"
 					aria-label={t('exportLabel', { number: runNumber })}
-					aria-busy={preparing != null}
-					disabled={preparing != null}
+					aria-busy={isPreparing}
+					disabled={isPreparing}
 				>
-					{preparing == null ? <DownloadIcon size={ICON_SIZE} /> : <SpinnerIcon size={ICON_SIZE} />}
-					{preparing == null ? t('export') : t('exporting')}
+					{isPreparing ? <SpinnerIcon size={ICON_SIZE} /> : <DownloadIcon size={ICON_SIZE} />}
+					{isPreparing ? t('exporting') : t('export')}
 					<ChevronDownIcon size={ICON_SIZE} />
 				</Button>
 			</DropdownMenuTrigger>
 			<DropdownMenuContent align="end" className="min-w-52">
-				{DOWNLOADS.map((group, index) => (
-					<Fragment key={group[0].key}>
-						{index > 0 && <DropdownMenuSeparator />}
-						{group.map(({ key, path, Icon }) => (
-							<DropdownMenuItem key={key} onSelect={() => void download(key, path)}>
-								<Icon size={ICON_SIZE} className="text-text-muted" />
-								{t(key)}
-							</DropdownMenuItem>
-						))}
-					</Fragment>
-				))}
+				{FINDINGS.map(({ key, format, Icon }) => {
+					const isDisabled = format === 'xlsx' && isTooBigForExcel
+					return (
+						<DropdownMenuItem
+							key={key}
+							asChild={!isDisabled}
+							disabled={isDisabled}
+							title={isDisabled ? t('exportTooBigForExcel') : undefined}
+						>
+							{isDisabled ? (
+								<span>
+									<Icon size={ICON_SIZE} className="text-text-muted" />
+									{t(key)}
+								</span>
+							) : (
+								<a href={`/api/runs/${runId}/findings?format=${format}`} download>
+									<Icon size={ICON_SIZE} className="text-text-muted" />
+									{t(key)}
+								</a>
+							)}
+						</DropdownMenuItem>
+					)
+				})}
+				{isTooBigForExcel && (
+					<p className="text-text-muted max-w-52 px-2 pb-1.5 text-xs">
+						{t('exportTooBigForExcel')}
+					</p>
+				)}
+				<DropdownMenuSeparator />
+				<DropdownMenuItem onSelect={() => void downloadReport()}>
+					<PdfFileIcon size={ICON_SIZE} className="text-text-muted" />
+					{t(REPORT.key)}
+				</DropdownMenuItem>
 			</DropdownMenuContent>
 		</DropdownMenu>
 	)

@@ -13,6 +13,10 @@ export const TABULAR_FORMATS = [
 
 export type TabularFormat = (typeof TABULAR_FORMATS)[number]['format']
 
+// The most data rows an Excel sheet holds (1,048,576 rows, one the header):
+// a bigger download is CSV only.
+export const XLSX_MAX_ROWS = 1_048_575
+
 // The largest file a user can upload.
 export const MAX_FILE_BYTES = 1_000_000
 
