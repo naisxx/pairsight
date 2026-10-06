@@ -1,16 +1,17 @@
 import 'server-only'
-import { db } from '@/server/db/client'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { buildBlockedPairs, presetsFor, type BlockingRule, type RuleStats } from './blocking'
 import { getCurrentDataset } from './datasets'
 import { getVisibleEvaluation } from './evaluations'
 import type { EvaluationScope } from './scope'
-import { mapRecordFields, mappedIdentityRoles } from './fields'
-import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
+import { loadBlockingRecords } from './blocking-records'
+import { mappedIdentityRoles } from './fields'
+import { parseBlockingRules, parseColumnRoles } from './json'
 import type { BlockingField } from './normalize'
 
 // Live statistics for blocking rules before the user commits to them.
-// Records are capped at LIMITS.maxSourceRecords, so recomputing is cheap.
+// Records are read once per request (blocking-records.ts); grouping 10,000
+// of them by every rule takes well under a second.
 
 async function loadBlockingInput({
 	scope,
@@ -23,17 +24,10 @@ async function loadBlockingInput({
 	const dataset = await getCurrentDataset(evaluationId)
 	if (dataset == null) return { evaluation, dataset: null, records: [], mappedRoles: [] }
 	const columnRoles = parseColumnRoles(dataset.columnRoles)
-	const rows = await db.sourceRecord.findMany({
-		where: { datasetId: dataset.id },
-		select: { id: true, values: true }
-	})
 	return {
 		evaluation,
 		dataset,
-		records: rows.map((record) => ({
-			id: record.id,
-			fields: mapRecordFields({ values: parseRecordValues(record.values), columnRoles })
-		})),
+		records: await loadBlockingRecords(dataset.id),
 		mappedRoles: [...mappedIdentityRoles(columnRoles)]
 	}
 }

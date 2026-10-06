@@ -23,7 +23,10 @@ export type RuleStats = {
 	pairCount: number
 	largestBucket: number
 	recordsWithoutKey: number
-	oversizedBuckets: Array<{ size: number; pairCount: number }>
+	// Groups over the warning size, summed up: how many, the pairs they make
+	// together, and the biggest one. One line however many groups there are
+	// (a big file can have hundreds). Null when none is that big.
+	oversized: { groups: number; pairCount: number; largest: number } | null
 	// One normalized key, field by field, to show what the rule compares on:
 	// a shared bucket's if there is one. Null when no record has a key.
 	sampleKey: string[] | null
@@ -54,6 +57,19 @@ function blockingKey({
 	return parts.join(KEY_SEPARATOR)
 }
 
+function oversizedGroups(groups: string[][]): RuleStats['oversized'] {
+	let count = 0
+	let pairCount = 0
+	let largest = 0
+	for (const members of groups) {
+		if (members.length <= LIMITS.bucketWarningSize) continue
+		count++
+		pairCount += groupPairCount(members.length)
+		largest = Math.max(largest, members.length)
+	}
+	return count === 0 ? null : { groups: count, pairCount, largest }
+}
+
 export function buildBlockedPairs({
 	records,
 	rules,
@@ -73,7 +89,9 @@ export function buildBlockedPairs({
 				recordsWithoutKey++
 				continue
 			}
-			buckets.set(key, [...(buckets.get(key) ?? []), record.id])
+			const members = buckets.get(key)
+			if (members == null) buckets.set(key, [record.id])
+			else members.push(record.id)
 		}
 		const shared = [...buckets.values()].filter((members) => members.length > 1)
 		const sample =
@@ -83,7 +101,9 @@ export function buildBlockedPairs({
 		let pairCount = 0
 		for (const members of shared) {
 			members.forEach((first, index) => {
-				for (const second of members.slice(index + 1)) {
+				for (let other = index + 1; other < members.length; other++) {
+					const second = members[other]
+					if (second == null) continue
 					const pair = canonicalPair(first, second)
 					if (pair == null) continue
 					pairCount++
@@ -98,11 +118,9 @@ export function buildBlockedPairs({
 			ruleId: rule.id,
 			bucketCount: shared.length,
 			pairCount,
-			largestBucket: Math.max(0, ...shared.map((members) => members.length)),
+			largestBucket: shared.reduce((largest, members) => Math.max(largest, members.length), 0),
 			recordsWithoutKey,
-			oversizedBuckets: shared
-				.filter((members) => members.length > LIMITS.bucketWarningSize)
-				.map((members) => ({ size: members.length, pairCount: groupPairCount(members.length) })),
+			oversized: oversizedGroups(shared),
 			sampleKey: sample == null ? null : sample.split(KEY_SEPARATOR)
 		}
 	})

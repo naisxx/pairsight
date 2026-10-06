@@ -191,15 +191,17 @@ export function CompositeRuleEditor({
 								{t('ruleOverCap', { pairs: stat.pairCount, limit: limits.maxPairsPerRun })}
 							</p>
 						)}
-						{stat.oversizedBuckets.map((bucket) => (
-							<p
-								key={`${bucket.size}-${bucket.pairCount}`}
-								className="text-warning mt-2 flex items-start gap-1.5"
-							>
+						{stat.oversized != null && (
+							<p className="text-warning mt-2 flex items-start gap-1.5">
 								<AlertIcon size={ICON_SIZE} className="mt-px shrink-0" />
-								{t('oversized', { size: bucket.size, pairs: bucket.pairCount })}
+								{t('oversized', {
+									groups: stat.oversized.groups,
+									size: stat.oversized.largest,
+									pairs: stat.oversized.pairCount,
+									limit: limits.bucketWarningSize
+								})}
 							</p>
-						))}
+						)}
 					</>
 				)}
 			</div>

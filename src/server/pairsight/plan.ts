@@ -3,14 +3,15 @@ import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { buildBlockedPairs, type RuleStats } from './blocking'
 import { summarizePlan, type PlanBlocker } from './plan-summary'
-import { mapRecordFields, mappedIdentityRoles } from './fields'
+import { loadBlockingRecords } from './blocking-records'
+import { mappedIdentityRoles } from './fields'
 import { JEV_MODEL, judgmentKey, type JudgmentConfig } from './judgment'
 import { buildComparisonSet, pairKey, type ComparisonPair } from './pairs'
 import { parseIdentityRoles } from './schemas'
 import { getCurrentDataset } from './datasets'
 import { getVisibleEvaluation } from './evaluations'
 import type { EvaluationScope } from './scope'
-import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
+import { parseBlockingRules, parseColumnRoles } from './json'
 
 // The comparison plan: what a run *would* evaluate right now. Shared by the
 // Plan screen and by startRun, so what the user reviews is exactly what runs.
@@ -32,11 +33,9 @@ export async function computePlan({
 		return { evaluation, dataset, rules, blockers } as const
 	}
 
+	const columnRoles = parseColumnRoles(dataset.columnRoles)
 	const [records, exports] = await Promise.all([
-		db.sourceRecord.findMany({
-			where: { datasetId: dataset.id },
-			select: { id: true, values: true }
-		}),
+		loadBlockingRecords(dataset.id),
 		db.vendorExport.findMany({
 			where: { evaluationId, datasetId: dataset.id },
 			orderBy: { createdAt: 'asc' },
@@ -49,15 +48,11 @@ export async function computePlan({
 		})
 	])
 
-	const columnRoles = parseColumnRoles(dataset.columnRoles)
 	const mappedRoles = mappedIdentityRoles(columnRoles)
 	const jevFields = parseIdentityRoles(evaluation.jevFields).filter((role) => mappedRoles.has(role))
 
 	const blocking = buildBlockedPairs({
-		records: records.map((record) => ({
-			id: record.id,
-			fields: mapRecordFields({ values: parseRecordValues(record.values), columnRoles })
-		})),
+		records,
 		rules,
 		country: evaluation.countryCode
 	})
