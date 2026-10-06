@@ -35,6 +35,9 @@ export type RuleStats = {
 export type BlockingResult = {
 	pairs: Array<CanonicalPair & { ruleIds: string[] }>
 	stats: RuleStats[]
+	// False when building stopped at `maxPairs`: there are more pairs than
+	// that, and `pairs` holds only some of them.
+	isComplete: boolean
 }
 
 const KEY_SEPARATOR = '\u0000'
@@ -70,16 +73,26 @@ function oversizedGroups(groups: string[][]): RuleStats['oversized'] {
 	return count === 0 ? null : { groups: count, pairCount, largest }
 }
 
+// Every rule's groups and its exact pair count, worked out from group sizes;
+// then, unless `countOnly`, the pairs themselves, deduplicated across rules.
+// Building stops once there are more than `maxPairs` (a run's limit), so a
+// runaway group (thousands of records sharing a key: millions of pairs) is
+// counted but never built, and a page stays quick whatever the rules pick.
 export function buildBlockedPairs({
 	records,
 	rules,
-	country
+	country,
+	maxPairs = Number.POSITIVE_INFINITY,
+	countOnly = false
 }: {
 	records: BlockingRecord[]
 	rules: BlockingRule[]
 	country: string
+	maxPairs?: number
+	countOnly?: boolean
 }): BlockingResult {
 	const pairs = new Map<string, CanonicalPair & { ruleIds: string[] }>()
+	let isComplete = true
 	const stats = rules.map((rule) => {
 		const buckets = new Map<string, string[]>()
 		let recordsWithoutKey = 0
@@ -98,21 +111,11 @@ export function buildBlockedPairs({
 			[...buckets.entries()].find(([, members]) => members.length > 1)?.[0] ??
 			[...buckets.keys()][0] ??
 			null
-		let pairCount = 0
-		for (const members of shared) {
-			members.forEach((first, index) => {
-				for (let other = index + 1; other < members.length; other++) {
-					const second = members[other]
-					if (second == null) continue
-					const pair = canonicalPair(first, second)
-					if (pair == null) continue
-					pairCount++
-					const key = pairKey(pair)
-					const existing = pairs.get(key)
-					if (existing == null) pairs.set(key, { ...pair, ruleIds: [rule.id] })
-					else if (!existing.ruleIds.includes(rule.id)) existing.ruleIds.push(rule.id)
-				}
-			})
+		// Record ids are unique, so a group of n makes n(n−1)/2 pairs.
+		const pairCount = shared.reduce((sum, members) => sum + groupPairCount(members.length), 0)
+		if (!countOnly && isComplete) {
+			if (pairCount > maxPairs) isComplete = false
+			else isComplete = addPairs({ pairs, groups: shared, ruleId: rule.id, maxPairs })
 		}
 		return {
 			ruleId: rule.id,
@@ -124,5 +127,40 @@ export function buildBlockedPairs({
 			sampleKey: sample == null ? null : sample.split(KEY_SEPARATOR)
 		}
 	})
-	return { pairs: [...pairs.values()], stats }
+	return { pairs: isComplete ? [...pairs.values()] : [], stats, isComplete }
+}
+
+// One rule's pairs added to the rest; false once there are more than
+// `maxPairs`, when it stops.
+function addPairs({
+	pairs,
+	groups,
+	ruleId,
+	maxPairs
+}: {
+	pairs: Map<string, CanonicalPair & { ruleIds: string[] }>
+	groups: string[][]
+	ruleId: string
+	maxPairs: number
+}): boolean {
+	for (const members of groups) {
+		for (let index = 0; index < members.length; index++) {
+			const first = members[index]
+			for (let other = index + 1; other < members.length; other++) {
+				const second = members[other]
+				if (first == null || second == null) continue
+				const pair = canonicalPair(first, second)
+				if (pair == null) continue
+				const key = pairKey(pair)
+				const existing = pairs.get(key)
+				if (existing != null) {
+					if (!existing.ruleIds.includes(ruleId)) existing.ruleIds.push(ruleId)
+					continue
+				}
+				if (pairs.size >= maxPairs) return false
+				pairs.set(key, { ...pair, ruleIds: [ruleId] })
+			}
+		}
+	}
+	return true
 }

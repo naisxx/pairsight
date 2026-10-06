@@ -113,6 +113,7 @@ type Cached = { fetchedAt: number; rates: RateCard }
 // runs after the response), so this stays until someone can point at a bill
 // or a cold-start graph. Upstash/Redis is the upgrade if that day comes.
 let cached: Cached | null = null
+let fetching: Promise<RateCard | undefined> | null = null
 
 export async function fetchRateCard(): Promise<RateCard> {
 	const response = await fetch(OPENROUTER_MODELS_URL, {
@@ -144,13 +145,20 @@ export async function fetchRateCard(): Promise<RateCard> {
 // cleanly into a total and under-reports forever.
 export async function rateCard(): Promise<RateCard | undefined> {
 	if (cached != null && Date.now() - cached.fetchedAt < RATE_TTL_MS) return cached.rates
-	try {
-		const rates = await fetchRateCard()
-		cached = { fetchedAt: Date.now(), rates }
-		return rates
-	} catch {
-		// Stale rates beat no rates — a week-old price is off by a rounding
-		// error, a missing price is off by the entire call.
-		return cached?.rates
-	}
+	// One fetch at a time: a burst of calls on a cold cache shares it rather
+	// than each downloading the whole catalogue.
+	fetching ??= fetchRateCard()
+		.then((rates) => {
+			cached = { fetchedAt: Date.now(), rates }
+			return rates
+		})
+		.catch(() => {
+			// Stale rates beat no rates — a week-old price is off by a rounding
+			// error, a missing price is off by the entire call.
+			return cached?.rates
+		})
+		.finally(() => {
+			fetching = null
+		})
+	return fetching
 }

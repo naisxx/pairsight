@@ -17,14 +17,25 @@
 // so a test can prove an action made no Jev calls for its own records even
 // while other tests run in parallel.
 //
-// POST /reject?marker=<text> answers 401 (a rejected API key) to every call
-// containing <text> until POST /accept?marker=<text>, so a test can stop its
-// own run with a configuration error and then resume it.
+// POST /reject?marker=<text>[&status=403] answers 401 (a rejected API key),
+// or the status given, to every call containing <text> until
+// POST /accept?marker=<text>, so a test can stop its own run with a
+// configuration error and then resume it.
 //
 // POST /slow?marker=<text> delays every answer to a call containing <text>
 // by a few seconds until POST /fast?marker=<text>, so a test can
 // catch its own run part-way (to pause it) on a stub that's otherwise
 // instant.
+//
+// Jev's bad days, per marker, each until POST /calm?marker=<text>:
+//   POST /busy?marker=&status=429&retryAfter=2&count=6
+//        answers `status` (with Retry-After seconds, if given) to the next
+//        `count` calls (every call, without a count)
+//   POST /outage?marker=&seconds=10
+//        every call fails for that long: 529, 503 and a dropped connection,
+//        in turn
+//   POST /hang?marker=&count=1   the next `count` calls never get an answer
+//   POST /garbage?marker=&count=1   a 200 whose body isn't JSON
 //
 // Usage: node scripts/jev-stub.mjs   (JEV_STUB_PORT, default 4010)
 
@@ -36,7 +47,11 @@ const retrySeen = new Set()
 // Recent request bodies for /calls; capped so a long dev session can't grow it forever.
 const MAX_RECORDED_CALLS = 5_000
 const recordedCalls = []
-const rejectedMarkers = new Set()
+// marker -> the status a call containing it gets (401 or 403).
+const rejectedMarkers = new Map()
+// marker -> { kind, status?, retryAfter?, remaining?, until? } (see above).
+const troubles = new Map()
+const OUTAGE_STATUSES = [529, 503, 'drop']
 const slowMarkers = new Set()
 // How long a slowed answer waits. The worker checks a run's pairs at once,
 // so this is about how long a slowed run takes: long enough for another tab
@@ -144,9 +159,32 @@ const server = createServer((request, response) => {
 		const url = new URL(request.url ?? '', 'http://stub')
 		const marker = url.searchParams.get('marker') ?? ''
 		if (marker === '') return send(response, 400, { error: 'marker_required' })
-		if (url.pathname === '/reject') rejectedMarkers.add(marker)
-		else rejectedMarkers.delete(marker)
-		return send(response, 200, { rejected: [...rejectedMarkers].includes(marker) })
+		if (url.pathname === '/reject') {
+			rejectedMarkers.set(marker, Number(url.searchParams.get('status') ?? 401))
+		} else rejectedMarkers.delete(marker)
+		return send(response, 200, { rejected: rejectedMarkers.has(marker) })
+	}
+	if (request.method === 'POST' && /^\/(busy|outage|hang|garbage|calm)\?/.test(request.url ?? '')) {
+		const url = new URL(request.url ?? '', 'http://stub')
+		const marker = url.searchParams.get('marker') ?? ''
+		if (marker === '') return send(response, 400, { error: 'marker_required' })
+		const kind = url.pathname.slice(1)
+		if (kind === 'calm') {
+			troubles.delete(marker)
+			return send(response, 200, { calm: true })
+		}
+		const count = url.searchParams.get('count')
+		const seconds = Number(url.searchParams.get('seconds') ?? 0)
+		troubles.set(marker, {
+			kind,
+			status: Number(url.searchParams.get('status') ?? 429),
+			retryAfter: url.searchParams.get('retryAfter'),
+			remaining:
+				count == null ? (kind === 'busy' || kind === 'outage' ? Infinity : 1) : Number(count),
+			until: kind === 'outage' ? Date.now() + seconds * 1_000 : Infinity,
+			turn: 0
+		})
+		return send(response, 200, { [kind]: true })
 	}
 	if (request.method === 'POST' && /^\/(slow|fast)\?/.test(request.url ?? '')) {
 		const url = new URL(request.url ?? '', 'http://stub')
@@ -170,18 +208,55 @@ const server = createServer((request, response) => {
 	let raw = ''
 	request.on('data', (chunk) => (raw += chunk))
 	request.on('end', () => {
+		if (troubled(raw, request, response)) return
 		const isSlow = [...slowMarkers].some((marker) => raw.includes(marker))
 		if (isSlow) setTimeout(() => answer(raw, response), SLOW_ANSWER_MS)
 		else answer(raw, response)
 	})
 })
 
-// Answers one judgment request (after the slow delay, if any).
-function answer(raw, response) {
+function record(raw) {
 	recordedCalls.push(raw)
 	if (recordedCalls.length > MAX_RECORDED_CALLS) recordedCalls.shift()
-	if ([...rejectedMarkers].some((marker) => raw.includes(marker))) {
-		return send(response, 401, { error: 'invalid_api_key' })
+}
+
+// A bad day for this call's marker, if it has one: answers (or doesn't) and
+// returns true.
+function troubled(raw, request, response) {
+	const entry = [...troubles].find(([marker]) => raw.includes(marker))
+	if (entry == null) return false
+	const [marker, trouble] = entry
+	if (trouble.remaining <= 0 || Date.now() >= trouble.until) {
+		troubles.delete(marker)
+		return false
+	}
+	trouble.remaining--
+	record(raw)
+	if (trouble.kind === 'hang') return true
+	if (trouble.kind === 'garbage') {
+		response.writeHead(200, { 'content-type': 'text/html' })
+		response.end('<html>Bad gateway</html>')
+		return true
+	}
+	if (trouble.kind === 'outage') {
+		const status = OUTAGE_STATUSES[trouble.turn++ % OUTAGE_STATUSES.length]
+		if (status === 'drop') request.socket.destroy()
+		else send(response, status, { error: 'overloaded' })
+		return true
+	}
+	const headers = { 'content-type': 'application/json' }
+	if (trouble.retryAfter != null) headers['retry-after'] = trouble.retryAfter
+	response.writeHead(trouble.status, headers)
+	response.end(JSON.stringify({ error: 'rate_limited' }))
+	return true
+}
+
+// Answers one judgment request (after the slow delay, if any).
+function answer(raw, response) {
+	record(raw)
+	const rejected = [...rejectedMarkers].find(([marker]) => raw.includes(marker))
+	if (rejected != null) {
+		return send(response, rejected[1], { error: 'invalid_api_key' })
 	}
 	let body
 	try {

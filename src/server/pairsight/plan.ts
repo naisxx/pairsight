@@ -12,6 +12,7 @@ import { getCurrentDataset } from './datasets'
 import { getVisibleEvaluation } from './evaluations'
 import type { EvaluationScope } from './scope'
 import { parseBlockingRules, parseColumnRoles } from './json'
+import { LIMITS } from './limits'
 
 // The comparison plan: what a run *would* evaluate right now. Shared by the
 // Plan screen and by startRun, so what the user reviews is exactly what runs.
@@ -51,10 +52,13 @@ export async function computePlan({
 	const mappedRoles = mappedIdentityRoles(columnRoles)
 	const jevFields = parseIdentityRoles(evaluation.jevFields).filter((role) => mappedRoles.has(role))
 
+	// Built up to a run's limit: past it the plan is blocked anyway, and a
+	// runaway rule is counted but never built.
 	const blocking = buildBlockedPairs({
 		records,
 		rules,
-		country: evaluation.countryCode
+		country: evaluation.countryCode,
+		maxPairs: LIMITS.maxPairsPerRun
 	})
 	const comparison: ComparisonPair[] = buildComparisonSet({
 		blocked: blocking.pairs,
@@ -83,6 +87,7 @@ export async function computePlan({
 		recordCount: records.length,
 		rules,
 		ruleStats: blocking.stats,
+		isComplete: blocking.isComplete,
 		blockedPairCount: blocking.pairs.length,
 		comparison,
 		vendorPairs: exports.flatMap((vendorExport) =>

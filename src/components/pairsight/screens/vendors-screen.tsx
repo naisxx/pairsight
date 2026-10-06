@@ -21,7 +21,7 @@ export async function VendorsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				evaluationId={id}
 				vendors={vendors}
 				maxVendors={LIMITS.maxVendors}
-				maxPairs={LIMITS.maxPairsPerRun}
+				maxPairs={LIMITS.maxVendorRows}
 			/>
 		</>
 	)

@@ -141,3 +141,46 @@ test('products block on one barcode however it is written, and on part number wi
 		[['a', 'b']]
 	)
 })
+
+// One group of `size` records sharing an email.
+function crowd(size: number, prefix = 'c') {
+	return Array.from({ length: size }, (_, index) => ({
+		id: `${prefix}${index}`,
+		fields: { email: `${prefix}@crowd.test`, phone: `555${String(index).padStart(7, '0')}` }
+	}))
+}
+
+test('a rule over the limit is counted exactly but its pairs are never built', () => {
+	const records = crowd(2_000)
+	const result = buildBlockedPairs({
+		records,
+		rules: [EMAIL_RULE],
+		country: 'US',
+		maxPairs: 1_000
+	})
+	assert.equal(result.isComplete, false)
+	assert.deepEqual(result.pairs, [])
+	assert.equal(result.stats[0]?.pairCount, groupPairCount(2_000))
+	assert.equal(result.stats[0]?.largestBucket, 2_000)
+})
+
+test('building stops once the pairs go over the limit, groups each under it', () => {
+	// Two groups each under the limit, together over it.
+	const records = [...crowd(40, 'a'), ...crowd(40, 'b')]
+	const under = buildBlockedPairs({ records, rules: [EMAIL_RULE], country: 'US', maxPairs: 2_000 })
+	assert.equal(under.isComplete, true)
+	assert.equal(under.pairs.length, 2 * groupPairCount(40))
+	const over = buildBlockedPairs({ records, rules: [EMAIL_RULE], country: 'US', maxPairs: 1_000 })
+	assert.equal(over.isComplete, false)
+	assert.deepEqual(over.pairs, [])
+})
+
+test('counting only gives the same numbers as building', () => {
+	const records = [...people, ...crowd(30)]
+	const rules = presetsFor('person').map((rule) => ({ id: rule.id, fields: [...rule.fields] }))
+	const built = buildBlockedPairs({ records, rules, country: 'US' })
+	const counted = buildBlockedPairs({ records, rules, country: 'US', countOnly: true })
+	assert.deepEqual(counted.stats, built.stats)
+	assert.deepEqual(counted.pairs, [])
+	assert.equal(built.isComplete, true)
+})

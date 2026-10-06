@@ -438,7 +438,7 @@ bar.
     and the cap.
 - **Plan:**
   - A breakdown list: pairs from rules, pairs added by vendors, overlap removed,
-    unique total against the 5,000 cap, and assessments reused from earlier
+    unique total against the cap (100,000 since Scale Roadmap item 8), and assessments reused from earlier
     runs.
   - "What Jev receives": the field list, plus "No vendor names, scores or
     decisions are sent".

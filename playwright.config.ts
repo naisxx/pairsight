@@ -18,7 +18,17 @@ export default defineConfig({
 		trace: 'on-first-retry',
 		screenshot: 'only-on-failure'
 	},
-	projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+	projects: [
+		{ name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@pushback/ },
+		// Jev pushing back slows every call the server makes (one shared limit),
+		// so those tests run on their own, once everything else has finished.
+		{
+			name: 'pushback',
+			use: { ...devices['Desktop Chrome'] },
+			grep: /@pushback/,
+			dependencies: ['chromium']
+		}
+	],
 	// Boots the app itself for local runs; CI (and any review skill running
 	// against an already-live URL via E2E_BASE_URL) should skip this by
 	// setting E2E_BASE_URL and leaving webServer unused — see
@@ -55,7 +65,10 @@ export default defineConfig({
 									TYPESAFE_API_KEY: 'e2e-stub-key',
 									// Its own worker pool: a dev server on the same database
 									// must never take (and really check) the suite's runs.
-									RUN_WORKER_POOL: 'e2e'
+									RUN_WORKER_POOL: 'e2e',
+									// Above the stub's slow answers (6 s), so only a call that
+									// never answers times out, and soon.
+									TYPESAFE_TIMEOUT_MS: '10000'
 								}
 							: {}
 					}

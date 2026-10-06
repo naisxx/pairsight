@@ -45,6 +45,17 @@ the Runs centre, is read from counts stored on the run, kept as pairs are
 checked, not counted from its pairs on each ask (`getRunProgress`,
 `src/server/pairsight/runs.ts`).
 
+Watch Prisma's relation counts. A `_count` of a relation inside a nested
+`select` (`runs: { take: 1, select: { _count: { select: { pairs: … } } } }`)
+looks like it counts the few rows selected, but Prisma counts the whole child
+table, grouped by parent, and then keeps the parents it needs. The dashboard
+did that for each evaluation's latest run, counting every pair in the
+database on every view; it ran the local database out of shared memory once
+runs reached a million pairs. Read a stored count instead (`runs.checkedCount`),
+or count one parent's rows with a filtered `count()` by its indexed key.
+A relation `_count` is fine only over a table that stays small (a dataset's
+vendor files).
+
 How it's enforced: PairSight's request queries are built in one place
 (`requestSql` in `src/server/pairsight/results-query.ts`), and
 `pnpm scale:check-results` reads each one's plan on the biggest local runs and

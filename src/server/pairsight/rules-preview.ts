@@ -48,7 +48,13 @@ export async function rulesPreview({
 		...presets.map((rule) => ({ id: rule.id, fields: [...rule.fields] })),
 		...saved.filter((rule) => !presets.some((preset) => preset.id === rule.id))
 	]
-	const { stats } = buildBlockedPairs({ records, rules, country: evaluation.countryCode })
+	// Only each rule's numbers: worked out from its groups, no pairs built.
+	const { stats } = buildBlockedPairs({
+		records,
+		rules,
+		country: evaluation.countryCode,
+		countOnly: true
+	})
 	return { evaluation, saved, rules, mappedRoles, stats }
 }
 
@@ -67,5 +73,5 @@ export async function previewRuleStats({
 }): Promise<RuleStats | null> {
 	const { records } = await loadBlockingInput({ scope, evaluationId })
 	const rule = { id: 'preview', fields }
-	return buildBlockedPairs({ records, rules: [rule], country }).stats[0] ?? null
+	return buildBlockedPairs({ records, rules: [rule], country, countOnly: true }).stats[0] ?? null
 }

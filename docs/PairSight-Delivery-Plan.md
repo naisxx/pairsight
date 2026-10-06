@@ -58,16 +58,27 @@ the start, without duplicating any Jev work.
   attempt.
 - **The run worker** (`src/server/pairsight/worker/run-worker.ts`) lives in
   the web server, started once at boot from `instrumentation.ts`. Every
-  second it looks for runs with status `running`; for each it calls
-  `processRunBatch`, which:
-  - claims a batch of pending assessments, plus any "running" ones older
-    than 60 seconds (reclaimed after a crash or a restart)
-  - calls Jev with the run's share of `RUN_WORKER_CONCURRENCY` (default 40,
-    shared evenly across running runs) and a 20-second timeout
-  - retries 429, 529, timeouts and network errors up to 3 times with
-    backoff
-  - marks 422 and unparseable responses as `failed` straight away
-  - stops the run on 401, as a configuration error
+  second it looks for runs with status `running`, and keeps each one's calls
+  topped up with `startRunCalls` as answers come back (never waiting on a
+  batch, so one slow call holds only its own slot), which:
+  - claims pending assessments that are due (`nextTryAt`), plus
+    any "running" ones whose claim is stale (twice the call timeout plus
+    20 s: reclaimed after a crash, a restart or a failed save)
+  - calls Jev through the server's one shared limit
+    (`worker/jev-limiter.ts`), split evenly across running runs: it starts
+    at `RUN_WORKER_CONCURRENCY` (100), climbs to
+    `RUN_WORKER_CONCURRENCY_MAX` (200) while Jev keeps up, halves on
+    pushback and stops for a while when Jev is down; each call times out
+    after `TYPESAFE_TIMEOUT_MS` (20 s)
+  - on busy, rate-limited, down, slow or garbled answers, releases the pair
+    with a time to try again (backoff, honouring `Retry-After`), never
+    failing it, and marks the run waiting (`runs.waitingSince`)
+  - asks again when an answer has no usable score, up to 3 times
+  - fails a pair only when Jev refuses it (400, 413, 422) or never gives a
+    usable answer
+  - stops the run when the key is missing, or refused for about a minute
+
+  (Scale Roadmap item 4 has the table of every outcome.)
 
   When nothing is left to claim and nothing is in flight, `finishIfDone`
   marks the run complete.

@@ -125,7 +125,7 @@ V1 shipped in October 2026 as a complete loop:
 
 Saved evaluations, the fictional demo data (a public, read-only sandbox) and the landing page shipped with it.
 
-V1 evaluates people, organisations or products (read from the uploaded file's columns and confirmed by the user) in CSV or Excel files: up to 10,000 records (10 MB) and 40 columns, three vendors, and 5,000 pairs per run. Each type brings its own fields, blocking rules and definition of "the same", and the sandbox has a prepared evaluation of each.
+V1 evaluates people, organisations or products (read from the uploaded file's columns and confirmed by the user) in CSV or Excel files: up to 10,000 records (10 MB) and 40 columns, three vendors, and 100,000 pairs per run. Each type brings its own fields, blocking rules and definition of "the same", and the sandbox has a prepared evaluation of each.
 
 Fuzzy blocking shipped with it: rules can match on how a name sounds, its words in any order, an email username or a postcode district, so duplicates with a typo, a move or a new email reach Jev too, and Results calls out the hard cases each vendor caught or missed.
 

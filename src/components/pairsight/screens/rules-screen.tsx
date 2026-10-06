@@ -48,6 +48,7 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					fromRules: counts?.blockedPairs ?? 0,
 					vendorOnly: counts?.addedByVendorOnly ?? 0,
 					total: counts?.uniquePairs ?? 0,
+					isExact: counts?.isExact ?? true,
 					limit: LIMITS.maxPairsPerRun,
 					raw: savedStats.reduce((sum, stat) => sum + stat.pairCount, 0),
 					largest: Math.max(0, ...savedStats.map((stat) => stat.largestBucket)),

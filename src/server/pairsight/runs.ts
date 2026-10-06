@@ -1,6 +1,7 @@
 import 'server-only'
 import { AppError } from '@/lib/errors/app-error'
 import { failureReason, type FailureReason } from '@/lib/pairsight/failure-reasons'
+import { captureError } from '@/lib/observability/capture-error'
 import { db } from '@/server/db/client'
 import { evaluationWhere, ownerScope, type EvaluationScope } from './scope'
 
@@ -54,6 +55,9 @@ export type RunProgress = {
 	// When its last pair was checked: set before its results are worked out,
 	// so a run can be done checking while still `running` for a few seconds.
 	completedAt: Date | null
+	// Since when it has been waiting for Jev, busy or down, to answer again;
+	// it carries on by itself. Null when it isn't waiting.
+	waitingSince: Date | null
 }
 
 // A run's counts worked out exactly from its pairs' answers, and stored
@@ -79,19 +83,62 @@ export async function recountRun(runId: string) {
 	})
 }
 
+// Answers waiting to be counted, by assessment: whether each failed.
+const uncounted = new Map<string, boolean>()
+let flushTimer: ReturnType<typeof setTimeout> | null = null
+// Answers are counted together this often. One update per answer had every
+// call in flight queue on the run's one row (21 ms each at 100 calls at
+// once), which made counting, not Jev, the slowest part of a run.
+const COUNT_EVERY_MS = 250
+
 // A pair's final answer, counted on every running run that holds it (pairs'
-// answers are shared between runs of the same records and settings).
-export async function countAnswer({
+// answers are shared between runs of the same records and settings). Counted
+// a moment later, with the answers around it: the Runs centre's progress
+// trails by at most that, and finishing a run recounts it exactly, so a
+// restart losing a few never shows in its results.
+export function countAnswer({
 	assessmentId,
 	isFailed
 }: {
 	assessmentId: string
 	isFailed: boolean
 }) {
-	await db.run.updateMany({
-		where: { status: 'running', countedAt: { not: null }, pairs: { some: { assessmentId } } },
-		data: { checkedCount: { increment: 1 }, failedCount: { increment: isFailed ? 1 : 0 } }
+	uncounted.set(assessmentId, isFailed)
+	flushTimer ??= setTimeout(() => {
+		flushTimer = null
+		countAnswers().catch((error: unknown) => captureError(error, { source: 'run-counts' }))
+	}, COUNT_EVERY_MS)
+}
+
+async function countAnswers() {
+	const answers = new Map(uncounted)
+	uncounted.clear()
+	if (answers.size === 0) return
+	const holders = await db.runPair.findMany({
+		where: {
+			assessmentId: { in: [...answers.keys()] },
+			run: { status: 'running', countedAt: { not: null } }
+		},
+		select: { runId: true, assessmentId: true }
 	})
+	const byRun = new Map<string, { checked: number; failed: number }>()
+	for (const { runId, assessmentId } of holders) {
+		const counts = byRun.get(runId) ?? { checked: 0, failed: 0 }
+		counts.checked++
+		if (answers.get(assessmentId) === true) counts.failed++
+		byRun.set(runId, counts)
+	}
+	await Promise.all(
+		[...byRun].map(([runId, counts]) =>
+			db.run.updateMany({
+				where: { id: runId, status: 'running', countedAt: { not: null } },
+				data: {
+					checkedCount: { increment: counts.checked },
+					failedCount: { increment: counts.failed }
+				}
+			})
+		)
+	)
 }
 
 // How far a run is, from its stored counts: the same cost however many
@@ -105,6 +152,7 @@ export async function getRunProgress(runId: string): Promise<RunProgress> {
 			status: true,
 			stopReason: true,
 			completedAt: true,
+			waitingSince: true,
 			pairCount: true,
 			checkedCount: true,
 			failedCount: true,
@@ -135,7 +183,8 @@ export async function getRunProgress(runId: string): Promise<RunProgress> {
 		failures: [...byReason]
 			.map(([reason, count]) => ({ reason, count }))
 			.sort((a, b) => b.count - a.count),
-		completedAt: run.completedAt
+		completedAt: run.completedAt,
+		waitingSince: run.status === 'running' ? run.waitingSince : null
 	}
 }
 
@@ -144,11 +193,11 @@ export async function retryFailed({ ownerId, runId }: { ownerId: string; runId: 
 	await db.$transaction([
 		db.assessment.updateMany({
 			where: { status: 'failed', runPairs: { some: { runId } } },
-			data: { status: 'pending', attempts: 0, errorCode: null }
+			data: { status: 'pending', attempts: 0, errorCode: null, nextTryAt: null }
 		}),
 		db.run.update({
 			where: { id: runId },
-			data: { status: 'running', stopReason: null, completedAt: null }
+			data: { status: 'running', stopReason: null, completedAt: null, waitingSince: null }
 		})
 	])
 	// Its failed pairs are waiting again.
@@ -164,15 +213,22 @@ export async function pauseRun({ ownerId, runId }: { ownerId: string; runId: str
 	await getOwnedRun({ ownerId, runId })
 	await db.run.updateMany({
 		where: { id: runId, status: 'running' },
-		data: { status: 'stopped', stopReason: PAUSED }
+		data: { status: 'stopped', stopReason: PAUSED, waitingSince: null }
 	})
 }
 
-// After a pause, or a configuration stop (the key was added or fixed).
+// After a pause, or a configuration stop (the key was added or fixed). Pairs
+// that were waiting to try Jev again go straight away: someone just asked.
 export async function resumeRun({ ownerId, runId }: { ownerId: string; runId: string }) {
 	await getOwnedRun({ ownerId, runId })
-	await db.run.update({
-		where: { id: runId },
-		data: { status: 'running', stopReason: null, completedAt: null }
-	})
+	await db.$transaction([
+		db.assessment.updateMany({
+			where: { status: 'pending', nextTryAt: { not: null }, runPairs: { some: { runId } } },
+			data: { nextTryAt: null }
+		}),
+		db.run.update({
+			where: { id: runId },
+			data: { status: 'running', stopReason: null, completedAt: null, waitingSince: null }
+		})
+	])
 }

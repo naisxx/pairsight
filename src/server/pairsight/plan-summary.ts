@@ -19,6 +19,10 @@ export type PlanCounts = {
 	allPossiblePairs: number
 	reusable: number
 	toEvaluate: number
+	// False when the rules pick more pairs than one run can check and they
+	// weren't all built (blocking.ts): the pair counts are then "at least",
+	// and the plan is blocked.
+	isExact: boolean
 }
 
 // One source of pairs, largest first. Rules overlap, so rule contributions
@@ -45,11 +49,15 @@ export function summarizePlan({
 	vendorPairs,
 	reusableKeys,
 	vendorCount,
-	jevFieldCount
+	jevFieldCount,
+	isComplete = true
 }: {
 	recordCount: number
 	rules: BlockingRule[]
 	ruleStats: RuleStats[]
+	// Whether blocking built every pair; when not, `comparison` holds only
+	// the vendors' pairs and the rules' total is known to be over the limit.
+	isComplete?: boolean
 	blockedPairCount: number
 	comparison: ComparisonPair[]
 	vendorPairs: VendorPair[]
@@ -57,24 +65,34 @@ export function summarizePlan({
 	vendorCount: number
 	jevFieldCount: number
 }): { counts: PlanCounts; blockers: PlanBlocker[]; contributors: PlanContributor[] } {
-	const reusable = comparison.filter((pair) => reusableKeys.has(pairKey(pair))).length
-	const addedByVendorOnly = comparison.filter((pair) => pair.ruleIds.length === 0).length
+	const vendorPairCount = new Set(vendorPairs.map(pairKey)).size
+	// Not every pair was built: the rules alone pick more than the limit, at
+	// least as many as the biggest rule. Nothing is reused or added to that.
+	const atLeast = Math.max(LIMITS.maxPairsPerRun + 1, ...ruleStats.map((stat) => stat.pairCount))
+	const reusable = isComplete
+		? comparison.filter((pair) => reusableKeys.has(pairKey(pair))).length
+		: 0
+	const addedByVendorOnly = isComplete
+		? comparison.filter((pair) => pair.ruleIds.length === 0).length
+		: 0
+	const uniquePairs = isComplete ? comparison.length : atLeast
 	const counts: PlanCounts = {
 		records: recordCount,
-		blockedPairs: blockedPairCount,
-		vendorPairs: new Set(vendorPairs.map(pairKey)).size,
+		blockedPairs: isComplete ? blockedPairCount : atLeast,
+		vendorPairs: vendorPairCount,
 		addedByVendorOnly,
-		uniquePairs: comparison.length,
+		uniquePairs,
 		allPossiblePairs: groupPairCount(recordCount),
 		reusable,
-		toEvaluate: comparison.length - reusable
+		toEvaluate: uniquePairs - reusable,
+		isExact: isComplete
 	}
 
 	const blockers: PlanBlocker[] = []
 	if (vendorCount === 0) blockers.push('no_vendors')
 	if (jevFieldCount < MIN_JEV_FIELDS) blockers.push('no_jev_fields')
-	if (comparison.length === 0) blockers.push('no_pairs')
-	if (comparison.length > LIMITS.maxPairsPerRun) blockers.push('too_many_pairs')
+	if (uniquePairs === 0) blockers.push('no_pairs')
+	if (uniquePairs > LIMITS.maxPairsPerRun) blockers.push('too_many_pairs')
 
 	const ruleContributors: PlanContributor[] = rules.flatMap((rule) => {
 		const stat = ruleStats.find((candidate) => candidate.ruleId === rule.id)

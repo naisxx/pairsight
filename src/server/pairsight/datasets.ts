@@ -6,6 +6,7 @@ import type { SourceRecordInput } from './source-records'
 import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
 import { recordKeys } from './record-keys'
+import { chunks } from './chunks'
 
 // Records written per statement.
 const SAVE_BATCH = 5_000
@@ -72,9 +73,9 @@ export async function saveSourceDataset({
 		select: { id: true }
 	})
 	const write = async (records: SourceRecordInput[]) => {
-		for (let at = 0; at < records.length; at += SAVE_BATCH) {
+		for (const batch of chunks(records, SAVE_BATCH)) {
 			await db.sourceRecord.createMany({
-				data: records.slice(at, at + SAVE_BATCH).map((record) => ({
+				data: batch.map((record) => ({
 					datasetId: dataset.id,
 					reference: record.reference,
 					rowNumber: record.rowNumber,

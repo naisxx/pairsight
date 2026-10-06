@@ -19,6 +19,7 @@ export async function PlanBlockers({
 	contributors,
 	rules,
 	uniquePairs,
+	isExact,
 	maxPairsPerRun
 }: {
 	// The evaluation's pages, for the fix links.
@@ -28,6 +29,8 @@ export async function PlanBlockers({
 	contributors: readonly PlanContributor[]
 	rules: Array<{ id: string; fields: string[] }>
 	uniquePairs: number
+	// False when the rules pick too many to build: only "over the limit" is known.
+	isExact: boolean
 	maxPairsPerRun: number
 }) {
 	const [t, tRules, tRoles] = await Promise.all([
@@ -44,10 +47,14 @@ export async function PlanBlockers({
 				<section role="alert" className="border-danger bg-danger-subtle rounded-md border p-4">
 					<h2 className="text-danger flex items-center gap-2 text-sm font-semibold">
 						<WarningCircleIcon size={ICON_SIZE} />
-						{t('overTitle', { total: uniquePairs, limit: maxPairsPerRun })}
+						{isExact
+							? t('overTitle', { total: uniquePairs, limit: maxPairsPerRun })
+							: t('overTitleMany', { limit: maxPairsPerRun })}
 					</h2>
 					<p className="type-ui text-text mt-1">
-						{t('overDescription', { count: uniquePairs - maxPairsPerRun })}
+						{isExact
+							? t('overDescription', { count: uniquePairs - maxPairsPerRun })
+							: t('overDescriptionMany')}
 					</p>
 					<ul className="divide-border border-border bg-surface mt-3 divide-y overflow-hidden rounded-sm border">
 						{contributors.map((item) =>

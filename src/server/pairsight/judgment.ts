@@ -114,11 +114,19 @@ export function parseJevAnswer(body: unknown, entityType: EntityType): JevAnswer
 	return { ok: true, score: answer.noul, modelReported: parsed.data.model ?? null }
 }
 
-export type FailureAction = 'retry' | 'fail' | 'stop_run'
+// What a failed Jev call means for its pair (docs/PairSight-Scale-Roadmap.md,
+// item 4). Only `fail` ever fails a pair, and only for a pair Jev read and
+// refused:
+// - `wait`: Jev is busy, down, slow or unreachable, or the answer got lost
+//   on the way. The pair waits and is tried again later, as often as it
+//   takes; the worker slows down as a whole. Never a failure.
+// - `access`: the key is missing, rejected or forbidden. Tried a few times
+//   (a gateway can blip), then the run stops for someone to fix the key.
+// - `fail`: Jev read the request and refused this pair (400, 413, 422).
+export type FailureAction = 'wait' | 'access' | 'fail'
 
-// 429 and 529 are documented as retryable with backoff; other 5xx, timeouts
-// and network errors are treated the same. A config problem (missing or
-// rejected key) stops the run: no pair can succeed until it's fixed.
+const BAD_PAIR_STATUSES: ReadonlySet<number> = new Set([400, 413, 422])
+
 export function classifyFailure({
 	kind,
 	status
@@ -126,8 +134,34 @@ export function classifyFailure({
 	kind: TypesafeFailureKind
 	status?: number
 }): FailureAction {
-	if (kind === 'config') return 'stop_run'
-	if (kind === 'timeout' || kind === 'network') return 'retry'
-	if (status === 429 || (status != null && status >= 500)) return 'retry'
-	return 'fail'
+	if (kind === 'config') return 'access'
+	if (kind === 'http' && status != null && BAD_PAIR_STATUSES.has(status)) return 'fail'
+	// 429, 408, 409, every 5xx (529 included), timeouts, dropped connections,
+	// a body cut off or not JSON, and any status Jev doesn't document: wait.
+	return 'wait'
+}
+
+// How long a pair waits before Jev is asked again after a busy answer: 2 s,
+// 4 s, 8 s… by how often it has been tried, capped at 2 minutes, never
+// sooner than Jev asked (Retry-After). Jittered down to half, so pairs
+// released together don't all come back in the same second.
+const WAIT_FIRST_MS = 2_000
+const WAIT_MAX_MS = 120_000
+// Doubling stops here, long past the cap, so a pair tried thousands of times
+// never overflows the arithmetic.
+const MAX_DOUBLINGS = 16
+
+export function waitBeforeRetryMs({
+	attempts,
+	retryAfterMs,
+	random = Math.random
+}: {
+	attempts: number
+	retryAfterMs: number | null
+	random?: () => number
+}): number {
+	const exponent = Math.max(0, attempts - 1)
+	const full = Math.min(WAIT_MAX_MS, WAIT_FIRST_MS * 2 ** Math.min(exponent, MAX_DOUBLINGS))
+	const jittered = Math.round(full * (0.5 + random() / 2))
+	return Math.max(jittered, retryAfterMs ?? 0)
 }
