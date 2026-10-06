@@ -446,7 +446,40 @@ are noted; the later items assume the earlier ones exist.
   - **Benchmark:** `scripts/splink-spike/` now scores the service's own
     model, for any later change to it.
 
-### 6. Automatic pair selection: works on the first run
+### 6. Automatic pair selection: works on the first run (built, 2026-10-07)
+
+- **Built:**
+  - **PairSight suggests the pairs by default.** A new people evaluation
+    with 200 records or more starts with no comparison rules: the pairs
+    item 5's service scores at weight 0 or more are suggested, shown as
+    "Suggested by PairSight". The screens never name the technology behind
+    it (`docs/rules/copy.md`; `src/i18n/copy.test.mts` fails on the names).
+  - **Rules screen:** a card at the top, "PairSight suggests the pairs",
+    with its switch, how many it suggests, what they share in plain words
+    ("the same date of birth (64%) · first and last names swapped (5%)",
+    from each pair's reasons) and the pre-run check per vendor ("These
+    would also find 19 of the 21 pairs Vendor A matched"). Your own rules
+    sit under "Advanced", closed unless rules are on or suggestions aren't
+    picking.
+  - **Never an empty plan by accident.** Files under 200 records and other
+    types save the type's default rules, as before. If suggestions are
+    unavailable or fail and no rule is on, the plan uses the default rules
+    and says so. Switched off on purpose, it's your rules as set. While
+    suggestions are being worked out, Start waits.
+  - **Each pair says why:** the service turns each pair's per-field levels
+    into reason codes (`pair_scores.reasons`); the pair page says "Suggested
+    because they share the same date of birth, first and last names
+    swapped", and the scoring job tallies them once for the Rules card.
+  - **No safety sample.** On the benchmark the pairs below the floor hold
+    almost no duplicates (0 of 87 missed at 10K): the misses are pairs never
+    scored at all, which no affordable sample reaches, so it would almost
+    always report "0 found". Instead Results' coverage panel and the PDF
+    say plainly that suggested pairs share something PairSight compares (a
+    name, date of birth, email, phone or postcode), and pairs sharing none
+    of these weren't checked.
+- **Left for later:** Jev's answers sharpening the next run; removing the
+  TypeScript rules once nothing needs them (organisations and products still
+  do).
 
 - **What:**
   - The funnel replaces hand-built rules as the default: wide net,
