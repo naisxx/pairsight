@@ -8,8 +8,8 @@ Update this file when an item ships or a decision changes.
 
 ## Why
 
-v1 capped an evaluation at **500 records and 5,000 pairs per run** (item 3
-raised records to 10,000). These are
+v1 capped an evaluation at **500 records and 5,000 pairs per run** (now
+10,000 records and 100,000 pairs: items 3 and 8). These were
 safety limits from how v1 runs, not limits of Jev or the database:
 
 - **Runs are driven by the browser tab.** There's no background worker. The
@@ -273,13 +273,72 @@ are noted; the later items assume the earlier ones exist.
   3.5 s). Raising the record limit past 10K needs that work done once and
   stored (with items 6 and 8), not just a bigger number.
 
-### 4. Jev throughput
+### 4. Jev throughput (built, 2026-10-06)
 
-- **What:**
-  - Raise concurrency to what item 0 measured.
-  - Adaptive backoff on 429/529.
-  - Keep the per-run cost and time estimate honest.
-- **Depends on:** items 0 and 1.
+- **Measured live** (`pnpm jev:speed 40 80 120 160 200`, 2026-10-06, about
+  $0.06 in all): no pushback at any level.
+
+  | Calls at once | Pairs/s | Note                   |
+  | ------------- | ------- | ---------------------- |
+  | 40            | 25.1    | cold start (p95 3.4 s) |
+  | 80            | 130.6   |                        |
+  | 120           | 254.7   |                        |
+  | 160           | 337.3   |                        |
+  | 200           | 403.9   | p50 390 ms             |
+
+- **Defaults from that:** start at 100 calls at once
+  (`RUN_WORKER_CONCURRENCY`, was 40) and climb to at most 200
+  (`RUN_WORKER_CONCURRENCY_MAX`, the highest level measured clean). A call
+  times out after 20 s (`TYPESAFE_TIMEOUT_MS`).
+- **Built:**
+  - **Never failing on pushback.** Every Jev outcome is one of four kinds
+    (`judgment.ts` `classifyFailure`):
+
+    | Outcome                                                                                                                        | What happens                                                                           |
+    | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- |
+    | A score                                                                                                                        | saved                                                                                  |
+    | Busy: 429, 408, 409, any 5xx (529 too), a status Jev doesn't document, timeout, dropped connection, a body cut off or not JSON | the pair waits and is tried again, as often as it takes; everything slows down         |
+    | Key refused (401, 403)                                                                                                         | the pair waits; after about a minute of refusals the run stops for the key to be fixed |
+    | Key missing                                                                                                                    | the run stops                                                                          |
+    | Jev refused the pair (400, 413, 422)                                                                                           | failed                                                                                 |
+    | An answer without a usable score                                                                                               | asked again straight away, up to 3 times, then failed                                  |
+
+    A waiting pair is released at once (nothing sleeps holding a slot) with
+    `assessments.nextTryAt`: 2 s, 4 s, 8 s… capped at 2 minutes, jittered,
+    never sooner than Jev's `Retry-After`. Our own database failing while
+    saving an answer leaves the pair claimed, to be taken again once the
+    claim is stale. A run never finishes while pairs are waiting.
+
+  - **Calls are topped up, never batched.** As answers come back, the
+    worker starts more of the run's pairs (once a quarter of its share is
+    free), so one slow or stuck call holds only its own slot. Before, a run
+    went a batch at a time and waited for the batch's slowest call: one call
+    that never answered froze the whole run for the 20 s timeout. A 435-pair
+    run with one stuck call now checks the other 434 in about 2 s.
+  - **Answers are counted together**, every 250 ms, instead of one update of
+    the run's row per answer. At 100 calls at once those updates queued on
+    the one row (21 ms each) and were the slowest part of a run. Finishing a
+    run recounts it exactly.
+  - **One shared limit per server** (`worker/jev-limiter.ts`), for every run
+    and a pair page's re-check. It adds 4 calls after each clean window up
+    to the max, halves on pushback (once per burst, floor 2), and after 10
+    busy answers in a row, or a `Retry-After`, stops calling: 5 s, then
+    twice as long each time up to 2 minutes, with one probe call deciding
+    whether to carry on. An outage of any length is just a longer wait.
+  - **The card says when it's waiting** (`runs.waitingSince`): "Waiting for
+    Jev", with a note that it carries on by itself. Pause still works;
+    Resume sends waiting pairs straight away.
+  - **A time estimate on the Plan screen**, next to the cost: the speed of
+    the last 5 finished live runs with at least 50 new checks, taken
+    together (item 8 refined this)
+    (`runs.newChecks` over checking time), or calls at once ÷ 0.5 s per call
+    before there are any; plus 30%, rounded up ("takes about 3 minutes").
+  - Fixes on the way: a re-check from the pair page, or a stop, no longer
+    turns a finished run into a stopped one; a re-check while Jev is busy
+    leaves the pair failed to try again, instead of stranding it.
+  - The Jev stub learned Jev's bad days (`/busy`, `/outage`, `/hang`,
+    `/garbage`, 403), and the e2e suite runs each one to a complete run
+    with nothing failed.
 
 ### 5. Splink scoring service
 
@@ -334,12 +393,47 @@ are noted; the later items assume the earlier ones exist.
   of pairs). Small runs keep checking everything exactly.
 - **Depends on:** items 4–6.
 
-### 8. Replace the pair cap with an estimate
+### 8. Replace the pair cap with an estimate (built, 2026-10-06, with item 4)
 
-- **What:** the 5,000 wall becomes "about 25 minutes, ~$0.60. Start?".
-  Guardrails stay for runaway groups (a loose key making one group of
-  thousands of records).
-- **Depends on:** items 1 and 4. It can come earlier if useful.
+- **Built:**
+  - **The limit is 100,000 pairs per run** (was 5,000): about 10 minutes of
+    Jev at today's speed. The Plan screen's time and cost (item 4) are the
+    estimate; there's no extra confirm step (decided 2026-10-06).
+  - **Why not higher yet:** the Rules and Plan pages build a plan's pairs on
+    every view. Up to 100K that stays quick (measured below); past it, pairs
+    need working out once and storing, which comes with item 6.
+  - **A real guardrail for runaway groups.** Each rule's pairs are counted
+    from its group sizes first (n(n−1)/2 per group), and pairs are built only
+    up to the limit: a rule picking millions (5,000 records sharing a key) is
+    counted exactly, never built. The plan is blocked with that rule named
+    and a Turn off button, and the screens say "far more than one run can
+    check" rather than a made-up total. The Rules screen's per-rule numbers
+    no longer build pairs at all.
+  - **Starting a big run:** one transaction (a failed start leaves nothing),
+    writing in batches of 5,000 with time to match its size, reading earlier
+    scores once instead of twice. The button says "Getting 99.7K pairs
+    ready…" for big runs.
+  - **The time estimate learns from this server's pool only** (the e2e
+    suite's stub runs share the local database with real ones) and weighs
+    runs by size: all their checks over all their time, so start-up time in
+    small runs doesn't make big ones look slow.
+  - The vendor file message now names the limit it's checked against
+    (100,000 rows), not the pair limit.
+- **Measured** (local, Jev stub, 447 records in one group: 99,681 pairs):
+
+  |                                 | Time                |
+  | ------------------------------- | ------------------- |
+  | Rules page                      | 0.6 s               |
+  | Plan page                       | 1.4 s               |
+  | Start (click to the run's card) | 24.5 s              |
+  | Checking every pair             | 4 min 35 s (~360/s) |
+  | Results page                    | 1.3 s               |
+
+  Stub answers are instant, so with real Jev (0.4–0.8 s a call) checking
+  is Jev-bound: about 7–14 minutes at 100–200 calls at once. No real Jev
+  credits were used for this test.
+
+- **Depends on:** items 1 and 4.
 
 ### 9. Splink as a free baseline vendor (optional)
 

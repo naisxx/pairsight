@@ -58,7 +58,7 @@ and filter, not a category).
 | ------------------------------ | --------------------------------------------------------- |
 | Source records                 | 500                                                       |
 | Vendors                        | 1 required end to end; up to 3 if the core flow is stable |
-| Unique evaluated pairs per run | 5,000                                                     |
+| Unique evaluated pairs per run | 100,000 (5,000 in v1; Scale Roadmap item 8)               |
 | Bucket size warning            | > 50 records (shows the bucket's pair count)              |
 | Import format                  | CSV or Excel (.xlsx)                                      |
 
