@@ -105,8 +105,16 @@ model SourceRecord {
 	rowNumber Int
 	// Original cell values keyed by header — shown as-is in pair inspection.
 	values    Json
+	// For reading results in the database (record-keys.ts): the record's name
+	// as shown on Results, its reference padded so text order is natural
+	// order (R2 before R10), and both lowercased for search. Filled when the
+	// records are saved, or on first read for records saved before.
+	label      String?
+	sortKey    String?
+	searchText String?
 
 	@@unique([datasetId, reference])
+	@@index([datasetId, sortKey])
 	@@map("source_records")
 }
 
@@ -204,6 +212,11 @@ model Run {
 	pairCount         Int
 	createdAt         DateTime      @default(now()) @db.Timestamptz(6)
 	completedAt       DateTime?     @db.Timestamptz(6)
+	// The Overview, worked out once when the run finishes (run-summary.ts):
+	// exact counts and patterns over every checked pair, so Results never
+	// load the whole run. Null until built; the version marks its format.
+	summary           Json?
+	summaryVersion    Int?
 	pairs             RunPair[]
 
 	@@unique([evaluationId, number])
@@ -224,9 +237,20 @@ model RunPair {
 	matchedByExportIds String[]
 	assessmentId       String     @db.Uuid
 	assessment         Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+	// What Results read, copied here when the run's summary is built
+	// (run-summary.ts) so a page of Results reads this table alone and never
+	// joins the whole run: the judgment's status and score as of the summary,
+	// the record that comes first's sortKey, and both records' searchText.
+	// Null until the first summary.
+	status             AssessmentStatus?
+	score              Float?
+	sortKey            String?
+	searchText         String?
 
 	@@unique([runId, recordAId, recordBId])
 	@@index([assessmentId])
+	// Results sorted by score read a page straight off this index.
+	@@index([runId, score])
 	@@map("run_pairs")
 }
 
