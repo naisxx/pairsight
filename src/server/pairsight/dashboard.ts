@@ -74,8 +74,10 @@ export async function getDashboard({
 			entityType: true,
 			createdAt: true,
 			updatedAt: true,
-			// The current dataset is the newest; its vendor exports are the vendors.
+			// The current dataset is the newest saved one; its vendor exports are
+			// the vendors.
 			datasets: {
+				where: { savedAt: { not: null } },
 				orderBy: { createdAt: 'desc' },
 				take: 1,
 				select: {

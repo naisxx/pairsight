@@ -5,7 +5,7 @@ import { log } from '@/server/lib/logger'
 import { mapRecordFields } from './fields'
 import type { JudgmentConfig } from './judgment'
 import { assess, RunStopped } from './assess'
-import { getOwnedRun, getRunProgress, runNotFound } from './runs'
+import { getOwnedRun, recountRun, runNotFound } from './runs'
 import {
 	buildRunSummary,
 	clearRunSummaries,
@@ -167,25 +167,39 @@ export async function processRunBatch({
 // don't hold it open; they can be tried again from its card). Returns whether
 // the run is no longer running, for whatever reason.
 export async function finishIfDone(runId: string): Promise<boolean> {
-	const progress = await getRunProgress(runId)
-	if (progress.status !== 'running') return true
-	if (progress.pending > 0 || progress.running > 0) return false
-	// Its Overview is worked out before it's marked finished, so a finished
-	// run always has one to show.
+	const current = await db.run.findUniqueOrThrow({
+		where: { id: runId },
+		select: { status: true }
+	})
+	if (current.status !== 'running') return true
+	// Asked of the pairs themselves, not the stored counts: only the pairs
+	// still waiting or being checked are read (an index on their status).
+	const outstanding = await db.assessment.count({
+		where: { runPairs: { some: { runId } }, status: { in: ['pending', 'running'] } }
+	})
+	if (outstanding > 0) return false
+	// Checking is done now: that's when it finished (its elapsed time is the
+	// checking, not the summary). Its Overview is worked out before it's
+	// marked complete, so a complete run always has one to show; until then
+	// the Runs centre says the results are being worked out.
+	await db.run.updateMany({
+		where: { id: runId, status: 'running', completedAt: null },
+		data: { completedAt: new Date() }
+	})
 	const run = await db.run.findUniqueOrThrow({
 		where: { id: runId },
 		select: { ...SUMMARY_RUN_SELECT, judgmentKey: true }
 	})
-	const summary = await buildRunSummary(run)
+	const [summary, counts] = await Promise.all([buildRunSummary(run), recountRun(runId)])
 	const { count } = await db.run.updateMany({
 		where: { id: runId, status: 'running' },
-		data: { status: 'completed', completedAt: new Date(), ...summaryColumns(summary) }
+		data: { status: 'completed', ...summaryColumns(summary) }
 	})
 	if (count === 1) {
 		log.info('pairsight run completed', {
 			runId,
-			succeeded: progress.succeeded,
-			failed: progress.failed
+			succeeded: counts.checkedCount - counts.failedCount,
+			failed: counts.failedCount
 		})
 		// Pairs it judged may be shared with other finished runs.
 		await clearRunSummaries({
@@ -226,6 +240,7 @@ export async function retryPair({
 		// Every finished run holding this pair now counts it differently; the
 		// action rebuilds them once it has answered.
 		await clearRunSummaries({ datasetId: run.datasetId, judgmentKey: run.judgmentKey })
+		await recountRun(runId)
 	}
 	const { status } = await db.assessment.findUniqueOrThrow({
 		where: { id: pair.assessment.id },

@@ -116,9 +116,12 @@ export async function createVendorDraft({
 	})
 }
 
+// The owner's draft, without its pairs (a big JSON value only confirming
+// reads).
 async function ownedDraft(ownerId: string, draftId: string) {
 	const draft = await db.vendorDraft.findFirst({
-		where: { id: draftId, evaluation: { ownerId, kind: 'live' } }
+		where: { id: draftId, evaluation: { ownerId, kind: 'live' } },
+		select: { id: true, evaluationId: true, datasetId: true, name: true }
 	})
 	if (draft == null) throw evaluationNotFound()
 	return draft
@@ -186,8 +189,12 @@ export async function draftDatasetId(ownerId: string, draftId: string) {
 	return (await ownedDraft(ownerId, draftId)).datasetId
 }
 
+// Matches written per statement, and how long confirming a big file may take.
+const CONFIRM_BATCH = 5_000
+const CONFIRM_TRANSACTION = { timeout: 60_000, maxWait: 10_000 }
+
 // The user confirmed the file lists every match the vendor made: the draft
-// becomes an export with its matches, in one transaction.
+// becomes an export with its matches, in one transaction (all or nothing).
 export async function confirmVendorDraft({
 	ownerId,
 	draftId
@@ -195,7 +202,8 @@ export async function confirmVendorDraft({
 	ownerId: string
 	draftId: string
 }) {
-	const draft = await ownedDraft(ownerId, draftId)
+	await ownedDraft(ownerId, draftId)
+	const draft = await db.vendorDraft.findUniqueOrThrow({ where: { id: draftId } })
 	const columns = parseVendorColumns(draft.mapping)
 	const stats = parseVendorStats(draft.stats)
 	const { fileName } = draft
@@ -218,16 +226,18 @@ export async function confirmVendorDraft({
 			},
 			select: { id: true }
 		})
-		await tx.vendorMatch.createMany({
-			data: pairs.map((pair) => ({
-				exportId: vendorExport.id,
-				recordAId: pair.a,
-				recordBId: pair.b
-			}))
-		})
+		for (let at = 0; at < pairs.length; at += CONFIRM_BATCH) {
+			await tx.vendorMatch.createMany({
+				data: pairs.slice(at, at + CONFIRM_BATCH).map((pair) => ({
+					exportId: vendorExport.id,
+					recordAId: pair.a,
+					recordBId: pair.b
+				}))
+			})
+		}
 		await tx.vendorDraft.delete({ where: { id: draftId } })
 		return vendorExport
-	})
+	}, CONFIRM_TRANSACTION)
 }
 
 export async function deleteVendor({

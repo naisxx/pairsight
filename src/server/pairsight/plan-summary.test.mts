@@ -12,7 +12,7 @@ function stat(ruleId: string, pairCount: number, largestBucket = 2): RuleStats {
 		pairCount,
 		largestBucket,
 		recordsWithoutKey: 0,
-		oversizedBuckets: []
+		oversized: null
 	}
 }
 

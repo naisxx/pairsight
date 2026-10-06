@@ -382,15 +382,17 @@ function RuleWarnings({ stat, limits }: { stat: RuleStats; limits: RuleLimits })
 					{t('ruleOverCap', { pairs: stat.pairCount, limit: limits.maxPairsPerRun })}
 				</p>
 			)}
-			{stat.oversizedBuckets.map((bucket) => (
-				<p
-					key={`${bucket.size}-${bucket.pairCount}`}
-					className="text-warning mt-1.5 flex items-start gap-1.5 text-xs"
-				>
+			{stat.oversized != null && (
+				<p className="text-warning mt-1.5 flex items-start gap-1.5 text-xs">
 					<AlertIcon size={SMALL_ICON_SIZE} className="mt-px shrink-0" />
-					{t('oversized', { size: bucket.size, pairs: bucket.pairCount })}
+					{t('oversized', {
+						groups: stat.oversized.groups,
+						size: stat.oversized.largest,
+						pairs: stat.oversized.pairCount,
+						limit: limits.bucketWarningSize
+					})}
 				</p>
-			))}
+			)}
 		</>
 	)
 }

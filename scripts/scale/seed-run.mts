@@ -25,6 +25,7 @@ import {
 	summaryColumns
 } from '../../src/server/pairsight/run-summary.ts'
 import { generatePeople, HEADERS } from './people.mts'
+import { scaleOwner } from './owner.mts'
 
 const DEFAULT_PAIRS = 200_000
 // People per pair: enough records that random pairs rarely repeat.
@@ -59,28 +60,6 @@ function random(seed: number) {
 }
 const next = random(7)
 
-async function owner(): Promise<string> {
-	if (options.email != null) {
-		const user = await db.user.findUnique({ where: { email: options.email }, select: { id: true } })
-		if (user == null) throw new Error('No local account has that email.')
-		return user.id
-	}
-	const users = await db.user.findMany({
-		where: { NOT: { email: { startsWith: 'e2e+' } } },
-		select: { id: true }
-	})
-	const counts = await Promise.all(
-		users.map(async (user) => ({
-			id: user.id,
-			evaluations: await db.evaluation.count({ where: { ownerId: user.id } })
-		}))
-	)
-	const chosen = counts.sort((a, b) => b.evaluations - a.evaluations)[0]
-	if (chosen == null)
-		throw new Error('No local account to own the run. Sign up first, or pass --email.')
-	return chosen.id
-}
-
 async function inBatches<T>(rows: T[], write: (batch: T[]) => Promise<unknown>) {
 	for (let at = 0; at < rows.length; at += BATCH) await write(rows.slice(at, at + BATCH))
 }
@@ -92,7 +71,7 @@ const timed = async <T,>(label: string, work: () => Promise<T>) => {
 	return result
 }
 
-const ownerId = await owner()
+const ownerId = await scaleOwner(options.email)
 const people = generatePeople(Math.max(MIN_PEOPLE, Math.ceil(pairTarget / PAIRS_PER_PERSON)))
 const columnRoles = Object.fromEntries(
 	HEADERS.map((header) => [header, header === 'record_id' ? 'other' : header])

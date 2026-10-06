@@ -14,10 +14,11 @@ const nextConfig: NextConfig = {
 	reactCompiler: {
 		panicThreshold: 'all_errors'
 	},
-	// PairSight CSV uploads are sent to server actions as text: up to 1 MB of
-	// file (src/server/pairsight/limits.ts) plus the rest of the payload.
+	// Files never go through a server action: they're uploaded once to
+	// PUT /api/evaluations/[id]/uploads (src/server/api/pairsight/uploads.ts),
+	// so actions only carry choices. Next's default limit is enough.
 	experimental: {
-		serverActions: { bodySizeLimit: '2mb' }
+		serverActions: { bodySizeLimit: '1mb' }
 	},
 	// Messages are read from disk at request time (src/i18n/request.ts), not
 	// imported, so the build's file trace must be told to ship them.

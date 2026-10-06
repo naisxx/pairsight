@@ -5,21 +5,32 @@
 //
 // Usage: pnpm scale:datasets "<folder>"
 //
-// Sized to today's limits (500 records, 5,000 pairs per run) until large
-// uploads land (docs/PairSight-Scale-Roadmap.md, item 3).
+// Sized to today's limits: up to 10,000 records (docs/PairSight-Scale-Roadmap.md,
+// item 3) and 5,000 pairs per run. The 10K set also comes as an Excel
+// workbook, to try a big workbook upload.
 
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
-import { generatePeople, toCsv } from './people.mts'
+import ExcelJS from 'exceljs'
+import { generatePeople, HEADERS, toCsv } from './people.mts'
 
-const RECORDS = 500
 // Share of planted duplicates each vendor finds, and how many random
 // non-duplicate pairs it wrongly matches, per set.
 // The careful vendor makes few wrong matches; the aggressive one over-merges,
 // which is what makes a run long (500 records hold only so many duplicates).
 const SETS = [
-	{ name: 'medium', aggressiveExtra: 1_200, carefulExtra: 12, seed: 11 },
-	{ name: 'large', aggressiveExtra: 4_400, carefulExtra: 25, seed: 12 }
+	{
+		name: 'medium',
+		records: 500,
+		aggressiveExtra: 1_200,
+		carefulExtra: 12,
+		seed: 11,
+		excel: false
+	},
+	{ name: 'large', records: 500, aggressiveExtra: 4_400, carefulExtra: 25, seed: 12, excel: false },
+	// The default rules find about 1,200 pairs in 10K people; the vendors
+	// keep a run under 5,000 pairs.
+	{ name: '10k', records: 10_000, aggressiveExtra: 2_000, carefulExtra: 40, seed: 13, excel: true }
 ] as const
 const AGGRESSIVE_FINDS = 0.95
 const CAREFUL_FINDS = 0.7
@@ -40,7 +51,7 @@ if (folder == null || folder === '') {
 await mkdir(folder, { recursive: true })
 
 for (const set of SETS) {
-	const { rows, duplicates } = generatePeople(RECORDS, set.seed)
+	const { rows, duplicates } = generatePeople(set.records, set.seed)
 	const next = random(set.seed)
 	const ids = rows.map((row) => row.record_id)
 	const randomPair = () => {
@@ -65,6 +76,13 @@ for (const set of SETS) {
 	const careful = vendorFile(CAREFUL_FINDS, set.carefulExtra)
 	const prefix = path.join(folder, `people-${set.name}`)
 	await writeFile(`${prefix}-records.csv`, toCsv(rows))
+	if (set.excel) {
+		const book = new ExcelJS.Workbook()
+		book
+			.addWorksheet('Records')
+			.addRows([[...HEADERS], ...rows.map((row) => HEADERS.map((header) => row[header]))])
+		await writeFile(`${prefix}-records.xlsx`, Buffer.from(await book.xlsx.writeBuffer()))
+	}
 	await writeFile(`${prefix}-vendor-aggressive.csv`, aggressive.csv)
 	await writeFile(`${prefix}-vendor-careful.csv`, careful.csv)
 	console.log(

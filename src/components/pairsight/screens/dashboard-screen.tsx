@@ -8,6 +8,10 @@ import { Reveal } from '@/components/ui/reveal'
 import { cn } from '@/lib/cn'
 import type { Dashboard } from '@/server/pairsight/dashboard'
 
+// Evaluations still in setup shown to pick up: the newest few, so the card
+// stays the size of the latest results beside it.
+const CONTINUE_SHOWN = 3
+
 // The evaluations dashboard: the header (greeting and New evaluation, or the
 // sandbox's introduction), the summary strip, the latest results, what's
 // still in setup and every evaluation. Read-only in the sandbox: no create,
@@ -68,7 +72,11 @@ export async function DashboardScreen({
 							className={cn(latest != null ? '@5xl:col-span-4' : '@5xl:col-span-12')}
 						>
 							<ContinueSetup
-								rows={rows.filter((row) => row.status !== 'complete')}
+								total={rows.filter((row) => row.status !== 'complete').length}
+								rows={rows
+									.filter((row) => row.status !== 'complete')
+									.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+									.slice(0, CONTINUE_SHOWN)}
 								takenNames={names}
 								isReadOnly={isReadOnly}
 							/>

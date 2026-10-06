@@ -111,6 +111,37 @@ export function createDownloadRoute<InputSchema extends z.ZodType>(config: {
 	}
 }
 
+// The upload form of createApiRoute, for routes that take a file as the raw
+// request body: the same explicit input (query string plus the route's own
+// params) and error handling, with the body handed to the handler as a
+// stream so it can refuse an oversize file as it arrives. Answers JSON.
+export function createUploadRoute<InputSchema extends z.ZodType, Output>(config: {
+	input: InputSchema
+	handler: (input: z.infer<InputSchema>, body: ReadableStream<Uint8Array> | null) => Promise<Output>
+}) {
+	return async function (
+		req: NextRequest,
+		context: { params: Promise<Record<string, string | string[]>> }
+	) {
+		try {
+			const input = config.input.parse({
+				...Object.fromEntries(req.nextUrl.searchParams),
+				...(await context.params)
+			})
+			return NextResponse.json(await config.handler(input, req.body))
+		} catch (error) {
+			if (error instanceof z.ZodError) {
+				return NextResponse.json(
+					{ error: 'Invalid request', issues: error.flatten() },
+					{ status: 400 }
+				)
+			}
+			const { userMessage, status } = captureError(error)
+			return NextResponse.json({ error: userMessage }, { status })
+		}
+	}
+}
+
 // Cron routes check CRON_SECRET instead of a user session — wrap any route
 // under src/app/api/cron/** with this so the check can't be forgotten.
 export function createCronRoute(handler: (req: NextRequest) => Promise<Response>) {

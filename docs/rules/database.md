@@ -40,6 +40,11 @@ database out of shared memory ("could not resize shared memory segment"), and
 Results crashed. The local database container has 64 MB; a server has more,
 but the work still grows with the data.
 
+The same goes for anything polled: a run's progress, asked every second by
+the Runs centre, is read from counts stored on the run, kept as pairs are
+checked, not counted from its pairs on each ask (`getRunProgress`,
+`src/server/pairsight/runs.ts`).
+
 How it's enforced: PairSight's request queries are built in one place
 (`requestSql` in `src/server/pairsight/results-query.ts`), and
 `pnpm scale:check-results` reads each one's plan on the biggest local runs and

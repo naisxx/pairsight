@@ -82,8 +82,8 @@ for (const [label, rules] of [
 	console.log(`  blocking time     ${run.ms} ms · heap ${heapMb()} MB`)
 	for (const stat of run.result.stats) {
 		const warning =
-			stat.oversizedBuckets.length > 0
-				? ` · ${stat.oversizedBuckets.length} groups over ${LIMITS.bucketWarningSize}`
+			stat.oversized != null
+				? ` · ${stat.oversized.groups} groups over ${LIMITS.bucketWarningSize}`
 				: ''
 		console.log(
 			`    ${stat.ruleId.padEnd(26)} ${stat.pairCount.toLocaleString().padStart(9)} pairs · biggest group ${stat.largestBucket}${warning}`

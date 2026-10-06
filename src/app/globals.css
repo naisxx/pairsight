@@ -393,6 +393,38 @@
 	}
 }
 
+/* The same fade, top and bottom, for a list that scrolls inside its card
+   (src/components/ui/scroll-area.tsx). */
+@keyframes scroll-fade-y {
+	from {
+		--scroll-fade-start: 0px;
+		--scroll-fade-end: 32px;
+	}
+	8% {
+		--scroll-fade-start: 32px;
+	}
+	92% {
+		--scroll-fade-end: 32px;
+	}
+	to {
+		--scroll-fade-start: 32px;
+		--scroll-fade-end: 0px;
+	}
+}
+@supports (animation-timeline: scroll()) {
+	.scroll-fade-y {
+		mask-image: linear-gradient(
+			to bottom,
+			transparent,
+			#000 var(--scroll-fade-start),
+			#000 calc(100% - var(--scroll-fade-end)),
+			transparent
+		);
+		animation: scroll-fade-y linear both;
+		animation-timeline: scroll(self block);
+	}
+}
+
 /* Toasts sit above a docked action bar, never over its buttons. Unlayered, so
    it beats the viewport's own bottom-0 utility. */
 body:has([data-action-bar]) [data-toast-viewport] {

@@ -104,9 +104,10 @@ export function IdentitySection({
 				<fieldset>
 					<legend className="type-ui font-medium">{t('jevFieldsLegend')}</legend>
 					<p className="text-text-muted text-xs">{t('jevFieldsHint')}</p>
-					<div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-2 @2xl:grid-cols-3">
+					{/* As many columns as fit, so a field name never breaks over two lines. */}
+					<div className="mt-2 grid grid-cols-[repeat(auto-fill,minmax(8.5rem,1fr))] gap-x-4 gap-y-2">
 						{mappedRoles.map((role) => (
-							<label key={role} className="type-ui flex items-center gap-2">
+							<label key={role} className="type-ui flex items-center gap-2 whitespace-nowrap">
 								<Checkbox
 									checked={jevFields.has(role)}
 									onCheckedChange={(checked) =>

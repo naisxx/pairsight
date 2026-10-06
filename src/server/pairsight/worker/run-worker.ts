@@ -4,6 +4,7 @@ import { captureError } from '@/lib/observability/capture-error'
 import { db } from '@/server/db/client'
 import { log as rootLog, withLogContext } from '@/server/lib/logger'
 import { finishIfDone, processRunBatch } from '../run-engine'
+import { sweepUploads } from '../uploads'
 import { batchSizeFor, createReportOnce, shareConcurrency } from './schedule'
 
 // The background run worker (docs/PairSight-Scale-Roadmap.md, item 1): runs
@@ -16,6 +17,8 @@ import { batchSizeFor, createReportOnce, shareConcurrency } from './schedule'
 // How often to look for runs to work on, and to re-check a run whose last
 // pairs are being judged elsewhere.
 const POLL_MS = 1_000
+// How often the worker clears old uploads and half-written datasets.
+const SWEEP_EVERY_MS = 60 * 60 * 1000
 // After an unexpected failure, wait before trying the run again.
 const ERROR_BACKOFF_MS = 3_000
 
@@ -73,9 +76,21 @@ export function startRunWorker() {
 			}
 		})
 
+	// Uploads nobody saved and half-written datasets, cleared now and then.
+	let lastSweep = 0
+	const sweep = async () => {
+		if (Date.now() - lastSweep < SWEEP_EVERY_MS) return
+		lastSweep = Date.now()
+		const swept = await sweepUploads()
+		if (swept.uploads + swept.datasets > 0) log.info('old uploads cleared', swept)
+	}
+
 	const loop = async () => {
 		log.info('run worker started', { concurrency: total, pool: env.RUN_WORKER_POOL })
 		while (!stopping) {
+			await sweep().catch((error: unknown) => {
+				if (reportOnce('*', 'sweep')) captureError(error, { source: 'run-worker' })
+			})
 			try {
 				const running = await db.run.findMany({
 					where: { status: 'running', origin: 'live', workerPool: env.RUN_WORKER_POOL },

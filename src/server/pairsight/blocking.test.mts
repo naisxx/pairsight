@@ -70,7 +70,11 @@ test('buckets above the warning size are reported with their pair expansion', ()
 		fields: { email: 'a@x.com' }
 	}))
 	const { stats } = buildBlockedPairs({ records: same, rules: [EMAIL_RULE], country: 'US' })
-	assert.deepEqual(stats[0].oversizedBuckets, [{ size, pairCount: groupPairCount(size) }])
+	assert.deepEqual(stats[0].oversized, {
+		groups: 1,
+		pairCount: groupPairCount(size),
+		largest: size
+	})
 	assert.equal(stats[0].largestBucket, size)
 })
 

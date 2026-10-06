@@ -111,7 +111,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 					<table className="type-ui w-full min-w-[900px] border-separate border-spacing-0">
 						<caption className="sr-only">{t('caption')}</caption>
 						<thead className="bg-surface-muted">
-							<tr>
+							<tr className="whitespace-nowrap">
 								<th scope="col" className={th}>
 									{t('colName')}
 								</th>
@@ -153,10 +153,11 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 										className="hover:bg-surface-hover cursor-pointer transition-colors duration-100"
 										onClick={() => router.push(href)}
 									>
-										<td className={td}>
+										<td className={`${td} max-w-60`}>
 											<Link
 												href={href}
-												className="text-text font-medium hover:underline"
+												className="text-text block truncate font-medium hover:underline"
+												title={row.name}
 												onClick={(event) => event.stopPropagation()}
 											>
 												{row.name}
@@ -183,15 +184,23 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 										<td className={`${td} text-right font-mono`}>
 											{row.vendorCount === 0 ? '—' : <Count value={row.vendorCount} />}
 										</td>
-										<td className={`${td} text-text-muted`}>
-											{row.lastRunAt == null
-												? t('never')
-												: format.dateTime(row.lastRunAt, {
-														dateStyle: 'medium',
-														timeStyle: 'short'
-													})}
+										<td
+											className={`${td} text-text-muted whitespace-nowrap`}
+											// The day, so the column stays one line; the time on hover.
+											title={
+												row.lastRunAt == null
+													? undefined
+													: format.dateTime(row.lastRunAt, {
+															dateStyle: 'medium',
+															timeStyle: 'short'
+														})
+											}
+										>
+											{row.lastRunAt == null ? t('never') : date(row.lastRunAt)}
 										</td>
-										<td className={`${td} text-text-muted`}>{date(row.updatedAt)}</td>
+										<td className={`${td} text-text-muted whitespace-nowrap`}>
+											{date(row.updatedAt)}
+										</td>
 										<td
 											className={`${td} w-12 text-right`}
 											onClick={(event) => event.stopPropagation()}

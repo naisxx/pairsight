@@ -305,6 +305,49 @@ test.describe('PairSight vertical slice', () => {
 		).toBeVisible()
 	})
 
+	test('a 10,000-record file uploads once, is checked and saved; a bigger file is refused plainly', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Big file')
+		const input = page.locator('input[type=file]')
+
+		// Over the size limit: said plainly, before anything is sent.
+		await input.setInputFiles({
+			name: 'too-big.csv',
+			mimeType: 'text/csv',
+			buffer: Buffer.alloc(10_000_001, 'a')
+		})
+		await expect(page.getByText(/^The file is bigger than 10 MB/)).toBeVisible()
+
+		// 10,000 fictional people, at the record limit.
+		const lines = ['record_id,first_name,last_name,email,date_of_birth']
+		for (let index = 1; index <= 10_000; index++) {
+			lines.push(
+				`P${String(index).padStart(5, '0')},Test${index},Person${index % 977},p${index}@big.example.test,19${50 + (index % 50)}-0${1 + (index % 9)}-1${index % 10}`
+			)
+		}
+		const uploads: string[] = []
+		page.on('request', (request) => {
+			if (request.method() === 'PUT' && request.url().includes('/uploads')) {
+				uploads.push(request.url())
+			}
+		})
+		await input.setInputFiles({
+			name: 'people-10k.csv',
+			mimeType: 'text/csv',
+			buffer: Buffer.from(lines.join('\n'))
+		})
+		await expect(page.getByText('What’s in each column?')).toBeVisible({ timeout: 30_000 })
+		// The row count is shortened, exact on hover.
+		const rows = page.getByLabel('File details').getByText('10K', { exact: true })
+		await expect(rows).toHaveAttribute('title', '10,000')
+		await page.getByRole('button', { name: 'Next: vendors' }).click()
+		await page.waitForURL('**/vendors', { timeout: 60_000 })
+		expect(uploads).toHaveLength(1)
+		await expect(page.getByRole('navigation').getByText('10K records')).toBeVisible()
+	})
+
 	test('Excel in and out: a workbook’s sheet is picked, and findings export as a workbook', async ({
 		page
 	}) => {
@@ -317,6 +360,13 @@ test.describe('PairSight vertical slice', () => {
 			sheet: 'Customers',
 			before: { Notes: [['Fictional records'], ['Exported for an e2e test']] }
 		})
+		// The file goes up once; picking a sheet reads it from there.
+		const uploads: string[] = []
+		page.on('request', (request) => {
+			if (request.method() === 'PUT' && request.url().includes('/uploads')) {
+				uploads.push(request.url())
+			}
+		})
 		await page
 			.locator('input[type=file]')
 			.setInputFiles({ name: 'demo-source.xlsx', mimeType: XLSX_MIME, buffer: records })
@@ -326,6 +376,7 @@ test.describe('PairSight vertical slice', () => {
 		await picker.getByRole('button', { name: /^Customers/ }).click()
 		await expect(page.getByText('What’s in each column?')).toBeVisible()
 		await expect(page.getByText('Not saved yet · Excel · Sheet Customers')).toBeVisible()
+		expect(uploads).toHaveLength(1)
 		// Dates and numbers read as written: 1990-04-12, not a serial number.
 		await expect(page.getByRole('table').first()).toContainText('1990-04-12')
 		await page.getByRole('button', { name: 'Next: vendors' }).click()
@@ -953,16 +1004,23 @@ test.describe('PairSight vertical slice', () => {
 		// Jev agrees, and the vendor missed it.
 		await expect(tile(page, 'Only Jev says same')).toContainText('1')
 		const sources = page.getByRole('region', { name: 'Why was each pair checked?' })
-		await expect(sources).toContainText('1 duplicate was picked only by close-match rules')
-		await expect(sources).toContainText('Vendor A caught 0')
 		await expect(sources).toContainText(rule)
+		// The hard cases sit behind the card's (i), seen without scrolling.
+		await sources
+			.getByRole('button', { name: 'About these numbers and hard-to-spot duplicates' })
+			.hover()
+		const tip = page.getByRole('tooltip')
+		await expect(tip).toContainText('1 duplicate was picked only by close-match rules')
+		await expect(tip).toContainText('Vendor A caught 0')
 
 		const summary = await exportFindings(page, 1, /^Summary report/)
 		const report = await readPdfText(await summary.path())
 		expect(report).toContain('Hard cases')
 		expect(report).toContain('Vendor A caught 0 of the 1 hard-to-spot duplicate.')
 
-		await sources.getByRole('link', { name: 'See these pairs' }).click()
+		await sources
+			.getByRole('link', { name: 'See the 1 pair only close-match rules picked' })
+			.click()
 		await page.waitForURL(/source=fuzzy/)
 		await expect(matching(page)).toHaveText('1 pair')
 		await expect(page.getByRole('table').getByText('Catherine Smyth')).toBeVisible()

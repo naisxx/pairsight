@@ -12,13 +12,15 @@ const ARROW_SIZE = 14
 const EMPTY_ICON_SIZE = 20
 
 // Evaluations without finished results, each linking to the stage to pick
-// up from.
+// up from: the newest few (`rows`), and how many there are in all (`total`).
 export function ContinueSetup({
 	rows,
+	total,
 	takenNames,
 	isReadOnly
 }: {
 	rows: DashboardRow[]
+	total: number
 	takenNames: string[]
 	// The sandbox: "start your own" is a sign-up, not a new evaluation.
 	isReadOnly: boolean
@@ -35,7 +37,7 @@ export function ContinueSetup({
 				<h2 id="continue-title" className="text-sm font-semibold">
 					{t('continueTitle')}
 				</h2>
-				<Count value={rows.length} className="text-text-muted font-mono text-xs" />
+				<Count value={total} className="text-text-muted font-mono text-xs" />
 			</header>
 			{rows.length === 0 ? (
 				<div className="flex flex-1 flex-col items-center justify-center px-6 py-8 text-center">

@@ -45,49 +45,97 @@ export type RunProgress = {
 	status: 'running' | 'completed' | 'stopped'
 	stopReason: string | null
 	total: number
+	// Pairs without a final answer yet: waiting, or being checked now.
 	pending: number
-	running: number
 	succeeded: number
 	failed: number
 	// Failed pairs grouped by why, most common first.
 	failures: Array<{ reason: FailureReason; count: number }>
+	// When its last pair was checked: set before its results are worked out,
+	// so a run can be done checking while still `running` for a few seconds.
+	completedAt: Date | null
 }
 
-export async function getRunProgress(runId: string): Promise<RunProgress> {
-	const [run, groups, failedCodes] = await Promise.all([
-		db.run.findUniqueOrThrow({ where: { id: runId }, select: { status: true, stopReason: true } }),
-		db.assessment.groupBy({
-			by: ['status'],
-			where: { runPairs: { some: { runId } } },
-			_count: { _all: true }
-		}),
-		db.assessment.groupBy({
-			by: ['errorCode'],
-			where: { status: 'failed', runPairs: { some: { runId } } },
-			_count: { _all: true }
-		})
-	])
+// A run's counts worked out exactly from its pairs' answers, and stored
+// (runs.checkedCount, failedCount). Reads every pair, so only where counts
+// can shift other than by a pair being answered: a run starting, a retry, a
+// re-check, a run finishing, and a run never counted before.
+export async function recountRun(runId: string) {
+	const groups = await db.assessment.groupBy({
+		by: ['status'],
+		where: { runPairs: { some: { runId } }, status: { in: ['succeeded', 'failed'] } },
+		_count: { _all: true }
+	})
 	const count = (status: string) =>
 		groups.find((group) => group.status === status)?._count._all ?? 0
-	const progress = {
-		status: run.status,
-		stopReason: run.stopReason,
-		pending: count('pending'),
-		running: count('running'),
-		succeeded: count('succeeded'),
-		failed: count('failed')
-	}
+	return db.run.update({
+		where: { id: runId },
+		data: {
+			checkedCount: count('succeeded') + count('failed'),
+			failedCount: count('failed'),
+			countedAt: new Date()
+		},
+		select: { checkedCount: true, failedCount: true }
+	})
+}
+
+// A pair's final answer, counted on every running run that holds it (pairs'
+// answers are shared between runs of the same records and settings).
+export async function countAnswer({
+	assessmentId,
+	isFailed
+}: {
+	assessmentId: string
+	isFailed: boolean
+}) {
+	await db.run.updateMany({
+		where: { status: 'running', countedAt: { not: null }, pairs: { some: { assessmentId } } },
+		data: { checkedCount: { increment: 1 }, failedCount: { increment: isFailed ? 1 : 0 } }
+	})
+}
+
+// How far a run is, from its stored counts: the same cost however many
+// pairs it has, so the Runs centre can ask every second
+// (docs/rules/database.md, "Bounded queries"). Why pairs failed is only read
+// when some did.
+export async function getRunProgress(runId: string): Promise<RunProgress> {
+	const run = await db.run.findUniqueOrThrow({
+		where: { id: runId },
+		select: {
+			status: true,
+			stopReason: true,
+			completedAt: true,
+			pairCount: true,
+			checkedCount: true,
+			failedCount: true,
+			countedAt: true
+		}
+	})
+	const counts = run.countedAt == null ? await recountRun(runId) : run
+	const failedCodes =
+		counts.failedCount === 0
+			? []
+			: await db.assessment.groupBy({
+					by: ['errorCode'],
+					where: { status: 'failed', runPairs: { some: { runId } } },
+					_count: { _all: true }
+				})
 	const byReason = new Map<FailureReason, number>()
 	for (const group of failedCodes) {
 		const reason = failureReason(group.errorCode)
 		byReason.set(reason, (byReason.get(reason) ?? 0) + group._count._all)
 	}
 	return {
-		...progress,
-		total: progress.pending + progress.running + progress.succeeded + progress.failed,
+		status: run.status,
+		stopReason: run.stopReason,
+		total: run.pairCount,
+		pending: Math.max(0, run.pairCount - counts.checkedCount),
+		succeeded: counts.checkedCount - counts.failedCount,
+		failed: counts.failedCount,
 		failures: [...byReason]
 			.map(([reason, count]) => ({ reason, count }))
-			.sort((a, b) => b.count - a.count)
+			.sort((a, b) => b.count - a.count),
+		completedAt: run.completedAt
 	}
 }
 
@@ -103,6 +151,8 @@ export async function retryFailed({ ownerId, runId }: { ownerId: string; runId: 
 			data: { status: 'running', stopReason: null, completedAt: null }
 		})
 	])
+	// Its failed pairs are waiting again.
+	await recountRun(runId)
 }
 
 // Why a run stopped because someone paused it, not because of a problem.
@@ -121,5 +171,8 @@ export async function pauseRun({ ownerId, runId }: { ownerId: string; runId: str
 // After a pause, or a configuration stop (the key was added or fixed).
 export async function resumeRun({ ownerId, runId }: { ownerId: string; runId: string }) {
 	await getOwnedRun({ ownerId, runId })
-	await db.run.update({ where: { id: runId }, data: { status: 'running', stopReason: null } })
+	await db.run.update({
+		where: { id: runId },
+		data: { status: 'running', stopReason: null, completedAt: null }
+	})
 }

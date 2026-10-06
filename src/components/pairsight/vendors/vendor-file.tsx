@@ -17,6 +17,8 @@ import {
 import type { VendorListItem } from '@/server/pairsight/vendor-exports'
 import type { VendorColumns, VendorFormat } from '@/server/pairsight/vendors'
 import { FileDrop } from '../file-drop'
+import { useEvaluationView } from '../evaluation-context'
+import { uploadFile } from '../upload-file'
 import { TabularFileIcon, useFileTypeLabel } from '../file-type'
 import { SheetPicker, type SheetChoice } from '../sheet-picker'
 import { checkTabularFile, useFileErrorMessage, useRowList, ValidationPanel } from '../validation'
@@ -55,9 +57,13 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	const fileError = useFileErrorMessage()
 	const fileType = useFileTypeLabel()
 	const list = useRowList()
-	// The chosen file, kept as is so changing its columns sends it again, with
-	// the workbook sheet it's read from (`sheet`) once one is picked.
-	const [file, setFile] = useState<File | null>(null)
+	const view = useEvaluationView()
+	// The chosen file, uploaded once (upload-file.ts) and re-checked from
+	// there when its columns or sheet change, with the workbook sheet it's
+	// read from (`sheet`) once one is picked.
+	const [file, setFile] = useState<{ file: File; uploadId: string } | null>(null)
+	// While the file goes up: how much of it has.
+	const [uploadPercent, setUploadPercent] = useState<number | null>(null)
 	const [sheet, setSheet] = useState<string | undefined>(undefined)
 	const [sheets, setSheets] = useState<SheetChoice[] | null>(null)
 	const [checked, setChecked] = useState<Checked | null>(null)
@@ -69,12 +75,15 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	const [isConfirming, startConfirming] = useTransition()
 	const isDraft = vendor.kind === 'draft'
 
-	function check(next: File, { columns, sheet }: { columns?: VendorColumns; sheet?: string } = {}) {
+	function check(
+		uploadId: string,
+		{ columns, sheet }: { columns?: VendorColumns; sheet?: string } = {}
+	) {
 		setErrors([])
 		startChecking(async () => {
 			const result = await checkVendorFileAction({
 				draftId: vendor.id,
-				file: next,
+				uploadId,
 				sheet,
 				columns
 			})
@@ -103,22 +112,40 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 		setErrors([])
 		const checkedFile = checkTabularFile(chosen)
 		if (!checkedFile.ok) return setErrors([fileError({ code: checkedFile.code })])
-		setFile(chosen)
-		setSheet(undefined)
-		setSheets(null)
-		check(chosen)
+		startChecking(async () => {
+			setUploadPercent(0)
+			const uploaded = await uploadFile({
+				evaluationId: view.evaluationId,
+				kind: 'vendor',
+				file: chosen,
+				onProgress: setUploadPercent
+			})
+			setUploadPercent(null)
+			if (!uploaded.ok) {
+				return setErrors([
+					uploaded.tooLarge
+						? fileError({ code: 'too_large' })
+						: (uploaded.message ?? t('uploadFailed'))
+				])
+			}
+			setFile({ file: chosen, uploadId: uploaded.uploadId })
+			setSheet(undefined)
+			setSheets(null)
+			check(uploaded.uploadId)
+		})
 	}
 
+	// Another sheet or other columns of the same upload: nothing is sent again.
 	function pickSheet(name: string) {
 		if (file == null) return
 		setSheet(name)
-		check(file, { sheet: name })
+		check(file.uploadId, { sheet: name })
 	}
 
 	function choose(next: Pending) {
 		setPending(next)
 		const columns = fromPending(next)
-		if (file != null && columns != null) check(file, { columns, sheet })
+		if (file != null && columns != null) check(file.uploadId, { columns, sheet })
 	}
 
 	const showDrop = isDraft && (isReplacing || (file == null && vendor.fileName == null))
@@ -127,7 +154,7 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	const issues = checked?.issues ?? null
 	const hasPassingFile =
 		isDraft && vendor.fileName != null && issues == null && checked?.detection == null
-	const fileName = file?.name ?? vendor.fileName
+	const fileName = file?.file.name ?? vendor.fileName
 	const issueMessages =
 		issues == null
 			? []
@@ -167,7 +194,9 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 					<FileDrop
 						label={t('dropTitle', { name: vendor.name })}
 						hint={t('dropHint')}
-						busyLabel={t('checking')}
+						busyLabel={
+							uploadPercent == null ? t('checking') : t('uploading', { percent: uploadPercent })
+						}
 						isBusy={isChecking}
 						onFile={onFile}
 					/>
@@ -238,7 +267,7 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 					{sheets != null && file != null && (
 						<div className="mt-3">
 							<SheetPicker
-								fileName={file.name}
+								fileName={file.file.name}
 								sheets={sheets}
 								picked={sheet ?? null}
 								isBusy={isChecking}

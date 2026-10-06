@@ -1,22 +1,18 @@
 import type { TabularFormat } from '@/lib/pairsight/tabular-formats'
 import type { Table, TableError } from './table'
 
-// A file's cells as rows of text, before the shared checks; `sheet` names the
-// sheet a workbook was read from. A format that stops keeping rows past the
-// limit says how many data rows there really were (`dataRows`), so the limit
-// message gives the true count.
-export type DecodeResult =
-	| { ok: true; grid: string[][]; sheet?: string; dataRows?: number }
-	| { ok: false; error: TableError }
+// A file opened for reading: its raw rows a batch at a time, before the
+// shared checks (scan.ts), and which sheet of a workbook they come from.
+export type OpenResult =
+	{ ok: true; rows: AsyncIterable<string[][]>; sheet?: string } | { ok: false; error: TableError }
 
-// One file format: turns a file's bytes into a grid of cells and a table back
-// into bytes. Nothing else: limits and checks are shared (validateTable), so
-// every format behaves the same once read. `maxRows` lets a format stop
-// keeping rows it will never use; `sheet` picks a workbook's sheet.
+// One file format: opens a file's bytes as rows and writes a table back into
+// bytes. Nothing else: limits and checks are shared (scan.ts), so every
+// format behaves the same once read. `sheet` picks a workbook's sheet.
 export type TabularAdapter = {
 	format: TabularFormat
 	mimeType: string
 	extension: string
-	decode: (bytes: Uint8Array, options: { maxRows: number; sheet?: string }) => Promise<DecodeResult>
+	open: (bytes: Uint8Array, options: { sheet?: string }) => Promise<OpenResult>
 	encode: (table: Table) => Promise<Uint8Array>
 }

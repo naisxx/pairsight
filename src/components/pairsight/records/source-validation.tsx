@@ -1,6 +1,7 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { InfoIcon, SuccessIcon, WarningCircleIcon } from '@/components/ui/icons'
 import type { ColumnCheck } from '@/server/pairsight/source-records'
+import { useRowList } from '../validation'
 
 const LISTED = 6
 const ICON_SIZE = 16
@@ -21,16 +22,23 @@ export function SourceValidation({
 }) {
 	const t = useTranslations('Records')
 	const format = useFormatter()
+	const list = useRowList()
 	const mono = (chunks: React.ReactNode) => <span className="font-mono">{chunks}</span>
 	const problemCount = check == null ? 0 : check.blank + check.duplicateCount
 	const items =
 		check == null
 			? []
 			: [
-					...check.missing.map((row) => ({ key: `m${row}`, rows: [row], reference: null })),
+					...check.missing.map((row) => ({
+						key: `m${row}`,
+						rows: [row],
+						count: 1,
+						reference: null
+					})),
 					...check.duplicates.map((duplicate) => ({
 						key: `d${duplicate.reference}`,
 						rows: duplicate.rows,
+						count: duplicate.count,
 						reference: duplicate.reference
 					}))
 				].sort((a, b) => (a.rows[0] ?? 0) - (b.rows[0] ?? 0))
@@ -69,9 +77,9 @@ export function SourceValidation({
 							{items.slice(0, LISTED).map((item) => (
 								<li key={item.key} className="type-ui px-3 py-2.5">
 									<span className="text-text-muted font-mono">
-										{item.rows.length === 1
+										{item.count === 1
 											? t('rowLabel', { row: item.rows[0] ?? 0 })
-											: t('rowsLabel', { rows: item.rows.join(', ') })}
+											: t('rowsLabel', { rows: list(item.rows, item.count) })}
 									</span>
 									<span className="text-text-muted mx-1.5">·</span>
 									<span className="font-medium">

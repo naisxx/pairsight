@@ -42,7 +42,9 @@ export function VendorStats({
 		>
 			{items.map((item) => (
 				<div key={item.label} className="border-border border-b p-3 @3xl:border-b-0">
-					<dt className="text-text-muted text-xs">{item.label}</dt>
+					<dt className="text-text-muted truncate text-xs" title={item.label}>
+						{item.label}
+					</dt>
 					<dd
 						className={cn(
 							'mt-1 font-mono text-[20px] leading-none font-medium',
