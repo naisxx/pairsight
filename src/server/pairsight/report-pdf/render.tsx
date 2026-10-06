@@ -37,6 +37,7 @@ export async function summaryExport({ scope, runId }: { scope: EvaluationScope; 
 				failure: (reason) => tFailures(reason),
 				date: (date) => format.dateTime(date, { dateStyle: 'medium' }),
 				dateTime: (date) => format.dateTime(date, { dateStyle: 'medium', timeStyle: 'short' }),
+				count: (value) => format.number(value, 'compact'),
 				list: (items) => listFormat.format(items)
 			}}
 		/>

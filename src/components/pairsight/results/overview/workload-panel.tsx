@@ -3,6 +3,7 @@ import { Link } from '@/i18n/routing'
 import { ArrowRightIcon } from '@/components/ui/icons'
 import { Panel } from '@/components/ui/panel'
 import type { Workload } from '@/lib/pairsight/metrics'
+import { Count } from '@/components/ui/count'
 
 // What's left to look at for this vendor, each opening its pairs: the
 // disagreements, the scores closest to the threshold, and what isn't judged.
@@ -59,7 +60,7 @@ export function WorkloadPanel({
 							href={row.href}
 							className="group hover:bg-surface-hover flex w-full items-center gap-3 rounded-sm px-2 py-2 text-left transition-colors duration-150"
 						>
-							<span className="w-8 font-mono text-lg font-medium">{row.value}</span>
+							<Count value={row.value} className="w-12 shrink-0 font-mono text-lg font-medium" />
 							<span className="min-w-0 flex-1">
 								<span className="text-text type-ui block font-medium">{row.label}</span>
 								<span className="text-text-muted block text-xs">{row.detail}</span>

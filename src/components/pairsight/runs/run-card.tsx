@@ -26,6 +26,7 @@ import { ReadOnlyGate } from '../read-only'
 import { ruleLabel } from '../rule-label'
 import { RunElapsed } from './run-elapsed'
 import { useRunsCentre } from './runs-centre'
+import { Count } from '@/components/ui/count'
 
 const ICON_SIZE = 15
 const PERCENT = 100
@@ -128,7 +129,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 					<div className="type-ui flex justify-between">
 						<span className="text-text-muted">{t('judged')}</span>
 						<span className="font-mono">
-							{done} / {progress.total}
+							<Count value={done} /> / <Count value={progress.total} />
 						</span>
 					</div>
 					<div
@@ -276,7 +277,10 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 								<dt className="text-text-muted">{t('detailFailures')}</dt>
 								<dd>
 									{progress.failures
-										.map(({ reason, count }) => `${tFailures(reason)} · ${count}`)
+										.map(
+											({ reason, count }) =>
+												`${tFailures(reason)} · ${format.number(count, 'compact')}`
+										)
 										.join(', ')}
 								</dd>
 							</>

@@ -10,6 +10,7 @@ import type { Category } from '@/lib/pairsight/decisions'
 import type { CategoryCounts } from '@/lib/pairsight/metrics'
 import { cn } from '@/lib/cn'
 import { CategoryDot } from '../../result-parts'
+import { Count } from '@/components/ui/count'
 
 const TINT: Partial<Record<Category, { cell: string; text: string }>> = {
 	pairsight_only: { cell: 'bg-cat-pairsight-subtle', text: 'text-cat-pairsight' },
@@ -138,25 +139,43 @@ export function DecisionMatrix({
 							<th scope="row" className="py-2 text-left font-sans font-normal">
 								{t('matched')}
 							</th>
-							<td className="py-2 text-right">{counts.both_matched}</td>
-							<td className="py-2 text-right">{counts.vendor_only}</td>
-							<td className="py-2 text-right">{counts.both_matched + counts.vendor_only}</td>
+							<td className="py-2 text-right">
+								<Count value={counts.both_matched} />
+							</td>
+							<td className="py-2 text-right">
+								<Count value={counts.vendor_only} />
+							</td>
+							<td className="py-2 text-right">
+								<Count value={counts.both_matched + counts.vendor_only} />
+							</td>
 						</tr>
 						<tr className="border-border border-b">
 							<th scope="row" className="py-2 text-left font-sans font-normal">
 								{t('notMatched')}
 							</th>
-							<td className="py-2 text-right">{counts.pairsight_only}</td>
-							<td className="py-2 text-right">{counts.neither_matched}</td>
-							<td className="py-2 text-right">{counts.pairsight_only + counts.neither_matched}</td>
+							<td className="py-2 text-right">
+								<Count value={counts.pairsight_only} />
+							</td>
+							<td className="py-2 text-right">
+								<Count value={counts.neither_matched} />
+							</td>
+							<td className="py-2 text-right">
+								<Count value={counts.pairsight_only + counts.neither_matched} />
+							</td>
 						</tr>
 						<tr>
 							<th scope="row" className="text-text-muted py-2 text-left font-sans font-normal">
 								{t('total')}
 							</th>
-							<td className="py-2 text-right">{counts.both_matched + counts.pairsight_only}</td>
-							<td className="py-2 text-right">{counts.vendor_only + counts.neither_matched}</td>
-							<td className="py-2 text-right">{assessed}</td>
+							<td className="py-2 text-right">
+								<Count value={counts.both_matched + counts.pairsight_only} />
+							</td>
+							<td className="py-2 text-right">
+								<Count value={counts.vendor_only + counts.neither_matched} />
+							</td>
+							<td className="py-2 text-right">
+								<Count value={assessed} />
+							</td>
 						</tr>
 					</tbody>
 				</table>

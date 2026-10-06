@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/cn'
 import type { VendorFileStats } from '@/server/pairsight/vendors'
+import { Count } from '@/components/ui/count'
 
 // What a vendor file adds up to: its pairs, and what was cleaned up or
 // couldn't be matched to a record.
@@ -48,7 +49,7 @@ export function VendorStats({
 							item.isProblem && 'text-danger'
 						)}
 					>
-						{item.value}
+						<Count value={item.value} />
 					</dd>
 					<dd className="text-text-muted type-caption mt-1">{item.note}</dd>
 				</div>

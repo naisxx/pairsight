@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { labelFor, type EntityType } from '@/lib/pairsight/entity-types'
 import { PAGE_SIZES, SEARCH_MAX_LENGTH } from '@/lib/pairsight/input-limits'
+import { compareNatural } from '@/lib/pairsight/natural-key'
 import { categorize, CATEGORIES, isLowConfidence, type Category } from './decisions'
 import { mapRecordFields, type FieldRole } from './fields'
 
@@ -122,11 +123,10 @@ export function recordLabel({
 }
 
 // Storage keeps pairs in canonical id order; people read them in reference
-// order (R2 before R10).
+// order (R2 before R10), the same natural order the database sorts by
+// (natural-key.ts).
 export function byReference<T extends { reference: string }>(first: T, second: T): [T, T] {
-	return first.reference.localeCompare(second.reference, undefined, { numeric: true }) <= 0
-		? [first, second]
-		: [second, first]
+	return compareNatural(first.reference, second.reference) <= 0 ? [first, second] : [second, first]
 }
 
 const NO_RULES: ReadonlySet<string> = new Set()
@@ -202,11 +202,15 @@ function matchesScore(row: ResultRow, score: ResultFilters['score']): boolean {
 	const isMatch = row.category === 'both_matched' || row.category === 'pairsight_only'
 	if (score === 'above') return isMatch
 	if (score === 'below') return !isMatch
-	const range = SCORE_RANGE.exec(score)
-	const from = Number(range?.[1])
-	const to = Number(range?.[2])
+	const { from, to } = scoreRange(score)
 	// The last range includes a perfect 1.
 	return row.score >= from && (row.score < to || (to === 1 && row.score === 1))
+}
+
+// The bounds of an "r:0.3-0.4" score range filter.
+export function scoreRange(score: string): { from: number; to: number } {
+	const range = SCORE_RANGE.exec(score)
+	return { from: Number(range?.[1]), to: Number(range?.[2]) }
 }
 
 function matchesStatus(row: ResultRow, status: ResultFilters['status']): boolean {

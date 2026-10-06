@@ -10,6 +10,7 @@
 // Next.
 const CANDIDATE_SUFFIXES = ['.ts', '.tsx', '/index.ts']
 const ALIAS_PREFIX = '@/'
+const SERVER_ONLY = 'server-only'
 // The URL itself, not pathToFileURL(url.pathname): on Windows the pathname is
 // "/C:/…", which pathToFileURL turns into a doubled drive ("file:///C:/C:/…").
 const SRC_URL = new URL('../src/', import.meta.url).href
@@ -19,6 +20,9 @@ function withSuffixes(specifier) {
 }
 
 export async function resolve(specifier, context, nextResolve) {
+	// Next supplies `server-only` (a marker that fails a client bundle); a
+	// script reading the database through src/server has nothing to guard.
+	if (specifier === SERVER_ONLY) return { url: 'data:text/javascript,', shortCircuit: true }
 	if (specifier.startsWith(ALIAS_PREFIX)) {
 		const base = `${SRC_URL}${specifier.slice(ALIAS_PREFIX.length)}`
 		for (const candidate of withSuffixes(base)) {

@@ -6,6 +6,9 @@ import { InfoTip } from '@/components/ui/info-tip'
 import { ArrowRightIcon, SuccessIcon } from '@/components/ui/icons'
 import type { LatestResults as LatestResultsData } from '@/server/pairsight/dashboard'
 import { formatShare, MUTED_SERIES, VENDOR_SERIES } from '../results/overview/chart-theme'
+import { Count } from '@/components/ui/count'
+import { exactTitle } from '@/components/ui/count'
+import { EXACT_FORMATS } from '@/i18n/formats'
 
 const PERCENT = 100
 const EYEBROW_ICON_SIZE = 14
@@ -132,7 +135,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 											aria-label={t('disagreementsFor', { count: missed + merged, vendor: name })}
 											className="text-accent-ink font-mono hover:underline"
 										>
-											{missed + merged}
+											<Count value={missed + merged} />
 										</Link>
 										<span className="text-text-muted type-caption ml-1">
 											{t('disagreementsDetail', { missed, merged })}
@@ -147,7 +150,16 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 
 			{/* Pinned to the bottom when the card is stretched to its neighbour's height. */}
 			<div className="border-border bg-surface-muted mt-auto flex flex-wrap items-center gap-3 border-t px-5 py-3">
-				<p className="type-ui text-text-muted">
+				<p
+					className="type-ui text-text-muted"
+					title={exactTitle([disagreements], () =>
+						t.markup(
+							'latestSummary',
+							{ count: disagreements, n: (chunks) => chunks },
+							EXACT_FORMATS
+						)
+					)}
+				>
 					{t.rich('latestSummary', { count: disagreements, n: mono })}
 					{first != null && first.counts.incomplete > 0 && (
 						<>

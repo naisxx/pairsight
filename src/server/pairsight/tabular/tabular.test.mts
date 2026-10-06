@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import ExcelJS from 'exceljs'
 import { LIMITS } from '../limits'
 import { readTable, writeTable, type Table } from './index'
+import { streamTable } from './stream'
 
 const BOM = '﻿'
 // Decoded as written: a default TextDecoder would drop the byte-order mark.
@@ -207,4 +208,51 @@ test('a workbook that declares it unpacks too large is refused before unpacking'
 		ok: false,
 		error: { code: 'unreadable' }
 	})
+})
+
+// A table's rows as pages, the way the findings download reads them.
+async function* inPages(rows: string[][], size: number) {
+	for (let at = 0; at < rows.length; at += size) yield rows.slice(at, at + size)
+}
+
+async function collect(stream: ReadableStream<Uint8Array>): Promise<Uint8Array> {
+	return new Uint8Array(await new Response(stream).arrayBuffer())
+}
+
+test('a streamed file is the same as one written whole', async () => {
+	const table: Table = {
+		headers: ['ref', 'score', 'note'],
+		rows: Array.from({ length: 7 }, (_, index) => [
+			`R${index}`,
+			(index / 10).toFixed(2),
+			index % 2 === 0 ? 'Smith, "Jane"' : '=SUM(A1)'
+		])
+	}
+	const csv = await collect(
+		streamTable({ headers: table.headers, pages: inPages(table.rows, 3), format: 'csv' })
+	)
+	assert.equal(decode(csv), decode(await writeTable(table, 'csv')))
+
+	const xlsx = await collect(
+		streamTable({ headers: table.headers, pages: inPages(table.rows, 3), format: 'xlsx' })
+	)
+	assert.deepEqual(await readTable({ fileName: 'x.xlsx', bytes: xlsx, maxRows: 10 }), {
+		ok: true,
+		sheet: 'Findings',
+		table
+	})
+	const book = new ExcelJS.Workbook()
+	await book.xlsx.load(new Uint8Array(xlsx).buffer)
+	const sheet = book.getWorksheet('Findings')
+	assert.ok(sheet)
+	assert.equal(sheet.getRow(1).getCell(1).font?.bold, true)
+	assert.equal(sheet.views[0]?.state, 'frozen')
+	assert.deepEqual(sheet.autoFilter, 'A1:C1')
+	assert.equal(sheet.getCell('B3').value, 0.1)
+
+	// No pairs: just the header.
+	const empty = await collect(
+		streamTable({ headers: table.headers, pages: inPages([], 3), format: 'csv' })
+	)
+	assert.equal(decode(empty), `${BOM}ref,score,note\r\n`)
 })

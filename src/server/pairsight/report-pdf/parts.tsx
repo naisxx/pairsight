@@ -15,6 +15,8 @@ export type ReportText = {
 	failure: (reason: FailureReason) => string
 	date: (date: Date) => string
 	dateTime: (date: Date) => string
+	// A count as the app writes every count (src/i18n/formats.ts).
+	count: (value: number) => string
 }
 
 const PERCENT = 100
@@ -102,7 +104,7 @@ export function Scorecard({ vendors, text }: { vendors: VendorDetail[]; text: Re
 					<Text style={[styles.cell, styles.bold, { width: SCORECARD.vendor }]}>{vendor.name}</Text>
 					{counts(vendor).map((count, index) => (
 						<Text key={index} style={[styles.cell, styles.number, { width: SCORECARD.count }]}>
-							{count}
+							{text.count(count)}
 						</Text>
 					))}
 					<MetricCell value={vendor.metrics.precision} width={SCORECARD.metric} />

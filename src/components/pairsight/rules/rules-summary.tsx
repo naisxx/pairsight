@@ -1,6 +1,7 @@
-import { useFormatter, useTranslations } from 'next-intl'
+import { useTranslations } from 'next-intl'
 import { AlertIcon, WarningCircleIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
+import { Count } from '@/components/ui/count'
 
 const ICON_SIZE = 15
 const FULL_PERCENT = 100
@@ -26,7 +27,6 @@ export function RulesSummary({
 	isUpdating: boolean
 }) {
 	const t = useTranslations('Rules')
-	const format = useFormatter()
 	const isOver = summary.total > summary.limit
 	const percent = Math.min(FULL_PERCENT, (summary.total / summary.limit) * FULL_PERCENT)
 	return (
@@ -46,16 +46,20 @@ export function RulesSummary({
 			>
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryFromRules')}</dt>
-					<dd className="font-mono">{format.number(summary.fromRules)}</dd>
+					<dd className="font-mono">
+						<Count value={summary.fromRules} />
+					</dd>
 				</div>
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryVendor')}</dt>
-					<dd className="font-mono">+{format.number(summary.vendorOnly)}</dd>
+					<dd className="font-mono">
+						+<Count value={summary.vendorOnly} />
+					</dd>
 				</div>
 				<div className="border-border flex justify-between border-t pt-2">
 					<dt className="font-medium">{t('summaryTotal')}</dt>
 					<dd className={cn('font-mono font-semibold', isOver && 'text-danger')}>
-						{format.number(summary.total)}
+						<Count value={summary.total} />
 					</dd>
 				</div>
 			</dl>
@@ -79,18 +83,22 @@ export function RulesSummary({
 				<p className="text-text-muted mt-1.5 flex justify-between text-xs">
 					<span>{t('summaryLimit')}</span>
 					<span className="font-mono">
-						{format.number(summary.total)} / {format.number(summary.limit)}
+						<Count value={summary.total} /> / <Count value={summary.limit} />
 					</span>
 				</p>
 			</div>
 			<dl className="border-border space-y-1.5 border-t px-4 py-3 text-xs">
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryRaw')}</dt>
-					<dd className="font-mono">{summary.raw}</dd>
+					<dd className="font-mono">
+						<Count value={summary.raw} />
+					</dd>
 				</div>
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryOverlaps')}</dt>
-					<dd className="font-mono">{Math.max(0, summary.raw - summary.fromRules)}</dd>
+					<dd className="font-mono">
+						<Count value={Math.max(0, summary.raw - summary.fromRules)} />
+					</dd>
 				</div>
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryLargest')}</dt>

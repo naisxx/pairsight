@@ -28,12 +28,24 @@ export function normalizeEmail(value: string | undefined): string | null {
 	return email == null ? null : email.toLowerCase()
 }
 
+// Parsing a phone number is by far the slowest normalization, and the same
+// record's number comes up in every pair it's in: answers are remembered,
+// up to this many before starting over, so memory stays bounded.
+const PHONE_MEMO_SIZE = 50_000
+const phoneMemo = new Map<string, string | null>()
+
 export function normalizePhone(value: string | undefined, country: string): string | null {
 	const phone = present(value)
 	const region = country.toUpperCase()
 	if (phone == null || !isSupportedCountry(region)) return null
+	const key = `${region}|${phone}`
+	const known = phoneMemo.get(key)
+	if (known !== undefined) return known
 	const parsed = parsePhoneNumberFromString(phone, region)
-	return parsed != null && parsed.isPossible() ? parsed.number : null
+	const normalized = parsed != null && parsed.isPossible() ? parsed.number : null
+	if (phoneMemo.size >= PHONE_MEMO_SIZE) phoneMemo.clear()
+	phoneMemo.set(key, normalized)
+	return normalized
 }
 
 export function normalizeText(value: string | undefined): string | null {

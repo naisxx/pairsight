@@ -1,21 +1,20 @@
 import 'server-only'
+import { statsForVendor, statsMetrics } from '@/lib/pairsight/stats'
 import { db } from '@/server/db/client'
 import { categorize } from './decisions'
-import {
-	applyFilters,
-	buildRows,
-	byReference,
-	countCategories,
-	PAGE_SIZE,
-	pickVendorId,
-	recordLabel,
-	type ResultFilters
-} from './result-rows'
+import { parseColumnRoles, parseRecordValues } from './json'
 import { buildOverview } from './result-overview'
+import { buildRows, byReference, PAGE_SIZE, pickVendorId, type ResultFilters } from './result-rows'
+import {
+	countPairs,
+	pairPage,
+	pairPosition,
+	pairRowsByIds,
+	type PairContext
+} from './results-query'
+import { fuzzyRuleIdsOf, readRunSummary, runVendors } from './run-summary'
 import { getVisibleRun } from './runs'
 import type { EvaluationScope } from './scope'
-import { isFuzzyRule } from '@/lib/pairsight/derived-keys'
-import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
 
 export {
 	parseResultFilters,
@@ -25,68 +24,19 @@ export {
 	type ResultRow
 } from './result-rows'
 
-// Database-backed read models for the Results and Pair detail screens. A run
-// holds at most LIMITS.maxPairsPerRun pairs, so loading it whole and filtering
-// in memory (src/server/pairsight/result-rows.ts) is cheap and keeps one
-// definition of "the current list" for both screens.
+// Read models for the Results and Pair detail screens.
 
-// Everything a run's results are built from, loaded once: shared by Results and the
-// findings export (findings.ts).
-export async function loadRunView({ scope, runId }: { scope: EvaluationScope; runId: string }) {
+// The run's finished Results: the Overview from its summary
+// (run-summary.ts), Detailed analysis a page at a time from the database
+// (results-query.ts). Nothing here loads the whole run.
+async function resultsContext({ scope, runId }: { scope: EvaluationScope; runId: string }) {
 	const run = await getVisibleRun({ scope, runId })
-	const [dataset, records, vendors, pairs] = await Promise.all([
-		db.sourceDataset.findUniqueOrThrow({
-			where: { id: run.datasetId },
-			select: { columnRoles: true }
-		}),
-		db.sourceRecord.findMany({
-			where: { datasetId: run.datasetId },
-			select: { id: true, reference: true, values: true }
-		}),
-		db.vendorExport.findMany({
-			where: { id: { in: run.exportIds } },
-			orderBy: { createdAt: 'asc' },
-			select: { id: true, name: true }
-		}),
-		db.runPair.findMany({
-			where: { runId },
-			select: {
-				id: true,
-				recordAId: true,
-				recordBId: true,
-				ruleIds: true,
-				matchedByExportIds: true,
-				assessment: {
-					select: {
-						status: true,
-						score: true,
-						errorCode: true,
-						modelReported: true,
-						completedAt: true
-					}
-				}
-			}
-		})
+	const [vendors, summary] = await Promise.all([
+		runVendors(run.exportIds),
+		// Builds it, and the pairs every page reads, if it isn't current.
+		readRunSummary(run)
 	])
-	const columnRoles = parseColumnRoles(dataset.columnRoles)
-	const recordsById = new Map(
-		records.map((record) => {
-			const values = parseRecordValues(record.values)
-			const label = recordLabel({
-				values,
-				columnRoles,
-				reference: record.reference,
-				entityType: run.entityType
-			})
-			return [record.id, { id: record.id, reference: record.reference, values, label }]
-		})
-	)
-	const fuzzyRuleIds: ReadonlySet<string> = new Set(
-		parseBlockingRules(run.blockingRules)
-			.filter(isFuzzyRule)
-			.map((rule) => rule.id)
-	)
-	return { run, columnRoles, recordsById, vendors, pairs, fuzzyRuleIds }
+	return { run, vendors, summary, fuzzyRuleIds: fuzzyRuleIdsOf(run.blockingRules) }
 }
 
 export async function getRunResults({
@@ -98,73 +48,57 @@ export async function getRunResults({
 	runId: string
 	filters: ResultFilters
 }) {
-	const view = await loadRunView({ scope, runId })
-	const vendorId = pickVendorId(view.vendors, filters.vendor)
-	const rows = buildRows({
-		pairs: view.pairs,
-		records: view.recordsById,
-		threshold: view.run.threshold,
-		vendorId,
-		fuzzyRuleIds: view.fuzzyRuleIds
-	})
-	const counts = countCategories(rows)
-	const filtered = applyFilters(rows, filters)
+	const { run, vendors, summary, fuzzyRuleIds } = await resultsContext({ scope, runId })
+	const vendorId = pickVendorId(vendors, filters.vendor)
+	const context: PairContext = { runId, threshold: run.threshold, vendorId, fuzzyRuleIds }
+	const vendorIndex = vendorId == null ? -1 : summary.vendorIds.indexOf(vendorId)
+	const isDetailed = filters.tab === 'detailed'
+	const top = vendorId == null ? undefined : summary.top[vendorId]
 	const pageSize = filters.size ?? PAGE_SIZE
-	const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
-	const page = Math.min(filters.page ?? 1, pageCount)
+	const requestedPage = filters.page ?? 1
+	const [matching, firstTry, missed, merges] = await Promise.all([
+		countPairs({ context, filters }),
+		isDetailed ? pairPage({ context, filters, page: requestedPage, size: pageSize }) : [],
+		isDetailed ? [] : pairRowsByIds({ context, ids: top?.missed ?? [] }),
+		isDetailed ? [] : pairRowsByIds({ context, ids: top?.merges ?? [] })
+	])
+	const pageCount = Math.max(1, Math.ceil(matching / pageSize))
+	const page = Math.min(requestedPage, pageCount)
+	// Past the last page (the list shrank): show the last one.
+	const rows =
+		isDetailed && page !== requestedPage
+			? await pairPage({ context, filters, page, size: pageSize })
+			: firstTry
+	const counts = statsMetrics(summary.rows, vendorIndex).counts
+	const overview = buildOverview({ summary, vendors, vendorId, top: { missed, merges } })
 	return {
-		run: view.run,
-		vendors: view.vendors,
+		run,
+		vendors,
 		vendorId,
 		counts,
-		evaluated: rows.length - counts.incomplete,
+		evaluated: overview.coverage.total - counts.incomplete,
 		coverage: {
-			total: rows.length,
-			fromRules: rows.filter((row) => row.ruleIds.length > 0).length,
-			addedByVendor: rows.filter((row) => row.ruleIds.length === 0).length
+			total: overview.coverage.total,
+			fromRules: overview.coverage.fromRules,
+			addedByVendor: overview.coverage.addedByVendor
 		},
-		models: [...new Set(view.pairs.flatMap((pair) => pair.assessment.modelReported ?? []))],
-		overview: buildOverview({
-			pairs: view.pairs,
-			rows,
-			vendors: view.vendors,
-			vendorId,
-			threshold: view.run.threshold,
-			recordCount: view.recordsById.size,
-			records: view.recordsById,
-			columnRoles: view.columnRoles,
-			country: view.run.countryCode,
-			fuzzyRuleIds: view.fuzzyRuleIds
-		}),
-		// Every pair's status, score and this vendor's decision, so the threshold
-		// control can preview a new threshold without a round trip.
-		metricPairs: rows.map((row) => ({
-			status: row.status,
-			score: row.score,
-			isVendorMatch: row.isVendorMatch
-		})),
+		models: summary.models,
+		overview,
+		// This vendor's counts, so the threshold control can preview another
+		// threshold without a round trip; small whatever the run's size.
+		stats: statsForVendor(summary.rows, vendorIndex),
 		// Each vendor's categories side by side; only worth showing with two or more.
 		vendorCounts:
-			view.vendors.length < 2
+			vendors.length < 2
 				? []
-				: view.vendors.map((vendor) => ({
+				: overview.byVendor.map((vendor) => ({
 						id: vendor.id,
 						name: vendor.name,
-						counts:
-							vendor.id === vendorId
-								? counts
-								: countCategories(
-										buildRows({
-											pairs: view.pairs,
-											records: view.recordsById,
-											threshold: view.run.threshold,
-											vendorId: vendor.id
-										})
-									)
+						counts: vendor.metrics.counts
 					})),
-		rows: filtered.slice((page - 1) * pageSize, page * pageSize),
+		rows,
 		pageSize,
-		matching: filtered.length,
+		matching,
 		page,
 		pageCount
 	}
@@ -181,38 +115,80 @@ export async function getPairDetail({
 	pairId: string
 	filters: ResultFilters
 }) {
-	const view = await loadRunView({ scope, runId })
-	const pair = view.pairs.find((candidate) => candidate.id === pairId)
-	const first = pair == null ? undefined : view.recordsById.get(pair.recordAId)
-	const second = pair == null ? undefined : view.recordsById.get(pair.recordBId)
-	if (pair == null || first == null || second == null) return null
-
-	const vendorId = pickVendorId(view.vendors, filters.vendor)
-	const rows = buildRows({
-		pairs: view.pairs,
-		records: view.recordsById,
-		threshold: view.run.threshold,
-		vendorId,
-		fuzzyRuleIds: view.fuzzyRuleIds
+	const run = await getVisibleRun({ scope, runId })
+	const [vendors, dataset, pair] = await Promise.all([
+		runVendors(run.exportIds),
+		db.sourceDataset.findUniqueOrThrow({
+			where: { id: run.datasetId },
+			select: { columnRoles: true }
+		}),
+		db.runPair.findFirst({
+			where: { id: pairId, runId },
+			select: {
+				id: true,
+				recordAId: true,
+				recordBId: true,
+				ruleIds: true,
+				matchedByExportIds: true,
+				assessment: {
+					select: {
+						status: true,
+						score: true,
+						errorCode: true,
+						modelReported: true,
+						completedAt: true
+					}
+				}
+			}
+		}),
+		// Its position is read from the run's pairs as of its summary.
+		readRunSummary(run)
+	])
+	if (pair == null) return null
+	const records = await db.sourceRecord.findMany({
+		where: { id: { in: [pair.recordAId, pair.recordBId] } },
+		select: { id: true, reference: true, values: true, label: true }
 	})
-	const row = rows.find((candidate) => candidate.id === pairId)
+	const recordsById = new Map(
+		records.map((record) => [
+			record.id,
+			{
+				id: record.id,
+				reference: record.reference,
+				values: parseRecordValues(record.values),
+				label: record.label ?? record.reference
+			}
+		])
+	)
+	const first = recordsById.get(pair.recordAId)
+	const second = recordsById.get(pair.recordBId)
+	if (first == null || second == null) return null
+
+	const vendorId = pickVendorId(vendors, filters.vendor)
+	const fuzzyRuleIds = fuzzyRuleIdsOf(run.blockingRules)
+	const context: PairContext = { runId, threshold: run.threshold, vendorId, fuzzyRuleIds }
+	const [row] = buildRows({
+		pairs: [pair],
+		records: recordsById,
+		threshold: run.threshold,
+		vendorId,
+		fuzzyRuleIds: new Set(fuzzyRuleIds)
+	})
 	if (row == null) return null
-	// The filtered list it was opened from; if the filters no longer include
-	// this pair, step through the whole run instead.
-	const filtered = applyFilters(rows, filters)
-	const isInFiltered = filtered.some((candidate) => candidate.id === pairId)
-	const list = isInFiltered ? filtered : applyFilters(rows, {})
-	const position = list.findIndex((candidate) => candidate.id === pairId)
+	// Its place in the filtered list it was opened from; if the filters no
+	// longer include this pair, step through the whole run instead.
+	const inFiltered = await pairPosition({ context, filters, pairId })
+	const position = inFiltered ?? (await pairPosition({ context, filters: {}, pairId }))
 	const [recordA, recordB] = byReference(first, second)
 	return {
-		run: view.run,
-		columnRoles: view.columnRoles,
+		run,
+		columnRoles: parseColumnRoles(dataset.columnRoles),
 		assessment: pair.assessment,
 		ruleIds: pair.ruleIds,
 		row,
 		recordA,
 		recordB,
-		vendors: view.vendors.map((vendor) => {
+		vendors: vendors.map((vendor) => {
 			const isMatch = pair.matchedByExportIds.includes(vendor.id)
 			return {
 				...vendor,
@@ -221,15 +197,15 @@ export async function getPairDetail({
 					isVendorMatch: isMatch,
 					status: pair.assessment.status,
 					score: pair.assessment.score,
-					threshold: view.run.threshold
+					threshold: run.threshold
 				})
 			}
 		}),
 		vendorId,
-		position: position === -1 ? null : position + 1,
-		listSize: list.length,
-		isInFiltered,
-		previousId: position > 0 ? (list[position - 1]?.id ?? null) : null,
-		nextId: position !== -1 ? (list[position + 1]?.id ?? null) : null
+		position: position?.position ?? null,
+		listSize: position?.total ?? 0,
+		isInFiltered: inFiltered != null,
+		previousId: position?.previousId ?? null,
+		nextId: position?.nextId ?? null
 	}
 }

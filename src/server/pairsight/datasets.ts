@@ -5,6 +5,7 @@ import { defaultIdentity } from './judgment'
 import type { SourceRecordInput } from './source-records'
 import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
+import { recordKeys } from './record-keys'
 
 // The current dataset is the latest one; older datasets stay only for the
 // runs that used them.
@@ -65,7 +66,13 @@ export async function saveSourceDataset({
 				datasetId: dataset.id,
 				reference: record.reference,
 				rowNumber: record.rowNumber,
-				values: record.values
+				values: record.values,
+				...recordKeys({
+					reference: record.reference,
+					values: record.values,
+					columnRoles,
+					entityType
+				})
 			}))
 		})
 		await tx.evaluation.update({

@@ -164,16 +164,66 @@ are noted; the later items assume the earlier ones exist.
   and 8); telling someone a run finished when no page is open (in-app only
   for now).
 
-### 2. Results from the database
+### 2. Results from the database (built, 2026-10-06)
 
-- **What:**
-  - Results, the pairs list, filters, counts, Overview charts, the PDF and
-    the downloads read through database queries (paged lists, grouped
-    counts, per-vendor aggregates), not by loading a whole run.
-  - Downloads stream (CSV for very large runs; Excel stops at 1,048,576
-    rows per sheet).
-- **Depends on:** nothing strictly. It can run alongside item 1 but is
-  planned after it.
+- **Built:**
+  - **The Overview is worked out once,** when the run finishes, and stored
+    on the run (`runs.summary`, `run-summary.ts`): a count table (status ×
+    0.01 score bin × Jev's decision and close call at the run's cut-off ×
+    which vendors matched × why it was checked), pairs per rule, the field
+    patterns per vendor over every judged pair, the top disagreements, the
+    Jev versions and the record count. Every number on the Overview, the
+    dashboard and the PDF comes from it **exactly**
+    (`src/lib/pairsight/stats.ts`). That includes the 0.05 cut-off sweep
+    and the threshold preview, which now receives a few hundred rows
+    instead of one entry per pair. Nothing is sampled.
+  - **Kept current:** a run that finishes, and a pair page's re-check,
+    clear and rebuild the summaries of the other finished runs sharing those
+    judgments. Runs finished before this build theirs on first read.
+  - **Detailed analysis in SQL** (`results-query.ts`): the same filters,
+    search and order, a page at a time with an exact count, plus the pair's
+    position and neighbours for J/K.
+  - **Bounded requests** (`docs/rules/database.md`, "Bounded queries"): a
+    Results request reads `run_pairs` alone and joins records and judgments
+    only for the rows it shows. Each pair's status, score, sort key and
+    search text are copied onto it when the summary is built, so a summary
+    and its pages always agree. The first version joined the whole run on
+    every request, and at 1M pairs that ran the local database out of shared
+    memory and crashed Results. `pnpm scale:check-results` now reads every
+    request query's plan and fails on a whole-run read.
+  - Records carry `label`, `sortKey` and `searchText`. `sortKey` is the
+    natural-order key in hex, so the database's own collation and its index
+    give natural order.
+  - **Streaming downloads:** findings CSV and Excel are written a page at a
+    time, walking records in natural order through their index. They're
+    plain links, so the browser shows its own progress. Past 1,048,575 rows
+    the menu offers CSV only.
+  - Phone numbers are parsed once per value, not once per pair (a bounded
+    memo in `normalize.ts`): that was most of the summary's time.
+- **Proven equal:** `pnpm scale:check-results` compares the database's
+  summary, every filtered list, its order and pair positions against the
+  pair-by-pair code on every finished run in the local database: all 860
+  match, including a 200,000-pair one. The full e2e suite passes, including
+  a new test: a later run re-checking a shared pair updates an earlier
+  finished run.
+- **Measured** (`pnpm scale:seed-run`, `pnpm scale:measure-results`; local
+  Docker Postgres on a laptop, default settings):
+
+  |                                   | 200k pairs  | 1M pairs                    |
+  | --------------------------------- | ----------- | --------------------------- |
+  | Summary built (in the background) | 17 s        | 165 s                       |
+  | Overview read                     | 17 ms       | 20 ms                       |
+  | Detailed analysis, a page         | 0.004–0.3 s | 0.01–1.3 s                  |
+  | Count of a filtered list          | 0.02–0.09 s | 0.07–0.11 s                 |
+  | Search                            | 0.1 s       | 0.25 s                      |
+  | Pair position (J/K)               | 0.1–0.55 s  | 0.14–1.6 s                  |
+  | Findings CSV, every pair          | 8 s         | 44 s, memory flat (~400 MB) |
+
+  Twelve Results requests at once on the 1M run finish together in 3.7 s.
+
+- **Left open:** the summary build at 1M pairs (165 s) is background work
+  but slower than the first version (94 s), as it now copies each pair's
+  judgment. A rebuild only rewrites pairs whose judgment changed.
 
 ### 3. Large uploads
 

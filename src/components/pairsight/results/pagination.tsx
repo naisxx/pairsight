@@ -6,6 +6,8 @@ import { cn } from '@/lib/cn'
 import type { ResultFilters } from '@/server/pairsight/results'
 import { PageSizeSelect } from './page-size-select'
 import { toQuery } from './query'
+import { exactTitle } from '@/components/ui/count'
+import { EXACT_FORMATS } from '@/i18n/formats'
 
 // The table's footer: which rows are showing, rows per page, and paging.
 export function Pagination({
@@ -44,7 +46,12 @@ export function Pagination({
 			aria-label={t('pagination')}
 			className="border-border bg-surface type-ui flex flex-wrap items-center justify-between gap-3 rounded-b-md border px-3 py-2"
 		>
-			<p className="text-text-muted">
+			<p
+				className="text-text-muted"
+				title={exactTitle([first, last, total], () =>
+					t.markup('showingRows', { first, last, total, n: (chunks) => chunks }, EXACT_FORMATS)
+				)}
+			>
 				{t.rich('showingRows', {
 					first,
 					last,

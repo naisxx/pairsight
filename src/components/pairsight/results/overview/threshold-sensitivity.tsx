@@ -30,6 +30,7 @@ import {
 	SERIES_B,
 	THRESHOLD_STROKE
 } from './chart-theme'
+import { Count } from '@/components/ui/count'
 
 const LINES = [
 	{ key: 'precision', stroke: SERIES_A, dash: undefined },
@@ -249,7 +250,9 @@ export function ThresholdSensitivity({
 									<td className="py-1.5 text-right">{share(point.precision)}</td>
 									<td className="py-1.5 text-right">{share(point.recall)}</td>
 									<td className="py-1.5 text-right">{share(point.f1)}</td>
-									<td className="py-1.5 text-right">{point.matches}</td>
+									<td className="py-1.5 text-right">
+										<Count value={point.matches} />
+									</td>
 								</tr>
 							))}
 						</tbody>

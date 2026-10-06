@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { getRequestConfig } from 'next-intl/server'
 import { hasLocale } from 'next-intl'
+import { formats } from './formats'
 import { MESSAGE_FILES } from './messages'
 import { routing } from './routing'
 
@@ -40,6 +41,7 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
 	return {
 		locale,
-		messages: await loadMessages(MESSAGE_FILES[locale])
+		messages: await loadMessages(MESSAGE_FILES[locale]),
+		formats
 	}
 })

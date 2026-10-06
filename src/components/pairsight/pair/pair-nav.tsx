@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button'
 import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icons'
 import { Kbd } from '@/components/ui/kbd'
 import { cn } from '@/lib/cn'
+import { exactTitle } from '@/components/ui/count'
+import { EXACT_FORMATS } from '@/i18n/formats'
 
 type Href = { pathname: string; query: Record<string, string> }
 
@@ -49,7 +51,16 @@ export function PairNav({
 			</Button>
 			<div className="flex items-center gap-2">
 				{position != null && (
-					<span className="text-text-muted type-ui">
+					<span
+						className="text-text-muted type-ui"
+						title={exactTitle([position, total], () =>
+							t.markup(
+								isInFiltered ? 'positionFiltered' : 'positionAll',
+								{ position, total, n: (chunks) => chunks },
+								EXACT_FORMATS
+							)
+						)}
+					>
 						{t.rich(isInFiltered ? 'positionFiltered' : 'positionAll', {
 							position,
 							total,

@@ -59,7 +59,13 @@ export function createApiRoute<InputSchema extends z.ZodType, Output>(config: {
 }
 
 // A file to download: what a download route's handler returns.
-export type DownloadFile = { fileName: string; contentType: string; body: Uint8Array }
+// `body` is the whole file, or a stream for one written as it's read (a
+// run's findings).
+export type DownloadFile = {
+	fileName: string
+	contentType: string
+	body: Uint8Array | ReadableStream<Uint8Array>
+}
 
 // The file form of createApiRoute, for routes that send a download (an
 // export) rather than JSON: the same explicit input (query string plus the
@@ -83,7 +89,9 @@ export function createDownloadRoute<InputSchema extends z.ZodType>(config: {
 			const file = await config.handler(input, req)
 			// An ASCII name for older clients, and the exact one (RFC 5987).
 			const asciiName = file.fileName.replace(/[^\x20-\x7e]|"/g, '_')
-			return new NextResponse(new Blob([new Uint8Array(file.body)]), {
+			const body =
+				file.body instanceof Uint8Array ? new Blob([new Uint8Array(file.body)]) : file.body
+			return new NextResponse(body, {
 				headers: {
 					'Content-Type': file.contentType,
 					'Content-Disposition': `attachment; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,

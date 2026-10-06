@@ -9,10 +9,11 @@ import { Input } from '@/components/ui/input'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Slider } from '@/components/ui/slider'
 import type { Category } from '@/lib/pairsight/decisions'
-import { histogram, vendorMetrics, type MetricPair } from '@/lib/pairsight/metrics'
+import { statsHistogram, statsMetrics, statsMetricsAt, type StatsRow } from '@/lib/pairsight/stats'
 import { cn } from '@/lib/cn'
 import { CategoryDot } from './result-parts'
 import { formatShare } from './results/overview/chart-theme'
+import { Count } from '@/components/ui/count'
 
 const STEP = 0.01
 const PERCENT = 100
@@ -34,12 +35,14 @@ export function ThresholdControl({
 	threshold,
 	rulesHref,
 	vendorName,
-	pairs
+	stats
 }: {
 	threshold: number
 	rulesHref: string
 	vendorName: string
-	pairs: MetricPair[]
+	// The run's counts for this vendor, as vendor 0 (stats.ts
+	// `statsForVendor`): exact at every 0.01 step the control offers.
+	stats: StatsRow[]
 }) {
 	const t = useTranslations('Results')
 	const tCat = useTranslations('Categories')
@@ -49,35 +52,50 @@ export function ThresholdControl({
 	const [text, setText] = useState(threshold.toFixed(2))
 	const notAvailable = tOverview('notAvailable')
 
-	const bins = histogram(pairs)
+	const bins = statsHistogram(stats, 0)
 	const tallest = Math.max(1, ...bins.map((bin) => bin.matched + bin.notMatched))
-	const current = vendorMetrics(pairs, threshold)
-	const preview = vendorMetrics(pairs, draft)
-	const rows: Array<{ key: string; label: string; dot?: Category; from: string; to: string }> = [
+	const current = statsMetrics(stats, 0)
+	// The run's own threshold may have more decimals than a step.
+	const preview = draft === threshold ? current : statsMetricsAt(stats, 0, draft)
+	const rows: Array<{
+		key: string
+		label: string
+		dot?: Category
+		from: React.ReactNode
+		to: React.ReactNode
+		changed: boolean
+	}> = [
 		{
 			key: 'matches',
 			label: t('pairsightMatches'),
-			from: String(current.tp + current.fn),
-			to: String(preview.tp + preview.fn)
+			from: <Count value={current.tp + current.fn} />,
+			to: <Count value={preview.tp + preview.fn} />,
+			changed: current.tp + current.fn !== preview.tp + preview.fn
 		},
 		...ORDER.map((category) => ({
 			key: category,
 			label: tCat(category),
 			dot: category,
-			from: String(current.counts[category]),
-			to: String(preview.counts[category])
+			from: <Count value={current.counts[category]} />,
+			to: <Count value={preview.counts[category]} />,
+			changed: current.counts[category] !== preview.counts[category]
 		})),
 		{
 			key: 'precision',
 			label: tOverview('precisionLabel'),
 			from: formatShare(current.precision, notAvailable),
-			to: formatShare(preview.precision, notAvailable)
+			to: formatShare(preview.precision, notAvailable),
+			changed:
+				formatShare(current.precision, notAvailable) !==
+				formatShare(preview.precision, notAvailable)
 		},
 		{
 			key: 'recall',
 			label: tOverview('recallLabel'),
 			from: formatShare(current.recall, notAvailable),
-			to: formatShare(preview.recall, notAvailable)
+			to: formatShare(preview.recall, notAvailable),
+			changed:
+				formatShare(current.recall, notAvailable) !== formatShare(preview.recall, notAvailable)
 		}
 	]
 
@@ -188,11 +206,7 @@ export function ThresholdControl({
 									<span className="text-text-muted">{row.from}</span>
 									<ArrowRightIcon size={11} className="text-text-muted" />
 									<span className="sr-only">{t('becomes')}</span>
-									<span
-										className={cn(
-											row.from !== row.to ? 'text-accent-ink font-semibold' : 'text-text'
-										)}
-									>
+									<span className={cn(row.changed ? 'text-accent-ink font-semibold' : 'text-text')}>
 										{row.to}
 									</span>
 								</dd>

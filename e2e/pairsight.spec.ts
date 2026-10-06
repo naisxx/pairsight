@@ -639,6 +639,41 @@ test.describe('PairSight vertical slice', () => {
 		await expect(card).toContainText('Finished, 1 pair couldn’t be checked')
 	})
 
+	test('a later run checking a shared pair again updates an earlier finished run’s numbers', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Shared checks')
+		await uploadRecords(page, 'failures-source.csv')
+		await addVendor(page, 'failures-vendor.csv')
+		await runEvaluation(page)
+		// Run 1's numbers are worked out once it finishes: two pairs not checked.
+		await expect(tile(page, 'Not checked yet')).toContainText('2')
+		await expect(tile(page, 'Both say same')).toContainText('1')
+
+		// Run 2, at another cut-off, shares run 1's checks and tries its failed
+		// pairs again: Retrycase is judged this time, Failcase fails again.
+		await page.getByRole('button', { name: /^Match cut-off 0\.50/ }).click()
+		await page.getByRole('dialog').getByRole('link', { name: 'Change in Rules' }).click()
+		await page.waitForURL('**/rules')
+		const threshold = page.getByRole('radiogroup', { name: 'How sure must Jev be?' })
+		await threshold.getByRole('radio', { name: /^Lenient/ }).click()
+		await expect(threshold.getByRole('radio', { name: /^Lenient/ })).toBeChecked()
+		await reviewPlan(page)
+		await startRun(page)
+		const main = page.locator('#main')
+		await expect(main).toContainText('Run 2 ·')
+		await expect(tile(page, 'Not checked yet')).toContainText('1')
+
+		// Run 1 counts the new check too, though it finished before it.
+		await page.getByRole('button', { name: 'Choose a run' }).click()
+		await page.getByRole('menuitem', { name: /^Run 1 ·/ }).click()
+		await expect(main).toContainText('Run 1 ·')
+		await expect(page.getByRole('button', { name: /^Match cut-off 0\.50/ })).toBeVisible()
+		await expect(tile(page, 'Not checked yet')).toContainText('1')
+		await expect(tile(page, 'Both say same')).toContainText('2')
+	})
+
 	test('a rejected API key stops the run with the fix, and it resumes once the key works', async ({
 		page
 	}) => {
@@ -825,23 +860,23 @@ test.describe('PairSight vertical slice', () => {
 
 		await page.getByRole('link', { name: 'Next: rules' }).click()
 		await page.waitForURL('**/rules')
-		await expect(page.getByText('This rule alone picks 5,460 pairs').first()).toBeVisible()
+		await expect(page.getByText('This rule alone picks 5.46K pairs').first()).toBeVisible()
 		// The live summary and the action bar say it before the plan does.
 		await expect(
 			page.getByText(
 				'460 pairs over the limit. Turn off a rule, or add a value to one, so it picks fewer.'
 			)
 		).toBeVisible()
-		await expect(page.getByText('Bring the pairs down to 5,000 or fewer (now 5,460)')).toBeVisible()
+		await expect(page.getByText('Bring the pairs down to 5K or fewer (now 5.46K)')).toBeVisible()
 		await expect(page.getByRole('link', { name: 'Check and start', exact: true })).toHaveCount(0)
 		await page.goto(page.url().replace(/\/rules$/, '/plan'))
 		const overLimit = page.getByRole('heading', {
-			name: '5,460 pairs is more than one run can check (5,000)'
+			name: '5.46K pairs is more than one run can check (5K)'
 		})
 		await expect(overLimit).toBeVisible()
 		await expect(
 			page.getByRole('listitem').filter({ hasText: 'Same name and postcode' })
-		).toContainText('5,460 pairs · biggest group 105')
+		).toContainText('5.46K pairs · biggest group 105')
 		await expect(page.getByRole('button', { name: 'Start run' })).toBeDisabled()
 
 		// Turning the rule off from the plan brings it under the limit.

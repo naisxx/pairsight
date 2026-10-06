@@ -41,7 +41,8 @@ export function compareFields({
 				? 'bothMissing'
 				: a === '' || b === ''
 					? 'oneMissing'
-					: normalize(a) === normalize(b)
+					: // Identical values normalize alike: no need to parse them.
+						a === b || normalize(a) === normalize(b)
 						? 'same'
 						: 'different'
 		const isFormatOnly = comparison === 'same' && a.trim() !== b.trim()
