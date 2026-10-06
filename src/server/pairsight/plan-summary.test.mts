@@ -35,7 +35,6 @@ test('counts: overlapping rules and vendor pairs are counted once, reuse is subt
 		recordCount: 5,
 		rules,
 		ruleStats: [stat('email', 1), stat('phone', 2)],
-		blockedPairCount: 2,
 		comparison,
 		vendorPairs: [
 			{ a: 'r1', b: 'r2' },
@@ -55,6 +54,8 @@ test('counts: overlapping rules and vendor pairs are counted once, reuse is subt
 		allPossiblePairs: 10,
 		reusable: 1,
 		toEvaluate: 2,
+		splinkPairs: 0,
+		addedBySplinkOnly: 0,
 		isExact: true
 	})
 	assert.deepEqual(blockers, [])
@@ -65,7 +66,6 @@ test('blockers: each missing piece is reported, not just the first', () => {
 		recordCount: 3,
 		rules: [],
 		ruleStats: [],
-		blockedPairCount: 0,
 		comparison: [],
 		vendorPairs: [],
 		reusableKeys: new Set(),
@@ -80,7 +80,6 @@ test('one field for Jev is not enough to run', () => {
 		recordCount: 3,
 		rules: [],
 		ruleStats: [],
-		blockedPairCount: 0,
 		comparison: [pair('a', 'b', [])],
 		vendorPairs: [],
 		reusableKeys: new Set(),
@@ -99,7 +98,6 @@ test('over the cap: blocked, with the biggest source of pairs named first', () =
 		recordCount: 200,
 		rules,
 		ruleStats: [stat('email', 0), stat('phone', over - 3, 120)],
-		blockedPairCount: over - 3,
 		comparison,
 		vendorPairs: [],
 		reusableKeys: new Set(),
@@ -128,7 +126,6 @@ test('exactly at the cap is allowed', () => {
 		recordCount: 500,
 		rules,
 		ruleStats: [stat('email', LIMITS.maxPairsPerRun)],
-		blockedPairCount: LIMITS.maxPairsPerRun,
 		comparison,
 		vendorPairs: [],
 		reusableKeys: new Set(),
@@ -146,7 +143,6 @@ test('rules too big to build: blocked as far over, counts are a floor, the rule 
 		rules,
 		ruleStats: [stat('email', huge, 5_000), stat('phone', 10)],
 		isComplete: false,
-		blockedPairCount: 0,
 		comparison,
 		vendorPairs: [{ a: 'v1', b: 'v2' }],
 		reusableKeys: new Set(),
@@ -166,7 +162,6 @@ test('rules too big to build, none over on its own: still over the limit', () =>
 		rules,
 		ruleStats: [stat('email', 60_000), stat('phone', 60_000)],
 		isComplete: false,
-		blockedPairCount: 0,
 		comparison: [],
 		vendorPairs: [],
 		reusableKeys: new Set(),
@@ -175,4 +170,31 @@ test('rules too big to build, none over on its own: still over the limit', () =>
 	})
 	assert.deepEqual(blockers, ['too_many_pairs'])
 	assert.equal(counts.uniquePairs, LIMITS.maxPairsPerRun + 1)
+})
+
+test('Splink’s picks: counted once with the rules, its own additions and its share named', () => {
+	const comparison = [
+		pair('r1', 'r2', ['email', 'splink']),
+		pair('r3', 'r4', ['splink']),
+		pair('r5', 'r6', ['splink'], ['v1']),
+		pair('r7', 'r8', ['phone'])
+	]
+	const { counts, contributors } = summarizePlan({
+		recordCount: 10,
+		rules,
+		ruleStats: [stat('email', 1), stat('phone', 1)],
+		splinkPairCount: 3,
+		comparison,
+		vendorPairs: [{ a: 'r5', b: 'r6' }],
+		reusableKeys: new Set(),
+		vendorCount: 1,
+		jevFieldCount: 2
+	})
+	assert.equal(counts.uniquePairs, 4)
+	// Picked by a rule or by Splink: all four.
+	assert.equal(counts.blockedPairs, 4)
+	assert.equal(counts.splinkPairs, 3)
+	assert.equal(counts.addedBySplinkOnly, 2)
+	assert.equal(counts.addedByVendorOnly, 0)
+	assert.deepEqual(contributors[0], { kind: 'splink', pairCount: 3 })
 })

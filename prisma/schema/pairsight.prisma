@@ -63,6 +63,9 @@ model Evaluation {
 	jevFields         String[]
 	// BlockingRule[] (src/server/pairsight/blocking.ts).
 	blockingRules     Json
+	// Whether the Plan adds the pairs Splink picked (splink/picks.ts) to the
+	// rules' and vendors' pairs. On unless switched off in Rules.
+	splinkPicks       Boolean         @default(true)
 	threshold         Float           @default(0.5)
 	createdAt         DateTime        @default(now()) @db.Timestamptz(6)
 	updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
@@ -91,14 +94,54 @@ model SourceDataset {
 	// Set once every record is in: records are written in batches, and a
 	// dataset still being written (or left half-written) is never used.
 	savedAt         DateTime?      @default(now()) @db.Timestamptz(6)
+	// Splink's scoring of its pairs (src/server/pairsight/splink/), run by the
+	// background worker: the dataset row is the job, as a run is. Null until
+	// first asked for (on save, or when its Plan is first opened), so datasets
+	// from before Splink aren't all scored at once.
+	scoreStatus     ScoreStatus?
+	scoreClaimedAt  DateTime?      @db.Timestamptz(6)
+	scoredAt        DateTime?      @db.Timestamptz(6)
+	// How it went: versions, timings, pairs scored and kept, or why skipped.
+	scoreSummary    Json?
 	records         SourceRecord[]
+	pairScores      PairScore[]
 	vendorExports   VendorExport[]
 	vendorDrafts    VendorDraft[]
 	runs            Run[]
 	assessments     Assessment[]
 
 	@@index([evaluationId, createdAt])
+	// The worker looks for datasets to score every second.
+	@@index([scoreStatus, scoreClaimedAt])
 	@@map("source_datasets")
+}
+
+enum ScoreStatus {
+	pending
+	running
+	done
+	// Not scored, for a reason in scoreSummary: too few records, a type
+	// Splink doesn't do yet, or Splink not set up on this server.
+	skipped
+	failed
+}
+
+// One pair Splink scored as worth checking, for one dataset (canonical
+// order: the smaller record id first). Only pairs above the service's
+// storage floor, at most a run's worth. Splink only picks pairs; Jev still
+// judges every one (docs/rules/splink-service.md).
+model PairScore {
+	datasetId        String        @db.Uuid
+	dataset          SourceDataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+	recordAId        String        @db.Uuid
+	recordBId        String        @db.Uuid
+	matchWeight      Float
+	matchProbability Float
+
+	@@id([datasetId, recordAId, recordBId])
+	// The Plan reads a dataset's pairs above its floor, best first.
+	@@index([datasetId, matchWeight])
+	@@map("pair_scores")
 }
 
 model SourceRecord {

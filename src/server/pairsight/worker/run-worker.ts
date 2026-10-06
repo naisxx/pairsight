@@ -5,6 +5,7 @@ import { db } from '@/server/db/client'
 import { log as rootLog, withLogContext } from '@/server/lib/logger'
 import { limiter } from '../assess'
 import { finishIfDone, markWaiting, startRunCalls, type RunFlight } from '../run-engine'
+import { claimDatasetToScore, scoreDataset } from '../splink/score-dataset'
 import { sweepUploads } from '../uploads'
 import { createReportOnce, shareConcurrency, shouldRefill } from './schedule'
 
@@ -139,6 +140,18 @@ export function startRunWorker() {
 		if (swept.uploads + swept.datasets > 0) log.info('old uploads cleared', swept)
 	}
 
+	// Splink scoring (splink/score-dataset.ts): one dataset at a time on this
+	// server, beside the runs, since it's heavy on CPU and memory.
+	let scoring: Promise<void> | null = null
+	const scoreNext = async () => {
+		if (scoring != null) return
+		const datasetId = await claimDatasetToScore()
+		if (datasetId == null) return
+		scoring = withLogContext({ datasetId }, () => scoreDataset(datasetId)).finally(() => {
+			scoring = null
+		})
+	}
+
 	const loop = async () => {
 		log.info('run worker started', {
 			concurrency: env.RUN_WORKER_CONCURRENCY,
@@ -148,6 +161,9 @@ export function startRunWorker() {
 		while (!stopping) {
 			await sweep().catch((error: unknown) => {
 				if (reportOnce('*', 'sweep')) captureError(error, { source: 'run-worker' })
+			})
+			await scoreNext().catch((error: unknown) => {
+				if (reportOnce('*', 'score')) captureError(error, { source: 'run-worker' })
 			})
 			try {
 				const running = await db.run.findMany({

@@ -25,9 +25,18 @@ export const saveRulesAction = validatedAction({
 		// One field alone gives Jev too little to tell two people apart.
 		jevFields: z.array(identityRoleSchema).min(MIN_JEV_FIELDS),
 		blockingRules: blockingRulesSchema,
-		threshold: thresholdSchema
+		threshold: thresholdSchema,
+		splinkPicks: z.boolean()
 	}),
-	handler: async ({ evaluationId, identity, countryCode, jevFields, blockingRules, threshold }) => {
+	handler: async ({
+		evaluationId,
+		identity,
+		countryCode,
+		jevFields,
+		blockingRules,
+		threshold,
+		splinkPicks
+	}) => {
 		const user = await requireUser()
 		await updateEvaluationConfig({
 			ownerId: user.id,
@@ -37,7 +46,8 @@ export const saveRulesAction = validatedAction({
 			countryCode,
 			jevFields,
 			blockingRules,
-			threshold
+			threshold,
+			splinkPicks
 		})
 		revalidateEvaluationPages()
 		return { saved: true }

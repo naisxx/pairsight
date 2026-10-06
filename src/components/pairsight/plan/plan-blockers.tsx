@@ -82,10 +82,15 @@ export async function PlanBlockers({
 									</ReadOnlyGate>
 								</li>
 							) : (
-								<li key="vendors" className="type-ui flex flex-wrap items-center gap-3 px-3 py-2">
-									<span className="font-medium">{t('overVendors')}</span>
+								<li key={item.kind} className="type-ui flex flex-wrap items-center gap-3 px-3 py-2">
+									<span className="font-medium">
+										{item.kind === 'vendors' ? t('overVendors') : t('overSplink')}
+									</span>
 									<span className="text-text-muted">
-										{t.rich('overVendorsNote', { pairs: item.pairCount, n: mono })}
+										{t.rich(item.kind === 'vendors' ? 'overVendorsNote' : 'overSplinkNote', {
+											pairs: item.pairCount,
+											n: mono
+										})}
 									</span>
 								</li>
 							)

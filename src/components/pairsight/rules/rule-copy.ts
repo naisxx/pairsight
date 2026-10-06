@@ -2,6 +2,9 @@
 // every entity type) and its normalization — shared by the Rules screen and
 // every rule label.
 export const RULE_COPY: Record<string, { title: string; hint: string }> = {
+	// Not a rule: Splink's picks (src/server/pairsight/splink/picks.ts), named
+	// wherever a pair's reasons for being checked are shown.
+	splink: { title: 'ruleSplink', hint: 'ruleSplinkHint' },
 	email: { title: 'ruleEmail', hint: 'ruleEmailHint' },
 	phone: { title: 'rulePhone', hint: 'rulePhoneHint' },
 	name: { title: 'ruleName', hint: 'ruleNameHint' },

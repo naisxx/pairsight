@@ -117,7 +117,8 @@ export async function updateEvaluationConfig({
 	countryCode,
 	jevFields,
 	blockingRules,
-	threshold
+	threshold,
+	splinkPicks
 }: {
 	ownerId: string
 	evaluationId: string
@@ -128,11 +129,21 @@ export async function updateEvaluationConfig({
 	blockingRules: Array<z.infer<typeof blockingRuleSchema>>
 	// The next run's threshold; runs already started keep their own.
 	threshold: number
+	// Whether the Plan adds the pairs Splink picked (splink/picks.ts).
+	splinkPicks: boolean
 }) {
 	await getOwnedEvaluation({ ownerId, id: evaluationId })
 	await db.evaluation.update({
 		where: { id: evaluationId },
-		data: { identitySame, identityDifferent, countryCode, jevFields, blockingRules, threshold }
+		data: {
+			identitySame,
+			identityDifferent,
+			countryCode,
+			jevFields,
+			blockingRules,
+			threshold,
+			splinkPicks
+		}
 	})
 }
 
