@@ -3,6 +3,7 @@ import { entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { runBase, type EvaluationView } from '@/lib/pairsight/evaluation-view'
 import { evaluationWhere, type EvaluationScope } from './scope'
+import { recountRun } from './runs'
 import type { VendorMetrics } from '@/lib/pairsight/metrics'
 import { statsMetrics } from '@/lib/pairsight/stats'
 import { readRunSummary, runVendors, SUMMARY_RUN_SELECT } from './run-summary'
@@ -94,7 +95,13 @@ export async function getDashboard({
 					status: true,
 					createdAt: true,
 					completedAt: true,
-					_count: { select: { pairs: { where: { assessment: { status: 'succeeded' } } } } }
+					// Its stored counts (runs.ts), never a count of its pairs: a
+					// relation `_count` here counted every run's pairs in the
+					// database on each view, and ran Postgres out of shared memory
+					// once runs got big (docs/rules/database.md, "Bounded queries").
+					checkedCount: true,
+					failedCount: true,
+					countedAt: true
 				}
 			}
 		}
@@ -150,7 +157,7 @@ export async function getDashboard({
 			evaluations: rows.length,
 			withResults: finished.length,
 			inSetup: rows.length - finished.length,
-			pairsAssessed: evaluations.reduce((sum, item) => sum + (item.runs[0]?._count.pairs ?? 0), 0)
+			pairsAssessed: await pairsAssessed(evaluations.map((evaluation) => evaluation.runs[0]))
 		},
 		latest:
 			newest == null
@@ -199,4 +206,20 @@ async function latestResults({
 			metrics: statsMetrics(summary.rows, summary.vendorIds.indexOf(vendor.id))
 		}))
 	}
+}
+
+// Pairs Jev has checked in each evaluation's latest run, from the runs' stored
+// counts. A run from before they were stored is counted once, and kept.
+async function pairsAssessed(
+	runs: Array<
+		{ id: string; checkedCount: number; failedCount: number; countedAt: Date | null } | undefined
+	>
+): Promise<number> {
+	const counts = await Promise.all(
+		runs.map((run) => (run == null ? null : run.countedAt == null ? recountRun(run.id) : run))
+	)
+	return counts.reduce(
+		(sum, count) => sum + (count == null ? 0 : count.checkedCount - count.failedCount),
+		0
+	)
 }
