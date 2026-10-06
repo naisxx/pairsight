@@ -18,6 +18,7 @@ export async function PlanLedger({
 	cost,
 	duration,
 	splink,
+	isUsingDefaultRules,
 	isOverLimit
 }: {
 	counts: PlanCounts
@@ -30,6 +31,8 @@ export async function PlanLedger({
 	duration: RunDuration
 	// Splink's picks (splink/picks.ts): whether they're in, coming, or not.
 	splink: { state: SplinkState; reason: string | null }
+	// Nothing else picks pairs, so the type's simple rules do (plan.ts).
+	isUsingDefaultRules: boolean
 	isOverLimit: boolean
 }) {
 	const t = await getTranslations('Plan')
@@ -48,13 +51,13 @@ export async function PlanLedger({
 		{
 			label: t('rowRules'),
 			value: <Count value={ruleMatches} />,
-			note: t('rowRulesNote', { count: ruleCount })
+			note: isUsingDefaultRules ? t('rowRulesDefault') : t('rowRulesNote', { count: ruleCount })
 		},
 		...(splink.state === 'off'
 			? []
 			: [
 					{
-						label: t('rowSplink'),
+						label: t('rowSuggested'),
 						value:
 							splink.state === 'done' ? (
 								<>
@@ -67,18 +70,18 @@ export async function PlanLedger({
 							<span className="inline-flex max-w-full items-center gap-1">
 								<span className="truncate">
 									{splink.state === 'done'
-										? t('rowSplinkNote')
+										? t('rowSuggestedNote')
 										: splink.state === 'waiting'
-											? t('rowSplinkWaiting')
+											? t('rowSuggestedWaiting')
 											: splink.state === 'failed'
-												? t('rowSplinkFailed')
+												? t('rowSuggestedFailed')
 												: splink.reason === 'too_few_records'
-													? t('rowSplinkTooFew')
+													? t('rowSuggestedTooFew')
 													: splink.reason === 'not_people'
-														? t('rowSplinkNotPeople')
-														: t('rowSplinkNotSetUp')}
+														? t('rowSuggestedNotPeople')
+														: t('rowSuggestedNotSetUp')}
 								</span>
-								<InfoTip label={t('splinkInfoLabel')} content={t('splinkInfo')} />
+								<InfoTip label={t('suggestionsInfoLabel')} content={t('suggestionsInfo')} />
 							</span>
 						)
 					}
@@ -101,7 +104,7 @@ export async function PlanLedger({
 			),
 			note:
 				counts.splinkPairs > 0
-					? t('rowDuplicatesNoteSplink', { overlaps, inside: vendorInside })
+					? t('rowDuplicatesNoteSuggested', { overlaps, inside: vendorInside })
 					: t('rowDuplicatesNote', { overlaps, inside: vendorInside })
 		}
 	]

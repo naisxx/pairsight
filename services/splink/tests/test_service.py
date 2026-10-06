@@ -5,6 +5,7 @@ import pytest
 
 from pairsight_splink.cli import STORE_FLOOR, main
 from pairsight_splink.model import MIN_RECORDS, RECORD_COLUMNS, prepare, score
+from pairsight_splink.reasons import reasons
 
 from .people import people
 
@@ -64,7 +65,7 @@ def test_the_cli_writes_the_kept_pairs_best_first_and_says_how_it_went(tmp_path,
     )
     summary = json.loads(capsys.readouterr().out)
     pairs = pd.read_csv(tmp_path / "pairs.csv", dtype={"a": str, "b": str})
-    assert list(pairs.columns) == ["a", "b", "match_weight", "match_probability"]
+    assert list(pairs.columns) == ["a", "b", "match_weight", "match_probability", "reasons"]
     assert (pairs["match_weight"] >= STORE_FLOOR).all()
     assert pairs["match_weight"].is_monotonic_decreasing
     assert summary["records"] == len(records)
@@ -81,3 +82,34 @@ def test_the_same_file_always_gives_the_same_pairs():
         score(records, memory_limit=MEMORY).pairs.sort_values(["a", "b"]).reset_index(drop=True)
     )
     pd.testing.assert_frame_equal(first, second)
+
+
+def test_each_pair_carries_its_reasons_in_codes():
+    frame = pd.DataFrame(
+        {
+            "gamma_first_name_last_name": [5, 6, 0],
+            "gamma_dob": [5, -1, 2],
+            "gamma_email": [0, 4, 3],
+            "gamma_phone": [-1, 1, 0],
+            "gamma_postcode_spaced": [2, 4, -1],
+            "gamma_city": [1, 0, 0],
+        }
+    )
+    assert list(reasons(frame)) == [
+        "name_swapped;dob_same;postcode_area;city_same",
+        "name_same;email_same;phone_same;postcode_same",
+        "dob_close;email_username",
+    ]
+
+
+def test_planted_duplicates_are_explained(tmp_path, capsys):
+    records, duplicates = people(600)
+    records.to_csv(tmp_path / "records.csv", index=False)
+    main(["score", "--records", str(tmp_path / "records.csv"), "--out", str(tmp_path / "p.csv")])
+    capsys.readouterr()
+    pairs = pd.read_csv(tmp_path / "p.csv", dtype=str, keep_default_na=False)
+    assert list(pairs.columns) == ["a", "b", "match_weight", "match_probability", "reasons"]
+    planted = pairs[[(a, b) in duplicates for a, b in zip(pairs["a"], pairs["b"], strict=True)]]
+    # The tests' duplicates share an email, a name and a birth date.
+    assert all("email_same" in codes.split(";") for codes in planted["reasons"])
+    assert all("name_same" in codes.split(";") for codes in planted["reasons"])

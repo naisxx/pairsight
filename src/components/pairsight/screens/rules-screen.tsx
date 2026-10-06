@@ -9,6 +9,7 @@ import { computePlan } from '@/server/pairsight/plan'
 import { rulesPreview } from '@/server/pairsight/rules-preview'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
+import { RefreshWhile } from '@/components/pairsight/refresh-while'
 
 export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const { workspace, view, scope } = loaded
@@ -28,9 +29,12 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	// The summary follows what's saved: the plan's counts and the saved rules.
 	const savedStats = ('ruleStats' in plan ? plan.ruleStats : undefined) ?? []
 	const counts = 'counts' in plan ? plan.counts : null
+	const splink = ('splink' in plan ? plan.splink : undefined) ?? null
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
+			{/* Suggestions still being worked out: the card fills in by itself. */}
+			<RefreshWhile isActive={splink?.state === 'waiting'} />
 			<RulesForm
 				evaluationId={id}
 				initial={{
@@ -46,7 +50,8 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				mappedRoles={preview.mappedRoles}
 				stats={preview.stats}
 				summary={{
-					fromRules: counts?.blockedPairs ?? 0,
+					fromRules: (counts?.blockedPairs ?? 0) - (counts?.addedBySplinkOnly ?? 0),
+					suggestedOnly: counts?.addedBySplinkOnly ?? 0,
 					vendorOnly: counts?.addedByVendorOnly ?? 0,
 					total: counts?.uniquePairs ?? 0,
 					isExact: counts?.isExact ?? true,
@@ -68,6 +73,12 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 									}
 								]
 					)
+				}}
+				suggestions={{
+					state: splink?.state ?? 'off',
+					suggested: splink?.suggested ?? 0,
+					reasons: splink?.reasons ?? [],
+					vendorCheck: ('vendorCheck' in plan ? plan.vendorCheck : undefined) ?? []
 				}}
 				countries={countryOptions(locale)}
 				limits={{

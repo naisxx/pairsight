@@ -191,6 +191,12 @@ def score(records: pd.DataFrame, memory_limit: str) -> Scored:
             "b": predictions["unique_id_r"],
             "match_weight": predictions["match_weight"],
             "match_probability": predictions["match_probability"],
+            # Each comparison's level for the pair, for its reasons (reasons.py).
+            **{
+                column: predictions[column]
+                for column in predictions.columns
+                if column.startswith("gamma_")
+            },
         }
     )
     # PairSight's canonical order: the smaller id first, by plain comparison.

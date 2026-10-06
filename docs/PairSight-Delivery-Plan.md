@@ -122,6 +122,12 @@ the start, without duplicating any Jev work.
 - It never blocks anything: under 200 records, a type other than people,
   Splink not set up, or a failure, the plan goes on with rules and vendor
   pairs and says why in one line.
+- Since item 6 it's the default: a new people evaluation of 200 records or
+  more starts with no rules (they sit under "Advanced" on the Rules screen),
+  smaller files and other types start with the type's default rules, and a
+  plan with no rules and no suggestions available falls back to the
+  defaults (`rulesForPlan`). On screen these are "Suggested by PairSight";
+  the technology is never named.
 
 **Reading results: from the database, never the whole run** (Scale Roadmap
 item 2).

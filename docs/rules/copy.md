@@ -105,6 +105,17 @@ The exact figure is never lost: hovering a shortened count shows it.
 - Not counts, so not shortened: shares (80.0%), scores and cut-offs (0.62),
   money, dates, page numbers, run numbers and IDs.
 
+## Never name the tech behind a feature
+
+Screens say what PairSight does, not what it's built with. No library,
+service or method names anywhere a user can see them: no "Splink", "DuckDB",
+"Fellegi–Sunter", "match weight", "model" or "EM", in copy, tips, file
+names, downloads or the PDF. Pairs PairSight picks by itself are
+**suggested by PairSight**; what they share is said in plain words ("the
+same date of birth", "first and last names swapped"). Code, ids and docs may
+keep the real names (`'splink'` among a pair's reasons, `services/splink`).
+`src/i18n/copy.test.mts` fails on the names.
+
 ## Outside the catalog
 
 A few messages are written where they're raised rather than in

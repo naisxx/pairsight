@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import type { RuleStats } from './blocking'
 import { LIMITS } from './limits'
 import { pairKey, type ComparisonPair } from './pairs'
-import { summarizePlan } from './plan-summary'
+import { rulesForPlan, summarizePlan } from './plan-summary'
 
 function stat(ruleId: string, pairCount: number, largestBucket = 2): RuleStats {
 	return {
@@ -197,4 +197,24 @@ test('Splink’s picks: counted once with the rules, its own additions and its s
 	assert.equal(counts.addedBySplinkOnly, 2)
 	assert.equal(counts.addedByVendorOnly, 0)
 	assert.deepEqual(contributors[0], { kind: 'splink', pairCount: 3 })
+})
+
+test('a plan never goes empty: with no rule on and no suggestions, the default rules pick', () => {
+	const defaults = [{ id: 'email', fields: ['email' as const] }]
+	const saved = [{ id: 'phone', fields: ['phone' as const] }]
+	for (const suggestions of ['skipped', 'failed'] as const) {
+		assert.deepEqual(rulesForPlan({ saved: [], suggestions, defaults }), {
+			rules: defaults,
+			isUsingDefaultRules: true
+		})
+	}
+	// Suggestions picking (or about to), or switched off on purpose: as set.
+	for (const suggestions of ['done', 'waiting', 'off'] as const) {
+		assert.deepEqual(rulesForPlan({ saved: [], suggestions, defaults }), {
+			rules: [],
+			isUsingDefaultRules: false
+		})
+	}
+	// Your own rules always stand.
+	assert.deepEqual(rulesForPlan({ saved, suggestions: 'off', defaults }).rules, saved)
 })

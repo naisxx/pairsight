@@ -13,6 +13,8 @@ import { log as rootLog } from '@/server/lib/logger'
 import { loadBlockingRecords } from '../blocking-records'
 import { chunks } from '../chunks'
 import { LIMITS } from '../limits'
+import { SPLINK_PLAN_FLOOR } from './picks'
+import { parseReasons, tallyReasons, type SuggestionReason } from './reasons'
 import { splinkRecordLines } from './records'
 import { runSplink, splinkPython, type SplinkSummary } from './service'
 
@@ -38,6 +40,7 @@ function staleBefore(): Date {
 // there's none (or another server got it first).
 export async function claimDatasetToScore(): Promise<string | null> {
 	const waiting = {
+		scorePool: env.RUN_WORKER_POOL,
 		OR: [
 			{ scoreStatus: 'pending' as const },
 			{ scoreStatus: 'running' as const, scoreClaimedAt: { lt: staleBefore() } }
@@ -77,14 +80,28 @@ async function* readPairs(file: string) {
 			isHeader = false
 			continue
 		}
-		const [a, b, weight, probability] = line.split(',')
+		const [a, b, weight, probability, reasons = ''] = line.split(',')
 		if (a == null || b == null || a === '' || b === '') continue
-		yield { a, b, matchWeight: Number(weight), matchProbability: Number(probability) }
+		yield {
+			a,
+			b,
+			matchWeight: Number(weight),
+			matchProbability: Number(probability),
+			reasons: parseReasons(reasons)
+		}
 	}
 }
 
+type ScoredPair = {
+	a: string
+	b: string
+	matchWeight: number
+	matchProbability: number
+	reasons: SuggestionReason[]
+}
+
 async function storePairs(datasetId: string, file: string) {
-	const pairs: Array<{ a: string; b: string; matchWeight: number; matchProbability: number }> = []
+	const pairs: ScoredPair[] = []
 	for await (const pair of readPairs(file)) pairs.push(pair)
 	await db.$transaction(
 		async (tx) => {
@@ -96,14 +113,22 @@ async function storePairs(datasetId: string, file: string) {
 						recordAId: pair.a,
 						recordBId: pair.b,
 						matchWeight: pair.matchWeight,
-						matchProbability: pair.matchProbability
+						matchProbability: pair.matchProbability,
+						reasons: pair.reasons
 					}))
 				})
 			}
 		},
 		{ timeout: STORE_TIMEOUT_MS }
 	)
-	return pairs.length
+	// What the suggested pairs have in common, counted once here so a page
+	// never reads every pair to say it (the Rules screen's "most share…").
+	const suggested = pairs.filter((pair) => pair.matchWeight >= SPLINK_PLAN_FLOOR)
+	return {
+		stored: pairs.length,
+		suggested: suggested.length,
+		reasons: tallyReasons(suggested)
+	}
 }
 
 export async function scoreDataset(datasetId: string): Promise<void> {
@@ -140,8 +165,17 @@ export async function scoreDataset(datasetId: string): Promise<void> {
 			return
 		}
 		const stored = await storePairs(datasetId, outPath)
-		await finish(datasetId, 'done', { ...summary, pairs_stored: stored })
-		log.info('dataset scored', { datasetId, pairs: stored, seconds: summary.seconds_total })
+		await finish(datasetId, 'done', {
+			...summary,
+			pairs_stored: stored.stored,
+			pairs_suggested: stored.suggested,
+			reasons: stored.reasons
+		})
+		log.info('dataset scored', {
+			datasetId,
+			pairs: stored.stored,
+			seconds: summary.seconds_total
+		})
 	} catch (error) {
 		const kind = error instanceof Error ? error.name : 'unknown'
 		log.error('dataset scoring failed', { datasetId, kind })

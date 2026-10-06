@@ -81,7 +81,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				</p>
 			)}
 
-			{plan.blockers.length > 0 && (
+			{plan.blockers.some((blocker) => blocker !== 'still_suggesting') && (
 				<div className="mb-4">
 					<PlanBlockers
 						base={view.base}
@@ -111,6 +111,9 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 							})}
 							duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
 							splink={splink}
+							isUsingDefaultRules={
+								'isUsingDefaultRules' in plan && plan.isUsingDefaultRules === true
+							}
 							isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
 						/>
 					)}

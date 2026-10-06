@@ -14,6 +14,8 @@ import { isPairsightMatch } from '@/server/pairsight/decisions'
 import { getPairDetail, parseResultFilters } from '@/server/pairsight/results'
 import { isUuid } from '@/server/pairsight/schemas'
 import { parseBlockingRules } from '@/server/pairsight/json'
+import { SPLINK_RULE_ID } from '@/server/pairsight/plan-summary'
+import { suggestionReasons } from '@/server/pairsight/splink/picks'
 import type { loadRun } from '@/server/pairsight/evaluation-pages'
 
 // Pair detail (docs/PairSight-UX-Plan.md §4.2): the two records side by
@@ -42,6 +44,14 @@ export async function PairScreen({
 	if (detail == null) notFound()
 
 	const { run, row, recordA, recordB, assessment } = detail
+	// Suggested by PairSight: why, in words.
+	const suggestedBecause = detail.ruleIds.includes(SPLINK_RULE_ID)
+		? await suggestionReasons({
+				datasetId: run.datasetId,
+				recordAId: recordA.id,
+				recordBId: recordB.id
+			})
+		: []
 	const query = toQuery({ ...filters, vendor: detail.vendorId, sel: undefined })
 	const pairHref = (targetId: string) => ({ pathname: `${base}/pairs/${targetId}`, query })
 	const asUrl = (href: { pathname: string; query: Record<string, string> }) =>
@@ -146,6 +156,7 @@ export async function PairScreen({
 						matchingVendors={detail.vendors
 							.filter((vendor) => vendor.isMatch)
 							.map((vendor) => vendor.name)}
+						suggestedBecause={suggestedBecause.map((reason) => tRules(`reason_${reason}`))}
 					/>
 				</div>
 				{/* In one column, Jev's verdict comes before the field-by-field detail. */}

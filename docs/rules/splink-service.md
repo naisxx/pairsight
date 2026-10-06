@@ -16,6 +16,10 @@ rules pick.
   JSON lines, which the worker passes to the app's logger.
 - **Python never touches the database, never calls Jev, never sees runs or
   vendors.** Postgres stays the single source of truth.
+- **The UI never names it.** On screen these are pairs "suggested by
+  PairSight", explained in plain words from their reason codes
+  (`pairsight_splink/reasons.py`, stored on `pair_scores.reasons`); see
+  `docs/rules/copy.md`.
 - **It only picks pairs.** Splink never decides a match: Jev judges every
   pair, and every vendor pair is always checked.
 - **One place starts it:** `src/server/pairsight/splink/service.ts`, with

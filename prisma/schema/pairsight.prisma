@@ -99,6 +99,10 @@ model SourceDataset {
 	// first asked for (on save, or when its Plan is first opened), so datasets
 	// from before Splink aren't all scored at once.
 	scoreStatus     ScoreStatus?
+	// Which servers' workers may score it: those with the same RUN_WORKER_POOL
+	// as the server that queued it, as with runs (a dev server and the e2e
+	// server share one database).
+	scorePool       String         @default("default")
 	scoreClaimedAt  DateTime?      @db.Timestamptz(6)
 	scoredAt        DateTime?      @db.Timestamptz(6)
 	// How it went: versions, timings, pairs scored and kept, or why skipped.
@@ -112,7 +116,7 @@ model SourceDataset {
 
 	@@index([evaluationId, createdAt])
 	// The worker looks for datasets to score every second.
-	@@index([scoreStatus, scoreClaimedAt])
+	@@index([scoreStatus, scorePool, scoreClaimedAt])
 	@@map("source_datasets")
 }
 
@@ -137,6 +141,9 @@ model PairScore {
 	recordBId        String        @db.Uuid
 	matchWeight      Float
 	matchProbability Float
+	// Why it was picked, as reason codes (splink/reasons.ts): the same name,
+	// names swapped, the same date of birth… Shown in plain words.
+	reasons          String[]      @default([])
 
 	@@id([datasetId, recordAId, recordBId])
 	// The Plan reads a dataset's pairs above its floor, best first.

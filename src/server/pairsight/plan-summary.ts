@@ -1,3 +1,4 @@
+import { SPLINK_RULE_ID } from '@/lib/pairsight/suggested'
 import type { BlockingRule, RuleStats } from './blocking'
 import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
 import { LIMITS } from './limits'
@@ -8,7 +9,14 @@ import { groupPairCount, pairKey, type ComparisonPair } from './pairs'
 // data; everything here is testable without a database.
 
 export type PlanBlocker =
-	'no_dataset' | 'no_vendors' | 'no_jev_fields' | 'no_pairs' | 'too_many_pairs'
+	| 'no_dataset'
+	| 'no_vendors'
+	| 'no_jev_fields'
+	| 'no_pairs'
+	| 'too_many_pairs'
+	// PairSight is still working out which pairs to suggest: the run waits
+	// for them rather than starting without (splink/picks.ts).
+	| 'still_suggesting'
 
 export type PlanCounts = {
 	records: number
@@ -44,8 +52,27 @@ export type PlanContributor =
 
 type VendorPair = { a: string; b: string }
 
-// Among a pair's reasons for being checked: Splink picked it (splink/picks.ts).
-export const SPLINK_RULE_ID = 'splink'
+// The rules a plan uses. When suggestions can't run here (too few records,
+// not people, not available) and no rule is on, the type's simple default
+// rules pick the pairs instead, so a plan never goes empty by accident.
+// Switched off on purpose, it's your rules (or none) as set. While
+// suggestions are still being worked out, the run waits for them.
+export function rulesForPlan({
+	saved,
+	suggestions,
+	defaults
+}: {
+	saved: BlockingRule[]
+	suggestions: 'off' | 'waiting' | 'done' | 'skipped' | 'failed'
+	defaults: BlockingRule[]
+}): { rules: BlockingRule[]; isUsingDefaultRules: boolean } {
+	const isUsingDefaultRules =
+		saved.length === 0 && (suggestions === 'skipped' || suggestions === 'failed')
+	return { rules: isUsingDefaultRules ? defaults : saved, isUsingDefaultRules }
+}
+
+// Among a pair's reasons for being checked: suggested by PairSight.
+export { SPLINK_RULE_ID }
 
 export function summarizePlan({
 	recordCount,

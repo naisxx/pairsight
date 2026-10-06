@@ -1,8 +1,8 @@
 import 'server-only'
-import { entityTypeOf } from '@/lib/pairsight/entity-types'
+import { defaultRules, entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { buildBlockedPairs, type RuleStats } from './blocking'
-import { summarizePlan, type PlanBlocker } from './plan-summary'
+import { rulesForPlan, summarizePlan, type PlanBlocker } from './plan-summary'
 import { loadBlockingRecords } from './blocking-records'
 import { mappedIdentityRoles } from './fields'
 import { JEV_MODEL, judgmentKey, type JudgmentConfig } from './judgment'
@@ -30,10 +30,10 @@ export async function computePlan({
 }) {
 	const evaluation = await getVisibleEvaluation({ scope, id: evaluationId })
 	const dataset = await getCurrentDataset(evaluationId)
-	const rules = parseBlockingRules(evaluation.blockingRules)
+	const savedRules = parseBlockingRules(evaluation.blockingRules)
 	if (dataset == null) {
 		const blockers: PlanBlocker[] = ['no_dataset']
-		return { evaluation, dataset, rules, blockers } as const
+		return { evaluation, dataset, rules: savedRules, blockers } as const
 	}
 
 	const columnRoles = parseColumnRoles(dataset.columnRoles)
@@ -51,6 +51,13 @@ export async function computePlan({
 		}),
 		splinkPicks({ datasetId: dataset.id, isOn: evaluation.splinkPicks })
 	])
+
+	// Default rules when suggestions can't run here and no rule is on.
+	const { rules, isUsingDefaultRules } = rulesForPlan({
+		saved: savedRules,
+		suggestions: splink.state,
+		defaults: defaultRules(entityTypeOf(evaluation.entityType))
+	})
 
 	const mappedRoles = mappedIdentityRoles(columnRoles)
 	const jevFields = parseIdentityRoles(evaluation.jevFields).filter((role) => mappedRoles.has(role))
@@ -91,7 +98,7 @@ export async function computePlan({
 	const reusableKeys = new Set(
 		reusableAssessments.map((row) => pairKey({ a: row.recordAId, b: row.recordBId }))
 	)
-	const { counts, blockers, contributors } = summarizePlan({
+	const summary = summarizePlan({
 		recordCount: records.length,
 		rules,
 		ruleStats: blocking.stats,
@@ -105,6 +112,28 @@ export async function computePlan({
 		vendorCount: exports.length,
 		jevFieldCount: jevFields.length
 	})
+	const { counts, contributors } = summary
+	// Suggestions still being worked out, and nothing else picking pairs yet:
+	// starting now would leave them out.
+	const blockers: PlanBlocker[] =
+		splink.state === 'waiting' && savedRules.length === 0
+			? [...summary.blockers.filter((blocker) => blocker !== 'no_pairs'), 'still_suggesting']
+			: summary.blockers
+
+	// The pre-run check: how many of each vendor's pairs the plan picks by
+	// itself (a rule or a suggestion), before adding the vendors' own. Vendor
+	// pairs are only checked against here, never used to choose.
+	const pickedKeys = new Set(
+		comparison.filter((pair) => pair.ruleIds.length > 0).map((pair) => pairKey(pair))
+	)
+	const vendorCheck = exports.map((vendorExport) => ({
+		exportId: vendorExport.id,
+		name: vendorExport.name,
+		total: vendorExport.matches.length,
+		found: vendorExport.matches.filter((match) =>
+			pickedKeys.has(pairKey({ a: match.recordAId, b: match.recordBId }))
+		).length
+	}))
 
 	return {
 		evaluation,
@@ -118,6 +147,13 @@ export async function computePlan({
 		counts,
 		blockers,
 		contributors,
-		splink: { state: splink.state, reason: splink.reason }
+		vendorCheck,
+		isUsingDefaultRules,
+		splink: {
+			state: splink.state,
+			reason: splink.reason,
+			suggested: splink.suggested,
+			reasons: splink.reasons
+		}
 	} as const
 }

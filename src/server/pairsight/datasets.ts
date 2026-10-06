@@ -1,5 +1,6 @@
 import 'server-only'
-import { defaultRules, entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
+import { entityTypeOf, startingRules, type EntityType } from '@/lib/pairsight/entity-types'
+import { env } from '@/lib/env'
 import { db } from '@/server/db/client'
 import { defaultIdentity } from './judgment'
 import type { SourceRecordInput } from './source-records'
@@ -7,6 +8,7 @@ import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
 import { recordKeys } from './record-keys'
 import { chunks } from './chunks'
+import { parseBlockingRules } from './json'
 
 // Records written per statement.
 const SAVE_BATCH = 5_000
@@ -56,18 +58,22 @@ export async function saveSourceDataset({
 	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
 	const jevFields = [...new Set(Object.values(columnRoles).filter(isIdentityRole))]
 	// A replacement of another kind starts from the new type's identity
-	// definition and rules; the same type keeps what the user set. (A new
-	// evaluation already holds the person defaults, so a first person file
-	// changes nothing.)
-	const typeDefaults =
-		entityTypeOf(evaluation.entityType) === entityType
-			? { entityType }
-			: {
-					entityType,
-					identitySame: defaultIdentity(entityType).same,
-					identityDifferent: defaultIdentity(entityType).different,
-					blockingRules: defaultRules(entityType)
-				}
+	// definition and rules; the same type keeps what the user set. With no
+	// rules on yet (a new evaluation), its starting rules follow the file:
+	// none where PairSight will suggest the pairs, the defaults where it can't.
+	const isSameType = entityTypeOf(evaluation.entityType) === entityType
+	const hasNoRules = parseBlockingRules(evaluation.blockingRules).length === 0
+	const typeDefaults = isSameType
+		? {
+				entityType,
+				...(hasNoRules ? { blockingRules: startingRules(entityType, rowCount) } : {})
+			}
+		: {
+				entityType,
+				identitySame: defaultIdentity(entityType).same,
+				identityDifferent: defaultIdentity(entityType).different,
+				blockingRules: startingRules(entityType, rowCount)
+			}
 	const dataset = await db.sourceDataset.create({
 		data: { evaluationId, fileName, rowCount, referenceColumn, columnRoles, savedAt: null },
 		select: { id: true }
@@ -96,7 +102,7 @@ export async function saveSourceDataset({
 			// Current now, and queued for Splink (splink/score-dataset.ts).
 			db.sourceDataset.update({
 				where: { id: dataset.id },
-				data: { savedAt: new Date(), scoreStatus: 'pending' }
+				data: { savedAt: new Date(), scoreStatus: 'pending', scorePool: env.RUN_WORKER_POOL }
 			}),
 			db.evaluation.update({ where: { id: evaluationId }, data: { jevFields, ...typeDefaults } })
 		])
