@@ -10,6 +10,8 @@ import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
 import { OptionSelect, type SelectOption } from '@/components/ui/select'
 import { SEARCH_MAX_LENGTH } from '@/lib/pairsight/input-limits'
+import { exactTitle } from '@/components/ui/count'
+import { EXACT_FORMATS } from '@/i18n/formats'
 
 const SEARCH_DEBOUNCE_MS = 200
 // Params a filter change keeps: where you are, not what you're filtering.
@@ -183,7 +185,13 @@ export function PairFilters({
 				)}
 			</div>
 			<div className="type-ui flex flex-wrap items-center gap-2">
-				<p aria-live="polite" className="text-text-muted">
+				<p
+					aria-live="polite"
+					className="text-text-muted"
+					title={exactTitle([matching], () =>
+						t.markup('matching', { count: matching, n: (chunks) => chunks }, EXACT_FORMATS)
+					)}
+				>
 					{t.rich('matching', {
 						count: matching,
 						n: (chunks) => <span className="text-text font-mono">{chunks}</span>

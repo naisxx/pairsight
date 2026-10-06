@@ -209,6 +209,18 @@ const eslintConfig = defineConfig([
 						"Program:has(> ExpressionStatement[directive='use client']) ImportDeclaration[source.value=/^@\\/server\\/lib\\/logger(\\/|$)/]",
 					message:
 						'The logger is server-only; a Client Component reports errors through Sentry (instrumentation-client.ts). See docs/rules/logging.md.'
+				},
+				// Every count is written one way (src/i18n/formats.ts): 1.2K, exact
+				// on hover. A bare format.number(x) or toLocaleString() skips it.
+				{
+					selector: "CallExpression[callee.property.name='number'][arguments.length=1]",
+					message:
+						"Write a count with <Count value={n} /> (src/components/ui/count.tsx) or format.number(n, 'compact'); pass another named format for anything that isn't a count."
+				},
+				{
+					selector: "CallExpression[callee.property.name='toLocaleString']",
+					message:
+						"Write a count with <Count value={n} /> or format.number(n, 'compact') (src/i18n/formats.ts)."
 				}
 			]
 		}

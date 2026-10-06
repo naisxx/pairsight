@@ -7,6 +7,8 @@ import type { Category } from '@/lib/pairsight/decisions'
 import { cn } from '@/lib/cn'
 import type { FieldPatterns } from '@/server/pairsight/result-overview'
 import { CategoryDot } from '../../result-parts'
+import { Count } from '@/components/ui/count'
+import { EXACT_FORMATS } from '@/i18n/formats'
 
 const PERCENT = 100
 // The strongest tint a cell gets (at 100% agreement), mixed from its category.
@@ -99,7 +101,7 @@ export function FieldPatternsPanel({
 									>
 										<CategoryDot category={column.category} className="size-2" />
 										{tCat(column.category)}
-										<span className="text-text-muted font-mono">{column.count}</span>
+										<Count value={column.count} className="text-text-muted font-mono" />
 									</Link>
 								</th>
 							))}
@@ -123,7 +125,11 @@ export function FieldPatternsPanel({
 												title={
 													isEmpty
 														? t('patternNoValues')
-														: t('patternCellTitle', { same: cell.same, total: cell.total })
+														: t(
+																'patternCellTitle',
+																{ same: cell.same, total: cell.total },
+																EXACT_FORMATS
+															)
 												}
 												className={cn(
 													'flex h-8 items-center justify-between gap-2 rounded-[5px] px-2 transition-[background-color] duration-300 ease-out',
@@ -142,7 +148,7 @@ export function FieldPatternsPanel({
 												</span>
 												{!isEmpty && (
 													<span className="text-text-muted font-mono text-[0.6875rem]">
-														{cell.same}/{cell.total}
+														<Count value={cell.same} />/<Count value={cell.total} />
 													</span>
 												)}
 											</span>

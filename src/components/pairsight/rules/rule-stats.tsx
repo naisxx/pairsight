@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { cn } from '@/lib/cn'
 import type { RuleStats } from '@/server/pairsight/blocking'
+import { Count } from '@/components/ui/count'
 
 // A rule's buckets, pairs and largest bucket, as three right-aligned columns.
 export function RuleStatColumns({
@@ -28,7 +29,7 @@ export function RuleStatColumns({
 				<div key={item.label}>
 					<dt className="text-text-muted type-caption">{item.label}</dt>
 					<dd className={cn('type-ui font-mono', item.isWarning && 'text-warning font-semibold')}>
-						{item.value ?? '—'}
+						{item.value == null ? '—' : <Count value={item.value} />}
 					</dd>
 				</div>
 			))}

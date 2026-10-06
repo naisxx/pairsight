@@ -3,6 +3,7 @@ import { QuestionIcon } from '@/components/ui/icons'
 import { Panel } from '@/components/ui/panel'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import type { ResultsOverview } from '@/server/pairsight/result-overview'
+import { Count } from '@/components/ui/count'
 
 const PERCENT = 100
 
@@ -53,7 +54,10 @@ export function CoveragePanel({
 			}
 		>
 			<p className="flex items-baseline gap-2">
-				<span className="font-mono text-[26px] leading-none font-medium">{coverage.assessed}</span>
+				<Count
+					value={coverage.assessed}
+					className="font-mono text-[26px] leading-none font-medium"
+				/>
 				<span className="text-text-muted type-ui">
 					{t.rich('coverageAssessed', { total: coverage.total, n: mono })}
 				</span>
@@ -81,7 +85,7 @@ export function CoveragePanel({
 				).map(([key, dot, count]) => (
 					<li key={key} className="flex items-center gap-1.5">
 						<span aria-hidden className={`size-2 rounded-full ${dot}`} />
-						{t(`status.${key}`)} <span className="text-text font-mono">{count}</span>
+						{t(`status.${key}`)} <Count value={count} className="text-text font-mono" />
 					</li>
 				))}
 			</ul>
@@ -95,7 +99,9 @@ export function CoveragePanel({
 				).map(([key, count]) => (
 					<div key={key} className="flex justify-between gap-3">
 						<dt className="text-text-muted">{t(`coverage.${key}`)}</dt>
-						<dd className="font-mono">{count}</dd>
+						<dd className="font-mono">
+							<Count value={count} />
+						</dd>
 					</div>
 				))}
 			</dl>

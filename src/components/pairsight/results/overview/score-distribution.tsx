@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import {
 	Bar,
 	BarChart,
@@ -25,6 +25,7 @@ import {
 	UNMATCHED_SERIES,
 	THRESHOLD_STROKE
 } from './chart-theme'
+import { Count } from '@/components/ui/count'
 
 // Room for the last tick label ("1.0") so it isn't clipped.
 const CHART_RIGHT_MARGIN = 16
@@ -53,6 +54,8 @@ export function ScoreDistribution({
 	className?: string
 }) {
 	const t = useTranslations('Overview')
+	const format = useFormatter()
+	const compact = (value: number) => format.number(value, 'compact')
 	const router = useRouter()
 	const [view, setView] = useState<ChartView>('chart')
 	const data = bins.map((bin, index) => ({
@@ -98,7 +101,7 @@ export function ScoreDistribution({
 				<div
 					role="img"
 					aria-label={t('histogramChartLabel', {
-						summary: data.map((bin) => `${rangeLabel(bin)}: ${bin.total}`).join(', '),
+						summary: data.map((bin) => `${rangeLabel(bin)}: ${compact(bin.total)}`).join(', '),
 						threshold: threshold.toFixed(2)
 					})}
 					className="h-[200px]"
@@ -120,7 +123,13 @@ export function ScoreDistribution({
 								axisLine={{ stroke: GRID_STROKE }}
 								tickLine={false}
 							/>
-							<YAxis allowDecimals={false} tick={AXIS_TICK} axisLine={false} tickLine={false} />
+							<YAxis
+								allowDecimals={false}
+								tickFormatter={compact}
+								tick={AXIS_TICK}
+								axisLine={false}
+								tickLine={false}
+							/>
 							<Tooltip
 								cursor={{ fill: 'var(--surface-hover)' }}
 								content={({ active, payload }) => {
@@ -133,11 +142,11 @@ export function ScoreDistribution({
 											</p>
 											<p className="text-text-muted mt-1">
 												{t('matchedBy', { vendor: vendorName })}:{' '}
-												<span className="text-text font-mono">{bin.matched}</span>
+												<Count value={bin.matched} className="text-text font-mono" />
 											</p>
 											<p className="text-text-muted">
 												{t('notMatched')}:{' '}
-												<span className="text-text font-mono">{bin.notMatched}</span>
+												<Count value={bin.notMatched} className="text-text font-mono" />
 											</p>
 											<p className="text-accent-ink mt-1">{t('clickToView')}</p>
 										</div>
@@ -212,9 +221,15 @@ export function ScoreDistribution({
 										{rangeLabel(bin)}
 									</button>
 								</th>
-								<td className="py-1.5 text-right">{bin.matched}</td>
-								<td className="py-1.5 text-right">{bin.notMatched}</td>
-								<td className="py-1.5 text-right">{bin.total}</td>
+								<td className="py-1.5 text-right">
+									<Count value={bin.matched} />
+								</td>
+								<td className="py-1.5 text-right">
+									<Count value={bin.notMatched} />
+								</td>
+								<td className="py-1.5 text-right">
+									<Count value={bin.total} />
+								</td>
 							</tr>
 						))}
 					</tbody>

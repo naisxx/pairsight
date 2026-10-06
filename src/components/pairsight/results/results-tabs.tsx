@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { cn } from '@/lib/cn'
+import { Count } from '@/components/ui/count'
 
 // Overview and Detailed analysis. They're links (the tab lives in the URL,
 // so the server renders the right one and Back works), styled as tabs; the
@@ -45,7 +46,7 @@ export function ResultsTabs({
 									isCurrent ? 'bg-accent text-accent-ink' : 'bg-surface-muted text-text-muted'
 								)}
 							>
-								{detailedCount}
+								<Count value={detailedCount} />
 							</span>
 						)}
 					</Link>

@@ -1,4 +1,4 @@
-import { useTranslations } from 'next-intl'
+import { useFormatter, useTranslations } from 'next-intl'
 import { InfoIcon, SuccessIcon, WarningCircleIcon } from '@/components/ui/icons'
 import type { ColumnCheck } from '@/server/pairsight/source-records'
 
@@ -20,6 +20,7 @@ export function SourceValidation({
 	blanks: Array<{ field: string; count: number }>
 }) {
 	const t = useTranslations('Records')
+	const format = useFormatter()
 	const mono = (chunks: React.ReactNode) => <span className="font-mono">{chunks}</span>
 	const problemCount = check == null ? 0 : check.blank + check.duplicateCount
 	const items =
@@ -95,7 +96,9 @@ export function SourceValidation({
 						<InfoIcon size={NOTE_ICON_SIZE} className="mt-0.5 shrink-0" />
 						<p>
 							{t('blanksNote', {
-								fields: blanks.map((blank) => `${blank.field}: ${blank.count}`).join(', ')
+								fields: blanks
+									.map((blank) => `${blank.field}: ${format.number(blank.count, 'compact')}`)
+									.join(', ')
 							})}
 						</p>
 					</div>

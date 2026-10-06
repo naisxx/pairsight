@@ -5,6 +5,7 @@ import type { ResultCategory } from '@/lib/pairsight/metrics'
 import { cn } from '@/lib/cn'
 import type { HardCases, SourceRow } from '@/server/pairsight/result-overview'
 import { CATEGORY_STYLES } from '../../result-parts'
+import { Count } from '@/components/ui/count'
 
 const ORDER: ResultCategory[] = [
 	'both_matched',
@@ -60,7 +61,7 @@ export function SourceBreakdown({
 								<span className="flex items-baseline justify-between gap-2 text-xs">
 									<span className={cn('text-text min-w-0', isVendor && 'italic')}>{label}</span>
 									<span className="text-text-muted shrink-0">
-										<span className="text-text font-mono">{source.total}</span>
+										<Count value={source.total} className="text-text font-mono" />
 										{disagreements > 0 && (
 											<>
 												{' · '}

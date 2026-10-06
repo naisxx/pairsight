@@ -89,6 +89,22 @@ The keys and URL values stay `both_matched`, `pairsight_only`,
 `vendor_only`, `neither_matched`, `incomplete` — they're a contract with
 links and downloads, not words anyone reads.
 
+## Numbers
+
+Every count is written one way (`src/i18n/formats.ts`): three significant
+figures, with K and M from a thousand: 999, 1.2K, 12.3K, 1.23M. A bare
+"1200" or "1,234,567" is hard to read at a glance, and runs get big fast.
+The exact figure is never lost: hovering a shortened count shows it.
+
+- In messages, a count is `{count, number, compact}`, plural branches
+  included (never `#`). `src/i18n/counts.test.mts` fails otherwise.
+- In components, a count on its own is `<Count value={n} />`
+  (`src/components/ui/count.tsx`), exact on hover. A sentence whose count
+  is the point gets the exact sentence on hover with `exactTitle`. Lint fails
+  on `format.number(n)` without a named format and on `toLocaleString()`.
+- Not counts, so not shortened: shares (80.0%), scores and cut-offs (0.62),
+  money, dates, page numbers, run numbers and IDs.
+
 ## Outside the catalog
 
 A few messages are written where they're raised rather than in

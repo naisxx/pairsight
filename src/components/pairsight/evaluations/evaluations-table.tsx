@@ -33,6 +33,7 @@ import {
 import { EvaluationStatusChip } from '../shell/status-chip'
 import { NameDialog } from './name-dialog'
 import { StageProgress } from './stage-progress'
+import { Count } from '@/components/ui/count'
 
 const ICON_SIZE = 15
 const MORE_ICON_SIZE = 18
@@ -176,9 +177,11 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 													: t('nextPlain', { stage: tSteps(row.nextKey) })}
 											</span>
 										</td>
-										<td className={`${td} text-right font-mono`}>{row.recordCount ?? '—'}</td>
 										<td className={`${td} text-right font-mono`}>
-											{row.vendorCount === 0 ? '—' : row.vendorCount}
+											{row.recordCount == null ? '—' : <Count value={row.recordCount} />}
+										</td>
+										<td className={`${td} text-right font-mono`}>
+											{row.vendorCount === 0 ? '—' : <Count value={row.vendorCount} />}
 										</td>
 										<td className={`${td} text-text-muted`}>
 											{row.lastRunAt == null

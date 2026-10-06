@@ -6,6 +6,7 @@ import type { VendorMetrics } from '@/lib/pairsight/metrics'
 import type { Category } from '@/lib/pairsight/decisions'
 import { cn } from '@/lib/cn'
 import { CategoryDot, CATEGORY_STYLES } from '../../result-parts'
+import { Count } from '@/components/ui/count'
 
 const ORDER: Category[] = ['both_matched', 'pairsight_only', 'vendor_only', 'neither_matched']
 const PERCENT = 100
@@ -106,7 +107,7 @@ export function CategorySummary({
 						{tCat('incomplete')}
 					</span>
 					<span className="text-text-muted mt-2 font-mono text-[26px] leading-none font-medium">
-						{metrics.counts.incomplete}
+						<Count value={metrics.counts.incomplete} />
 					</span>
 					<span className="text-text-muted mt-2 text-xs leading-snug">
 						{t.rich('incompleteMeaning', {

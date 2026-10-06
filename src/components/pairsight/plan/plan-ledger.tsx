@@ -1,6 +1,7 @@
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/cn'
 import type { PlanCounts } from '@/server/pairsight/plan'
+import { Count } from '@/components/ui/count'
 
 const PERCENT = 100
 
@@ -22,30 +23,38 @@ export async function PlanLedger({
 	cost: string
 	isOverLimit: boolean
 }) {
-	const [t, format] = await Promise.all([getTranslations('Plan'), getFormatter()])
+	const t = await getTranslations('Plan')
 	const overlaps = Math.max(0, ruleMatches - counts.blockedPairs)
 	const vendorInside = counts.vendorPairs - counts.addedByVendorOnly
 	const possible = counts.allPossiblePairs
 	const percent = possible === 0 ? 0 : (counts.uniquePairs / possible) * PERCENT
 	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
 	const rows = [
-		{ label: t('rowRecords'), value: format.number(counts.records), note: fileName },
-		{ label: t('rowPossible'), value: format.number(possible), note: t('rowPossibleNote') },
+		{ label: t('rowRecords'), value: <Count value={counts.records} />, note: fileName },
+		{ label: t('rowPossible'), value: <Count value={possible} />, note: t('rowPossibleNote') },
 		// Read down, these add up: rule matches + vendor pairs − duplicates
 		// = the unique pairs below.
 		{
 			label: t('rowRules'),
-			value: format.number(ruleMatches),
+			value: <Count value={ruleMatches} />,
 			note: t('rowRulesNote', { count: ruleCount })
 		},
 		{
 			label: t('rowVendor'),
-			value: `+${format.number(counts.vendorPairs)}`,
+			value: (
+				<>
+					+<Count value={counts.vendorPairs} />
+				</>
+			),
 			note: t('rowVendorNote')
 		},
 		{
 			label: t('rowDuplicates'),
-			value: `−${format.number(overlaps + vendorInside)}`,
+			value: (
+				<>
+					−<Count value={overlaps + vendorInside} />
+				</>
+			),
 			note: t('rowDuplicatesNote', { overlaps, inside: vendorInside })
 		}
 	]
@@ -76,12 +85,14 @@ export async function PlanLedger({
 							isOverLimit && 'text-danger'
 						)}
 					>
-						{format.number(counts.uniquePairs)}
+						<Count value={counts.uniquePairs} />
 					</dd>
 				</div>
 				<div className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3">
 					<dt className="type-ui">{t('rowReused')}</dt>
-					<dd className="font-mono text-[15px]">{format.number(counts.reusable)}</dd>
+					<dd className="font-mono text-[15px]">
+						<Count value={counts.reusable} />
+					</dd>
 					<dd className="text-text-muted text-xs">
 						{counts.reusable > 0 ? t('rowReusedNote') : t('rowReusedNone')}
 					</dd>
@@ -89,7 +100,7 @@ export async function PlanLedger({
 				<div className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3">
 					<dt className="type-ui font-medium">{t('rowNew')}</dt>
 					<dd className="font-mono text-[15px] font-semibold">
-						{format.number(counts.toEvaluate)}
+						<Count value={counts.toEvaluate} />
 					</dd>
 					<dd className="text-text-muted text-xs">{t('rowNewNote', { cost })}</dd>
 				</div>

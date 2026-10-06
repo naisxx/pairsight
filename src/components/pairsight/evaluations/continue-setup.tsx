@@ -6,6 +6,7 @@ import { ArrowRightIcon, SuccessIcon } from '@/components/ui/icons'
 import type { DashboardRow } from '@/server/pairsight/dashboard'
 import { NewEvaluationButton } from './new-evaluation-button'
 import { StageProgress } from './stage-progress'
+import { Count } from '@/components/ui/count'
 
 const ARROW_SIZE = 14
 const EMPTY_ICON_SIZE = 20
@@ -34,7 +35,7 @@ export function ContinueSetup({
 				<h2 id="continue-title" className="text-sm font-semibold">
 					{t('continueTitle')}
 				</h2>
-				<span className="text-text-muted font-mono text-xs">{rows.length}</span>
+				<Count value={rows.length} className="text-text-muted font-mono text-xs" />
 			</header>
 			{rows.length === 0 ? (
 				<div className="flex flex-1 flex-col items-center justify-center px-6 py-8 text-center">

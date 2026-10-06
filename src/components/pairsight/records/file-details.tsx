@@ -1,5 +1,6 @@
 import { useTranslations } from 'next-intl'
 import { TabularFileIcon } from '../file-type'
+import { Count } from '@/components/ui/count'
 
 const ICON_SIZE = 26
 
@@ -22,8 +23,8 @@ export function FileDetails({
 }) {
 	const t = useTranslations('Records')
 	const stats = [
-		{ label: t('rows'), value: String(rows) },
-		{ label: t('columns'), value: String(columns) },
+		{ label: t('rows'), value: <Count value={rows} /> },
+		{ label: t('columns'), value: <Count value={columns} /> },
 		...(size == null ? [] : [{ label: t('size'), value: size }])
 	]
 	return (
