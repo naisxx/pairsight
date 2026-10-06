@@ -22,7 +22,7 @@
 // own run with a configuration error and then resume it.
 //
 // POST /slow?marker=<text> delays every answer to a call containing <text>
-// by a couple of seconds until POST /fast?marker=<text>, so a test can
+// by a few seconds until POST /fast?marker=<text>, so a test can
 // catch its own run part-way (to pause it) on a stub that's otherwise
 // instant.
 //
@@ -38,8 +38,10 @@ const MAX_RECORDED_CALLS = 5_000
 const recordedCalls = []
 const rejectedMarkers = new Set()
 const slowMarkers = new Set()
-// How long a slowed answer waits.
-const SLOW_ANSWER_MS = 2_000
+// How long a slowed answer waits. The worker checks a run's pairs at once,
+// so this is about how long a slowed run takes: long enough for another tab
+// to see it running, short enough for a paused one to settle in a test.
+const SLOW_ANSWER_MS = 6_000
 
 const norm = (value) => (value ?? '').toString().trim().toLowerCase().replace(/\s+/g, ' ')
 const digits = (value) => (value ?? '').toString().replace(/\D/g, '').slice(-10)
