@@ -107,6 +107,22 @@ the start, without duplicating any Jev work.
   network rather than the CPU, so they don't slow pages. `RUN_WORKER_CONCURRENCY=0`
   turns the worker off on a server that should serve pages only.
 
+**Pair scoring: Splink picks extra pairs** (Scale Roadmap item 5,
+`docs/rules/splink-service.md`).
+
+- When records are saved, the dataset is queued (`scoreStatus` pending). The
+  run worker scores one dataset at a time: it writes the records cleaned by
+  the blocking code to a temp file, runs the Python service
+  (`services/splink`, Splink on DuckDB, trained on the records with no
+  labels) and stores the pairs it scores in `pair_scores`.
+- The Plan adds Splink's picks (match weight 0 or more) to the rules' and
+  vendors' pairs as one more reason a pair is checked (`splink` in
+  `run_pairs.ruleIds`). A switch in Rules turns it off. Splink only picks
+  pairs: Jev judges every one.
+- It never blocks anything: under 200 records, a type other than people,
+  Splink not set up, or a failure, the plan goes on with rules and vendor
+  pairs and says why in one line.
+
 **Reading results: from the database, never the whole run** (Scale Roadmap
 item 2).
 

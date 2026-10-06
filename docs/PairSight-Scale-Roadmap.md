@@ -340,7 +340,7 @@ are noted; the later items assume the earlier ones exist.
     `/garbage`, 403), and the e2e suite runs each one to a complete run
     with nothing failed.
 
-### 5. Splink scoring service
+### 5. Splink scoring service (built, 2026-10-07)
 
 - **Spike first:**
   - Run Splink on the planted-duplicate file and the synthetic 10k/100k
@@ -348,12 +348,103 @@ are noted; the later items assume the earlier ones exist.
     today's yardstick (`pnpm blocking:check`: exact rules 37%, close-match
     presets 85%).
   - Ship only if it beats that with fewer pairs.
-- **Then the service:**
-  - A Python + DuckDB process with the narrow boundary above, a pinned
-    Splink version, and its own lint, tests and build added to
-    `local-review` and CI.
-  - Runs as a job from the worker.
-  - Packaging for local dev and on-prem.
+- **Spike result: it does, by a wide margin, on 10K and 100K.**
+  - **Set-up** (`scripts/splink-spike/`, branch `spike/splink`):
+    - Splink 4.0.17 on DuckDB 1.5.6, trained with **no labels**, as it would
+      run on a customer's file.
+    - Both sides read the same records, cleaned by our own blocking code.
+    - Scored against the generator's answer key (`generatePeople`, seed 42;
+      the same 10K file item 0 measured).
+    - No Jev, no database.
+  - **Splink's role:** a wide net (same surname sound and birth year; first
+    name sound and postcode district; email username; phone; birth date;
+    postcode), then Splink's score keeps the pairs worth checking.
+
+  | Duplicates found (pairs to check)    | 104 hand-made | 10K            | 100K              |
+  | ------------------------------------ | ------------- | -------------- | ----------------- |
+  | Default rules                        | 10/27 (11)    | 70.6% (1,188)  | 70.3% (50,706)    |
+  | Default + close-match presets        | 23/27 (24)    | 76.5% (12,888) | 76.9% (1,214,466) |
+  | Splink, same pairs as the presets    | 22/27         | 91.2%          | 90.1%             |
+  | Splink, as many as the presets found | 25 pairs      | 963 pairs      | 61,476 pairs      |
+  | Splink at about 90%                  | n/a           | 1,117 pairs    | 62,715 pairs      |
+  | Splink time, peak memory             | 1 s, 0.1 GB   | 6 s, 0.3 GB    | 23 s, 1.8 GB      |
+  - **10K:** Splink finds 91% of duplicates with fewer pairs than even the
+    default rules (1,117 against 1,188), where the presets find 76.5% with
+    12,888.
+  - **100K:** our presets pick 1.2M pairs, over 12× the new 100K limit
+    (item 8), for 76.9%. Splink finds 90% with 62,715 pairs, inside it.
+  - **Where the gain is:** names swapped (presets 3 of 922 at 100K, Splink 922) and surname typos (603 of 899, Splink 899). Two things combine:
+    - the wide net reaches duplicates our rules never see (shared birth
+      date, name sound by district);
+    - Splink's score makes that net affordable: at 10K it holds 17,526
+      pairs, and the score keeps 1,117 of them while losing none of its
+      duplicates.
+  - **The 104-person file is a tie** (22 against 23 of 27 at 24 pairs). Our
+    presets were designed on that file, and 104 records are too few to
+    train Splink fully (it warns that some levels went untrained).
+  - **Neither finds "nickname, moved"** (2 of 911 at 100K): a new first
+    name, no birth date, new email and postcode leave only the surname.
+
+- **Lessons for the service:**
+  - **Training needs care.** EM over loose groups (same birth date, same
+    surname sound) settled on "same family", not "same person", and
+    learned that duplicates rarely share a phone. Precise groups (email
+    username, then full name) fixed it.
+  - **Untrained levels need help.** "Names swapped" and close name spellings
+    never appear in those groups, so at 100K they score low (median weight
+    about −19) and are found only far down the list: 90% costs 62,715
+    pairs, not a few thousand. Choosing training groups that include them,
+    or sensible starting values for rare levels, should close most of that.
+  - **The wide net must scale:** surname sound alone was 73M pairs at 100K
+    (common surnames), so it's narrowed by birth year.
+  - **The data is synthetic.** The hard kinds are the generator's own, and
+    its phone numbers collide by chance. Real files will differ, which is
+    what item 6's pre-run check against vendor pairs is for.
+- **The service, built** (`services/splink/`, `docs/rules/splink-service.md`):
+  - **Python 3.13, Splink and DuckDB pinned.** Records in and scored pairs
+    out, as files: the worker writes each saved dataset's records (cleaned by
+    our own blocking code) and runs `python -m pairsight_splink score`, one
+    dataset at a time, beside the runs. Pairs at or above a storage floor
+    (match weight −10) go to `pair_scores`. Python never touches the database,
+    Jev, runs or vendors, and nothing waits on it.
+  - **The dataset row is the job** (`source_datasets.scoreStatus`): pending
+    when saved (or when a plan first asks, for datasets from before Splink),
+    then running, then done, skipped (under 200 records, not people, or not
+    set up) or failed.
+  - **First use, on the Plan:** "Pairs Splink picked +N" joins the rules'
+    and vendors' pairs (weight 0 or more), with overlaps removed and the
+    100K limit applying. Runs record them, and Results name them "Picked by
+    Splink". A switch in Rules turns it off; while Splink works, the plan
+    says so and refreshes itself.
+  - **Model improvements over the spike,** still with no labels:
+    - a third training pass (same surname sound and birth date), which
+      sees typos and swapped names;
+    - starting values for the levels training can't see (swapped names,
+      close spellings, birth-date closeness), which training replaces when
+      it does see them.
+
+    |                            | 10K                  | 100K                 |
+    | -------------------------- | -------------------- | -------------------- |
+    | Splink at weight 0         | 91.2% (1,107 pairs)  | 90.1% (27,720 pairs) |
+    | Pairs to match the presets | 794 (presets 12,888) | 8,770 (presets 1.2M) |
+    | Time, true peak memory     | 8 s, 0.4 GB          | 22 s, 4.8 GB         |
+
+    100K needs 27,720 pairs for 90%, down from the spike's 62,715. On a
+    2,000-person file Splink now finds every swapped name and typo (38 the
+    default rules miss); before the starting values it found none. The
+    spike's 1.8 GB peak at 100K was sampled between steps; 4.8 GB is the
+    true peak. The app's 10K-record limit keeps it near 0.4 GB.
+
+  - **Checks:** `pnpm splink:setup` makes the local environment and
+    `pnpm python:check` runs ruff and pytest, as a CI job (`python`) and a
+    local-review gate. `check:standards` requires it whenever a
+    `pyproject.toml` is tracked. ESLint keeps `node:child_process` to the
+    one runner (`src/server/pairsight/splink/service.ts`).
+  - **On-prem:** `services/splink/Dockerfile`; `SPLINK_PYTHON` points the
+    worker at a wrapper that runs it. Full on-prem packaging stays under
+    "Later".
+  - **Benchmark:** `scripts/splink-spike/` now scores the service's own
+    model, for any later change to it.
 
 ### 6. Automatic pair selection: works on the first run
 
