@@ -5,6 +5,7 @@ import { parseBlockingRules, parseColumnRoles, parseRecordValues, parseVendorSta
 import { buildReport, reportExample } from './report-summary'
 import { pairRowsByIds } from './results-query'
 import { fuzzyRuleIdsOf, readRunSummary, runVendors } from './run-summary'
+import { SPLINK_RULE_ID } from './plan-summary'
 import { getRunProgress, getVisibleRun, runNotFinished } from './runs'
 import { countReusedJudgments } from './run-centre'
 import type { EvaluationScope } from './scope'
@@ -98,6 +99,8 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 		recordCount: summary.recordCount,
 		// Possible pairs no rule or vendor brought up: the report's blind spot.
 		notCompared: Math.max(0, possiblePairs(summary.recordCount) - report.pairs.total),
+		// PairSight suggested some of the pairs: the report says what that covers.
+		usedSuggestions: summary.sources.some((source) => source.ruleId === SPLINK_RULE_ID),
 		report
 	}
 }

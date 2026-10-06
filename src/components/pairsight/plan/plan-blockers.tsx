@@ -40,7 +40,10 @@ export async function PlanBlockers({
 	])
 	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
 	const isOver = blockers.includes('too_many_pairs')
-	const others = blockers.filter((blocker) => blocker !== 'too_many_pairs')
+	// Still suggesting isn't a problem to fix: Start just waits (plan-screen.tsx).
+	const others = blockers.filter(
+		(blocker) => blocker !== 'too_many_pairs' && blocker !== 'still_suggesting'
+	)
 	return (
 		<div className="space-y-4">
 			{isOver && (
@@ -84,10 +87,10 @@ export async function PlanBlockers({
 							) : (
 								<li key={item.kind} className="type-ui flex flex-wrap items-center gap-3 px-3 py-2">
 									<span className="font-medium">
-										{item.kind === 'vendors' ? t('overVendors') : t('overSplink')}
+										{item.kind === 'vendors' ? t('overVendors') : t('overSuggested')}
 									</span>
 									<span className="text-text-muted">
-										{t.rich(item.kind === 'vendors' ? 'overVendorsNote' : 'overSplinkNote', {
+										{t.rich(item.kind === 'vendors' ? 'overVendorsNote' : 'overSuggestedNote', {
 											pairs: item.pairCount,
 											n: mono
 										})}

@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Reveal } from '@/components/ui/reveal'
 import type { Category } from '@/lib/pairsight/decisions'
+import { SPLINK_RULE_ID } from '@/lib/pairsight/suggested'
 import type { ResultsOverview as OverviewData } from '@/server/pairsight/result-overview'
 import { CategorySummary } from './category-summary'
 import { CoveragePanel } from './coverage-panel'
@@ -74,7 +75,11 @@ export function ResultsOverview({
 					/>
 				</Reveal>
 				<Reveal index={index++} className="@5xl:col-span-4 @5xl:row-span-2">
-					<CoveragePanel coverage={overview.coverage} className="h-full" />
+					<CoveragePanel
+						coverage={overview.coverage}
+						usedSuggestions={overview.sources.some((source) => source.ruleId === SPLINK_RULE_ID)}
+						className="h-full"
+					/>
 				</Reveal>
 				<Reveal index={index++} className="@5xl:col-span-8">
 					<CategorySummary

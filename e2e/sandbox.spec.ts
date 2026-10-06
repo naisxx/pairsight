@@ -53,7 +53,7 @@ test.describe('Sandbox', () => {
 		// Records: the saved file, Replace is for accounts.
 		await step(page, 'Records').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/records`)
-		await expect(page.getByRole('heading', { name: 'What each column holds' })).toBeVisible()
+		await expect(page.getByLabel('File details')).toContainText(/We matched \d+ fields? to your/)
 		await expect(page.getByLabel('Sign up to upload your own records')).toBeVisible()
 
 		// Vendors: both vendors, viewable; adding one needs an account.

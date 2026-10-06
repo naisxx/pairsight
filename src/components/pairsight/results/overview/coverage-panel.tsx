@@ -11,9 +11,12 @@ const PERCENT = 100
 // from, and the possible pairs nobody compared (the blind spot recall can't see).
 export function CoveragePanel({
 	coverage,
+	usedSuggestions,
 	className
 }: {
 	coverage: ResultsOverview['coverage']
+	// PairSight suggested some of the run's pairs: say what that covers.
+	usedSuggestions: boolean
 	className?: string
 }) {
 	const t = useTranslations('Overview')
@@ -106,6 +109,9 @@ export function CoveragePanel({
 				))}
 			</dl>
 			<p className="text-text-muted mt-3 text-xs leading-relaxed">{t('coverageFootnote')}</p>
+			{usedSuggestions && (
+				<p className="text-text-muted mt-2 text-xs leading-relaxed">{t('coverageSuggested')}</p>
+			)}
 		</Panel>
 	)
 }

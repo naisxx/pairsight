@@ -26,7 +26,11 @@ const RETIRED: Array<[RegExp, string]> = [
 	[/\bthreshold\b/i, 'say "match cut-off"'],
 	[/\b(precision|recall|F1)\b/, 'plain words first; the technical name only in a tip'],
 	[/TYPESAFE_|\bpnpm\b|\.env\b|API key/, 'developer-only: say what to do instead'],
-	[/[≥±∅]/, 'write it in words']
+	[/[≥±∅]/, 'write it in words'],
+	[
+		/(splink|duckdb|fellegi|sunter|match weight|m-probabilit|u-probabilit)/i,
+		'never name the tech behind a feature: say "suggested by PairSight"'
+	]
 ]
 
 // Where a retired word is the point: the tips and report notes that give

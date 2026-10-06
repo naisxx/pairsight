@@ -7,10 +7,13 @@ import { CategoryBadge } from '../result-parts'
 // match that added it from outside the rules.
 export function PairOrigin({
 	ruleLabels,
-	matchingVendors
+	matchingVendors,
+	suggestedBecause = []
 }: {
 	ruleLabels: string[]
 	matchingVendors: string[]
+	// When PairSight suggested it: what the two records share, in words.
+	suggestedBecause?: string[]
 }) {
 	const t = useTranslations('Pair')
 	return (
@@ -37,6 +40,11 @@ export function PairOrigin({
 			) : (
 				<p className="type-ui mt-2">
 					{t('originVendor', { vendors: matchingVendors.join(t('and')) || '—' })}
+				</p>
+			)}
+			{suggestedBecause.length > 0 && (
+				<p className="type-ui mt-2">
+					{t('originSuggested', { reasons: suggestedBecause.join(', ') })}
 				</p>
 			)}
 			<p className="text-text-muted mt-2 text-xs">{t('originNote')}</p>

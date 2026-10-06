@@ -8,6 +8,8 @@ const FULL_PERCENT = 100
 
 export type RulesSummaryData = {
 	fromRules: number
+	// Pairs PairSight suggested that no rule picks.
+	suggestedOnly: number
 	vendorOnly: number
 	total: number
 	// False when the saved rules pick too many to build: `total` is then a
@@ -53,6 +55,14 @@ export function RulesSummary({
 						<Count value={summary.fromRules} />
 					</dd>
 				</div>
+				{summary.suggestedOnly > 0 && (
+					<div className="flex justify-between">
+						<dt className="text-text-muted">{t('summarySuggested')}</dt>
+						<dd className="font-mono">
+							+<Count value={summary.suggestedOnly} />
+						</dd>
+					</div>
+				)}
 				<div className="flex justify-between">
 					<dt className="text-text-muted">{t('summaryVendor')}</dt>
 					<dd className="font-mono">

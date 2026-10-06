@@ -15,7 +15,8 @@ import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
 import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
 import { RulesSummary, type RulesSummaryData } from './rules-summary'
-import { SplinkSwitch } from './splink-switch'
+import { AdvancedRules } from './advanced-rules'
+import { SuggestionsCard, type SuggestionsData } from './suggestions-card'
 import { ThresholdSection } from './threshold-section'
 import { useEvaluationView } from '../evaluation-context'
 import { ReadOnlyFieldset } from '../read-only'
@@ -69,6 +70,7 @@ export function RulesForm({
 	mappedRoles,
 	stats,
 	summary,
+	suggestions,
 	countries,
 	limits
 }: {
@@ -86,6 +88,8 @@ export function RulesForm({
 	mappedRoles: IdentityRole[]
 	stats: RuleStats[]
 	summary: RulesSummaryData
+	// What PairSight suggests for these records (SuggestionsCard).
+	suggestions: SuggestionsData
 	countries: SelectOption[]
 	limits: RuleLimits
 }) {
@@ -123,6 +127,17 @@ export function RulesForm({
 					? t('blockedFields')
 					: null
 	const allRules = [...presets, ...draft.composites]
+	const rulesOn =
+		runnablePresets.filter((rule) => draft.enabled.has(rule.id)).length + draft.composites.length
+	// Open when your own rules matter: some are on, suggestions are off, or
+	// they can't run here (not while still coming). Decided once, at first.
+	const [isAdvancedOpenAtFirst] = useState(
+		() =>
+			rulesOn > 0 ||
+			!initial.splinkPicks ||
+			suggestions.state === 'skipped' ||
+			suggestions.state === 'failed'
+	)
 	const payload = {
 		evaluationId,
 		identity: { same: draft.same, different: draft.different },
@@ -203,48 +218,51 @@ export function RulesForm({
 						value={draft.threshold}
 						onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
 					/>
-					<SplinkSwitch
+					<SuggestionsCard
 						isOn={draft.splinkPicks}
 						onChange={(splinkPicks) => setDraft((current) => ({ ...current, splinkPicks }))}
+						data={suggestions}
 					/>
-					<CandidateRules
-						evaluationId={evaluationId}
-						country={draft.country}
-						rules={allRules}
-						enabled={draft.enabled}
-						stats={(ruleId) =>
-							stats.find((candidate) => candidate.ruleId === ruleId) ?? addedStats[ruleId]
-						}
-						mapped={mapped}
-						availableFields={BLOCKING_FIELDS.filter(
-							(field) => missingField([field], mapped) == null
-						)}
-						limits={limits}
-						onToggle={(ruleId, isOn) =>
-							setDraft((current) => ({
-								...current,
-								enabled: toggled(current.enabled, ruleId, isOn)
-							}))
-						}
-						onSaveComposite={(rule, stat, replacing) => {
-							setAddedStats((current) => ({ ...current, [rule.id]: stat }))
-							setDraft((current) => ({
-								...current,
-								composites:
-									replacing == null
-										? [...current.composites, rule]
-										: current.composites.map((existing) =>
-												existing.id === replacing ? rule : existing
-											)
-							}))
-						}}
-						onDeleteComposite={(ruleId) =>
-							setDraft((current) => ({
-								...current,
-								composites: current.composites.filter((rule) => rule.id !== ruleId)
-							}))
-						}
-					/>
+					<AdvancedRules rulesOn={rulesOn} isOpenAtFirst={isAdvancedOpenAtFirst}>
+						<CandidateRules
+							evaluationId={evaluationId}
+							country={draft.country}
+							rules={allRules}
+							enabled={draft.enabled}
+							stats={(ruleId) =>
+								stats.find((candidate) => candidate.ruleId === ruleId) ?? addedStats[ruleId]
+							}
+							mapped={mapped}
+							availableFields={BLOCKING_FIELDS.filter(
+								(field) => missingField([field], mapped) == null
+							)}
+							limits={limits}
+							onToggle={(ruleId, isOn) =>
+								setDraft((current) => ({
+									...current,
+									enabled: toggled(current.enabled, ruleId, isOn)
+								}))
+							}
+							onSaveComposite={(rule, stat, replacing) => {
+								setAddedStats((current) => ({ ...current, [rule.id]: stat }))
+								setDraft((current) => ({
+									...current,
+									composites:
+										replacing == null
+											? [...current.composites, rule]
+											: current.composites.map((existing) =>
+													existing.id === replacing ? rule : existing
+												)
+								}))
+							}}
+							onDeleteComposite={(ruleId) =>
+								setDraft((current) => ({
+									...current,
+									composites: current.composites.filter((rule) => rule.id !== ruleId)
+								}))
+							}
+						/>
+					</AdvancedRules>
 				</ReadOnlyFieldset>
 				<div className="@5xl:col-span-4">
 					<RulesSummary summary={summary} isUpdating={isPending} />
