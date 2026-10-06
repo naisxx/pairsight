@@ -47,11 +47,19 @@ const envSchema = z.object({
 	// overridden by the e2e suite, which points it at a local stub.
 	TYPESAFE_API_KEY: z.string().optional(),
 	TYPESAFE_API_BASE_URL: z.string().url().default('https://api.typesafe.ai/v1'),
-	// How many Jev calls the background run worker makes at once, shared
-	// across running runs (src/server/pairsight/worker). Jev took 120 at once
-	// without pushing back (docs/PairSight-Scale-Roadmap.md, item 0). 0 turns
-	// the worker off, for a server that should serve pages only.
-	RUN_WORKER_CONCURRENCY: z.coerce.number().int().min(0).default(40),
+	// How long one Jev call may take before it's given up and tried again
+	// later. Lowered only by the e2e suite, to test a call that never answers.
+	TYPESAFE_TIMEOUT_MS: z.coerce.number().int().min(1).default(20_000),
+	// How many Jev calls the background run worker starts with at once,
+	// shared across running runs (src/server/pairsight/worker). It adapts
+	// from there: up to RUN_WORKER_CONCURRENCY_MAX while Jev answers cleanly,
+	// down when it pushes back. Jev took 200 at once without pushing back
+	// (docs/PairSight-Scale-Roadmap.md, item 4), so it starts at half that.
+	// 0 turns the worker off, for a server that should serve pages only.
+	RUN_WORKER_CONCURRENCY: z.coerce.number().int().min(0).default(100),
+	// The most Jev calls at once the worker climbs to: the highest level Jev
+	// took cleanly in the live speed test.
+	RUN_WORKER_CONCURRENCY_MAX: z.coerce.number().int().min(1).default(200),
 	// Which runs this server's worker takes: those started on a server with
 	// the same pool. Servers sharing one database (a dev server and the e2e
 	// server) keep apart by using different pools.

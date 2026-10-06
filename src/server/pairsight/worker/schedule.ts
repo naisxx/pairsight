@@ -11,12 +11,15 @@ export function shareConcurrency(total: number, runCount: number): number[] {
 	return Array.from({ length: runCount }, (_, index) => base + (index < remainder ? 1 : 0))
 }
 
-// A batch is a couple of rounds of the run's share, so its pool stays busy
-// while the next batch is claimed, but a pause still lands within seconds.
-const ROUNDS_PER_BATCH = 2
+// More pairs are started once this share of a run's calls have come back:
+// often enough that the calls stay busy, seldom enough that it isn't a
+// database read per answer. With nothing in flight, any room at all.
+const REFILL_FRACTION = 4
 
-export function batchSizeFor(share: number): number {
-	return Math.max(1, share) * ROUNDS_PER_BATCH
+export function shouldRefill({ share, inFlight }: { share: number; inFlight: number }): boolean {
+	const room = share - inFlight
+	if (room <= 0) return false
+	return inFlight === 0 || room >= Math.max(1, Math.ceil(share / REFILL_FRACTION))
 }
 
 // Reports an unexpected failure once per run and kind, not once per retry:

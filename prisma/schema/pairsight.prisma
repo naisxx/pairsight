@@ -238,6 +238,10 @@ model Run {
 	// for runs started before it was recorded (their original is unknown).
 	initialThreshold  Float?
 	pairCount         Int
+	// Of its pairs, how many had no score yet when it started: what it sent to
+	// Jev. With its checking time, how fast runs go here (run-estimate.ts).
+	// Null for runs started before it was recorded.
+	newChecks         Int?
 	createdAt         DateTime      @default(now()) @db.Timestamptz(6)
 	completedAt       DateTime?     @db.Timestamptz(6)
 	// The Overview, worked out once when the run finishes (run-summary.ts):
@@ -252,6 +256,9 @@ model Run {
 	checkedCount      Int           @default(0)
 	failedCount       Int           @default(0)
 	countedAt         DateTime?     @db.Timestamptz(6)
+	// Since when nothing has been answered because Jev is busy or down (the
+	// run waits and carries on by itself; jev-limiter.ts). Null otherwise.
+	waitingSince      DateTime?     @db.Timestamptz(6)
 	pairs             RunPair[]
 
 	@@unique([evaluationId, number])
@@ -306,6 +313,8 @@ model Assessment {
 	attempts      Int              @default(0)
 	errorCode     String?
 	claimedAt     DateTime?        @db.Timestamptz(6)
+	// After Jev was busy: not tried again before this (assess.ts). Null = any time.
+	nextTryAt     DateTime?        @db.Timestamptz(6)
 	completedAt   DateTime?        @db.Timestamptz(6)
 	createdAt     DateTime         @default(now()) @db.Timestamptz(6)
 	runPairs      RunPair[]

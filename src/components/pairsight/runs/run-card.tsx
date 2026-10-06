@@ -110,9 +110,11 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 					<p className="type-ui text-text-muted mt-0.5">
 						{look === 'running'
 							? // Every pair checked; the results are being worked out.
-								card.completedAt == null
-								? t('stateRunning')
-								: t('stateFinishing')
+								card.completedAt != null
+								? t('stateFinishing')
+								: progress.waitingSince != null
+									? t('stateWaiting')
+									: t('stateRunning')
 							: look === 'complete'
 								? t('stateComplete')
 								: look === 'incomplete'
@@ -167,6 +169,20 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 						</li>
 					)}
 				</ul>
+			)}
+
+			{look === 'running' && progress.waitingSince != null && (
+				<div
+					role="status"
+					className="border-border bg-surface-muted mx-4 mb-3 rounded-sm border px-3 py-2"
+				>
+					<p className="type-ui font-medium">{t('waitingTitle')}</p>
+					<p className="text-text-muted mt-0.5 text-xs">
+						{t('waitingBody', {
+							since: format.dateTime(progress.waitingSince, { timeStyle: 'short' })
+						})}
+					</p>
+				</div>
 			)}
 
 			{look === 'paused' && (

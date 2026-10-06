@@ -8,6 +8,7 @@ import {
 	defaultIdentity,
 	judgmentKey,
 	parseJevAnswer,
+	waitBeforeRetryMs,
 	type JudgmentConfig
 } from './judgment'
 
@@ -77,13 +78,19 @@ test('the judgment key ignores field order and changes with every judgment input
 	assert.notEqual(judgmentKey({ ...config, model: 'jev-1.13.0' }), base)
 })
 
-test('failures: 429/529/5xx and timeouts retry, 422 fails, config stops the run', () => {
-	assert.equal(classifyFailure({ kind: 'http', status: 429 }), 'retry')
-	assert.equal(classifyFailure({ kind: 'http', status: 529 }), 'retry')
-	assert.equal(classifyFailure({ kind: 'timeout' }), 'retry')
-	assert.equal(classifyFailure({ kind: 'network' }), 'retry')
-	assert.equal(classifyFailure({ kind: 'http', status: 422 }), 'fail')
-	assert.equal(classifyFailure({ kind: 'config', status: 401 }), 'stop_run')
+test('only a pair Jev refused fails; busy, slow or lost answers wait; key problems are access', () => {
+	for (const status of [429, 408, 409, 500, 502, 503, 504, 529, 418]) {
+		assert.equal(classifyFailure({ kind: 'http', status }), 'wait', `status ${status}`)
+	}
+	for (const kind of ['timeout', 'network', 'bad_body'] as const) {
+		assert.equal(classifyFailure({ kind }), 'wait', kind)
+	}
+	for (const status of [400, 413, 422]) {
+		assert.equal(classifyFailure({ kind: 'http', status }), 'fail', `status ${status}`)
+	}
+	assert.equal(classifyFailure({ kind: 'config', status: 401 }), 'access')
+	assert.equal(classifyFailure({ kind: 'config', status: 403 }), 'access')
+	assert.equal(classifyFailure({ kind: 'config' }), 'access')
 })
 
 test('a person is asked exactly what people were always asked, under the same key', () => {
@@ -128,4 +135,16 @@ test('organisations and products get their own question, definition and key', ()
 	assert.deepEqual(request.state.record_1, { company_name: 'Acme Ltd', website: 'acme.test' })
 	// Same inputs as another type: never the same key.
 	assert.notEqual(judgmentKey({ ...company, entityType: 'product' }), judgmentKey(company))
+})
+
+test('a busy pair waits longer each time, jittered, capped, and never less than Jev asked', () => {
+	const low = () => 0
+	const high = () => 1
+	assert.equal(waitBeforeRetryMs({ attempts: 1, retryAfterMs: null, random: high }), 2_000)
+	assert.equal(waitBeforeRetryMs({ attempts: 1, retryAfterMs: null, random: low }), 1_000)
+	assert.equal(waitBeforeRetryMs({ attempts: 3, retryAfterMs: null, random: high }), 8_000)
+	assert.equal(waitBeforeRetryMs({ attempts: 50, retryAfterMs: null, random: high }), 120_000)
+	assert.equal(waitBeforeRetryMs({ attempts: 50, retryAfterMs: null, random: low }), 60_000)
+	assert.equal(waitBeforeRetryMs({ attempts: 1, retryAfterMs: 30_000, random: high }), 30_000)
+	assert.equal(waitBeforeRetryMs({ attempts: 0, retryAfterMs: null, random: high }), 2_000)
 })
