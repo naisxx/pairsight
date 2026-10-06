@@ -27,7 +27,7 @@ export function FormatExample({ format }: { format: VendorFormat }) {
 		<div className="mt-3" aria-hidden>
 			<table className="border-border w-full border-separate border-spacing-0 overflow-hidden rounded-[6px] border font-mono text-[11px]">
 				<thead className="bg-surface-muted text-text-muted">
-					<tr>
+					<tr className="whitespace-nowrap">
 						{head.map((cell) => (
 							<th key={cell} className="border-border border-b px-2 py-1 text-left font-medium">
 								{cell}

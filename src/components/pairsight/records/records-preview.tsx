@@ -39,7 +39,7 @@ export function RecordsPreview({
 				<table className="w-full border-separate border-spacing-0 text-[12.5px]">
 					<caption className="sr-only">{t('previewCaption')}</caption>
 					<thead className="bg-surface-muted">
-						<tr>
+						<tr className="whitespace-nowrap">
 							<th
 								scope="col"
 								className="border-border bg-surface-muted text-text-muted type-caption sticky left-0 z-[1] w-12 border-b px-3 py-2 text-left font-medium"

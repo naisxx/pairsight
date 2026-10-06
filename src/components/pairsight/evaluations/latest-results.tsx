@@ -84,17 +84,17 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 			</div>
 
 			<div className="scroll-fade-x relative my-4 overflow-x-auto px-5">
-				<table className="type-ui w-full min-w-[560px]">
+				<table className="type-ui w-full min-w-[480px]">
 					<caption className="sr-only">{t('latestCaption')}</caption>
 					<thead>
-						<tr className="text-text-muted text-left text-xs">
+						<tr className="text-text-muted text-left text-xs whitespace-nowrap">
 							<th scope="col" className="pb-2 font-medium">
 								{t('colVendor')}
 							</th>
-							<th scope="col" className="w-[28%] pb-2 font-medium">
+							<th scope="col" className="w-[20%] pb-2 font-medium">
 								<MetricHeading metric="precision" label={t('colPrecision')} />
 							</th>
-							<th scope="col" className="w-[28%] pb-2 font-medium">
+							<th scope="col" className="w-[20%] pb-2 font-medium">
 								<MetricHeading metric="recall" label={t('colRecall')} />
 							</th>
 							<th scope="col" className="pb-2 text-right font-medium">
@@ -133,13 +133,12 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 										<Link
 											href={`${base}?vendor=${id}&tab=detailed&category=disagreements`}
 											aria-label={t('disagreementsFor', { count: missed + merged, vendor: name })}
+											// The split on hover, so the row stays one line at any width.
+											title={t('disagreementsDetail', { missed, merged }, EXACT_FORMATS)}
 											className="text-accent-ink font-mono hover:underline"
 										>
 											<Count value={missed + merged} />
 										</Link>
-										<span className="text-text-muted type-caption ml-1">
-											{t('disagreementsDetail', { missed, merged })}
-										</span>
 									</td>
 								</tr>
 							)
