@@ -8,7 +8,8 @@ Update this file when an item ships or a decision changes.
 
 ## Why
 
-v1 caps an evaluation at **500 records and 5,000 pairs per run**. These are
+v1 capped an evaluation at **500 records and 5,000 pairs per run** (item 3
+raised records to 10,000). These are
 safety limits from how v1 runs, not limits of Jev or the database:
 
 - **Runs are driven by the browser tab.** There's no background worker. The
@@ -225,15 +226,52 @@ are noted; the later items assume the earlier ones exist.
   but slower than the first version (94 s), as it now copies each pair's
   judgment. A rebuild only rewrites pairs whose judgment changed.
 
-### 3. Large uploads
+### 3. Large uploads (built, 2026-10-06)
 
-- **What:**
-  - Stream-parse the upload and insert records in batches. That replaces
-    the single 2 MB server action.
-  - A streaming Excel reader, or a clear "use CSV for very large files".
-  - Validation stays row-numbered.
-  - Raise the record limit (10,000 first).
-- **Depends on:** item 1, for processing big files in the background.
+- **Built:**
+  - **Upload once.** A file goes up once, as the raw body of
+    `PUT /api/evaluations/[id]/uploads`, with progress, and is kept in an
+    `uploads` table while it's checked. Every preview, sheet pick and vendor
+    column change reads it from there. Gone once saved, or after a day (the
+    run worker sweeps). Server actions no longer carry files.
+  - **Read as a stream.** CSV is parsed a batch of rows at a time. Excel
+    uses ExcelJS's streaming reader, after the zip is reordered (copied, not
+    unpacked) so the sheet list, number formats and shared text come before
+    the sheets: ExcelJS-written and other workbooks keep them last, which the
+    streaming reader can't handle. The checks run as rows go by, with the
+    same row-numbered messages (`tabular/scan.ts`).
+  - **Checked in one pass.** Every column is checked as a possible record ID
+    in one pass, linear in the file's cells (it was columns × rows ×
+    columns).
+  - **Saved in batches.** Records go in 5,000 at a time on a second pass, and
+    a dataset only becomes current once all its records are in
+    (`source_datasets.savedAt`). A save that fails part-way leaves nothing.
+    Vendor matches are confirmed in batches too, in one transaction.
+  - **Limits:** 10,000 records, 10 MB files, vendor files up to 100,000
+    rows.
+  - The Rules screen reads the records once per request, not twice, and
+    `blocking.ts` lost its quadratic spots.
+  - A run's progress is stored on it (pairs checked, pairs failed) and kept
+    as pairs are answered, so the Runs centre's every-second check no longer
+    counts a run's pairs. A run's elapsed time stops when its last pair is
+    checked, not when its results are ready.
+- **Measured** (`pnpm scale:measure-uploads`, the same code the screens
+  run; local Docker Postgres):
+
+  |                               | 10K CSV        | 10K Excel      | 100K CSV (past the limit) |
+  | ----------------------------- | -------------- | -------------- | ------------------------- |
+  | Upload                        | 0.2 s (1.0 MB) | 0.1 s (0.7 MB) | 0.7 s (10 MB)             |
+  | Preview, every column checked | 0.1 s          | 0.7 s          | 0.8 s                     |
+  | Save                          | 2.8 s          | 3.8 s          | 15 s                      |
+  | Rules page                    | 0.9 s          | 0.5 s          | 10.7 s                    |
+  | Plan page                     | 0.3 s          | 0.2 s          | 3.5 s                     |
+
+  A 10K vendor file is checked and confirmed in under 0.2 s each.
+
+- **Left for later:** at 100K records the upload, check and save hold, but
+  the Rules and Plan pages rebuild every pair on each view (10.7 s and
+  3.5 s). Raising the record limit past 10K needs that work done once and
+  stored (with items 6 and 8), not just a bigger number.
 
 ### 4. Jev throughput
 

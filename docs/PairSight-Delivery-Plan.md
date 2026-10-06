@@ -79,6 +79,14 @@ the start, without duplicating any Jev work.
   every second, and the runs list every few seconds while anything runs,
   so a run started in another tab shows up too. Runs keep going with no
   page open.
+- **Progress is stored, not counted.** Each run keeps how many of its pairs
+  have a final answer and how many failed (`runs.checkedCount`,
+  `failedCount`): a pair's answer adds to every running run holding it, and
+  an exact recount runs when counts can shift otherwise (a run starting, a
+  retry, a re-check, a run finishing). Following a run costs the same at any
+  size. A run is marked finished as soon as its last pair is checked, then
+  its results are worked out ("All pairs checked · working out the results")
+  before it's complete.
 - **Pause and resume.** Pause stops the run after the pairs already being
   checked; Resume carries on. **Retry failed** resets failed pairs to
   pending.
@@ -133,13 +141,14 @@ migration):
 | Model                | Key fields                                                                                                                                                                                                                                                 |
 | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Evaluation`         | `ownerId?` (null for the demo), `name`, `kind` (live or demo). Draft configuration: `identitySame`, `identityDifferent`, `countryCode`, `jevFields[]`, `blockingRules` (JSON), `threshold`                                                                 |
-| `SourceDataset`      | `evaluationId`, `fileName`, `rowCount`, `referenceColumn`, `columnRoles`. Immutable: replacing the file creates a new dataset.                                                                                                                             |
+| `SourceDataset`      | `evaluationId`, `fileName`, `rowCount`, `referenceColumn`, `columnRoles`. Immutable: replacing the file creates a new dataset. `savedAt` is set once every record is in; only saved datasets are current.                                                  |
 | `SourceRecord`       | `datasetId`, `reference` (unique per dataset), `rowNumber`, `values` (original values, JSON), and for reading results `label`, `sortKey`, `searchText`                                                                                                     |
 | `VendorExport`       | `evaluationId`, `datasetId`, `name`, `format` (pair, later group), `mapping`, `confirmedCompleteAt`, `pairCount`                                                                                                                                           |
 | `VendorMatch`        | `exportId`, `recordAId`, `recordBId` (canonical order, unique)                                                                                                                                                                                             |
 | `Run`                | `evaluationId`, `datasetId`, `number`, `origin` (live or prepared), `status`, and a frozen snapshot: identity definition, `jevFields`, country, rules, `exportIds[]`, `judgmentKey`, requested model, `threshold`; `summary` (the Overview, once finished) |
 | `RunPair`            | `runId`, `recordAId`, `recordBId`, `ruleIds[]`, `matchedByExportIds[]`, `assessmentId`, and as of the summary `status`, `score`, `sortKey`, `searchText`                                                                                                   |
 | `Assessment`         | `datasetId`, record A/B, `judgmentKey`, `status` (pending, running, succeeded or failed), `score?`, `modelReported`, `requestId`, `attempts`, `errorCode`, `claimedAt`, `completedAt`, `origin`                                                            |
+| `Upload`             | `ownerId`, `evaluationId`, `kind` (records or vendor), `fileName`, `size`, `bytes`. A file kept while it is checked; deleted once saved or after a day.                                                                                                    |
 | `HumanReview` (next) | `runPairId`, `reviewerId`, `verdict` (same, different or unsure), `note`. Kept separate from AI judgments.                                                                                                                                                 |
 
 - **Reuse:** `judgmentKey` is a hash of the identity definition,
@@ -152,10 +161,12 @@ migration):
 
 ## v1 choices
 
-- **Source CSV:** UTF-8, BOM allowed, header row, comma-delimited, ≤ 1 MB
-  (under Next's 1 MB server-action limit), ≤ 500 rows. An empty cell is
-  missing. The reference is trimmed, required and unique; errors list row
-  numbers.
+- **Source file:** CSV (UTF-8, BOM allowed, header row, comma-delimited) or
+  Excel, ≤ 10 MB, ≤ 10,000 rows. It's uploaded once to
+  `PUT /api/evaluations/[id]/uploads` and kept in `uploads` while it's
+  checked; it's read and saved a batch of rows at a time (Scale Roadmap item
+  3). An empty cell is missing. The reference is trimmed, required and
+  unique; errors list row numbers.
 - **Vendor pair CSV:**
   - The user picks the "record A" and "record B" columns. Other columns,
     including vendor scores, are ignored and never sent to Jev.
