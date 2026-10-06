@@ -1,32 +1,36 @@
+import { z } from 'zod'
 import {
 	emptyCounts,
-	histogram,
 	possiblePairs,
-	sensitivity,
 	stableRange,
-	vendorMetrics,
-	vendorOverlap,
-	workload,
 	type CategoryCounts,
-	type MetricPair,
 	type ResultCategory
 } from '@/lib/pairsight/metrics'
-import { isPairsightMatch, type Category } from '@/lib/pairsight/decisions'
-import { compareFields } from './compare'
-import type { FieldRole, IdentityRole } from './fields'
-import { isFuzzyOnly, type AssessmentStatus, type ResultRow } from './result-rows'
+import { CATEGORIES, type Category } from '@/lib/pairsight/decisions'
+import {
+	binPairs,
+	statsCoverage,
+	statsHardCases,
+	statsHistogram,
+	statsMetrics,
+	statsOverlap,
+	statsSensitivity,
+	statsWorkload,
+	type StatsRow
+} from '@/lib/pairsight/stats'
+import { compareFields, type FieldComparison } from './compare'
+import { FIELD_ROLES, type FieldRole, type IdentityRole } from './fields'
+import type { AssessmentStatus, ResultRow } from './result-rows'
+import { identityRoleSchema } from './schemas'
 
-// The Results overview (docs/PairSight-UX-Plan.md §4.1), built from the
-// pairs and rows getRunResults already loaded: no extra queries. Pure, so
-// it's unit-tested without a database.
+// The Results overview (docs/PairSight-UX-Plan.md §4.1), read from the run's
+// summary: exact counts over every pair, worked out once when the run
+// finished (run-summary.ts), so the Overview never loads the run. Pure, so
+// it's unit-tested without a database; `summarizePairs` builds the same
+// summary from pairs in memory, the reference the database's is checked
+// against.
 
-export type OverviewPair = {
-	matchedByExportIds: string[]
-	ruleIds: string[]
-	assessment: { status: AssessmentStatus; score: number | null }
-}
-
-const TOP_DISAGREEMENTS = 3
+export const TOP_DISAGREEMENTS = 3
 // A field "usually" matches within a category at or above this share of
 // pairs, and "usually differs" at or below the mirror share.
 const USUALLY_SHARED = 0.6
@@ -46,48 +50,47 @@ export type FieldPatterns = {
 
 const ASSESSED: Category[] = ['both_matched', 'pairsight_only', 'vendor_only', 'neither_matched']
 
-// How often each field agrees between the two records, per category. A pair
-// missing the value on either side doesn't count for that field.
-export function fieldPatterns({
-	rows,
-	records,
-	columnRoles,
-	country
-}: {
-	rows: ResultRow[]
-	records: ReadonlyMap<string, { values: Record<string, string> }>
-	columnRoles: Record<string, FieldRole>
-	country: string
-}): FieldPatterns {
-	const byCategory = new Map<Category, ResultRow[]>(ASSESSED.map((category) => [category, []]))
-	for (const row of rows) {
-		if (row.category !== 'incomplete') byCategory.get(row.category)?.push(row)
+// Same/compared counts per field and category, added to one pair at a time.
+export type PatternTallies = Map<
+	IdentityRole,
+	Partial<Record<Category, { same: number; total: number }>>
+>
+
+// One judged pair's field comparisons, counted under its category. A value
+// missing on either side doesn't count for that field.
+export function tallyPair(tallies: PatternTallies, category: Category, fields: FieldComparison[]) {
+	for (const field of fields) {
+		if (field.comparison === 'oneMissing' || field.comparison === 'bothMissing') continue
+		const cells = tallies.get(field.role) ?? {}
+		const cell = cells[category] ?? { same: 0, total: 0 }
+		cell.total++
+		if (field.comparison === 'same') cell.same++
+		cells[category] = cell
+		tallies.set(field.role, cells)
 	}
+}
+
+// The patterns table from the tallies and each category's pair count. Rows
+// follow the usual field order.
+export function finishFieldPatterns(
+	counts: Partial<Record<Category, number>>,
+	tallies: PatternTallies
+): FieldPatterns {
 	const columns = ASSESSED.flatMap((category) => {
-		const count = byCategory.get(category)?.length ?? 0
+		const count = counts[category] ?? 0
 		return count === 0 ? [] : [{ category, count }]
 	})
-
-	const tallies = new Map<IdentityRole, Partial<Record<Category, FieldPatternCell>>>()
-	for (const { category } of columns) {
-		for (const row of byCategory.get(category) ?? []) {
-			const valuesA = records.get(row.recordA.id)?.values
-			const valuesB = records.get(row.recordB.id)?.values
-			if (valuesA == null || valuesB == null) continue
-			for (const field of compareFields({ valuesA, valuesB, columnRoles, country }).fields) {
-				if (field.comparison === 'oneMissing' || field.comparison === 'bothMissing') continue
-				const cells = tallies.get(field.role) ?? {}
-				const cell = cells[category] ?? { same: 0, total: 0, share: 0 }
-				cell.total++
-				if (field.comparison === 'same') cell.same++
-				cell.share = cell.same / cell.total
-				cells[category] = cell
-				tallies.set(field.role, cells)
-			}
+	const patternRows = FIELD_ROLES.flatMap((role) => {
+		if (role === 'other') return []
+		const tally = tallies.get(role)
+		if (tally == null) return []
+		const cells: Partial<Record<Category, FieldPatternCell>> = {}
+		for (const category of ASSESSED) {
+			const cell = tally[category]
+			if (cell != null) cells[category] = { ...cell, share: cell.same / cell.total }
 		}
-	}
-
-	const patternRows = [...tallies].map(([role, cells]) => ({ role, cells }))
+		return [{ role, cells }]
+	})
 	const pick = (category: Category, shared: boolean) =>
 		patternRows
 			.flatMap(({ role, cells }) => {
@@ -107,25 +110,71 @@ export function fieldPatterns({
 	return { columns, rows: patternRows, summary }
 }
 
+// How often each field agrees between the two records, per category.
+export function fieldPatterns({
+	rows,
+	records,
+	columnRoles,
+	country
+}: {
+	rows: ResultRow[]
+	records: ReadonlyMap<string, { values: Record<string, string> }>
+	columnRoles: Record<string, FieldRole>
+	country: string
+}): FieldPatterns {
+	const counts: Partial<Record<Category, number>> = {}
+	const tallies: PatternTallies = new Map()
+	for (const row of rows) {
+		if (row.category === 'incomplete') continue
+		counts[row.category] = (counts[row.category] ?? 0) + 1
+		const valuesA = records.get(row.recordA.id)?.values
+		const valuesB = records.get(row.recordB.id)?.values
+		if (valuesA == null || valuesB == null) continue
+		tallyPair(
+			tallies,
+			row.category,
+			compareFields({ valuesA, valuesB, columnRoles, country }).fields
+		)
+	}
+	return finishFieldPatterns(counts, tallies)
+}
+
+// Pairs per rule that found them (null: added by a vendor only), split by
+// what a category needs: judged, Jev says same, which vendors matched.
+export type SourceStat = {
+	ruleId: string | null
+	judged: boolean
+	match: boolean
+	mask: number
+	count: number
+}
+
 export type SourceRow = { ruleId: string | null; counts: CategoryCounts; total: number }
 
-// Which rules surfaced each kind of pair. A pair found by several rules
-// counts once under each; pairs outside every rule sit under "added by a
-// vendor" (ruleId null), listed last.
-export function sourceBreakdown(rows: ResultRow[]): SourceRow[] {
+const matchedBy = (mask: number, vendorIndex: number) =>
+	vendorIndex >= 0 && (mask & (1 << vendorIndex)) !== 0
+
+function categoryOf(judged: boolean, match: boolean, isVendorMatch: boolean): ResultCategory {
+	if (!judged) return 'incomplete'
+	if (isVendorMatch) return match ? 'both_matched' : 'vendor_only'
+	return match ? 'pairsight_only' : 'neither_matched'
+}
+
+// Which rules surfaced each kind of pair, for one vendor. A pair found by
+// several rules counts once under each; pairs outside every rule sit under
+// "added by a vendor" (ruleId null), listed last. Ties keep rule order.
+export function sourceRows(stats: SourceStat[], vendorIndex: number): SourceRow[] {
 	const byRule = new Map<string | null, SourceRow>()
-	const add = (ruleId: string | null, category: ResultCategory) => {
-		const row = byRule.get(ruleId) ?? { ruleId, counts: emptyCounts(), total: 0 }
-		row.counts[category]++
-		row.total++
-		byRule.set(ruleId, row)
-	}
-	for (const row of rows) {
-		if (row.ruleIds.length === 0) add(null, row.category)
-		else for (const ruleId of row.ruleIds) add(ruleId, row.category)
+	for (const stat of stats) {
+		const row = byRule.get(stat.ruleId) ?? { ruleId: stat.ruleId, counts: emptyCounts(), total: 0 }
+		row.counts[categoryOf(stat.judged, stat.match, matchedBy(stat.mask, vendorIndex))] += stat.count
+		row.total += stat.count
+		byRule.set(stat.ruleId, row)
 	}
 	return [...byRule.values()].sort((a, b) =>
-		(a.ruleId == null) === (b.ruleId == null) ? b.total - a.total : a.ruleId == null ? 1 : -1
+		a.ruleId == null || b.ruleId == null
+			? (a.ruleId == null ? 1 : 0) - (b.ruleId == null ? 1 : 0)
+			: b.total - a.total || (a.ruleId < b.ruleId ? -1 : a.ruleId > b.ruleId ? 1 : 0)
 	)
 }
 
@@ -136,98 +185,97 @@ export type HardCases = {
 	byVendor: Array<{ id: string; caught: number }>
 }
 
-// The duplicates exact rules would have missed: found only by fuzzy rules,
-// confirmed by Jev, and how many of them each vendor caught. The fairest
-// reading of who handles hard cases (typos, a move, a new email).
-export function hardCases({
-	pairs,
-	fuzzyRuleIds,
-	vendors,
-	threshold
-}: {
-	pairs: ReadonlyArray<Pick<OverviewPair, 'ruleIds' | 'matchedByExportIds' | 'assessment'>>
-	fuzzyRuleIds: ReadonlySet<string>
-	vendors: ReadonlyArray<{ id: string }>
-	threshold: number
-}): HardCases {
-	const fuzzyOnly = pairs.filter((pair) => isFuzzyOnly(pair.ruleIds, fuzzyRuleIds))
-	const confirmed = fuzzyOnly.filter(
-		({ assessment }) =>
-			assessment.status === 'succeeded' &&
-			assessment.score != null &&
-			isPairsightMatch({ score: assessment.score, threshold })
+const statsRowSchema = z.object({
+	status: z.enum(['pending', 'running', 'succeeded', 'failed']),
+	bin: z.number().int().nullable(),
+	match: z.boolean(),
+	near: z.boolean(),
+	mask: z.number().int(),
+	kind: z.enum(['none', 'fuzzy', 'other']),
+	count: z.number().int()
+})
+
+const fieldPatternsSchema = z.object({
+	columns: z.array(z.object({ category: z.enum(CATEGORIES), count: z.number().int() })),
+	rows: z.array(
+		z.object({
+			role: identityRoleSchema,
+			cells: z.partialRecord(
+				z.enum(CATEGORIES),
+				z.object({ same: z.number(), total: z.number(), share: z.number() })
+			)
+		})
+	),
+	summary: z.partialRecord(
+		z.enum(['pairsight_only', 'vendor_only']),
+		z.object({ shared: z.array(identityRoleSchema), different: z.array(identityRoleSchema) })
 	)
-	return {
-		found: fuzzyOnly.length,
-		confirmed: confirmed.length,
-		byVendor: vendors.map((vendor) => ({
-			id: vendor.id,
-			caught: confirmed.filter((pair) => pair.matchedByExportIds.includes(vendor.id)).length
-		}))
-	}
-}
+})
 
-// Where to start reviewing: the duplicates the vendor missed that Jev is
-// surest about, and the vendor's merges Jev is least sure of.
-export function topDisagreements(rows: ResultRow[]) {
-	const scored = (category: Category) =>
-		rows.filter((row) => row.category === category && row.score != null)
-	return {
-		missed: scored('pairsight_only')
-			.sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-			.slice(0, TOP_DISAGREEMENTS),
-		merges: scored('vendor_only')
-			.sort((a, b) => (a.score ?? 0) - (b.score ?? 0))
-			.slice(0, TOP_DISAGREEMENTS)
-	}
-}
+// Bump when the shape or the way it's counted changes: older summaries are
+// then rebuilt on their next read.
+// 2: building one also copies each pair's judgment onto run_pairs.
+export const RUN_SUMMARY_VERSION = 2
 
+// Everything the Overview, the dashboard and the summary report show,
+// stored on the run (runs.summary).
+export const runSummarySchema = z.object({
+	// What it was counted at; a mismatch with the run means it's rebuilt.
+	threshold: z.number(),
+	// The order of each pair's vendor bitmask: the run's vendors, oldest first.
+	vendorIds: z.array(z.string()),
+	rows: z.array(statsRowSchema),
+	sources: z.array(
+		z.object({
+			ruleId: z.string().nullable(),
+			judged: z.boolean(),
+			match: z.boolean(),
+			mask: z.number().int(),
+			count: z.number().int()
+		})
+	),
+	// Per vendor id.
+	patterns: z.record(z.string(), fieldPatternsSchema),
+	top: z.record(z.string(), z.object({ missed: z.array(z.string()), merges: z.array(z.string()) })),
+	models: z.array(z.string()),
+	recordCount: z.number().int()
+})
+
+export type RunSummary = z.infer<typeof runSummarySchema>
+
+// The Overview for one vendor. `top` is the summary's top disagreements as
+// rows (results.ts reads those few pairs).
 export function buildOverview({
-	pairs,
-	rows,
+	summary,
 	vendors,
 	vendorId,
-	threshold,
-	recordCount,
-	records,
-	columnRoles,
-	country,
-	fuzzyRuleIds
+	top
 }: {
-	pairs: OverviewPair[]
-	rows: ResultRow[]
+	summary: RunSummary
 	vendors: Array<{ id: string; name: string }>
 	vendorId: string | undefined
-	threshold: number
-	recordCount: number
-	records: ReadonlyMap<string, { values: Record<string, string> }>
-	columnRoles: Record<string, FieldRole>
-	country: string
-	fuzzyRuleIds: ReadonlySet<string>
+	top: { missed: ResultRow[]; merges: ResultRow[] }
 }) {
-	const metricPairsFor = (id: string): MetricPair[] =>
-		pairs.map((pair) => ({
-			status: pair.assessment.status,
-			score: pair.assessment.score,
-			isVendorMatch: pair.matchedByExportIds.includes(id)
-		}))
-	const selected = vendorId == null ? [] : metricPairsFor(vendorId)
-	const metrics = vendorMetrics(selected, threshold)
-	const points = sensitivity(selected)
+	const { rows, vendorIds } = summary
+	const indexOf = (id: string | undefined) => (id == null ? -1 : vendorIds.indexOf(id))
+	const selectedIndex = indexOf(vendorId)
+	// No vendor: nothing to count for one.
+	const selectedRows = selectedIndex === -1 ? [] : rows
+	const metrics = statsMetrics(selectedRows, selectedIndex)
+	const points = statsSensitivity(selectedRows, selectedIndex)
 	const other = vendors.find((vendor) => vendor.id !== vendorId)
-	const fromRules = rows.filter((row) => row.ruleIds.length > 0).length
+	const coverage = statsCoverage(rows)
 
 	return {
 		metrics,
 		// Every vendor's metrics, for the other-vendor ticks and the comparison.
 		byVendor: vendors.map((vendor) => ({
 			...vendor,
-			metrics:
-				vendor.id === vendorId ? metrics : vendorMetrics(metricPairsFor(vendor.id), threshold)
+			metrics: vendor.id === vendorId ? metrics : statsMetrics(rows, indexOf(vendor.id))
 		})),
 		sensitivity: points,
 		stableRange: stableRange(points, metrics),
-		histogram: histogram(selected),
+		histogram: statsHistogram(selectedRows, selectedIndex),
 		// The selected vendor against the first other one (decision #7 in the
 		// revamp plan: more than two vendors compare pairwise like this).
 		overlap:
@@ -235,31 +283,135 @@ export function buildOverview({
 				? null
 				: {
 						vendors: [vendors.find((vendor) => vendor.id === vendorId), other],
-						groups: vendorOverlap(
-							pairs.map((pair) => ({
-								status: pair.assessment.status,
-								score: pair.assessment.score,
-								matchedBy: pair.matchedByExportIds
-							})),
-							[vendorId, other.id],
-							threshold
-						)
+						groups: statsOverlap(rows, selectedIndex, indexOf(other.id))
 					},
-		sources: sourceBreakdown(rows),
-		hardCases: hardCases({ pairs, fuzzyRuleIds, vendors, threshold }),
-		top: topDisagreements(rows),
-		workload: workload(selected, threshold),
+		sources: sourceRows(summary.sources, selectedIndex),
+		hardCases: statsHardCases(rows, vendorIds) satisfies HardCases,
+		top,
+		workload: statsWorkload(selectedRows, selectedIndex),
 		coverage: {
-			total: rows.length,
+			total: coverage.total,
 			assessed: metrics.assessed,
 			pending: metrics.pending,
 			failed: metrics.failed,
-			fromRules,
-			addedByVendor: rows.length - fromRules,
-			notCompared: Math.max(0, possiblePairs(recordCount) - rows.length)
+			fromRules: coverage.fromRules,
+			addedByVendor: coverage.addedByVendor,
+			notCompared: Math.max(0, possiblePairs(summary.recordCount) - coverage.total)
 		},
-		fieldPatterns: fieldPatterns({ rows, records, columnRoles, country })
+		fieldPatterns: (vendorId == null ? undefined : summary.patterns[vendorId]) ?? {
+			columns: [],
+			rows: [],
+			summary: {}
+		}
 	}
 }
 
 export type ResultsOverview = ReturnType<typeof buildOverview>
+
+export type SummaryPair = {
+	id: string
+	recordAId: string
+	recordBId: string
+	ruleIds: string[]
+	matchedByExportIds: string[]
+	assessment: { status: AssessmentStatus; score: number | null; modelReported?: string | null }
+}
+
+// A run's summary from its pairs in memory: what run-summary.ts builds in
+// the database, pair by pair. The tests' way to make one, and the reference
+// the database's is checked against.
+export function summarizePairs({
+	pairs,
+	records,
+	vendorIds,
+	threshold,
+	fuzzyRuleIds,
+	columnRoles,
+	country
+}: {
+	pairs: SummaryPair[]
+	records: ReadonlyMap<string, { values: Record<string, string> }>
+	vendorIds: string[]
+	threshold: number
+	fuzzyRuleIds: ReadonlySet<string>
+	columnRoles: Record<string, FieldRole>
+	country: string
+}): RunSummary {
+	const judged = (pair: SummaryPair) =>
+		pair.assessment.status === 'succeeded' && pair.assessment.score != null
+	const isMatch = (pair: SummaryPair) => judged(pair) && (pair.assessment.score ?? 0) >= threshold
+	const maskOf = (pair: SummaryPair) =>
+		vendorIds.reduce(
+			(bits, id, index) => (pair.matchedByExportIds.includes(id) ? bits | (1 << index) : bits),
+			0
+		)
+	const rows: StatsRow[] = binPairs({
+		pairs: pairs.map((pair) => ({ ...pair, ...pair.assessment })),
+		vendorIds,
+		threshold,
+		fuzzyRuleIds
+	})
+
+	const sources = new Map<string, SourceStat>()
+	for (const pair of pairs) {
+		for (const ruleId of pair.ruleIds.length === 0 ? [null] : pair.ruleIds) {
+			const stat = { ruleId, judged: judged(pair), match: isMatch(pair), mask: maskOf(pair) }
+			const key = JSON.stringify(stat)
+			const existing = sources.get(key)
+			if (existing == null) sources.set(key, { ...stat, count: 1 })
+			else existing.count++
+		}
+	}
+
+	const patterns: RunSummary['patterns'] = {}
+	const top: RunSummary['top'] = {}
+	const fields = new Map(
+		pairs.filter(judged).flatMap((pair) => {
+			const valuesA = records.get(pair.recordAId)?.values
+			const valuesB = records.get(pair.recordBId)?.values
+			return valuesA == null || valuesB == null
+				? []
+				: [[pair.id, compareFields({ valuesA, valuesB, columnRoles, country }).fields] as const]
+		})
+	)
+	vendorIds.forEach((vendorId, index) => {
+		const counts: Partial<Record<Category, number>> = {}
+		const tallies: PatternTallies = new Map()
+		const missed: SummaryPair[] = []
+		const merges: SummaryPair[] = []
+		for (const pair of pairs.filter(judged)) {
+			const vendor = matchedBy(maskOf(pair), index)
+			const category = categoryOf(true, isMatch(pair), vendor)
+			if (category === 'incomplete') continue
+			counts[category] = (counts[category] ?? 0) + 1
+			const compared = fields.get(pair.id)
+			if (compared != null) tallyPair(tallies, category, compared)
+			if (category === 'pairsight_only') missed.push(pair)
+			if (category === 'vendor_only') merges.push(pair)
+		}
+		patterns[vendorId] = finishFieldPatterns(counts, tallies)
+		const score = (pair: SummaryPair) => pair.assessment.score ?? 0
+		const byId = (a: SummaryPair, b: SummaryPair) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)
+		top[vendorId] = {
+			missed: missed
+				.sort((a, b) => score(b) - score(a) || byId(a, b))
+				.slice(0, TOP_DISAGREEMENTS)
+				.map((pair) => pair.id),
+			merges: merges
+				.sort((a, b) => score(a) - score(b) || byId(a, b))
+				.slice(0, TOP_DISAGREEMENTS)
+				.map((pair) => pair.id)
+		}
+	})
+
+	return {
+		threshold,
+		vendorIds,
+		rows,
+		sources: [...sources.values()],
+		patterns,
+		top,
+		models: [...new Set(pairs.flatMap((pair) => pair.assessment.modelReported ?? []))].sort(),
+		recordCount: records.size
+	}
+}

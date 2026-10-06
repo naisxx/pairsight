@@ -6,6 +6,13 @@ import { mapRecordFields } from './fields'
 import type { JudgmentConfig } from './judgment'
 import { assess, RunStopped } from './assess'
 import { getOwnedRun, getRunProgress, runNotFound } from './runs'
+import {
+	buildRunSummary,
+	clearRunSummaries,
+	refreshRunSummaries,
+	SUMMARY_RUN_SELECT,
+	summaryColumns
+} from './run-summary'
 import { parseIdentityRoles } from './schemas'
 import { parseColumnRoles, parseRecordValues } from './json'
 
@@ -163,9 +170,16 @@ export async function finishIfDone(runId: string): Promise<boolean> {
 	const progress = await getRunProgress(runId)
 	if (progress.status !== 'running') return true
 	if (progress.pending > 0 || progress.running > 0) return false
+	// Its Overview is worked out before it's marked finished, so a finished
+	// run always has one to show.
+	const run = await db.run.findUniqueOrThrow({
+		where: { id: runId },
+		select: { ...SUMMARY_RUN_SELECT, judgmentKey: true }
+	})
+	const summary = await buildRunSummary(run)
 	const { count } = await db.run.updateMany({
 		where: { id: runId, status: 'running' },
-		data: { status: 'completed', completedAt: new Date() }
+		data: { status: 'completed', completedAt: new Date(), ...summaryColumns(summary) }
 	})
 	if (count === 1) {
 		log.info('pairsight run completed', {
@@ -173,6 +187,13 @@ export async function finishIfDone(runId: string): Promise<boolean> {
 			succeeded: progress.succeeded,
 			failed: progress.failed
 		})
+		// Pairs it judged may be shared with other finished runs.
+		await clearRunSummaries({
+			datasetId: run.datasetId,
+			judgmentKey: run.judgmentKey,
+			exceptRunId: runId
+		})
+		await refreshRunSummaries({ datasetId: run.datasetId, judgmentKey: run.judgmentKey })
 	}
 	return true
 }
@@ -202,10 +223,13 @@ export async function retryPair({
 	})
 	if (count === 1) {
 		await judge({ run, assessments: [pair.assessment], claimFirst: false, concurrency: 1 })
+		// Every finished run holding this pair now counts it differently; the
+		// action rebuilds them once it has answered.
+		await clearRunSummaries({ datasetId: run.datasetId, judgmentKey: run.judgmentKey })
 	}
 	const { status } = await db.assessment.findUniqueOrThrow({
 		where: { id: pair.assessment.id },
 		select: { status: true }
 	})
-	return status
+	return { status, run }
 }

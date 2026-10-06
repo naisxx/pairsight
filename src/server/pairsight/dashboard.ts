@@ -3,7 +3,9 @@ import { entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { runBase, type EvaluationView } from '@/lib/pairsight/evaluation-view'
 import { evaluationWhere, type EvaluationScope } from './scope'
-import { vendorMetrics, type VendorMetrics } from '@/lib/pairsight/metrics'
+import type { VendorMetrics } from '@/lib/pairsight/metrics'
+import { statsMetrics } from '@/lib/pairsight/stats'
+import { readRunSummary, runVendors, SUMMARY_RUN_SELECT } from './run-summary'
 import {
 	activeStage,
 	evaluationStatus,
@@ -160,8 +162,8 @@ export async function getDashboard({
 	}
 }
 
-// A finished run's metrics per vendor: only statuses, scores and vendor
-// decisions, none of the records the Results screen loads.
+// A finished run's metrics per vendor, from its summary (run-summary.ts):
+// nothing loaded pair by pair.
 async function latestResults({
 	evaluationId,
 	evaluationName,
@@ -175,19 +177,15 @@ async function latestResults({
 }): Promise<LatestResults> {
 	const run = await db.run.findUniqueOrThrow({
 		where: { id: runId },
-		select: { id: true, number: true, completedAt: true, threshold: true, exportIds: true }
+		select: {
+			...SUMMARY_RUN_SELECT,
+			number: true,
+			completedAt: true,
+			summary: true,
+			summaryVersion: true
+		}
 	})
-	const [vendors, pairs] = await Promise.all([
-		db.vendorExport.findMany({
-			where: { id: { in: run.exportIds } },
-			orderBy: { createdAt: 'asc' },
-			select: { id: true, name: true }
-		}),
-		db.runPair.findMany({
-			where: { runId },
-			select: { matchedByExportIds: true, assessment: { select: { status: true, score: true } } }
-		})
-	])
+	const [vendors, summary] = await Promise.all([runVendors(run.exportIds), readRunSummary(run)])
 	return {
 		evaluationId,
 		evaluationName,
@@ -196,14 +194,7 @@ async function latestResults({
 		vendors: vendors.map((vendor) => ({
 			id: vendor.id,
 			name: vendor.name,
-			metrics: vendorMetrics(
-				pairs.map((pair) => ({
-					status: pair.assessment.status,
-					score: pair.assessment.score,
-					isVendorMatch: pair.matchedByExportIds.includes(vendor.id)
-				})),
-				run.threshold
-			)
+			metrics: statsMetrics(summary.rows, summary.vendorIds.indexOf(vendor.id))
 		}))
 	}
 }

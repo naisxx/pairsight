@@ -1,13 +1,15 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { emptyCounts, type SensitivityPoint, type VendorMetrics } from '@/lib/pairsight/metrics'
+import { buildRows } from './result-rows'
+import { summarizePairs, type SummaryPair } from './result-overview'
 import {
 	buildReport,
 	headToHead,
 	leadRange,
 	leaders,
 	rankVendors,
-	type ReportPair,
+	reportExample,
 	type ReportRecord
 } from './report-summary'
 
@@ -125,8 +127,9 @@ test('the lead range says who leads beyond it when the leader changes', () => {
 })
 
 const judged = (score: number) => ({ status: 'succeeded' as const, score, errorCode: null })
+type Assessment = SummaryPair['assessment'] & { errorCode: string | null }
 let pairId = 0
-function pair(a: string, b: string, matchedBy: string[], assessment: ReportPair['assessment']) {
+function pair(a: string, b: string, matchedBy: string[], assessment: Assessment) {
 	pairId++
 	return {
 		id: `p${pairId}`,
@@ -138,20 +141,33 @@ function pair(a: string, b: string, matchedBy: string[], assessment: ReportPair[
 	}
 }
 
+const columnRoles = { name: 'full_name', email: 'email' } as const
+
+function summaryOf(pairs: Array<ReturnType<typeof pair>>, vendorIds: string[]) {
+	return summarizePairs({
+		pairs,
+		records,
+		vendorIds,
+		threshold: 0.5,
+		fuzzyRuleIds: new Set(),
+		columnRoles,
+		country: 'US'
+	})
+}
+
 test('head to head counts only the judged pairs one vendor matched and the other did not', () => {
 	const pairs = [
 		pair('r1', 'r2', ['a'], judged(0.9)), // only a matched, Jev says same: a
 		pair('r1', 'r3', ['a'], judged(0.1)), // only a matched, Jev says different: b
 		pair('r2', 'r3', ['b'], judged(0.2)), // only b matched, Jev says different: a
 		pair('r3', 'r4', ['a', 'b'], judged(0.9)), // both matched: not counted
-		pair('r4', 'r5', ['b'], { status: 'failed', score: null, errorCode: 'http_500' })
+		pair('r4', 'r1', ['b'], { status: 'failed', score: null, errorCode: 'http_500' })
 	]
-	assert.deepEqual(headToHead(pairs, [{ id: 'a' }, { id: 'b' }], 0.5), [
+	assert.deepEqual(headToHead(summaryOf(pairs, ['a', 'b']), [{ id: 'a' }, { id: 'b' }]), [
 		{ a: 'a', b: 'b', total: 3, sidedWithA: 2, sidedWithB: 1 }
 	])
 })
 
-const columnRoles = { name: 'full_name', email: 'email' } as const
 const records = new Map<string, ReportRecord>(
 	[
 		['r1', 'Jane Smith', 'jane@x.test'],
@@ -171,19 +187,28 @@ test('the report ranks vendors, finds their worst disagreements and compares eac
 		pair('r2', 'r3', [], judged(0.8)),
 		pair('r3', 'r4', [], { status: 'pending', score: null, errorCode: null })
 	]
-	const report = buildReport({
-		threshold: 0.5,
-		country: 'US',
-		columnRoles,
-		records,
-		vendors: [
-			{ id: 'a', name: 'A' },
-			{ id: 'b', name: 'B' },
-			{ id: 'c', name: 'C' }
-		],
-		pairs,
-		fuzzyRuleIds: new Set()
-	})
+	const vendors = [
+		{ id: 'a', name: 'A' },
+		{ id: 'b', name: 'B' },
+		{ id: 'c', name: 'C' }
+	]
+	const summary = summaryOf(pairs, ['a', 'b', 'c'])
+	// The summary's top disagreements as rows, as report.ts reads them.
+	const examples = Object.fromEntries(
+		vendors.map(({ id }) => {
+			const rows = buildRows({ pairs, records, threshold: 0.5, vendorId: id })
+			const pick = (ids: string[]) =>
+				ids.flatMap((pairId) => rows.filter((row) => row.id === pairId))
+			const top = summary.top[id] ?? { missed: [], merges: [] }
+			const example = (row: (typeof rows)[number]) =>
+				reportExample({ row, records, columnRoles, country: 'US' })
+			return [
+				id,
+				{ merges: pick(top.merges).flatMap(example), misses: pick(top.missed).flatMap(example) }
+			]
+		})
+	)
+	const report = buildReport({ summary, vendors, examples })
 	assert.deepEqual(
 		report.vendors.map((entry) => [entry.id, entry.rank, entry.metrics.precision]),
 		[

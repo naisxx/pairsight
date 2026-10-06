@@ -1,9 +1,12 @@
 'use server'
 
+import { after } from 'next/server'
 import { z } from 'zod'
+import { captureError } from '@/lib/observability/capture-error'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
 import { retryPair } from '@/server/pairsight/run-engine'
+import { refreshRunSummaries } from '@/server/pairsight/run-summary'
 import {
 	getOwnedRun,
 	getRunProgress,
@@ -73,7 +76,14 @@ export const retryPairAction = validatedAction({
 	input: z.object({ runId: idSchema, pairId: idSchema }),
 	handler: async ({ runId, pairId }) => {
 		const user = await requireUser()
-		const status = await retryPair({ ownerId: user.id, runId, pairId })
+		const { status, run } = await retryPair({ ownerId: user.id, runId, pairId })
+		// Finished runs sharing the pair get their numbers rebuilt after the
+		// answer; one read before that rebuilds its own.
+		after(() =>
+			refreshRunSummaries({ datasetId: run.datasetId, judgmentKey: run.judgmentKey }).catch(
+				(error: unknown) => captureError(error, { runId, source: 'run-summary' })
+			)
+		)
 		revalidateEvaluationPages()
 		return { status }
 	}

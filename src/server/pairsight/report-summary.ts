@@ -1,31 +1,21 @@
-import { isPairsightMatch } from '@/lib/pairsight/decisions'
+import { stableRange, type SensitivityPoint, type VendorMetrics } from '@/lib/pairsight/metrics'
 import {
-	sensitivity,
-	stableRange,
-	vendorMetrics,
-	type MetricPair,
-	type SensitivityPoint,
-	type VendorMetrics
-} from '@/lib/pairsight/metrics'
+	statsCoverage,
+	statsHardCases,
+	statsHeadToHead,
+	statsMetrics,
+	statsSensitivity
+} from '@/lib/pairsight/stats'
 import { compareFields, type FieldComparison } from './compare'
 import type { FieldRole, IdentityRole } from './fields'
-import { fieldPatterns, hardCases, topDisagreements } from './result-overview'
-import { buildRows, type AssessmentStatus, type RecordSummary } from './result-rows'
+import type { RunSummary } from './result-overview'
+import type { RecordSummary, ResultRow } from './result-rows'
 
 // The summary report's content (docs/PairSight-UX-Plan.md, "Summary report"):
 // which vendor matched most like Jev on this data, what each gets wrong, the
 // pairs that show it, and how far that holds. Pure: numbers, ids and roles
 // only; the words are the PDF's (report-pdf/). Jev is the reference, so all
 // of it is agreement with an AI, never verified accuracy.
-
-export type ReportPair = {
-	id: string
-	recordAId: string
-	recordBId: string
-	ruleIds: string[]
-	matchedByExportIds: string[]
-	assessment: { status: AssessmentStatus; score: number | null; errorCode: string | null }
-}
 
 export type ReportRecord = RecordSummary & { values: Record<string, string> }
 
@@ -154,77 +144,62 @@ export function leadRange(
 // For every two vendors: of the judged pairs only one of them matched, how
 // often Jev agreed with each. The fairest one-line comparison there is: it
 // only counts the pairs where they actually disagree.
-export function headToHead(
-	pairs: ReportPair[],
-	vendors: Array<{ id: string }>,
-	threshold: number
-): HeadToHead[] {
+export function headToHead(summary: RunSummary, vendors: Array<{ id: string }>): HeadToHead[] {
 	const results: HeadToHead[] = []
 	vendors.forEach((a, index) => {
 		for (const b of vendors.slice(index + 1)) {
-			let sidedWithA = 0
-			let total = 0
-			for (const { matchedByExportIds: matchedBy, assessment } of pairs) {
-				if (assessment.status !== 'succeeded' || assessment.score == null) continue
-				const byA = matchedBy.includes(a.id)
-				if (byA === matchedBy.includes(b.id)) continue
-				total++
-				if (byA === isPairsightMatch({ score: assessment.score, threshold })) sidedWithA++
-			}
-			results.push({ a: a.id, b: b.id, total, sidedWithA, sidedWithB: total - sidedWithA })
+			const counts = statsHeadToHead(
+				summary.rows,
+				summary.vendorIds.indexOf(a.id),
+				summary.vendorIds.indexOf(b.id)
+			)
+			results.push({ a: a.id, b: b.id, ...counts })
 		}
 	})
 	return results
 }
 
-export type ReportInput = {
-	threshold: number
-	country: string
+// One of the pairs that show a vendor's disagreements, with its fields
+// compared. Null when a record or the score is missing.
+export function reportExample({
+	row,
+	records,
+	columnRoles,
+	country
+}: {
+	row: ResultRow
+	records: ReadonlyMap<string, { values: Record<string, string> }>
 	columnRoles: Record<string, FieldRole>
-	records: ReadonlyMap<string, ReportRecord>
-	vendors: Array<{ id: string; name: string }>
-	pairs: ReportPair[]
-	// The run's rules with a derived field, for the hard-cases line.
-	fuzzyRuleIds: ReadonlySet<string>
+	country: string
+}): ReportExample[] {
+	const a = records.get(row.recordA.id)
+	const b = records.get(row.recordB.id)
+	if (a == null || b == null || row.score == null) return []
+	const { fields } = compareFields({ valuesA: a.values, valuesB: b.values, columnRoles, country })
+	return [
+		{ recordA: row.recordA, recordB: row.recordB, score: row.score, ruleIds: row.ruleIds, fields }
+	]
 }
 
-export function buildReport({
-	threshold,
-	country,
-	columnRoles,
-	records,
-	vendors,
-	pairs,
-	fuzzyRuleIds
-}: ReportInput) {
-	const metricPairs = (vendorId: string): MetricPair[] =>
-		pairs.map(({ assessment, matchedByExportIds }) => ({
-			status: assessment.status,
-			score: assessment.score,
-			isVendorMatch: matchedByExportIds.includes(vendorId)
-		}))
-	const example = (row: ReturnType<typeof buildRows>[number]): ReportExample[] => {
-		const a = records.get(row.recordA.id)
-		const b = records.get(row.recordB.id)
-		if (a == null || b == null || row.score == null) return []
-		const { fields } = compareFields({ valuesA: a.values, valuesB: b.values, columnRoles, country })
-		return [
-			{ recordA: row.recordA, recordB: row.recordB, score: row.score, ruleIds: row.ruleIds, fields }
-		]
-	}
+export type ReportInput = {
+	summary: RunSummary
+	vendors: Array<{ id: string; name: string }>
+	// Each vendor's top disagreements (the summary's), with their fields.
+	examples: Record<string, { merges: ReportExample[]; misses: ReportExample[] }>
+}
 
+export function buildReport({ summary, vendors, examples }: ReportInput) {
+	const indexOf = (id: string) => summary.vendorIds.indexOf(id)
 	const details = vendors.map((vendor) => {
-		const own = metricPairs(vendor.id)
-		const rows = buildRows({ pairs, records, threshold, vendorId: vendor.id })
-		const top = topDisagreements(rows)
-		const { summary } = fieldPatterns({ rows, records, columnRoles, country })
+		const index = indexOf(vendor.id)
+		const patterns = summary.patterns[vendor.id]?.summary
 		return {
 			...vendor,
-			metrics: vendorMetrics(own, threshold),
-			sensitivity: sensitivity(own),
-			merges: summary.vendor_only ?? null,
-			misses: summary.pairsight_only ?? null,
-			examples: { merges: top.merges.flatMap(example), misses: top.missed.flatMap(example) }
+			metrics: statsMetrics(summary.rows, index),
+			sensitivity: statsSensitivity(summary.rows, index),
+			merges: patterns?.vendor_only ?? null,
+			misses: patterns?.pairsight_only ?? null,
+			examples: examples[vendor.id] ?? { merges: [], misses: [] }
 		}
 	})
 	const ranked: VendorDetail[] = rankVendors(details)
@@ -232,14 +207,14 @@ export function buildReport({
 	return {
 		vendors: ranked,
 		leaders: leaders(ranked),
-		leadRange: leadRange(ranked, threshold),
+		leadRange: leadRange(ranked, summary.threshold),
 		// Where the leader's own precision and recall hold still.
 		stableRange: first == null ? null : stableRange(first.sensitivity, first.metrics),
-		headToHead: headToHead(pairs, vendors, threshold),
-		hardCases: hardCases({ pairs, fuzzyRuleIds, vendors, threshold }),
+		headToHead: headToHead(summary, vendors),
+		hardCases: statsHardCases(summary.rows, summary.vendorIds),
 		// The run as a whole: the same for every vendor.
-		pairs: first?.metrics ?? vendorMetrics([], threshold),
-		fromRules: pairs.filter((pair) => pair.ruleIds.length > 0).length
+		pairs: first?.metrics ?? statsMetrics([], -1),
+		fromRules: statsCoverage(summary.rows).fromRules
 	}
 }
 

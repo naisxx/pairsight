@@ -135,7 +135,7 @@ export async function ResultsScreen({
 						</p>
 					</div>
 					<div className="flex flex-wrap items-center gap-2">
-						<ExportMenu runId={run.id} runNumber={run.number} />
+						<ExportMenu runId={run.id} runNumber={run.number} pairCount={run.pairCount} />
 						<RunSwitcher runId={run.id} runs={workspace.runs} />
 					</div>
 				</div>
@@ -148,7 +148,7 @@ export async function ResultsScreen({
 						threshold={run.threshold}
 						rulesHref={`${view.base}/rules`}
 						vendorName={vendorName}
-						pairs={results.metricPairs}
+						stats={results.stats}
 					/>
 				</div>
 
