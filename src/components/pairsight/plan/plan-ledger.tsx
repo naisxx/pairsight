@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { cn } from '@/lib/cn'
 import type { PlanCounts } from '@/server/pairsight/plan'
 import type { RunDuration } from '@/server/pairsight/run-estimate'
+import type { EntityType } from '@/lib/pairsight/entity-types'
 import type { SplinkState } from '@/server/pairsight/splink/picks'
 import { InfoTip } from '@/components/ui/info-tip'
 import { Count } from '@/components/ui/count'
@@ -18,6 +19,7 @@ export async function PlanLedger({
 	cost,
 	duration,
 	splink,
+	entityType,
 	isUsingDefaultRules,
 	isOverLimit
 }: {
@@ -31,6 +33,8 @@ export async function PlanLedger({
 	duration: RunDuration
 	// Splink's picks (splink/picks.ts): whether they're in, coming, or not.
 	splink: { state: SplinkState; reason: string | null }
+	// Says what PairSight compares for this type.
+	entityType: EntityType
 	// Nothing else picks pairs, so the type's simple rules do (plan.ts).
 	isUsingDefaultRules: boolean
 	isOverLimit: boolean
@@ -77,11 +81,12 @@ export async function PlanLedger({
 												? t('rowSuggestedFailed')
 												: splink.reason === 'too_few_records'
 													? t('rowSuggestedTooFew')
-													: splink.reason === 'not_people'
-														? t('rowSuggestedNotPeople')
-														: t('rowSuggestedNotSetUp')}
+													: t('rowSuggestedNotSetUp')}
 								</span>
-								<InfoTip label={t('suggestionsInfoLabel')} content={t('suggestionsInfo')} />
+								<InfoTip
+									label={t('suggestionsInfoLabel')}
+									content={t('suggestionsInfo', { type: entityType })}
+								/>
 							</span>
 						)
 					}

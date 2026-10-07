@@ -4,6 +4,7 @@ import { existsSync } from 'node:fs'
 import path from 'node:path'
 import { z } from 'zod'
 import { env } from '@/lib/env'
+import type { EntityType } from '@/lib/pairsight/entity-types'
 import { log as rootLog } from '@/server/lib/logger'
 
 // How PairSight runs the Splink service (services/splink,
@@ -72,11 +73,13 @@ function safeJson(text: string): unknown {
 // summary, rejects if it fails, times out or says something unreadable.
 export function runSplink({
 	python,
+	entityType,
 	recordsPath,
 	outPath,
 	maxPairs
 }: {
 	python: string
+	entityType: EntityType
 	recordsPath: string
 	outPath: string
 	maxPairs: number
@@ -85,6 +88,8 @@ export function runSplink({
 		'-m',
 		'pairsight_splink',
 		'score',
+		'--entity-type',
+		entityType,
 		'--records',
 		recordsPath,
 		'--out',

@@ -390,8 +390,10 @@ function MethodPage({ data, text }: Props) {
 					{t('notCompared', { count: data.notCompared })}
 				</Text>
 			)}
-			{data.usedSuggestions && (
-				<Text style={[styles.paragraph, styles.muted]}>{t('notComparedSuggested')}</Text>
+			{data.suggestedType != null && (
+				<Text style={[styles.paragraph, styles.muted]}>
+					{t('notComparedSuggested', { type: data.suggestedType })}
+				</Text>
 			)}
 
 			<Text style={styles.h3}>{t('judgmentsTitle')}</Text>

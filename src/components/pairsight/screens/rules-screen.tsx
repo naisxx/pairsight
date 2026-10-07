@@ -8,6 +8,7 @@ import { LIMITS } from '@/server/pairsight/limits'
 import { computePlan } from '@/server/pairsight/plan'
 import { rulesPreview } from '@/server/pairsight/rules-preview'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 import { RefreshWhile } from '@/components/pairsight/refresh-while'
 
@@ -76,6 +77,7 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				}}
 				suggestions={{
 					state: splink?.state ?? 'off',
+					entityType: entityTypeOf(evaluation.entityType),
 					suggested: splink?.suggested ?? 0,
 					reasons: splink?.reasons ?? [],
 					vendorCheck: ('vendorCheck' in plan ? plan.vendorCheck : undefined) ?? []

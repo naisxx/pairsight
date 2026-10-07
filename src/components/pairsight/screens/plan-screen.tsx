@@ -20,6 +20,7 @@ import { ReadOnlyGate } from '@/components/pairsight/read-only'
 import { runnableRules } from '@/lib/pairsight/rule-fields'
 import { mappedIdentityRoles } from '@/server/pairsight/fields'
 import { parseColumnRoles } from '@/server/pairsight/json'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
 
 const ICON_SIZE = 15
 const COST_FRACTION_DIGITS = 4
@@ -111,6 +112,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 							})}
 							duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
 							splink={splink}
+							entityType={entityTypeOf(workspace.evaluation.entityType)}
 							isUsingDefaultRules={
 								'isUsingDefaultRules' in plan && plan.isUsingDefaultRules === true
 							}

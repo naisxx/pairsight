@@ -3,10 +3,13 @@
 import { useTranslations } from 'next-intl'
 import { InfoTip } from '@/components/ui/info-tip'
 import { Switch } from '@/components/ui/switch'
+import type { EntityType } from '@/lib/pairsight/entity-types'
 
 export type SuggestionsData = {
 	// done: suggesting; waiting: still looking; off, skipped, failed: not.
 	state: 'off' | 'waiting' | 'done' | 'skipped' | 'failed'
+	// Says what PairSight compares for this type.
+	entityType: EntityType
 	suggested: number
 	// What the suggested pairs share, most common first (reason codes).
 	reasons: Array<{ reason: string; count: number }>
@@ -44,9 +47,14 @@ export function SuggestionsCard({
 				<div className="min-w-0">
 					<h2 id="suggestions-title" className="flex items-center gap-1 text-base font-semibold">
 						{t('suggestionsTitle')}
-						<InfoTip label={tPlan('suggestionsInfoLabel')} content={tPlan('suggestionsInfo')} />
+						<InfoTip
+							label={tPlan('suggestionsInfoLabel')}
+							content={tPlan('suggestionsInfo', { type: data.entityType })}
+						/>
 					</h2>
-					<p className="type-ui text-text-muted mt-1">{t('suggestionsDescription')}</p>
+					<p className="type-ui text-text-muted mt-1">
+						{t('suggestionsDescription', { type: data.entityType })}
+					</p>
 				</div>
 				<label className="type-ui flex shrink-0 items-center gap-2">
 					<Switch checked={isOn} onCheckedChange={onChange} />

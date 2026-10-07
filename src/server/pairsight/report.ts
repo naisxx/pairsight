@@ -1,5 +1,6 @@
 import 'server-only'
 import { possiblePairs } from '@/lib/pairsight/metrics'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { parseBlockingRules, parseColumnRoles, parseRecordValues, parseVendorStats } from './json'
 import { buildReport, reportExample } from './report-summary'
@@ -99,8 +100,11 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 		recordCount: summary.recordCount,
 		// Possible pairs no rule or vendor brought up: the report's blind spot.
 		notCompared: Math.max(0, possiblePairs(summary.recordCount) - report.pairs.total),
-		// PairSight suggested some of the pairs: the report says what that covers.
-		usedSuggestions: summary.sources.some((source) => source.ruleId === SPLINK_RULE_ID),
+		// PairSight suggested some of the pairs: the report says what that
+		// covers, for the run's type of record. Null when it didn't.
+		suggestedType: summary.sources.some((source) => source.ruleId === SPLINK_RULE_ID)
+			? entityTypeOf(run.entityType)
+			: null,
 		report
 	}
 }

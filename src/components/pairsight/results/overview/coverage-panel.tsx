@@ -2,6 +2,7 @@ import { useTranslations } from 'next-intl'
 import { QuestionIcon } from '@/components/ui/icons'
 import { Panel } from '@/components/ui/panel'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import type { EntityType } from '@/lib/pairsight/entity-types'
 import type { ResultsOverview } from '@/server/pairsight/result-overview'
 import { Count } from '@/components/ui/count'
 
@@ -11,12 +12,13 @@ const PERCENT = 100
 // from, and the possible pairs nobody compared (the blind spot recall can't see).
 export function CoveragePanel({
 	coverage,
-	usedSuggestions,
+	suggestedType,
 	className
 }: {
 	coverage: ResultsOverview['coverage']
-	// PairSight suggested some of the run's pairs: say what that covers.
-	usedSuggestions: boolean
+	// PairSight suggested some of the run's pairs (for this type of record):
+	// say what that covers. Null when it didn't.
+	suggestedType: EntityType | null
 	className?: string
 }) {
 	const t = useTranslations('Overview')
@@ -109,8 +111,10 @@ export function CoveragePanel({
 				))}
 			</dl>
 			<p className="text-text-muted mt-3 text-xs leading-relaxed">{t('coverageFootnote')}</p>
-			{usedSuggestions && (
-				<p className="text-text-muted mt-2 text-xs leading-relaxed">{t('coverageSuggested')}</p>
+			{suggestedType != null && (
+				<p className="text-text-muted mt-2 text-xs leading-relaxed">
+					{t('coverageSuggested', { type: suggestedType })}
+				</p>
 			)}
 		</Panel>
 	)

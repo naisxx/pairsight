@@ -16,7 +16,19 @@ export const SUGGESTION_REASONS = [
 	'phone_same',
 	'postcode_same',
 	'postcode_area',
-	'city_same'
+	'city_same',
+	'trading_name_same',
+	'registration_same',
+	'tax_id_same',
+	'website_same',
+	'gtin_same',
+	'mpn_same',
+	'sku_same',
+	'brand_same',
+	'brand_close',
+	'manufacturer_same',
+	'size_same',
+	'color_same'
 ] as const
 
 export type SuggestionReason = (typeof SUGGESTION_REASONS)[number]

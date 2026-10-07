@@ -79,6 +79,7 @@ const LEGAL_SUFFIXES = new Set([
 	'nv',
 	'oy',
 	'plc',
+	'public',
 	'pty',
 	'sa',
 	'sarl',
