@@ -11,6 +11,7 @@
 
 import { existsSync, readFileSync } from 'node:fs'
 import { PrismaClient } from '@prisma/client'
+import { chunks } from '../src/server/pairsight/chunks.ts'
 import { ENTITY_TYPES, type EntityType } from '../src/lib/pairsight/entity-types.ts'
 import { SANDBOX_EVALUATION_IDS } from '../src/lib/pairsight/sandbox.ts'
 import {
@@ -20,7 +21,9 @@ import {
 	sandboxSnapshotSchema
 } from '../src/lib/pairsight/sandbox-snapshot.ts'
 
-const TRANSACTION_TIMEOUT_MS = 30_000
+const TRANSACTION_TIMEOUT_MS = 120_000
+// Suggested pairs written per statement.
+const SCORE_BATCH = 5_000
 
 const db = new PrismaClient()
 
@@ -66,7 +69,6 @@ async function seed(type: EntityType, file: string) {
 					identityDifferent: evaluation.identityDifferent,
 					countryCode: evaluation.countryCode,
 					jevFields: evaluation.jevFields,
-					blockingRules: evaluation.blockingRules ?? [],
 					threshold: evaluation.threshold
 				}
 			})
@@ -78,7 +80,11 @@ async function seed(type: EntityType, file: string) {
 					rowCount: dataset.records.length,
 					referenceColumn: dataset.referenceColumn,
 					columnRoles: dataset.columnRoles ?? {},
-					createdAt: new Date(snapshot.run.createdAt)
+					createdAt: new Date(snapshot.run.createdAt),
+					// Scored when it was recorded: the suggestions below.
+					scoreStatus: 'done',
+					scoredAt: new Date(snapshot.run.createdAt),
+					scoreSummary: dataset.suggestions.summary ?? {}
 				}
 			})
 			await tx.sourceRecord.createMany({
@@ -90,6 +96,21 @@ async function seed(type: EntityType, file: string) {
 					values: record.values
 				}))
 			})
+			for (const batch of chunks(dataset.suggestions.pairs, SCORE_BATCH)) {
+				await tx.pairScore.createMany({
+					data: batch.map((pair) => {
+						const { recordAId, recordBId } = canonical(pair.records)
+						return {
+							datasetId,
+							recordAId,
+							recordBId,
+							matchWeight: pair.matchWeight,
+							matchProbability: pair.matchProbability,
+							reasons: pair.reasons
+						}
+					})
+				})
+			}
 			for (const [index, vendor] of vendors.entries()) {
 				const id = vendorIds[index] ?? ''
 				await tx.vendorExport.create({
@@ -123,7 +144,6 @@ async function seed(type: EntityType, file: string) {
 					identityDifferent: run.identityDifferent,
 					countryCode: run.countryCode,
 					jevFields: run.jevFields,
-					blockingRules: run.blockingRules ?? [],
 					exportIds: vendorIds,
 					judgmentKey: run.judgmentKey,
 					jevModel: run.jevModel,
@@ -156,7 +176,7 @@ async function seed(type: EntityType, file: string) {
 					id: id(SANDBOX_ID_KIND.runPair, index + 1),
 					runId,
 					...canonical(pair.records),
-					ruleIds: pair.ruleIds,
+					isSuggested: pair.isSuggested,
 					matchedByExportIds: pair.matchedBy.map((vendor) => vendorIds[vendor] ?? ''),
 					assessmentId: id(SANDBOX_ID_KIND.assessment, index + 1)
 				}))

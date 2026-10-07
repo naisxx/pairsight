@@ -10,6 +10,7 @@
 import { writeFileSync } from 'node:fs'
 import { PrismaClient } from '@prisma/client'
 import { format, resolveConfig } from 'prettier'
+import { SPLINK_PLAN_FLOOR } from '../src/server/pairsight/splink/floor.ts'
 import { entityTypeOf } from '../src/lib/pairsight/entity-types.ts'
 import {
 	SANDBOX_SNAPSHOTS,
@@ -52,9 +53,15 @@ try {
 		return [first, second]
 	}
 	const vendorIndex = new Map(vendors.map((vendor, index) => [vendor.id, index]))
+	// The suggestions the plan read (splink/picks.ts), so the sandbox shows
+	// them without scoring again.
+	const suggested = await db.pairScore.findMany({
+		where: { datasetId: dataset.id, matchWeight: { gte: SPLINK_PLAN_FLOOR } },
+		orderBy: { matchWeight: 'desc' }
+	})
 
 	const snapshot: SandboxSnapshot = {
-		version: 1,
+		version: 2,
 		recordedAt: run.completedAt.toISOString(),
 		evaluation: {
 			name: evaluation.name,
@@ -63,7 +70,6 @@ try {
 			identityDifferent: evaluation.identityDifferent,
 			countryCode: evaluation.countryCode,
 			jevFields: evaluation.jevFields,
-			blockingRules: evaluation.blockingRules,
 			threshold: evaluation.threshold
 		},
 		dataset: {
@@ -76,7 +82,16 @@ try {
 				values: Object.fromEntries(
 					Object.entries(record.values ?? {}).map(([key, value]) => [key, String(value)])
 				)
-			}))
+			})),
+			suggestions: {
+				summary: dataset.scoreSummary ?? {},
+				pairs: suggested.map((pair) => ({
+					records: refs(pair.recordAId, pair.recordBId),
+					matchWeight: pair.matchWeight,
+					matchProbability: pair.matchProbability,
+					reasons: pair.reasons
+				}))
+			}
 		},
 		vendors: vendors.map((vendor) => ({
 			name: vendor.name,
@@ -92,7 +107,6 @@ try {
 			identityDifferent: run.identityDifferent,
 			countryCode: run.countryCode,
 			jevFields: run.jevFields,
-			blockingRules: run.blockingRules,
 			judgmentKey: run.judgmentKey,
 			jevModel: run.jevModel,
 			threshold: run.threshold,
@@ -106,7 +120,7 @@ try {
 				}
 				return {
 					records: refs(pair.recordAId, pair.recordBId),
-					ruleIds: pair.ruleIds,
+					isSuggested: pair.isSuggested,
 					matchedBy: pair.matchedByExportIds.flatMap((id) => vendorIndex.get(id) ?? []),
 					assessment: {
 						status: assessment.status,
