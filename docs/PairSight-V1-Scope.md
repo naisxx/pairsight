@@ -13,9 +13,11 @@ defaults, to adjust after a real Jev integration test.
 **Confirmed v1 loop**
 
 1. Upload source records and vendor results, and map their fields.
-2. Define identity and overlapping blocking rules.
-3. Combine blocked candidates with every vendor-matched pair, removing
-   duplicate pairs.
+2. Define identity. (v1 also set overlapping blocking rules here; they
+   were later replaced by pairs PairSight suggests, Scale Roadmap items 6,
+   10 and 11.)
+3. Combine the pairs PairSight suggests with every vendor-matched pair,
+   removing duplicate pairs.
 4. Evaluate each unique pair with Jev and apply our decision.
 5. Compare decisions per vendor as **both matched**, **PairSight only**,
    **vendor only** or **neither matched** (on screen: Both say same, Only
@@ -36,19 +38,19 @@ read-only, on clearly labeled prepared results.
 
 **Shipped beyond the loop (M2–M4):** AI-estimated precision, recall and F1 on
 evaluated pairs, group exports, up to three vendors, the match threshold set
-in Rules, the Runs centre, the sandbox, a polished landing page, CSV and
+in What Jev checks (the `rules` step), the Runs centre, the sandbox, a polished landing page, CSV and
 Excel import, and the findings (CSV or Excel) and summary report (PDF)
 exports.
 
 **Record types:** people, organisations and products. The type is read from
 the uploaded file (its column names and sample values) and confirmed on
-Records; it decides the fields to map, the blocking presets, the default
-definition of "the same" and the question Jev is asked
+Records; it decides the fields to map, the model that suggests pairs, the
+default definition of "the same" and the question Jev is asked
 (`src/lib/pairsight/entity-types.ts`). People keep exactly the question
 and judgment key they always had, so earlier judgments stay reusable.
 
-**Later:** human corrections, rule suggestions learned from a run's
-confirmed duplicates, sampling of near-miss pairs outside the rules, and an
+**Later:** human corrections, sampling of near-miss pairs PairSight didn't
+suggest, and an
 "uncertain" category (today borderline scores are a low-confidence flag
 and filter, not a category).
 
@@ -56,22 +58,24 @@ and filter, not a category).
 
 | Limit                          | Default                                                   |
 | ------------------------------ | --------------------------------------------------------- |
-| Source records                 | 500                                                       |
+| Source records                 | At least 200, at most 10,000                              |
 | Vendors                        | 1 required end to end; up to 3 if the core flow is stable |
 | Unique evaluated pairs per run | 100,000 (5,000 in v1; Scale Roadmap item 8)               |
-| Bucket size warning            | > 50 records (shows the bucket's pair count)              |
+| Pairs per vendor file          | 100,000                                                   |
 | Import format                  | CSV or Excel (.xlsx)                                      |
 
-Check the limits **before any Jev call**. If the combined pair set exceeds
-the cap, explain which rules or vendors caused it and ask the user to
-reduce the input or tighten blocking. **Never silently drop vendor pairs.**
-The bucket warning is about workload, not accuracy.
+Check the limits **before any Jev call**. A records file under 200 records
+is refused at upload, in plain words: PairSight needs at least 200 to learn
+what a duplicate looks like. If the combined pair set exceeds the cap, show
+where the pairs come from (suggested by PairSight, or vendor pairs it didn't
+suggest) and ask the user to change the records or the vendor files.
+**Never silently drop vendor pairs.**
 
 ## Inputs and validation
 
 - **Source records:** a CSV with a unique record reference. Missing or
   duplicate references block the user from continuing. Keep the original
-  values for inspection; normalized copies are only for blocking.
+  values for inspection; normalized copies are only for picking pairs.
 - **Vendor exports:**
   - The standard pair CSV comes first. A standard group CSV comes next if
     time permits.
@@ -89,45 +93,42 @@ The bucket warning is about workload, not accuracy.
   - Every vendor must have evaluated the same source dataset and identity
     objective.
 
-## Blocking
+## How pairs are picked
 
-- Rules use exact equality on normalized values, and multiple rules combine
-  with OR. A rule is one field or a composite key.
-- Starter rules and their normalization:
-  - **Email:** trim and lowercase. Keep dots and `+tags`.
-  - **Phone:** normalize consistently using an explicit country context.
-  - **Name:** trim, lowercase and collapse whitespace.
-  - **Name + postcode or location:** a composite rule.
-- **Fuzzy rules** are still exact equality, on a derived key
-  (`src/lib/pairsight/derived-keys.ts`, computed in
-  `src/server/pairsight/key-transforms.ts`): how a name sounds (Double
-  Metaphone, any word order), its first 4 letters, its words in any order,
-  an email's username (`+tag` dropped) or domain, a birth year, a postcode
-  district (the UK outward code, else the first 3 characters), a phone's
-  last 7 digits. Stored as `field~transform`, so earlier rules and runs are
-  unchanged. A birth year, district, email domain or first initial only
-  counts beside another field. Each type has fuzzy presets, off by default.
-  Sounds-like is English-leaning: it misses some spellings (Thompson /
-  Thomson keeps the silent P; Sean / Shaun code differently) and nicknames
-  (Liz / Elizabeth) entirely.
-- **Measured** (`pnpm blocking:check`, a fictional file of 104 people with
-  27 planted duplicates): the default people rules find 10 (37%) in 11
-  candidate pairs; adding the fuzzy presets finds 23 (85%) in 24. A unit
-  test holds those bounds.
-- A pair found only by fuzzy rules is a **hard case**: Results and the
-  summary report say how many Jev confirmed and which vendors caught them.
-- A record with a missing value for a rule isn't bucketed by that rule, so
-  blanks never form one giant shared bucket.
-- Blocking only proposes pairs worth checking. It never decides that two
-  records match.
+- **The plan is the pairs PairSight suggests ∪ every pair any vendor
+  matched.** There are no rules to set. (v1 shipped hand-written blocking
+  rules with presets and fuzzy keys; Scale Roadmap items 6, 10 and 11
+  replaced them with suggestions.)
+- **Suggestions** come from the Splink service (`services/splink/`,
+  `docs/rules/splink-service.md`), which learns from the uploaded records
+  what a duplicate looks like, with one model per record type. A pair is
+  suggested at match weight 0 or above, at most 100,000 per dataset.
+- Values are cleaned the same way Jev's comparison view cleans them
+  (`src/server/pairsight/normalize.ts`): emails trimmed and lowercased,
+  phones normalized with the evaluation's country, names trimmed,
+  lowercased and whitespace collapsed. The service also reads keys derived
+  from them, such as how a name sounds or a postcode district
+  (`src/server/pairsight/match-keys.ts`, `matchKey`).
+- **Each suggested pair says why**, in plain words from its reason codes:
+  for example "the same date of birth", "the same company number" or "the
+  same barcode".
+- **At least 200 records.** Fewer can't teach the model what a duplicate
+  looks like, so smaller files are refused at upload. An older dataset saved
+  before that check can't be planned (`too_few_records`).
+- **Start waits for the suggestions** (`still_suggesting`). If scoring fails
+  or the service isn't set up, the Plan says so and offers Try again
+  (`suggestions_failed`). There is no fallback.
+- Suggesting only proposes pairs worth checking. It never decides that two
+  records match: Jev judges every pair.
 
 ## Pairs and categories
 
 - **A pair** is two different records, unordered, stored with its
   references in canonical order. Self-pairs are never created.
-- **The comparison set** is the blocked pairs ∪ every vendor-matched pair,
-  with each pair appearing once. Vendor pairs outside the blocking rules are
-  always included.
+- **The comparison set** is the suggested pairs ∪ every vendor-matched
+  pair, with each pair appearing once. Vendor pairs PairSight didn't suggest
+  are always included. Each run pair records whether it was suggested
+  (`RunPair.isSuggested`).
 - **Vendor decision** for each pair in the set: _matched_ if the confirmed
   complete export links the two records, otherwise _not matched_.
 - **Each pair's evaluation status** is `pending`, `succeeded` or `failed`.
@@ -142,20 +143,21 @@ The bucket warning is about workload, not accuracy.
     vendor mistake or a PairSight mistake.
   - Pending and failed pairs get **no category** and are never treated as
     nonmatches. They're shown and counted as incomplete.
-  - Pairs outside the set are unassessed. Statements about missed
-    duplicates cover the evaluated set only.
+  - Pairs outside the set (not suggested, and no vendor matched them) are
+    unassessed. Statements about missed duplicates cover the evaluated set
+    only.
 
 ## Runs and reuse
 
-- **Each run freezes** the source records, identity definition, blocking
-  configuration, vendor inputs and comparison set. Completed runs stay
+- **Each run freezes** the source records, identity definition, vendor
+  inputs and comparison set. Completed runs stay
   reproducible.
 - **Changing the source data, the identity definition, or Jev's
   model/request configuration** means a new run with new assessments.
-- **Changing blocking rules or adding a vendor** also means a new run, but
+- **Adding or changing a vendor file** also means a new run, but
   it reuses successful assessments whose records and judgment
   configuration are identical. Only newly introduced pairs go to Jev.
-- **Changing only the threshold** (in Rules, before a run) needs no new
+- **Changing only the threshold** (in What Jev checks, before a run) needs no new
   judgments: the next run reuses every saved score, is complete at once,
   and decides at the new threshold. Each run keeps the threshold it started
   with, so a result never shifts after it's been seen.

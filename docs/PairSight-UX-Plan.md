@@ -14,7 +14,7 @@ build order follows [PairSight-Delivery-Plan.md](PairSight-Delivery-Plan.md).
 ## What shipped (UI revamp, October 2026)
 
 The whole app was rebuilt to a finished design. Behaviour stayed ours
-(blocking, mapping, validation, runs, gating); the look, layout, copy and
+(picking pairs, mapping, validation, runs, gating); the look, layout, copy and
 motion follow the design. Human review is **not built**: anything of it in
 the design is hidden until it is. The demo
 became the Sandbox (below).
@@ -57,8 +57,11 @@ it redirects to where the evaluation is up to.
   read); then **what the records are**: people, organisations or products,
   read from the column names and sample values ("These look like
   organisations") and confirmed with three radio cards, or asked when the
-  file is ambiguous. The type decides the fields to map, the rules Rules
-  offers and what Jev is asked; switching it suggests that type's fields.
+  file is ambiguous. The type decides the fields to map, how PairSight
+  suggests pairs and what Jev is asked; switching it suggests that type's
+  fields. A file under 200 records is refused with a plain message ("The
+  file has N records. PairSight needs at least 200 to learn what a
+  duplicate looks like…"); the upper limit is 10,000.
   Then each of the type's fields mapped to one of your
   columns (suggested from a large dictionary of CRM, ERP and commerce column
   names, backed by the values: emails, websites, barcodes; with sample values), a Validation panel checking
@@ -69,29 +72,24 @@ it redirects to where the evaluation is up to.
   PairSight works out pair or group format and the columns from your records'
   references ("Read as …", with Change to override). Group exports expand to
   every pair in each group. Unknown references block, with row numbers.
-- **Rules** — identity definitions (both required), country by name, at
-  least two fields for Jev; preset rules with an example key and
-  Buckets/Pairs/Largest; composite rules to add, edit and delete; a live
-  summary. The **match threshold** is set here too: Lenient 0.35 / Balanced
-  0.50 / Strict 0.70, or a custom value from 0.01 to 0.99. It's decided before
-  any results are seen, and the next run keeps it. Changes save themselves;
-  invalid ones are held back with the reason. Rules show how they combine:
-  OR tags on dashed dividers between rules, AND tags between a rule's
-  fields, and a hover explainer. **Fuzzy rules** match on a derived key
-  (sounds like, first 4 letters, any word order, email username, birth
-  year, postcode district, last 7 digits): each type has fuzzy presets,
-  off by default, and the composite editor has a "Match on" choice per
-  field. They're tagged **Close match**, and a field too broad on its own
-  (a birth year, a district, an email domain) needs another field beside
-  it. On Results, "Why pairs were checked" adds **Hard-to-spot
-  duplicates**: duplicates only close-match rules picked, confirmed by
-  Jev, and how many each vendor caught, with a link to those pairs (a
-  "Picked only by close-match rules" filter). The PDF summary report
-  carries the same line.
+- **What Jev checks** (the `rules` step; route and stage key unchanged) —
+  what counts as the same (both definitions required), the values Jev sees
+  (at least two), the country by name, and the **match cut-off**: Lenient
+  0.35 / Balanced 0.50 / Strict 0.70, or a value of your own from 0.01 to
+  0.99. It's decided before any results are seen, and the next run keeps
+  it. Changes save themselves; invalid ones are held back with the reason.
+  Beside them, **The pairs Jev will check**: how many pairs PairSight
+  suggests, what they share ("the same date of birth", "the same company
+  number", "the same barcode"), and how many of each vendor's pairs they
+  already include. There are no rules to set: the hand-written comparison
+  rules, their presets, close-match keys and the Advanced section shipped
+  in v1 and were replaced by suggestions (Scale Roadmap items 6, 10 and
+  11), along with the suggestions switch and the hard-cases readout on
+  Results and in the PDF.
 - **Copy** — every screen is written for an analyst new to record
   matching, per `docs/rules/copy.md`: each step says what it needs, why,
-  and what it changes; one word per thing (Jev, pairs to check, comparison
-  rules, match cut-off, vendor file, download); precision, recall and F1
+  and what it changes; one word per thing (Jev, pairs to check, Suggested
+  by PairSight, match cut-off, vendor file, download); precision, recall and F1
   appear as Correct merges, Duplicates found and Overall score, with the
   technical names in hover tips and the PDF. The result groups say who
   says what (Both say same, Only Jev says same, Only vendor says same,
@@ -99,11 +97,22 @@ it redirects to where the evaluation is up to.
   is called the demo on screen. Step pages have their own tab titles.
   `src/i18n/copy.test.mts` fails on the retired jargon.
 - **Plan** — the "From records to pairs" ledger (with the cost estimate), the
-  match threshold the run will keep (with Change, back to Rules), What Jev
-  sees, the vendor-pair promise, an over-limit alert with a Turn off
-  per rule, and a notice for unfinished vendors. Start evaluation runs it.
+  match threshold the run will keep (with Change, back to What Jev checks),
+  What Jev sees, the vendor-pair promise (vendor pairs PairSight didn't
+  suggest are always checked), and a notice for unfinished vendors. Start
+  run runs it. What can hold it back:
+  - **Still suggesting:** Start waits while PairSight works out the pairs.
+  - **Suggestions failed** (scoring failed, or the service isn't set up):
+    the Plan says so with a **Try again** button that queues the scoring
+    again. There's no fallback.
+  - **Too few records:** an old dataset saved before small files were
+    refused.
+  - **Over the limit (100K pairs):** only suggested and vendor pairs can
+    get there (each vendor file is capped at 100K itself), so the alert
+    shows where the pairs come from (suggested, vendor-only) and links to
+    change the records or the vendor files.
 - **Runs centre** (replaces the Run step; the pipeline is now Records →
-  Vendors → Rules → Plan → Results). A dialog opened from **Runs** in the top
+  Vendors → What Jev checks → Plan → Results). A dialog opened from **Runs** in the top
   bar on every app page, with a spinner and a count while something runs.
   - **Contents:** every run across your evaluations, in two tabs. Active is
     the default while something runs, otherwise Completed. Completed holds
@@ -112,8 +121,9 @@ it redirects to where the evaluation is up to.
     paused ones (a quiet card: "You paused this run", with Resume).
   - **Cards:** the front shows run and evaluation, status, live progress or
     pairs and threshold, and the one action that matters. Details expand to
-    everything the run was run with: threshold and preset, judgments reused
-    and new, why pairs failed, Jev model, vendors and files, rules, fields,
+    everything the run was run with: the cut-off and its name (Lenient,
+    Balanced, Strict), judgments reused and new, why pairs failed, Jev
+    model, vendors and files, fields,
     country, identity text, times and the run ID.
   - **Starting a run:** Start opens the centre on Active. On completion the
     run moves to Completed and you're taken to its results. Closed early,
@@ -129,11 +139,12 @@ it redirects to where the evaluation is up to.
   disagreements, score distribution, sources, workload) and Detailed
   analysis (live filters, sortable table, retry per row). The run's threshold
   is fixed: its popover previews precision and recall at another value (a
-  "what if"), with no Apply. A different threshold means changing it in Rules
-  and running again. Every saved score is reused, so that run is complete at
+  "what if"), with no Apply. A different threshold means changing it in
+  What Jev checks and running again. Every saved score is reused, so that run is complete at
   once and costs nothing.
 - **Pair** — field comparison with differences highlighted, how the pair got
-  here, Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
+  here ("Suggested by PairSight: the two records share …", or that a vendor
+  matched it and PairSight didn't suggest it), Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
 - **Not found / errors** — a centred page; signed in, the way back is
   Evaluations.
 - **Export** menu (Results header, beside the run picker) — the run's
@@ -166,7 +177,8 @@ it redirects to where the evaluation is up to.
   3. **Examples:** each vendor's clearest wrong merges and missed
      duplicates, with the records' fields side by side.
   4. **Method and scope:** the files, the fields sent to Jev, the identity
-     definition, rules, coverage (including the pairs never compared), the
+     definition, coverage (pairs PairSight didn't suggest and no vendor
+     matched weren't checked), the
      Jev model and run times, and "Human review: none".
 
   Every page carries the caveat that these are AI-estimated agreement with
@@ -176,11 +188,13 @@ it redirects to where the evaluation is up to.
 
 - **Sandbox (`/sandbox`, M4)** — the whole app on three prepared, fictional
   evaluations side by side: customers (people), suppliers (organisations)
-  and a product catalogue, each with 24 records, a pair-format and a
-  group-format vendor and one run judged by the real Jev, with no login.
+  and a product catalogue, each with a pair-format and a group-format
+  vendor and one run judged by the real Jev, with no login. (They're being
+  re-recorded at about 2,000 fictional records per type, since suggestions
+  need at least 200.)
   `/sandbox` is their read-only dashboard; each opens at `/sandbox/<id>/…`. Every screen is the real one,
   read-only: anything that would save, upload or call Jev is shown but inert,
-  with a "Sign up to …" tip; rules are disabled and never saved. What only
+  with a "Sign up to …" tip; What Jev checks is disabled and never saved. What only
   reads still works: filters, tabs, sorting, the threshold preview, pairs
   and J/K. A banner under the top bar says what it is, and when the
   judgments were recorded, beside a Sign up button. Signed out, the sidebar
@@ -195,7 +209,7 @@ captured in both themes at 1440 / 1024 / 390 and reviewed. Fixes:
 - Page layouts follow the page's width rather than the window's, so a 1024 px
   window with the sidebar open gets the one-column layout instead of a
   squeezed one.
-- The plan's ledger adds up top to bottom; rules count only when they can run.
+- The plan's ledger adds up top to bottom.
 - A run that finished with failures says so, and Retry leads.
 - Mid-run, the shell shows the run.
 - Toasts sit above the action bar.
@@ -227,8 +241,8 @@ ring.
 | 13  | Unknown vendor references        | Block                                                                    |
 | 14  | Country                          | Chosen by name, stored as the two-letter code; no "Mixed"                |
 | 15  | Fields for Jev                   | At least two; "Does not count" is required (it's Jev's `criteria.false`) |
-| 16  | Derived rule fields              | Not now                                                                  |
-| 17  | Rules saving                     | Autosave                                                                 |
+| 16  | Derived rule fields              | Built later, then removed with the rules (Scale Roadmap item 11)         |
+| 17  | What Jev checks saving           | Autosave                                                                 |
 | 18  | Greeting name                    | A full name asked at onboarding                                          |
 | 19  | Sample files                     | Not now; the Sandbox shows a full evaluation instead                     |
 | 20  | Toasts                           | Ours, restyled                                                           |
@@ -271,18 +285,18 @@ new tokens when M1 implements them.
 
 ## 2. User journey (agreed behavior; "Next" means after Friday)
 
-| Stage          | User goal                                                             | Primary action                                  | Backend status shown          | Notes                                                               |
-| -------------- | --------------------------------------------------------------------- | ----------------------------------------------- | ----------------------------- | ------------------------------------------------------------------- |
-| Start          | Understand the product, try it                                        | **Try demo** / **Start evaluation**             | —                             | The demo needs no login. Starting requires login.                   |
-| New evaluation | Name it                                                               | **Create evaluation**                           | —                             | Lands on the Records step                                           |
-| Records        | Upload the source file, pick the reference column, map roles          | **Continue to vendors**                         | Upload → parsed → validated   | Missing or duplicate references block continuing                    |
-| Vendors        | Upload a pair or group file, check its columns, confirm it's complete | **Continue to rules**                           | Validated or errors           | Unknown references block. Completeness confirmation is required.    |
-| Rules          | Define "same individual" and the blocking rules                       | **Review plan**                                 | Live pair counts per rule     | Warning above 50 records per bucket                                 |
-| Plan           | Check what will be evaluated                                          | **Start evaluation**                            | Limit check                   | Over the cap: blocked, with the cause                               |
-| Runs centre    | Watch progress, handle failures (a dialog, not a step)                | **View results** (when done) / **Retry failed** | Exact per-pair counts         | The run pauses if the app is closed                                 |
-| Results        | See agreement per vendor, adjust threshold, filter                    | Open a pair                                     | Run status, threshold, model  | Incomplete pairs are counted separately                             |
-| Pair detail    | Understand one decision                                               | **Next pair** (J/K)                             | That pair's assessment status | Human review is Next                                                |
-| Export         | Take findings away                                                    | **Export** (CSV, Excel, PDF)                    | —                             | Built: the findings (every pair and vendor) and the summary report. |
+| Stage           | User goal                                                             | Primary action                                  | Backend status shown                          | Notes                                                                                                       |
+| --------------- | --------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Start           | Understand the product, try it                                        | **Try demo** / **Start evaluation**             | —                                             | The demo needs no login. Starting requires login.                                                           |
+| New evaluation  | Name it                                                               | **Create evaluation**                           | —                                             | Lands on the Records step                                                                                   |
+| Records         | Upload the source file, pick the reference column, map roles          | **Continue to vendors**                         | Upload → parsed → validated                   | Missing or duplicate references block continuing                                                            |
+| Vendors         | Upload a pair or group file, check its columns, confirm it's complete | **Next: what Jev checks**                       | Validated or errors                           | Unknown references block. Completeness confirmation is required.                                            |
+| What Jev checks | Define "same individual", the values Jev sees and the match cut-off   | **Review plan**                                 | Pairs PairSight suggests, and what they share | Waits while PairSight works out the pairs                                                                   |
+| Plan            | Check what will be evaluated                                          | **Start run**                                   | Suggestions ready, limit check                | Still suggesting, suggestions failed (Try again), too few records, or over the cap: blocked, with the cause |
+| Runs centre     | Watch progress, handle failures (a dialog, not a step)                | **View results** (when done) / **Retry failed** | Exact per-pair counts                         | The run pauses if the app is closed                                                                         |
+| Results         | See agreement per vendor, adjust threshold, filter                    | Open a pair                                     | Run status, threshold, model                  | Incomplete pairs are counted separately                                                                     |
+| Pair detail     | Understand one decision                                               | **Next pair** (J/K)                             | That pair's assessment status                 | Human review is Next                                                                                        |
+| Export          | Take findings away                                                    | **Export** (CSV, Excel, PDF)                    | —                                             | Built: the findings (every pair and vendor) and the summary report.                                         |
 
 ## 3. Navigation and hierarchy
 
@@ -301,7 +315,7 @@ new tokens when M1 implements them.
   - **Top bar** (48 px as shipped): the sidebar toggle and the breadcrumb,
     Evaluations / {name} / {stage}.
 - **Evaluation pipeline** (replaces the step rail): Records → Vendors (Input)
-  → Rules → Plan (Configure) → Run (Execute) → Results (Review) on one
+  → What Jev checks → Plan (Configure) → Run (Execute) → Results (Review) on one
   connected track.
   - **Stage states:** done (filled coral + check), active (coral ring — the
     next thing to do, or the run in progress, pulsing), next (hollow), locked
@@ -344,9 +358,9 @@ new tokens when M1 implements them.
     than **disagreement tiles** (PairSight only, Vendor only), to steer
     attention without implying correctness.
 - **Coverage strip:** one line, with a "How this works" popover. For example:
-  "1,204 pairs evaluated — 1,168 from your rules, 36 added only because a vendor
-  matched them. Pairs outside your rules that no vendor matched weren't
-  evaluated, so missed duplicates among them can't be seen."
+  "1,204 pairs checked — 1,168 suggested by PairSight, 36 added only because a
+  vendor matched them. Pairs PairSight didn't suggest and no vendor matched
+  weren't checked, so missed duplicates among them can't be seen."
 - **Threshold control:** a button, "Decision threshold 0.60", opens a popover
   with:
   - a slider and a numeric input
@@ -354,11 +368,12 @@ new tokens when M1 implements them.
     match"
   - the **score distribution chart** with the threshold line
   - a preview of how the counts change
-  - no Apply: the run keeps its threshold. **Change in Rules** leads to where
+  - no Apply: the run keeps its threshold. **Change in What Jev checks** leads to where
     the next run's threshold is set (see "What shipped").
 - **Filter bar** (state in the URL):
   - category (tied to the tiles)
-  - source: all / from rules / added by vendor
+  - why it was checked: all / Suggested by PairSight / Added by a vendor
+    (`source=suggested|vendor` in the URL)
   - low confidence
   - status: evaluated / incomplete
   - a search by record reference
@@ -370,7 +385,7 @@ new tokens when M1 implements them.
   - Vendor decision (matched / not matched)
   - Jev score (a mini bar with a threshold tick, plus the number)
   - PairSight decision
-  - Source ("Rules: Email" / "Added by vendor")
+  - Source ("Suggested by PairSight" / "Added because a vendor matched it")
   - Flags (low confidence)
     Incomplete rows show a status chip (Pending / Failed · reason) where the
     score and decision would be, never "no match".
@@ -394,8 +409,10 @@ new tokens when M1 implements them.
   - The model id, when it was evaluated, and "AI judgment: may be wrong".
   - Pending and failed states replace the score, with the reason and a
     **Retry** (live runs only).
-- **How this pair got here:** "Found by rules: Phone; Last name + postcode" or
-  "Added because Vendor A matched it (outside your rules)".
+- **How this pair got here:** "Suggested by PairSight: the two records share
+  the same date of birth and the same email" or "Vendor A matched it.
+  PairSight didn’t suggest it, so it was checked only because a vendor
+  matched it."
 - **Vendor decisions:** one row per vendor when there are several.
 - **Navigation:** Previous / Next within the current filtered list (J / K,
   "12 of 87"); Esc returns to results.
@@ -418,7 +435,8 @@ bar.
       numbers (first 20 shown, plus "and 14 more").
     - **Warnings** don't block.
   - Replacing the file is a secondary action that asks for confirmation.
-  - **Advanced** (collapsed): the fields sent to Jev (default: all mapped).
+  - Under 200 records: refused, saying PairSight needs at least 200 to learn
+    what a duplicate looks like.
 - **Vendors:**
   - An "Add vendor" card: name, file, record A and B column selects
     (suggested), and a completeness box explaining the omitted-pair assumption
@@ -427,24 +445,26 @@ bar.
     unknown-reference table.
   - Added vendors are listed with their pair counts. "Add another vendor" only
     when multiple vendors are enabled.
-- **Rules:** two sections.
-  - **Identity:** the two prefilled text areas and a country select.
-  - **Blocking:** preset rule cards (Email, Phone, Name, Name + postcode) with
-    toggle switches. Each card shows its normalization in one line ("lowercase,
-    trimmed; dots and +tags kept") and live stats: buckets, pairs, largest
-    bucket, and a warning above 50 records per bucket.
-  - **Advanced** (collapsed): a custom composite rule of 1–3 fields.
-  - A right-hand summary: running unique pairs, vendor pairs outside the rules,
-    and the cap.
+- **What Jev checks** (route and stage key `rules`):
+  - **Identity:** the two prefilled text areas, the values Jev sees (at
+    least two; default: all mapped) and a country select, then the match
+    cut-off.
+  - A right-hand card, **The pairs Jev will check**: how many pairs
+    PairSight suggests, what they share, and how many of each vendor's pairs
+    they already include. While PairSight is still working them out, it
+    says so.
 - **Plan:**
-  - A breakdown list: pairs from rules, pairs added by vendors, overlap removed,
-    unique total against the cap (100,000 since Scale Roadmap item 8), and assessments reused from earlier
-    runs.
+  - A breakdown list: pairs suggested by PairSight, pairs added by vendors,
+    overlap removed, unique total against the cap (100,000 since Scale
+    Roadmap item 8), and assessments reused from earlier runs.
   - "What Jev receives": the field list, plus "No vendor names, scores or
     decisions are sent".
   - The estimated calls and cost, labeled as an estimate at a stand-in rate.
-  - Over the cap: an error panel naming the rule or vendor responsible, with
-    fixes (turn off a rule, reduce the input).
+  - Still suggesting: Start waits. Suggestions failed: a panel saying so,
+    with **Try again**.
+  - Over the cap: an error panel showing where the pairs come from
+    (suggested, vendor-only), with links to change the records or the
+    vendor files.
 - **Run** (as first planned; superseded by the Runs centre, "What shipped"):
   - A progress bar with exact counts (succeeded / failed / pending of total),
     elapsed time, and a live region announcing milestones.
@@ -470,19 +490,19 @@ bar.
 
 ## 5. State inventory
 
-| State                                        | Pattern                                                                                                                |
-| -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Empty (no evaluations, no vendors, no rules) | One sentence explaining why it matters, plus the one action that fills it                                              |
-| Loading (page data)                          | Skeletons shaped like the final layout (table rows, tiles). No spinners over blank pages.                              |
-| Working (upload, parsing, counting)          | An inline progress line near the control; the primary action disabled with the reason                                  |
-| Run progress                                 | A progress bar with exact backend counts, polled; `aria-live="polite"` announcements                                   |
-| Success                                      | An inline confirmation and the next action highlighted; a toast only for background completions                        |
-| Validation error                             | A panel above the content: count, what to fix, and affected rows; fields outlined, and icon + text (never color alone) |
-| Blocking config error                        | A persistent banner with the fix; the run stops                                                                        |
-| Pair failed                                  | A status chip with the reason and **Retry**; excluded from categories and counted as Incomplete                        |
-| No results (filters)                         | "No pairs match these filters" plus **Clear filters**                                                                  |
-| Partial run                                  | Results show a banner, "86% evaluated — 164 pairs incomplete", with a link to the Runs centre                          |
-| Demo                                         | A persistent banner; editing actions hidden                                                                            |
+| State                               | Pattern                                                                                                                |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Empty (no evaluations, no vendors)  | One sentence explaining why it matters, plus the one action that fills it                                              |
+| Loading (page data)                 | Skeletons shaped like the final layout (table rows, tiles). No spinners over blank pages.                              |
+| Working (upload, parsing, counting) | An inline progress line near the control; the primary action disabled with the reason                                  |
+| Run progress                        | A progress bar with exact backend counts, polled; `aria-live="polite"` announcements                                   |
+| Success                             | An inline confirmation and the next action highlighted; a toast only for background completions                        |
+| Validation error                    | A panel above the content: count, what to fix, and affected rows; fields outlined, and icon + text (never color alone) |
+| Blocking config error               | A persistent banner with the fix; the run stops                                                                        |
+| Pair failed                         | A status chip with the reason and **Retry**; excluded from categories and counted as Incomplete                        |
+| No results (filters)                | "No pairs match these filters" plus **Clear filters**                                                                  |
+| Partial run                         | Results show a banner, "86% evaluated — 164 pairs incomplete", with a link to the Runs centre                          |
+| Demo                                | A persistent banner; editing actions hidden                                                                            |
 
 ## 6. Theme tokens (contrast checked)
 
@@ -509,7 +529,7 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
 | `--surface-elevated`          | `#FFFFFF`                            | `#18202B`             | Menus, dialogs, popovers, toasts                                                                           |
 | `--surface-muted`             | `#EEF1F4`                            | `#0E131A`             | Table headers, sunken areas, disabled buttons                                                              |
 | `--surface-hover`             | `#F1F4F7`                            | `#19212C`             | Hover for rows, menu items and interactive surfaces                                                        |
-| `--selected`                  | `#E6EDF6`                            | `#1E2B3F`             | Selected row, current step, enabled rule, drop target — always with a coral edge or outline                |
+| `--selected`                  | `#E6EDF6`                            | `#1E2B3F`             | Selected row, current step, chosen option, drop target — always with a coral edge or outline               |
 | `--ghost`                     | `#EFF2F6`                            | `#151C26`             | Ghost button at rest, so it reads as a button before hover                                                 |
 | `--diff` / `--diff-ink`       | `#E4EDFB` / `#1D5FB8`                | `#1D2C47` / `#8FB6FF` | Changed values in pair detail (a difference, not a warning). Text 15.30 / 11.87; marker 5.27 / 6.85        |
 | `--border`                    | `#DDE2E9`                            | `#263140`             | Decorative hairlines only — too faint for a control edge                                                   |
@@ -572,7 +592,7 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
 
 - **Type:**
   - Poppins (400/500/600) for the interface and JetBrains Mono for data —
-    record references, raw values, scores, counts, rule keys, keyboard hints.
+    record references, raw values, scores, counts, keyboard hints.
     Poppins has proportional digits and no tabular figures, so numbers that
     align or change live use the mono. Adopted 2026-10-01, replacing Inter.
   - Named roles, not raw sizes: display 36 / title 24 / heading 16 /
@@ -681,7 +701,7 @@ above and listed in `docs/rules/components.md`._
   `docs/PairSight-V1-Scope.md`, "Verified live".
 - **Default threshold (decided):** 0.50 (`DEFAULT_THRESHOLD`). In the live
   check, likely-different pairs scored ≤ 0.11 and likely-same pairs ≥ 0.76,
-  so 0.50 sits in a wide gap. It's set in Rules (with Lenient 0.35 and Strict
+  so 0.50 sits in a wide gap. It's set in What Jev checks (with Lenient 0.35 and Strict
   0.70 beside it), and each run keeps the threshold it started with.
 - **Wordmark (decided):** a text wordmark, "PairSight" in 600 weight with a
   small `--action` coral pair glyph. It's swapped when a real logo arrives.

@@ -41,7 +41,7 @@ measured contrast for each is in the UX plan §6.
 | `--bg`                                                                            | Page background                                                                                                    |
 | `--surface` / `--surface-elevated` / `--surface-muted`                            | Cards and tables / menus and dialogs / table headers and sunken areas                                              |
 | `--surface-hover`                                                                 | Hover state for rows, menu items and interactive surfaces                                                          |
-| `--selected`                                                                      | Selected row, current step, enabled rule — always with a coral edge or outline, never a brand tint                 |
+| `--selected`                                                                      | Selected row, current step, chosen option — always with a coral edge or outline, never a brand tint                |
 | `--ghost`                                                                         | Ghost button at rest                                                                                               |
 | `--diff` / `--diff-ink`                                                           | A changed value in pair detail and its ≠ marker (a difference, not a warning)                                      |
 | `--border`                                                                        | Decorative hairlines only — too faint for a control edge                                                           |
@@ -120,12 +120,9 @@ everywhere (globals.css), so numbers line up without a special role.
   in the column mapping, file names.
 - **Numbers that align or move:** Poppins' digits are proportional (a `1` is
   half the width of a `0`) and it has no tabular figures, so `tabular-nums`
-  does nothing. Scores, plan counts, rule stats and live run counters use the
+  does nothing. Scores, plan counts and live run counters use the
   mono roles; otherwise columns misalign and counters jitter as they tick.
   Numbers inside a sentence ("Run 2 · 8 pairs") stay in Poppins.
-- **Rule keys:** each blocking rule shows the field ids it matches on
-  (`name` + `postcode`) under its friendly title — the title is the label, the
-  key is the definition.
 - **Keyboard hints:** `J` `K` `Esc` as key caps, with the `Kbd` component.
 
 Never use the mono for headings, buttons, category names or prose.

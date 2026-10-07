@@ -139,18 +139,20 @@ of one monolithic instructions file.
   write time, never at query time. A project with no AI calls deletes the
   whole thing rather than leaving it dormant.
 - **[Splink service](docs/rules/splink-service.md)** — `services/splink/` is
-  a pinned Python + DuckDB program that picks extra pairs worth checking;
-  it never judges a pair (Jev does). Records in and scored pairs out, as
-  files; Python never touches the database, Jev, runs or vendors. Only
+  a pinned Python + DuckDB program that picks the pairs worth checking;
+  it never judges a pair (Jev does). Every plan is its suggestions plus
+  every vendor pair; when it can't score a dataset the Plan says so and
+  offers Try again. Records in and scored pairs out, as files; Python never
+  touches the database, Jev, runs or vendors. Only
   `src/server/pairsight/splink/service.ts` starts it (`execFile`, no
-  shell; ESLint bans `node:child_process` elsewhere), and it never blocks a
-  plan. A model or version change is benchmarked first
+  shell; ESLint bans `node:child_process` elsewhere). A model or version
+  change is benchmarked first
   (`scripts/splink-spike/`). `pnpm python:check` is its gate in CI and
   local-review.
 - **[Copy](docs/rules/copy.md)** — every word on screen is plain English
   for an analyst new to record matching: say what we need, why, and what
-  it changes; one word per thing (Jev, pairs to check, comparison rules,
-  match cut-off, vendor file, download), technical names only in hover
+  it changes; one word per thing (Jev, pairs to check, suggested by
+  PairSight, match cut-off, vendor file, download), technical names only in hover
   tips. `src/i18n/copy.test.mts` fails on the retired jargon.
 - **[Components](docs/rules/components.md)** — `src/components/ui/` is a
   small cva/Radix-based foundation (Button, Input, Card, toast system, ...),
