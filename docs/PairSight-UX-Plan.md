@@ -32,11 +32,21 @@ it redirects to where the evaluation is up to.
 **Screens.**
 
 - **Landing (`/`, signed out only)**:
-  - A hero with the product preview.
-  - How it works: three step cards whose illustrations drift in parallax.
-  - A closer look: a pair and a run's card, layered in parallax.
-  - Honest about what it measures.
-  - A deep coral call-to-action panel, and the footer.
+  - A floating nav: a link to each section (the current one marked), the
+    theme menu, Sign in and Try the demo, with a scroll progress bar.
+  - A hero with an interactive results panel on the demo's real recorded
+    run (`prisma/demo/sandbox-snapshot.json`): switch vendor, move the
+    match cut-off and the scores, the four counts and each pair's label
+    recompute with the same functions as Results; open a pair to see what
+    differs, Jev's score and what the vendor said.
+  - How it works: pinned while you scroll on wide screens, following one
+    real pair (R01 and R03, a duplicate both vendors missed) from the files,
+    through the rules, to the verdict. A plain list on narrow screens or
+    with reduced motion.
+  - A closer look (three cards), Who it's for, Honest about what it
+    measures (with "Your data"), and a short FAQ.
+  - A closing panel in the dark theme with a soft glow, and a four-column
+    footer.
 
   Signed in, `/`, `/sign-in` and `/sign-up` go to `/evaluations`.
 

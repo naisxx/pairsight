@@ -197,23 +197,26 @@ so server components animate without becoming client ones:
   each section of `.page-frame` rises a beat after the one before.
 - Number tiles count up from zero on first sight (`AnimatedNumber`), and
   score bars fill from the left.
-- The landing page is the one place for show: its headline arrives word by
-  word into a brand gradient (`text-gradient`, `--headline-*`, darker in
-  light mode to keep 3:1), the product preview tilts up into place over
-  drifting brand glows, and each section below plays its own sequence once
-  it scrolls into view (`InView` + `.on-view*`): "How it works" pops each
-  number, brings in its text and draws the line on to the next.
+- The landing page is the one place for show, and the one place motion is
+  driven by script: Motion (`motion/react`, through `LazyMotion`) and Lenis
+  for smooth wheel scrolling, both set up in
+  `src/components/pairsight/landing/landing-motion.tsx`. The hero arrives
+  once, in sequence (a fade and a 14 px rise, 0.7 s); every block below
+  fades and rises into place the first time it scrolls into view (0.6 s,
+  once). Section headings fill in word by word as they scroll up the page,
+  the nav's thin bar tracks how far down you are, and "How it works" pins
+  while its three steps play. No blur on text, ever. The headline accent is
+  the static brand gradient (`text-gradient`, `--headline-*`, darker in
+  light mode to keep 3:1).
 - Results charts draw over a second once their card has arrived, and its
   bars wipe in from the left (`bar-wipe`).
 - Dialogs ease in and fade back out, a little quicker. Anything that
   expands (a run card's details) eases its height open (`grid-rows-[0fr]` →
   `[1fr]`) instead of popping, and stays inert while closed.
-- Parallax (`.parallax` with a `.depth-1/2/3` or `.depth-back`): a layer
-  drifts by its depth while its block crosses the screen. It's scroll-driven
-  CSS, so browsers without it just show the layers still. The landing's "How
-  it works" and "A closer look" use it.
 - Every animation sits inside `prefers-reduced-motion: no-preference`.
-  With reduced motion, everything is simply there.
+  With reduced motion, everything is simply there: on the landing, Motion
+  skips movement, Lenis tracks the wheel one to one, headings are filled
+  and "How it works" is a plain list.
 
 ## 8. UI style: Classic or Glass
 
