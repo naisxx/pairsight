@@ -478,8 +478,8 @@ are noted; the later items assume the earlier ones exist.
     name, date of birth, email, phone or postcode), and pairs sharing none
     of these weren't checked.
 - **Left for later:** Jev's answers sharpening the next run; removing the
-  TypeScript rules once nothing needs them (organisations and products still
-  do).
+  TypeScript rules once nothing needs them (organisations and products got
+  suggestions in item 10; the rules go next).
 
 - **What:**
   - The funnel replaces hand-built rules as the default: wide net,
@@ -500,7 +500,35 @@ are noted; the later items assume the earlier ones exist.
 - **Depends on:** item 5. It supersedes the earlier "rule suggestions
   learned from past runs" idea, which needed a second run.
 
-### 7. Big-run shortcuts: verified auto-accept (only above a size)
+### 7. Big-run shortcuts: verified auto-accept (deferred, 2026-10-07)
+
+- **Deferred: measured, and not worth it yet.** On the benchmark, "certain"
+  holds only at a high bar, and there it covers few pairs:
+
+  | Match weight | 10K: planted duplicates | 100K: planted duplicates |
+  | ------------ | ----------------------- | ------------------------ |
+  | 10 or more   | 99.0% of 406 pairs      | 80.6% of 4,669 pairs     |
+  | 15 or more   | 100% of 401             | 99.5% of 3,743           |
+  | 20 or more   | 100% of 388             | 100% of 3,454            |
+
+  At weight 20 only about 12% of the 27,720 pairs suggested at 100K would
+  skip Jev: about a minute and $0.25 on a 100K-pair run, now that Jev checks
+  about 360 pairs a second (item 4) and suggestions cut pair counts 10–40×
+  (items 5–6). The synthetic data has no relatives at one address, exactly
+  the "certain" pairs your definition calls different, so real data would
+  be riskier, not safer.
+
+- **Revisit when** real customer runs show Jev time or cost hurts. Measure
+  precision on real data, with relatives, first.
+- **What building it would take** (mapped 2026-10-07): an auto-accept can't
+  live on the shared Jev judgment (later runs would reuse it as a Jev
+  answer, and earlier runs' results would shift once Jev checked it). It
+  needs a per-run record with the weight frozen at start, its own bucket in
+  the progress counts, the speed estimate and every metric ("says same,
+  outside the score bins"), a summary version bump, and the report's "every
+  answer here is Jev's" reworded.
+
+The plan as first written:
 
 - **What:** Fellegi–Sunter's three zones, with Jev as the reviewer.
   - Pairs Splink is certain about (above an upper threshold) skip Jev,
@@ -559,13 +587,84 @@ are noted; the later items assume the earlier ones exist.
 
 - **Depends on:** items 1 and 4.
 
-### 9. Splink as a free baseline vendor (optional)
+### 9. Splink as a free baseline vendor (dropped, 2026-10-07)
 
-- **What:** Splink's own matches appear in the comparison like a vendor's,
-  judged by Jev the same way. For example: "Vendor A beats the free
-  open-source baseline by 12 points". Strong evidence for the
-  buy-or-not decision.
-- **Depends on:** item 5.
+- **Dropped.** PairSight evaluates matching tools; it isn't one. Showing its
+  own picks as a competing vendor would read as claiming to beat the tools
+  it grades, and confuse the people choosing between them. Its picks stay
+  internal: "Suggested by PairSight" decides what Jev checks, and never
+  appears as a contender in the comparison.
+- **The idea, as first written:** Splink's own matches in the comparison
+  like a vendor's, judged by Jev ("Vendor A beats the free open-source
+  baseline by 12 points").
+
+### 10. Suggestions for every type (built, 2026-10-07)
+
+- **Why:** item 6 only suggested pairs for people; organisations and
+  products still started from hand-written rules. Every type now gets
+  PairSight's suggestions, the first step to removing the TypeScript rules
+  entirely (next: rules, the switch and the "Advanced" section go, and
+  every plan is suggested pairs plus vendor pairs).
+- **Built:**
+  - **One model per type** in `services/splink/` (`person.py`, `company.py`,
+    `product.py`), chosen by `score --entity-type`; `model.py` trains and
+    scores whichever one a file is for. People's model is unchanged.
+  - **Organisations** compare the cleaned name (legal suffixes stripped,
+    with levels for the same words in another order, one record's trading
+    name being the other's name, and close spellings), company number, tax
+    ID, website, email, phone, postcode and city. Wide net: each ID, the
+    exact name, name sound with postcode district or city, and postcode.
+  - **Products** compare barcode, part number, SKU, name, brand (with a
+    close level for a brand written two ways), manufacturer, category, size
+    and colour. Another size or colour is another product, so those differ
+    strongly against; the model number only widens the net, since a
+    product's variants share it.
+  - **Held weights and a floor.** Unsupervised training can't see what it
+    never meets in its training groups: two records of one firm rarely both
+    carry its number, so a different company number learned nothing, and
+    two firms with one name in one city looked alike; a file full of
+    variants taught that duplicates often carry different barcodes. Those
+    fields now hold their weights (`spec.held_exact`). And on 2,000 records
+    EM learned some levels as near-impossible for a duplicate (a swapped
+    name at -985), so every learned level now keeps at least 5% of real
+    duplicates (`M_FLOOR`): a difference counts against, but never alone.
+  - **Reasons** for each type (the same company number, the same barcode,
+    a brand written a little differently…), in plain words on the Rules
+    card and the pair page; the copy that described people only now names
+    each type's fields.
+  - Datasets skipped before as "not people" were re-queued
+    (`prisma/run-once.sql`). `normalizeCompanyName` now also drops
+    "public" from the end, so "Public Limited Company" and "PLC" agree.
+- **Measured** (`scripts/splink-spike/`, new seeded generators
+  `scripts/scale/companies.mts` and `products.mts`, 10% planted duplicates,
+  40% of them hard; products also plant variant traps). Splink at the plan's
+  floor (weight 0) against the default rules:
+
+  | File               | Splink: pairs, found | Default rules: pairs, found | Splink at the rules' pairs |
+  | ------------------ | -------------------- | --------------------------- | -------------------------- |
+  | People 2K          | 166, 78.0%           | 158, 66.0%                  | 74.2%                      |
+  | People 10K         | 1,128, 91.2%         | 1,188, 70.6%                | 91.2%                      |
+  | People 100K        | 31,154, 90.1%        | 50,706, 70.3%               | 90.1%                      |
+  | Organisations 2K   | 149, 78.8%           | 125, 63.1%                  | 69.8%                      |
+  | Organisations 10K  | 926, 79.9%           | 860, 66.6%                  | 79.5%                      |
+  | Organisations 100K | 28,255, 88.6%        | 29,703, 66.6%               | 88.7%                      |
+  | Products 2K        | 255, 99.0%           | 1,242, 78.4%                | 100%                       |
+  | Products 10K       | 1,159, 97.9%         | 6,267, 75.9%                | 99.9%                      |
+  | Products 100K      | 12,490, 94.7%        | 72,314, 75.5%               | 99.4%                      |
+  - **Variant traps** (products: same line, another size or colour) in the
+    plan: 62 of 1,141 at 2K, 228 of 5,710 at 10K, 2,856 of 57,312 at 100K;
+    the default rules bring up 1,089, 5,443 and 54,750. Jev still judges
+    each, so a trap costs a check, not a wrong answer.
+  - **What Splink misses:** organisations that moved city and changed
+    website, with only the name in common (the rules found 4 of 110 at 10K;
+    a shared name across cities is genuinely weak evidence), and people
+    with a nickname who moved (outside the wide net, as before).
+  - **Time and memory:** under 3 s and about 0.45 GB at 10K for every type;
+    at 100K, 24 s and about 5 GB for people, 6 s and 1.9 GB for
+    organisations, 7 s and 2.4 GB for products. People's 100K plan grew
+    from 27,720 to 31,154 pairs with the floor, for the same duplicates.
+  - The data is synthetic: the generators plant the kinds of duplicate a
+    records team meets, but real files will differ. Item 0's caveat stands.
 
 ### Later
 
@@ -579,9 +678,10 @@ are noted; the later items assume the earlier ones exist.
 
 ## Open questions
 
-- Jev's rate limit: none hit at 120 calls at once (item 0). TypeSafe's own
-  price is still unknown.
-- Queue tables versus the migrations and RLS rules (item 1).
-- What file sizes customers will actually bring. It decides when items 7
-  and 8 matter.
-- Python in CI: the runner, and caching Splink's dependencies (item 5).
+- Jev's rate limit: none hit at 200 calls at once (item 4), and runs now
+  wait out pushback rather than fail. TypeSafe's own price is still unknown.
+- What file sizes customers will actually bring, and how many of their
+  duplicates are relatives at one address. It decides whether item 7 comes
+  back, and whether the 100K pair limit (item 8) needs raising.
+- Settled: no queue tables (item 1: a running run is the job); Python in CI
+  runs as its own job with a pip cache (item 5).
