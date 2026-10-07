@@ -6,8 +6,10 @@
 // Surnames follow a long-tail spread like real ones (a few very common,
 // many rare), because that's what makes comparison groups grow at scale.
 
-import type { BlockingRecord } from '../../src/server/pairsight/blocking.ts'
-import type { KnownDuplicate } from '../../src/server/pairsight/blocking-quality.ts'
+import type { ScoringRecord } from '../../src/server/pairsight/scoring-records.ts'
+
+// A planted duplicate: two record ids and what kind of duplicate they are.
+export type KnownDuplicate = { recordA: string; recordB: string; kind: string }
 
 export const HEADERS = [
 	'record_id',
@@ -354,9 +356,9 @@ export function toCsv(rows: Row[]): string {
 	)
 }
 
-export function toRecords(rows: Row[]): BlockingRecord[] {
+export function toRecords(rows: Row[]): ScoringRecord[] {
 	return rows.map((row) => {
-		const fields: BlockingRecord['fields'] = {}
+		const fields: ScoringRecord['fields'] = {}
 		for (const header of HEADERS) {
 			if (header !== 'record_id' && row[header] !== '') fields[header] = row[header]
 		}

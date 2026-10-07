@@ -1,7 +1,7 @@
 // Times the upload path on a big records file (docs/PairSight-Scale-Roadmap.md,
 // item 3), through the same code the screens use: the upload, the preview
 // (every column checked), the save (two passes, records in batches), a
-// vendor's file checked and confirmed, then the Rules and Plan pages' work.
+// vendor's file checked and confirmed, then the What Jev checks and Plan pages' work.
 // It makes a "Scale check" evaluation in the local database, owned by the
 // account given (or the one with most evaluations).
 //
@@ -16,7 +16,6 @@ import { defaultIdentity } from '../../src/server/pairsight/judgment.ts'
 import { db } from '../../src/server/db/client.ts'
 import { getCurrentDataset, recordIdsByReference } from '../../src/server/pairsight/datasets.ts'
 import { computePlan } from '../../src/server/pairsight/plan.ts'
-import { rulesPreview } from '../../src/server/pairsight/rules-preview.ts'
 import { ownerScope } from '../../src/server/pairsight/scope.ts'
 import { previewSourceUpload, saveSourceUpload } from '../../src/server/pairsight/source-upload.ts'
 import { readTable } from '../../src/server/pairsight/tabular/index.ts'
@@ -28,7 +27,6 @@ import {
 } from '../../src/server/pairsight/vendor-exports.ts'
 import { detectVendorColumns, parseVendorFile } from '../../src/server/pairsight/vendors.ts'
 import { LIMITS } from '../../src/server/pairsight/limits.ts'
-import { defaultRules } from '../../src/lib/pairsight/entity-types.ts'
 import { generatePeople, toCsv } from './people.mts'
 import { scaleOwner } from './owner.mts'
 
@@ -84,8 +82,7 @@ async function measureFile({
 			name: `Scale check: ${label}`,
 			identitySame: identity.same,
 			identityDifferent: identity.different,
-			jevFields: [],
-			blockingRules: defaultRules('person')
+			jevFields: []
 		},
 		select: { id: true }
 	})
@@ -161,11 +158,8 @@ async function measureFile({
 		)
 	}
 	const scope = ownerScope(ownerId)
-	await timed(`${label}: Rules page (rules preview + plan)`, () =>
-		Promise.all([
-			rulesPreview({ scope, evaluationId: evaluation.id }),
-			computePlan({ scope, evaluationId: evaluation.id })
-		])
+	await timed(`${label}: What Jev checks page (its plan)`, () =>
+		computePlan({ scope, evaluationId: evaluation.id })
 	)
 	await timed(`${label}: Plan page`, () => computePlan({ scope, evaluationId: evaluation.id }))
 	return saved.rowCount

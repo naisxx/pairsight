@@ -9,9 +9,8 @@
 // team actually meets: a typo, a legal suffix written another way, a firm
 // filed under its trading name, and a firm that moved and changed website.
 
-import type { BlockingRecord } from '../../src/server/pairsight/blocking.ts'
-import type { KnownDuplicate } from '../../src/server/pairsight/blocking-quality.ts'
-import { random } from './people.mts'
+import type { ScoringRecord } from '../../src/server/pairsight/scoring-records.ts'
+import { random, type KnownDuplicate } from './people.mts'
 
 export const COMPANY_HEADERS = [
 	'record_id',
@@ -283,9 +282,9 @@ export function generateCompanies(
 	return { rows, duplicates }
 }
 
-export function companyRecords(rows: Row[]): BlockingRecord[] {
+export function companyRecords(rows: Row[]): ScoringRecord[] {
 	return rows.map((row) => {
-		const fields: BlockingRecord['fields'] = {}
+		const fields: ScoringRecord['fields'] = {}
 		for (const header of COMPANY_HEADERS) {
 			if (header !== 'record_id' && row[header] !== '') fields[header] = row[header]
 		}

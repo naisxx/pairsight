@@ -15,9 +15,8 @@
 import { mkdir, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import ExcelJS from 'exceljs'
-import type { KnownDuplicate } from '../../src/server/pairsight/blocking-quality.ts'
 import { COMPANY_HEADERS, companiesCsv, generateCompanies } from './companies.mts'
-import { generatePeople, HEADERS, toCsv } from './people.mts'
+import { generatePeople, HEADERS, toCsv, type KnownDuplicate } from './people.mts'
 import { generateProducts, PRODUCT_HEADERS, productsCsv } from './products.mts'
 
 type Generated = {

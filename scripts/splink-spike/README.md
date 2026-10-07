@@ -1,7 +1,7 @@
 # Splink benchmark (roadmap items 5 and 10)
 
 Measures how well the Splink service (`services/splink`) picks pairs for
-Jev, against our comparison rules, on fictional people, organisations and
+Jev on fictional people, organisations and
 products whose duplicates are known (`scripts/scale/people.mts`,
 `companies.mts`, `products.mts`). For products it also counts the variant
 traps each side brings up: the same line in another size or colour, which
@@ -19,10 +19,11 @@ services/splink/.venv/Scripts/python scripts/splink-spike/score.py company-10k
 ```
 
 - `export.mts` writes the records exactly as the app hands them to the
-  service, the answer key, and how today's rules do (`out/<name>/`).
+  service, and the answer key (`out/<name>/`).
 - `run.py` scores them with the service's own model.
-- `score.py` compares both sides by the same yardstick.
+- `score.py` reports duplicates found and pairs to check at each floor.
+
+The comparison rules these were first measured against are gone; their
+numbers stay in the roadmap.
 
 The 100K people run peaks at about 5 GB of memory; check you have it free first.
-`export.mts person hard` still writes the 104-person hand-made set, which is
-now under the service's 200-record minimum.
