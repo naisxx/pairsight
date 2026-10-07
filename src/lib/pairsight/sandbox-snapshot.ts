@@ -12,7 +12,9 @@ const isoDate = z.iso.datetime({ offset: true })
 const pairRefs = z.tuple([z.string(), z.string()])
 
 export const sandboxSnapshotSchema = z.object({
-	version: z.literal(1),
+	// 2: PairSight picks the pairs; no rules, each pair says whether it was
+	// suggested, and the dataset carries its suggestions.
+	version: z.literal(2),
 	recordedAt: isoDate,
 	evaluation: z.object({
 		name: z.string(),
@@ -22,7 +24,6 @@ export const sandboxSnapshotSchema = z.object({
 		identityDifferent: z.string(),
 		countryCode: z.string(),
 		jevFields: z.array(z.string()),
-		blockingRules: json,
 		threshold: z.number()
 	}),
 	dataset: z.object({
@@ -35,7 +36,21 @@ export const sandboxSnapshotSchema = z.object({
 				rowNumber: z.number().int(),
 				values: z.record(z.string(), z.string())
 			})
-		)
+		),
+		// PairSight's suggestions for these records, as scored when the run was
+		// recorded (pair_scores, at or above the plan's floor), so the sandbox
+		// shows them without scoring again.
+		suggestions: z.object({
+			summary: json,
+			pairs: z.array(
+				z.object({
+					records: pairRefs,
+					matchWeight: z.number(),
+					matchProbability: z.number(),
+					reasons: z.array(z.string())
+				})
+			)
+		})
 	}),
 	vendors: z.array(
 		z.object({
@@ -53,7 +68,6 @@ export const sandboxSnapshotSchema = z.object({
 		identityDifferent: z.string(),
 		countryCode: z.string(),
 		jevFields: z.array(z.string()),
-		blockingRules: json,
 		judgmentKey: z.string(),
 		jevModel: z.string(),
 		threshold: z.number(),
@@ -63,7 +77,7 @@ export const sandboxSnapshotSchema = z.object({
 		pairs: z.array(
 			z.object({
 				records: pairRefs,
-				ruleIds: z.array(z.string()),
+				isSuggested: z.boolean(),
 				// Indexes into `vendors`.
 				matchedBy: z.array(z.number().int()),
 				assessment: z.object({

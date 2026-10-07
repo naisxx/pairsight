@@ -6,7 +6,7 @@ import { cn } from '@/lib/cn'
 import { useIsReadOnly } from './evaluation-context'
 
 // What a sandbox visitor would need an account for, named on the tooltip.
-export type ReadOnlyAction = 'upload' | 'vendor' | 'rules' | 'run' | 'retry' | 'turnOff'
+export type ReadOnlyAction = 'upload' | 'vendor' | 'rules' | 'run' | 'retry'
 
 // One action, in the read-only sandbox: shown, but inert, with a "Sign up to
 // …" tip on hover and focus, announced as a disabled button by that name.

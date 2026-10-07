@@ -2,8 +2,6 @@ import 'server-only'
 import { db } from '@/server/db/client'
 import type { EvaluationView } from '@/lib/pairsight/evaluation-view'
 import { runBase } from '@/lib/pairsight/evaluation-view'
-import type { BlockingRule } from './blocking'
-import { parseBlockingRules } from './json'
 import { getRunProgress, type RunProgress } from './runs'
 import { evaluationWhere, type EvaluationScope } from './scope'
 
@@ -47,7 +45,6 @@ export type RunCard = {
 		identityDifferent: string
 		countryCode: string
 		jevFields: string[]
-		rules: BlockingRule[]
 		vendors: Array<{ name: string; fileName: string; format: string }>
 	}
 }
@@ -87,7 +84,6 @@ export async function listRunCards({
 			identityDifferent: true,
 			countryCode: true,
 			jevFields: true,
-			blockingRules: true,
 			exportIds: true,
 			evaluation: { select: { id: true, name: true } }
 		}
@@ -128,7 +124,6 @@ export async function listRunCards({
 					identityDifferent: run.identityDifferent,
 					countryCode: run.countryCode,
 					jevFields: run.jevFields,
-					rules: parseBlockingRules(run.blockingRules),
 					vendors: run.exportIds.flatMap((id) => {
 						const vendorExport = exportById.get(id)
 						return vendorExport == null ? [] : [vendorExport]

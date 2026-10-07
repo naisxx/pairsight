@@ -15,16 +15,13 @@ import { RunStatusChip } from '@/components/pairsight/results/run-status-chip'
 import { ExportMenu } from '@/components/pairsight/results/export-menu'
 import { RunSwitcher } from '@/components/pairsight/results/run-switcher'
 import { VendorSegmented } from '@/components/pairsight/results/vendor-segmented'
-import { ruleLabel } from '@/components/pairsight/rule-label'
 import { ThresholdControl } from '@/components/pairsight/threshold-control'
 import { RunNotFinished } from '@/components/pairsight/results/run-not-finished'
 import { getRunResults, parseResultFilters } from '@/server/pairsight/results'
 import { getRunProgress } from '@/server/pairsight/runs'
 import { runBase } from '@/lib/pairsight/evaluation-view'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
-import { parseBlockingRules } from '@/server/pairsight/json'
 import type { LoadedWorkspace, loadRun } from '@/server/pairsight/evaluation-pages'
-import { SPLINK_RULE_ID } from '@/server/pairsight/plan-summary'
 
 // Results (docs/PairSight-UX-Plan.md §4.1): the run's header, the vendor and
 // threshold controls, then the Overview or the Detailed analysis. Everything
@@ -40,12 +37,7 @@ export async function ResultsScreen({
 }) {
 	const { scope, base, view } = loaded
 	const runId = loaded.run.id
-	const [t, tRules, tRoles, format] = await Promise.all([
-		getTranslations('Results'),
-		getTranslations('Rules'),
-		getTranslations('Roles'),
-		getFormatter()
-	])
+	const [t, format] = await Promise.all([getTranslations('Results'), getFormatter()])
 
 	// Not finished (running, paused or stopped): how far it got, no numbers.
 	if (loaded.run.status !== 'completed') {
@@ -80,14 +72,6 @@ export async function ResultsScreen({
 	const tab = filters.tab === 'detailed' ? 'detailed' : 'overview'
 	const isFiltered = hasActiveFilters(filters)
 	const vendorName = results.vendors.find((vendor) => vendor.id === vendorId)?.name ?? ''
-	const rules = parseBlockingRules(run.blockingRules)
-	// The run's rules, and Splink's picks among a pair's reasons.
-	const ruleLabels = Object.fromEntries(
-		[...rules.map((rule) => rule.id), SPLINK_RULE_ID].map((ruleId) => [
-			ruleId,
-			ruleLabel({ ruleId, rules, tRules, tRoles })
-		])
-	)
 	const incomplete = results.overview.metrics.counts.incomplete
 
 	const resultsPath = `${base}/results`
@@ -177,7 +161,6 @@ export async function ResultsScreen({
 						vendorId={vendorId}
 						entityType={entityTypeOf(run.entityType)}
 						threshold={run.threshold}
-						ruleLabels={ruleLabels}
 						detailed={detailed}
 						pairHref={pairHref}
 						vendorHrefs={vendorHrefs}
@@ -218,7 +201,6 @@ export async function ResultsScreen({
 								rows={results.rows}
 								threshold={run.threshold}
 								vendorName={vendorName}
-								ruleLabels={ruleLabels}
 							/>
 							<Pagination
 								base={base}

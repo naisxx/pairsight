@@ -32,6 +32,8 @@ export function useFileErrorMessage() {
 			case 'too_many_rows':
 			case 'too_many_columns':
 				return t(error.code, { found: error.found, limit: error.limit })
+			case 'too_few_rows':
+				return t('too_few_rows', { found: error.found, minimum: error.minimum })
 			case 'blank_header':
 				return t('blank_header', { columns: list(error.columns) })
 			case 'duplicate_header':

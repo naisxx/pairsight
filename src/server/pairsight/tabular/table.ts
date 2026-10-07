@@ -13,6 +13,8 @@ export type TableError =
 	// Not a problem with the file, so the screens show a choice, not an error.
 	| { code: 'choose_sheet'; sheets: Array<{ name: string; rows: number }> }
 	| { code: 'too_many_rows'; limit: number; found: number }
+	// A records file too small for PairSight to learn which pairs to check.
+	| { code: 'too_few_rows'; minimum: number; found: number }
 	| { code: 'too_many_columns'; limit: number; found: number }
 	| { code: 'blank_header'; columns: number[] }
 	| { code: 'duplicate_header'; headers: string[] }

@@ -210,7 +210,7 @@ function ErrorReading({ vendor, text }: { vendor: VendorDetail; text: Props['tex
 
 function TradeoffsPage({ data, text }: Props) {
 	const { t } = text
-	const { vendors, headToHead, hardCases } = data.report
+	const { vendors, headToHead } = data.report
 	const name = (id: string) => vendors.find((vendor) => vendor.id === id)?.name ?? ''
 	const hasCurve = vendors.some((vendor) => vendor.sensitivity.some((point) => point.f1 != null))
 	return (
@@ -256,25 +256,6 @@ function TradeoffsPage({ data, text }: Props) {
 				</>
 			)}
 
-			{hardCases.found > 0 && (
-				<>
-					<Text style={styles.h2}>{t('hardCasesTitle')}</Text>
-					<Text style={[styles.paragraph, styles.muted]}>{t('hardCasesIntro')}</Text>
-					{hardCases.confirmed === 0 ? (
-						<Text style={styles.paragraph}>{t('hardCasesNone', { found: hardCases.found })}</Text>
-					) : (
-						hardCases.byVendor.map((entry) => (
-							<Text key={entry.id} style={styles.paragraph}>
-								{t('hardCasesVendor', {
-									vendor: name(entry.id),
-									caught: entry.caught,
-									confirmed: hardCases.confirmed
-								})}
-							</Text>
-						))
-					)}
-				</>
-			)}
 			<Footer data={data} text={text} />
 		</Page>
 	)
@@ -324,7 +305,7 @@ function ExamplesPage({ data, text }: Props) {
 
 function MethodPage({ data, text }: Props) {
 	const { t } = text
-	const { pairs, fromRules } = data.report
+	const { pairs, suggested } = data.report
 	const fresh = Math.max(0, data.progress.succeeded - data.reused)
 	return (
 		<Page size="A4" style={styles.page}>
@@ -359,18 +340,13 @@ function MethodPage({ data, text }: Props) {
 
 			<Text style={styles.h3}>{t('rulesTitle')}</Text>
 			<Text style={[styles.paragraph, styles.muted]}>{t('rulesIntro')}</Text>
-			{data.rules.map((rule) => (
-				<Text key={rule.id} style={styles.paragraph}>
-					{`•  ${text.rule(rule.id)}`}
-				</Text>
-			))}
 
 			<Text style={styles.h3}>{t('coverageTitle')}</Text>
 			<Text style={styles.paragraph}>
 				{t('coverageLine', {
 					total: pairs.total,
-					fromRules,
-					addedByVendor: pairs.total - fromRules
+					suggested,
+					addedByVendor: pairs.total - suggested
 				})}
 			</Text>
 			<Text style={styles.paragraph}>

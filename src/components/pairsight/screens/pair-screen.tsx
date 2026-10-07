@@ -8,13 +8,10 @@ import { PairKeyboard } from '@/components/pairsight/pair/pair-keyboard'
 import { PairNav } from '@/components/pairsight/pair/pair-nav'
 import { CategoryBadge } from '@/components/pairsight/result-parts'
 import { toQuery } from '@/components/pairsight/results/query'
-import { ruleLabel } from '@/components/pairsight/rule-label'
 import { compareFields } from '@/server/pairsight/compare'
 import { isPairsightMatch } from '@/server/pairsight/decisions'
 import { getPairDetail, parseResultFilters } from '@/server/pairsight/results'
 import { isUuid } from '@/server/pairsight/schemas'
-import { parseBlockingRules } from '@/server/pairsight/json'
-import { SPLINK_RULE_ID } from '@/server/pairsight/plan-summary'
 import { suggestionReasons } from '@/server/pairsight/splink/picks'
 import type { loadRun } from '@/server/pairsight/evaluation-pages'
 
@@ -35,17 +32,13 @@ export async function PairScreen({
 	const { scope, base } = loaded
 	const runId = loaded.run.id
 	const filters = parseResultFilters(rawFilters)
-	const [t, tRules, tRoles] = await Promise.all([
-		getTranslations('Pair'),
-		getTranslations('Rules'),
-		getTranslations('Roles')
-	])
+	const [t, tRules] = await Promise.all([getTranslations('Pair'), getTranslations('Rules')])
 	const detail = await getPairDetail({ scope, runId, pairId, filters })
 	if (detail == null) notFound()
 
 	const { run, row, recordA, recordB, assessment } = detail
 	// Suggested by PairSight: why, in words.
-	const suggestedBecause = detail.ruleIds.includes(SPLINK_RULE_ID)
+	const suggestedBecause = detail.isSuggested
 		? await suggestionReasons({
 				datasetId: run.datasetId,
 				recordAId: recordA.id,
@@ -75,7 +68,6 @@ export async function PairScreen({
 		columnRoles: detail.columnRoles,
 		country: run.countryCode
 	})
-	const rules = parseBlockingRules(run.blockingRules)
 	const vendorName = detail.vendors.find((vendor) => vendor.id === detail.vendorId)?.name ?? '—'
 
 	return (
@@ -150,9 +142,7 @@ export async function PairScreen({
 						referenceB={recordB.reference}
 					/>
 					<PairOrigin
-						ruleLabels={detail.ruleIds.map((ruleId) =>
-							ruleLabel({ ruleId, rules, tRules, tRoles })
-						)}
+						isSuggested={detail.isSuggested}
 						matchingVendors={detail.vendors
 							.filter((vendor) => vendor.isMatch)
 							.map((vendor) => vendor.name)}

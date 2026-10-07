@@ -33,7 +33,7 @@ import {
 import { RecordsPreview } from './records-preview'
 import { SourceValidation } from './source-validation'
 import { useEvaluationView } from '../evaluation-context'
-import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/entity-types'
 
 // The chosen file is uploaded once (upload-file.ts); the preview and the
 // save name it by id, with the sheet it was read from (preview.sheet).

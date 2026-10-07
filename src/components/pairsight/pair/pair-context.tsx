@@ -3,14 +3,14 @@ import { FlowIcon } from '@/components/ui/icons'
 import type { ResultCategory } from '@/server/pairsight/results'
 import { CategoryBadge } from '../result-parts'
 
-// Why this pair was compared: the blocking rules that found it, or the vendor
-// match that added it from outside the rules.
+// Why this pair was compared: PairSight suggested it (and why), or a vendor
+// matched it and it was added so every vendor match is checked.
 export function PairOrigin({
-	ruleLabels,
+	isSuggested,
 	matchingVendors,
 	suggestedBecause = []
 }: {
-	ruleLabels: string[]
+	isSuggested: boolean
 	matchingVendors: string[]
 	// When PairSight suggested it: what the two records share, in words.
 	suggestedBecause?: string[]
@@ -25,28 +25,13 @@ export function PairOrigin({
 				<FlowIcon className="text-text-muted" />
 				{t('originTitle')}
 			</h2>
-			{ruleLabels.length > 0 ? (
-				<p className="type-ui mt-2">
-					{t('originRules')}{' '}
-					{ruleLabels.map((label) => (
-						<span
-							key={label}
-							className="border-border bg-surface-muted mr-1.5 inline-flex h-6 items-center rounded-[6px] border px-2 font-mono text-xs"
-						>
-							{label}
-						</span>
-					))}
-				</p>
-			) : (
-				<p className="type-ui mt-2">
-					{t('originVendor', { vendors: matchingVendors.join(t('and')) || '—' })}
-				</p>
-			)}
-			{suggestedBecause.length > 0 && (
-				<p className="type-ui mt-2">
-					{t('originSuggested', { reasons: suggestedBecause.join(', ') })}
-				</p>
-			)}
+			<p className="type-ui mt-2">
+				{isSuggested
+					? suggestedBecause.length > 0
+						? t('originSuggested', { reasons: suggestedBecause.join(', ') })
+						: t('originSuggestedPlain')
+					: t('originVendor', { vendors: matchingVendors.join(t('and')) || '—' })}
+			</p>
 			<p className="text-text-muted mt-2 text-xs">{t('originNote')}</p>
 		</section>
 	)

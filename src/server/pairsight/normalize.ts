@@ -1,15 +1,11 @@
 import { isSupportedCountry, parsePhoneNumberFromString } from 'libphonenumber-js/min'
-import type { BaseField, BlockingField, IdentityRole } from '@/lib/pairsight/entity-types'
+import type { BaseField, IdentityRole } from '@/lib/pairsight/entity-types'
 import { isValidGtin } from '@/lib/pairsight/gtin'
 
-// Blocking-only normalization (docs/PairSight-V1-Scope.md, "Blocking").
-// Original values are always kept for inspection and for Jev; these keys only
-// decide which records share a bucket. `null` means "no usable value", and a
-// null key never joins a bucket.
-
-// A composite "name" the blocking rules can use without caring which name
-// fields the source mapped (NAME_SOURCES).
-export type { BlockingField }
+// Cleaned keys for comparing values: what PairSight's pair suggestions read
+// (match-keys.ts) and what Jev's comparison view calls same or different
+// (compare.ts). Original values are always kept for inspection and for Jev.
+// `null` means "no usable value".
 
 export type MappedFields = Partial<Record<IdentityRole, string>>
 
@@ -59,7 +55,7 @@ export function normalizePostcode(value: string | undefined): string | null {
 }
 
 // Legal-form words a company name may carry or drop ("Acme Ltd" / "ACME
-// Limited" / "Acme"), removed from the end of the name for blocking.
+// Limited" / "Acme"), removed from the end of the name.
 const LEGAL_SUFFIXES = new Set([
 	'ag',
 	'bv',
@@ -115,7 +111,7 @@ export function normalizeWebsite(value: string | undefined): string | null {
 const GTIN_LENGTH = 14
 
 // A barcode (EAN-8, UPC-A, EAN-13, GTIN-14) as 14 digits, so the same item
-// keyed as UPC and as EAN lands in one bucket. A number that fails its check
+// keyed as UPC and as EAN has one key. A number that fails its check
 // digit is kept as written: it may still be how both files spell it.
 export function normalizeGtin(value: string | undefined): string | null {
 	const gtin = present(value)
@@ -136,8 +132,7 @@ export function normalizeCode(value: string | undefined): string | null {
 	return cleaned === '' ? null : cleaned
 }
 
-// The record's name, from whichever name fields its type maps
-// (NAME_SOURCES): a person's full or first + last name, an organisation's
+// The record's name, from whichever name fields its type maps: a person's full or first + last name, an organisation's
 // name, a product's name.
 function normalizeName(fields: MappedFields): string | null {
 	const full = normalizeText(fields.full_name)

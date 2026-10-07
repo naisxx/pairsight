@@ -1,7 +1,7 @@
 import 'server-only'
 import { db, Prisma } from '@/server/db/client'
 import { LOW_CONFIDENCE_BAND } from '@/lib/pairsight/decisions'
-import type { RuleKind, StatsRow } from '@/lib/pairsight/stats'
+import type { StatsRow } from '@/lib/pairsight/stats'
 import type { SourceStat } from './result-overview'
 import {
 	buildRows,
@@ -27,7 +27,7 @@ import {
 // whole-run join. Work over the whole run happens only while building the
 // summary, in the background, a chunk of records at a time through indexes.
 //
-// These are $queryRaw (docs/rules/database.md): array tests (`= ANY`, `<@`,
+// These are $queryRaw (docs/rules/database.md): array tests (`= ANY`,
 // unnest), grouped counts, window functions for the pair's position and
 // UPDATE ... FROM are beyond Prisma's query API. Every value is a bound
 // parameter; only fixed fragments are composed. Records sort by their sortKey
@@ -39,7 +39,6 @@ export type PairContext = {
 	threshold: number
 	// The vendor the categories are read for; none decides "not matched".
 	vendorId: string | undefined
-	fuzzyRuleIds: readonly string[]
 }
 
 const judged = Prisma.sql`(rp.status = 'succeeded' AND rp.score IS NOT NULL)`
@@ -50,8 +49,6 @@ const vendorSame = (vendorId: string | undefined) =>
 	vendorId == null
 		? Prisma.sql`FALSE`
 		: Prisma.sql`(${vendorId}::text = ANY(rp."matchedByExportIds"))`
-const fuzzyOnly = (fuzzyRuleIds: readonly string[]) =>
-	Prisma.sql`(cardinality(rp."ruleIds") > 0 AND rp."ruleIds" <@ ${[...fuzzyRuleIds]}::text[])`
 // Bit i set when the run's vendor i (in `vendorIds`' order) matched the pair.
 const vendorMask = (vendorIds: readonly string[]) => Prisma.sql`(
 	SELECT coalesce(bit_or(1 << (v.i - 1)::int), 0)
@@ -104,16 +101,14 @@ function scoreSql(score: ResultFilters['score'], threshold: number): Prisma.Sql 
 }
 
 // result-rows.ts `matchesSource`.
-function sourceSql(source: ResultFilters['source'], fuzzyRuleIds: readonly string[]): Prisma.Sql {
+function sourceSql(source: ResultFilters['source']): Prisma.Sql {
 	switch (source) {
 		case undefined:
 			return Prisma.sql`TRUE`
-		case 'rules':
-			return Prisma.sql`cardinality(rp."ruleIds") > 0`
-		case 'fuzzy':
-			return fuzzyOnly(fuzzyRuleIds)
+		case 'suggested':
+			return Prisma.sql`rp."isSuggested"`
 		case 'vendor':
-			return Prisma.sql`cardinality(rp."ruleIds") = 0`
+			return Prisma.sql`NOT rp."isSuggested"`
 	}
 }
 
@@ -150,7 +145,7 @@ function whereSql(filters: ResultFilters, context: PairContext): Prisma.Sql {
 	return Prisma.sql`WHERE rp."runId" = ${context.runId}::uuid
 		AND ${categorySql(filters.category, context)}
 		AND ${scoreSql(filters.score, context.threshold)}
-		AND ${sourceSql(filters.source, context.fuzzyRuleIds)}
+		AND ${sourceSql(filters.source)}
 		AND ${lowConfidence}
 		AND ${statusSql(filters.status)}
 		AND ${searchSql(filters.q)}`
@@ -181,7 +176,7 @@ type PairRowRecord = {
 	id: string
 	recordAId: string
 	recordBId: string
-	ruleIds: string[]
+	isSuggested: boolean
 	matchedByExportIds: string[]
 	status: AssessmentStatus
 	score: number | null
@@ -197,7 +192,7 @@ type PairRowRecord = {
 function withRecords(page: Prisma.Sql): Prisma.Sql {
 	return Prisma.sql`
 		WITH page AS (${page})
-		SELECT page.id, page."recordAId", page."recordBId", page."ruleIds",
+		SELECT page.id, page."recordAId", page."recordBId", page."isSuggested",
 			page."matchedByExportIds", page.status::text AS status, page.score,
 			CASE WHEN page.status = 'failed' THEN a."errorCode" END AS "errorCode",
 			ra.reference AS "referenceA", ra.label AS "labelA",
@@ -229,14 +224,13 @@ function toResultRows(records: PairRowRecord[], context: PairContext): ResultRow
 			id: row.id,
 			recordAId: row.recordAId,
 			recordBId: row.recordBId,
-			ruleIds: row.ruleIds,
+			isSuggested: row.isSuggested,
 			matchedByExportIds: row.matchedByExportIds,
 			assessment: { status: row.status, score: row.score, errorCode: row.errorCode }
 		})),
 		records: summaries,
 		threshold: context.threshold,
-		vendorId: context.vendorId,
-		fuzzyRuleIds: new Set(context.fuzzyRuleIds)
+		vendorId: context.vendorId
 	})
 }
 
@@ -425,13 +419,11 @@ export async function* runPairPages({ runId, datasetId }: { runId: string; datas
 export async function statsRows({
 	runId,
 	threshold,
-	vendorIds,
-	fuzzyRuleIds
+	vendorIds
 }: {
 	runId: string
 	threshold: number
 	vendorIds: readonly string[]
-	fuzzyRuleIds: readonly string[]
 }): Promise<StatsRow[]> {
 	const rows = await db.$queryRaw<
 		Array<{
@@ -440,7 +432,7 @@ export async function statsRows({
 			match: boolean
 			near: boolean
 			mask: number
-			kind: RuleKind
+			suggested: boolean
 			count: bigint
 		}>
 	>`
@@ -449,11 +441,7 @@ export async function statsRows({
 				${judged} AND ${jevSame(threshold)} AS match,
 				${judged} AND ${near(threshold)} AS near,
 				${vendorMask(vendorIds)} AS mask,
-				CASE
-					WHEN cardinality(rp."ruleIds") = 0 THEN 'none'
-					WHEN ${fuzzyOnly(fuzzyRuleIds)} THEN 'fuzzy'
-					ELSE 'other'
-				END AS kind
+				rp."isSuggested" AS suggested
 			FROM run_pairs rp
 			WHERE rp."runId" = ${runId}::uuid
 		),
@@ -470,13 +458,13 @@ export async function statsRows({
 				)) END AS bin
 			FROM p
 		)
-		SELECT status::text AS status, bin, match, near, mask, kind, count(*) AS count
+		SELECT status::text AS status, bin, match, near, mask, suggested, count(*) AS count
 		FROM binned
-		GROUP BY status, bin, match, near, mask, kind`
+		GROUP BY status, bin, match, near, mask, suggested`
 	return rows.map((row) => ({ ...row, count: Number(row.count) }))
 }
 
-// Pairs per rule that found them, for each vendor's sources table.
+// Pairs by where they came from, for each vendor's sources table.
 export async function sourceStats({
 	runId,
 	threshold,
@@ -487,17 +475,12 @@ export async function sourceStats({
 	vendorIds: readonly string[]
 }): Promise<SourceStat[]> {
 	const rows = await db.$queryRaw<Array<Omit<SourceStat, 'count'> & { count: bigint }>>`
-		SELECT r.rule_id AS "ruleId",
+		SELECT rp."isSuggested" AS suggested,
 			${judged} AS judged,
 			${judged} AND ${jevSame(threshold)} AS match,
 			${vendorMask(vendorIds)} AS mask,
 			count(*) AS count
 		FROM run_pairs rp
-		CROSS JOIN LATERAL (
-			SELECT unnest(rp."ruleIds") AS rule_id
-			UNION ALL
-			SELECT NULL WHERE cardinality(rp."ruleIds") = 0
-		) r
 		WHERE rp."runId" = ${runId}::uuid
 		GROUP BY 1, 2, 3, 4`
 	return rows.map((row) => ({ ...row, count: Number(row.count) }))
@@ -529,7 +512,7 @@ export async function topDisagreementIds({
 export type FindingsPage = Array<{
 	recordAId: string
 	recordBId: string
-	ruleIds: string[]
+	isSuggested: boolean
 	matchedByExportIds: string[]
 	status: AssessmentStatus
 	score: number | null
@@ -555,7 +538,7 @@ export async function findingsPage({
 }): Promise<FindingsPage> {
 	if (recordAIds.length === 0) return []
 	return db.$queryRaw<FindingsPage>`
-		SELECT rp."recordAId", rp."recordBId", rp."ruleIds", rp."matchedByExportIds",
+		SELECT rp."recordAId", rp."recordBId", rp."isSuggested", rp."matchedByExportIds",
 			a.status::text AS status, a.score, a."errorCode", a."modelReported", a."completedAt",
 			ra.reference AS "referenceA", ra.values AS "valuesA",
 			rb.reference AS "referenceB", rb.values AS "valuesB"

@@ -25,7 +25,7 @@ const SCORE_DIGITS = 2
 export type FindingsPair = {
 	recordAId: string
 	recordBId: string
-	ruleIds: string[]
+	isSuggested: boolean
 	matchedByExportIds: string[]
 	assessment: {
 		status: AssessmentStatus
@@ -61,7 +61,7 @@ export type FindingsLabels = {
 	notMatched: string
 	addedByVendor: string
 	category: (category: Category | 'incomplete') => string
-	rule: (ruleId: string) => string
+	suggestedByPairSight: string
 }
 
 export type FindingsRecord = { reference: string; values: Record<string, string> }
@@ -124,7 +124,7 @@ export function findingsColumns({
 					: labels.noMatch
 				: labels.incomplete,
 			isJudged && isLowConfidence({ score, threshold }) ? labels.yes : labels.no,
-			pair.ruleIds.length === 0 ? labels.addedByVendor : pair.ruleIds.map(labels.rule).join('; '),
+			pair.isSuggested ? labels.suggestedByPairSight : labels.addedByVendor,
 			...vendors.flatMap((vendor) => {
 				const isVendorMatch = pair.matchedByExportIds.includes(vendor.id)
 				return [

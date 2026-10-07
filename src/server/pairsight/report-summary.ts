@@ -1,7 +1,6 @@
 import { stableRange, type SensitivityPoint, type VendorMetrics } from '@/lib/pairsight/metrics'
 import {
 	statsCoverage,
-	statsHardCases,
 	statsHeadToHead,
 	statsMetrics,
 	statsSensitivity
@@ -34,7 +33,8 @@ export type ReportExample = {
 	recordA: RecordSummary
 	recordB: RecordSummary
 	score: number
-	ruleIds: string[]
+	// PairSight suggested it; false when only a vendor matched it.
+	isSuggested: boolean
 	fields: FieldComparison[]
 }
 
@@ -177,7 +177,13 @@ export function reportExample({
 	if (a == null || b == null || row.score == null) return []
 	const { fields } = compareFields({ valuesA: a.values, valuesB: b.values, columnRoles, country })
 	return [
-		{ recordA: row.recordA, recordB: row.recordB, score: row.score, ruleIds: row.ruleIds, fields }
+		{
+			recordA: row.recordA,
+			recordB: row.recordB,
+			score: row.score,
+			isSuggested: row.isSuggested,
+			fields
+		}
 	]
 }
 
@@ -211,10 +217,9 @@ export function buildReport({ summary, vendors, examples }: ReportInput) {
 		// Where the leader's own precision and recall hold still.
 		stableRange: first == null ? null : stableRange(first.sensitivity, first.metrics),
 		headToHead: headToHead(summary, vendors),
-		hardCases: statsHardCases(summary.rows, summary.vendorIds),
 		// The run as a whole: the same for every vendor.
 		pairs: first?.metrics ?? statsMetrics([], -1),
-		fromRules: statsCoverage(summary.rows).fromRules
+		suggested: statsCoverage(summary.rows).suggested
 	}
 }
 

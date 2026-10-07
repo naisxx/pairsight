@@ -2,17 +2,17 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { ENTITY_TYPES, type EntityType } from '@/lib/pairsight/entity-types'
-import type { BlockingRecord } from '../blocking'
+import type { ScoringRecord } from '../scoring-records'
 import { splinkColumns, splinkRecordLines } from './records'
 
 // One record's line as column -> value.
-function written(type: EntityType, record: BlockingRecord): (column: string) => string | undefined {
+function written(type: EntityType, record: ScoringRecord): (column: string) => string | undefined {
 	const [, line] = [...splinkRecordLines([record], { type, country: 'GB' })]
 	const cells = (line ?? '').trimEnd().split(',')
 	return (column) => cells[splinkColumns(type).indexOf(column)]
 }
 
-test('records go to Splink cleaned by our own blocking keys, one line each', () => {
+test('records go to Splink as cleaned keys, one line each', () => {
 	const lines = [
 		...splinkRecordLines(
 			[

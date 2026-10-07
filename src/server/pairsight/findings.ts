@@ -1,13 +1,12 @@
 import 'server-only'
 import { getTranslations } from 'next-intl/server'
 import { XLSX_MAX_ROWS, type TabularFormat } from '@/lib/pairsight/tabular-formats'
-import { ruleLabel } from '@/components/pairsight/rule-label'
 import { db } from '@/server/db/client'
 import { log } from '@/server/lib/logger'
 import { exportFileName } from './export-file-name'
 import { AppError } from '@/lib/errors/app-error'
 import { findingsColumns } from './findings-table'
-import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
+import { parseColumnRoles, parseRecordValues } from './json'
 import { ensureRecordKeys } from './record-keys'
 import { runPairPages } from './results-query'
 import { runVendors } from './run-summary'
@@ -44,7 +43,7 @@ export async function findingsExport({
 	const run = await getVisibleRun({ scope, runId })
 	if (run.status !== 'completed') throw runNotFinished()
 	if (format === 'xlsx' && run.pairCount > XLSX_MAX_ROWS) throw tooManyRowsForExcel()
-	const [vendors, dataset, t, tCat, tRules, tRoles, tFailures] = await Promise.all([
+	const [vendors, dataset, t, tCat, tRoles, tFailures] = await Promise.all([
 		runVendors(run.exportIds),
 		db.sourceDataset.findUniqueOrThrow({
 			where: { id: run.datasetId },
@@ -52,12 +51,10 @@ export async function findingsExport({
 		}),
 		getTranslations('Export'),
 		getTranslations('Categories'),
-		getTranslations('Rules'),
 		getTranslations('Roles'),
 		getTranslations('Failures'),
 		ensureRecordKeys({ datasetId: run.datasetId, entityType: run.entityType })
 	])
-	const rules = parseBlockingRules(run.blockingRules)
 	const { headers, row } = findingsColumns({
 		columnRoles: parseColumnRoles(dataset.columnRoles),
 		vendors,
@@ -86,8 +83,8 @@ export async function findingsExport({
 			matched: t('matched'),
 			notMatched: t('notMatched'),
 			addedByVendor: t('addedByVendor'),
-			category: (category) => (category === 'incomplete' ? t('incomplete') : tCat(category)),
-			rule: (ruleId) => ruleLabel({ ruleId, rules, tRules, tRoles })
+			suggestedByPairSight: t('suggestedByPairSight'),
+			category: (category) => (category === 'incomplete' ? t('incomplete') : tCat(category))
 		}
 	})
 	const adapter = adapterFor(format)

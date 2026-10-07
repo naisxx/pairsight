@@ -19,7 +19,7 @@ export const resultFiltersSchema = z.object({
 	vendor: z.string().uuid().optional(),
 	// `disagreements` is PairSight only and vendor only together.
 	category: z.enum([...CATEGORIES, 'incomplete', 'disagreements']).optional(),
-	source: z.enum(['rules', 'fuzzy', 'vendor']).optional(),
+	source: z.enum(['suggested', 'vendor']).optional(),
 	lowConfidence: z.literal('1').optional(),
 	// Judged pairs; not judged yet or failed (incomplete); or just one of those.
 	status: z.enum(['evaluated', 'incomplete', 'pending', 'failed']).optional(),
@@ -80,10 +80,8 @@ export type ResultRow = {
 	status: AssessmentStatus
 	score: number | null
 	errorCode: string | null
-	ruleIds: string[]
-	// Found only by fuzzy rules (derived-keys.ts): a duplicate exact rules
-	// would have left out.
-	isFuzzyOnly: boolean
+	// PairSight suggested it; false when only a vendor matched it.
+	isSuggested: boolean
 	isLowConfidence: boolean
 }
 
@@ -91,7 +89,7 @@ export type PairInput = {
 	id: string
 	recordAId: string
 	recordBId: string
-	ruleIds: string[]
+	isSuggested: boolean
 	matchedByExportIds: string[]
 	assessment: { status: AssessmentStatus; score: number | null; errorCode: string | null }
 }
@@ -129,23 +127,14 @@ export function byReference<T extends { reference: string }>(first: T, second: T
 	return compareNatural(first.reference, second.reference) <= 0 ? [first, second] : [second, first]
 }
 
-const NO_RULES: ReadonlySet<string> = new Set()
-
-// Every rule that found the pair matches on a derived key.
-export function isFuzzyOnly(ruleIds: readonly string[], fuzzyRuleIds: ReadonlySet<string>) {
-	return ruleIds.length > 0 && ruleIds.every((ruleId) => fuzzyRuleIds.has(ruleId))
-}
-
 function matchesSource(row: ResultRow, source: ResultFilters['source']): boolean {
 	switch (source) {
 		case undefined:
 			return true
-		case 'rules':
-			return row.ruleIds.length > 0
-		case 'fuzzy':
-			return row.isFuzzyOnly
+		case 'suggested':
+			return row.isSuggested
 		case 'vendor':
-			return row.ruleIds.length === 0
+			return !row.isSuggested
 	}
 }
 
@@ -153,15 +142,12 @@ export function buildRows({
 	pairs,
 	records,
 	threshold,
-	vendorId,
-	fuzzyRuleIds = NO_RULES
+	vendorId
 }: {
 	pairs: PairInput[]
 	records: ReadonlyMap<string, RecordSummary>
 	threshold: number
 	vendorId: string | undefined
-	// The run's rules with a derived field (loadRunView).
-	fuzzyRuleIds?: ReadonlySet<string>
 }): ResultRow[] {
 	const summary = (id: string): RecordSummary =>
 		records.get(id) ?? { id, reference: '—', label: '—' }
@@ -178,8 +164,7 @@ export function buildRows({
 			status,
 			score,
 			errorCode,
-			ruleIds: pair.ruleIds,
-			isFuzzyOnly: isFuzzyOnly(pair.ruleIds, fuzzyRuleIds),
+			isSuggested: pair.isSuggested,
 			isLowConfidence:
 				status === 'succeeded' && score != null && isLowConfidence({ score, threshold })
 		}

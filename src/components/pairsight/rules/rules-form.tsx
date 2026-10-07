@@ -6,16 +6,11 @@ import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { ArrowRightIcon, InfoIcon, SpinnerIcon, SuccessIcon } from '@/components/ui/icons'
 import type { SelectOption } from '@/components/ui/select'
-import { BLOCKING_FIELDS, isCustomRuleId, MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/entity-types'
 import { saveRulesAction } from '@/server/actions/pairsight/rules'
-import type { RuleStats } from '@/server/pairsight/blocking'
 import type { IdentityRole } from '@/server/pairsight/fields'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
-import { CandidateRules } from './candidate-rules'
 import { IdentitySection } from './identity-section'
-import { missingField, type Rule, type RuleLimits } from '@/lib/pairsight/rule-fields'
-import { RulesSummary, type RulesSummaryData } from './rules-summary'
-import { AdvancedRules } from './advanced-rules'
 import { SuggestionsCard, type SuggestionsData } from './suggestions-card'
 import { ThresholdSection } from './threshold-section'
 import { useEvaluationView } from '../evaluation-context'
@@ -30,25 +25,18 @@ type Draft = {
 	different: string
 	country: string
 	jevFields: ReadonlySet<IdentityRole>
-	enabled: ReadonlySet<string>
-	composites: Rule[]
 	threshold: number
-	splinkPicks: boolean
 }
 
 // A comparable form of what would be saved, so the form is "unsaved"
-// exactly when saving would change something. Only presets that can run count:
-// one switched on for a column that isn't mapped is never saved.
-function snapshot(draft: Draft, presets: Rule[]): string {
+// exactly when saving would change something.
+function snapshot(draft: Draft): string {
 	return JSON.stringify([
 		draft.same.trim(),
 		draft.different.trim(),
 		draft.country,
 		[...draft.jevFields].sort(),
-		presets.filter((rule) => draft.enabled.has(rule.id)).map((rule) => rule.id),
-		draft.composites.map((rule) => rule.id).sort(),
-		draft.threshold,
-		draft.splinkPicks
+		draft.threshold
 	])
 }
 
@@ -59,20 +47,16 @@ function toggled<T>(set: ReadonlySet<T>, value: T, isOn: boolean): Set<T> {
 	return next
 }
 
-// The Rules step. Every change saves itself (when valid) a moment after it's
-// made, and the page then recounts the rules and the summary from what was
-// saved; runs keep their own copy of the settings, so this never changes a
-// past result.
+// The "What Jev checks" step: when two records are the same, what Jev sees,
+// and the match cut-off; beside them, the pairs PairSight suggests. Every
+// change saves itself (when valid) a moment after it's made; runs keep their
+// own copy of the settings, so this never changes a past result.
 export function RulesForm({
 	evaluationId,
 	initial,
-	rules,
 	mappedRoles,
-	stats,
-	summary,
 	suggestions,
-	countries,
-	limits
+	countries
 }: {
 	evaluationId: string
 	initial: {
@@ -80,44 +64,30 @@ export function RulesForm({
 		identityDifferent: string
 		countryCode: string
 		jevFields: IdentityRole[]
-		enabledRuleIds: string[]
 		threshold: number
-		splinkPicks: boolean
 	}
-	rules: Rule[]
 	mappedRoles: IdentityRole[]
-	stats: RuleStats[]
-	summary: RulesSummaryData
 	// What PairSight suggests for these records (SuggestionsCard).
 	suggestions: SuggestionsData
 	countries: SelectOption[]
-	limits: RuleLimits
 }) {
 	const t = useTranslations('Rules')
 	const tSandbox = useTranslations('Sandbox')
 	const router = useRouter()
 	const view = useEvaluationView()
 	const mapped = new Set(mappedRoles)
-	const presets = rules.filter((rule) => !isCustomRuleId(rule.id))
-	const runnablePresets = presets.filter((rule) => missingField(rule.fields, mapped) == null)
 	const saved: Draft = {
 		same: initial.identitySame,
 		different: initial.identityDifferent,
 		country: initial.countryCode,
 		jevFields: new Set(initial.jevFields.filter((field) => mapped.has(field))),
-		enabled: new Set(initial.enabledRuleIds),
-		composites: rules.filter((rule) => isCustomRuleId(rule.id)),
-		threshold: initial.threshold,
-		splinkPicks: initial.splinkPicks
+		threshold: initial.threshold
 	}
 	const [draft, setDraft] = useState<Draft>(saved)
-	// Stats for composites added or edited here, until the server counts
-	// them after the save (server stats win).
-	const [addedStats, setAddedStats] = useState<Record<string, RuleStats>>({})
 	const [error, setError] = useState<string | null>(null)
 	const [isSaving, startSaving] = useTransition()
 
-	const isDirty = snapshot(draft, runnablePresets) !== snapshot(saved, runnablePresets)
+	const isDirty = snapshot(draft) !== snapshot(saved)
 	const invalidReason =
 		draft.same.trim() === ''
 			? t('blockedSame')
@@ -126,31 +96,12 @@ export function RulesForm({
 				: draft.jevFields.size < MIN_JEV_FIELDS
 					? t('blockedFields')
 					: null
-	const allRules = [...presets, ...draft.composites]
-	const rulesOn =
-		runnablePresets.filter((rule) => draft.enabled.has(rule.id)).length + draft.composites.length
-	// Open when your own rules matter: some are on, suggestions are off, or
-	// they can't run here (not while still coming). Decided once, at first.
-	const [isAdvancedOpenAtFirst] = useState(
-		() =>
-			rulesOn > 0 ||
-			!initial.splinkPicks ||
-			suggestions.state === 'skipped' ||
-			suggestions.state === 'failed'
-	)
 	const payload = {
 		evaluationId,
 		identity: { same: draft.same, different: draft.different },
 		countryCode: draft.country,
 		jevFields: [...draft.jevFields],
-		threshold: draft.threshold,
-		splinkPicks: draft.splinkPicks,
-		// Presets that are on and runnable, plus every composite.
-		blockingRules: allRules.filter(
-			(rule) =>
-				isCustomRuleId(rule.id) ||
-				(draft.enabled.has(rule.id) && missingField(rule.fields, mapped) == null)
-		)
+		threshold: draft.threshold
 	}
 	// The sandbox never saves: its controls are disabled, and this makes sure.
 	const isPending = !view.isReadOnly && (isSaving || (isDirty && invalidReason == null))
@@ -168,7 +119,7 @@ export function RulesForm({
 	}
 
 	const saveSoon = useEffectEvent(() => save())
-	const draftKey = snapshot(draft, runnablePresets)
+	const draftKey = snapshot(draft)
 	const canSave = !view.isReadOnly && isDirty && invalidReason == null
 	useEffect(() => {
 		if (!canSave) return
@@ -182,15 +133,7 @@ export function RulesForm({
 	})
 	useEffect(() => () => saveOnLeave(), [])
 
-	const blockedReason =
-		invalidReason ??
-		(summary.total > summary.limit
-			? summary.isExact
-				? t('blockedOver', { limit: summary.limit, total: summary.total })
-				: t('blockedOverMany', { limit: summary.limit })
-			: isPending
-				? t('blockedSaving')
-				: null)
+	const blockedReason = invalidReason ?? (isPending ? t('blockedSaving') : null)
 
 	return (
 		<>
@@ -218,54 +161,9 @@ export function RulesForm({
 						value={draft.threshold}
 						onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
 					/>
-					<SuggestionsCard
-						isOn={draft.splinkPicks}
-						onChange={(splinkPicks) => setDraft((current) => ({ ...current, splinkPicks }))}
-						data={suggestions}
-					/>
-					<AdvancedRules rulesOn={rulesOn} isOpenAtFirst={isAdvancedOpenAtFirst}>
-						<CandidateRules
-							evaluationId={evaluationId}
-							country={draft.country}
-							rules={allRules}
-							enabled={draft.enabled}
-							stats={(ruleId) =>
-								stats.find((candidate) => candidate.ruleId === ruleId) ?? addedStats[ruleId]
-							}
-							mapped={mapped}
-							availableFields={BLOCKING_FIELDS.filter(
-								(field) => missingField([field], mapped) == null
-							)}
-							limits={limits}
-							onToggle={(ruleId, isOn) =>
-								setDraft((current) => ({
-									...current,
-									enabled: toggled(current.enabled, ruleId, isOn)
-								}))
-							}
-							onSaveComposite={(rule, stat, replacing) => {
-								setAddedStats((current) => ({ ...current, [rule.id]: stat }))
-								setDraft((current) => ({
-									...current,
-									composites:
-										replacing == null
-											? [...current.composites, rule]
-											: current.composites.map((existing) =>
-													existing.id === replacing ? rule : existing
-												)
-								}))
-							}}
-							onDeleteComposite={(ruleId) =>
-								setDraft((current) => ({
-									...current,
-									composites: current.composites.filter((rule) => rule.id !== ruleId)
-								}))
-							}
-						/>
-					</AdvancedRules>
 				</ReadOnlyFieldset>
 				<div className="@5xl:col-span-4">
-					<RulesSummary summary={summary} isUpdating={isPending} />
+					<SuggestionsCard data={suggestions} />
 				</div>
 			</div>
 

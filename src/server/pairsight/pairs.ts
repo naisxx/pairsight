@@ -26,17 +26,19 @@ export function groupPairCount(size: number): number {
 }
 
 export type ComparisonPair = CanonicalPair & {
-	ruleIds: string[]
+	// PairSight suggested it; false when only a vendor matched it.
+	isSuggested: boolean
 	matchedByExportIds: string[]
 }
 
-// Blocked pairs ∪ every vendor-matched pair, each appearing once. Vendor
-// pairs outside the blocking rules are always included — that is the point.
+// The pairs PairSight suggested ∪ every vendor-matched pair, each appearing
+// once. Vendor pairs PairSight didn't suggest are always included — that is
+// the point.
 export function buildComparisonSet({
-	blocked,
+	suggested,
 	vendorPairs
 }: {
-	blocked: Array<CanonicalPair & { ruleIds: string[] }>
+	suggested: CanonicalPair[]
 	vendorPairs: Array<{ exportId: string; pairs: CanonicalPair[] }>
 }): ComparisonPair[] {
 	const set = new Map<string, ComparisonPair>()
@@ -44,17 +46,12 @@ export function buildComparisonSet({
 		const key = pairKey(pair)
 		let existing = set.get(key)
 		if (existing == null) {
-			existing = { a: pair.a, b: pair.b, ruleIds: [], matchedByExportIds: [] }
+			existing = { a: pair.a, b: pair.b, isSuggested: false, matchedByExportIds: [] }
 			set.set(key, existing)
 		}
 		return existing
 	}
-	for (const pair of blocked) {
-		const target = entry(pair)
-		for (const ruleId of pair.ruleIds) {
-			if (!target.ruleIds.includes(ruleId)) target.ruleIds.push(ruleId)
-		}
-	}
+	for (const pair of suggested) entry(pair).isSuggested = true
 	for (const { exportId, pairs } of vendorPairs) {
 		for (const pair of pairs) {
 			const target = entry(pair)

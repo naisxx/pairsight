@@ -2,7 +2,6 @@ import { useTranslations } from 'next-intl'
 import { Reveal } from '@/components/ui/reveal'
 import type { Category } from '@/lib/pairsight/decisions'
 import type { EntityType } from '@/lib/pairsight/entity-types'
-import { SPLINK_RULE_ID } from '@/lib/pairsight/suggested'
 import type { ResultsOverview as OverviewData } from '@/server/pairsight/result-overview'
 import { CategorySummary } from './category-summary'
 import { CoveragePanel } from './coverage-panel'
@@ -37,7 +36,6 @@ export function ResultsOverview({
 	vendorId,
 	entityType,
 	threshold,
-	ruleLabels,
 	detailed,
 	pairHref,
 	vendorHrefs
@@ -47,7 +45,6 @@ export function ResultsOverview({
 	vendorId: string
 	entityType: EntityType
 	threshold: number
-	ruleLabels: Record<string, string>
 	// The detailed view with some filters set (the rest cleared).
 	detailed: (query: Record<string, string>) => Href
 	pairHref: (pairId: string) => Href
@@ -80,11 +77,7 @@ export function ResultsOverview({
 				<Reveal index={index++} className="@5xl:col-span-4 @5xl:row-span-2">
 					<CoveragePanel
 						coverage={overview.coverage}
-						suggestedType={
-							overview.sources.some((source) => source.ruleId === SPLINK_RULE_ID)
-								? entityType
-								: null
-						}
+						suggestedType={overview.sources.some((source) => source.suggested) ? entityType : null}
 						className="h-full"
 					/>
 				</Reveal>
@@ -181,14 +174,10 @@ export function ResultsOverview({
 				<Reveal index={index++} className="@5xl:col-span-4">
 					<SourceBreakdown
 						sources={overview.sources}
-						ruleLabels={ruleLabels}
 						sourceHrefs={{
-							rules: asString(detailed({ source: 'rules' })),
-							fuzzy: asString(detailed({ source: 'fuzzy' })),
+							suggested: asString(detailed({ source: 'suggested' })),
 							vendor: asString(detailed({ source: 'vendor' }))
 						}}
-						hardCases={overview.hardCases}
-						vendors={overview.byVendor}
 						className="h-full"
 					/>
 				</Reveal>

@@ -1,12 +1,13 @@
 import { doubleMetaphone } from 'double-metaphone'
-import { parseRuleField, type KeyTransform } from '@/lib/pairsight/derived-keys'
-import type { BlockingField } from '@/lib/pairsight/entity-types'
+import { parseKeyField, type KeyTransform } from '@/lib/pairsight/derived-keys'
+import type { KeyField } from '@/lib/pairsight/entity-types'
 import { normalizeField, type MappedFields } from './normalize'
 
-// The keys derived rule fields match on (src/lib/pairsight/derived-keys.ts).
-// Each starts from the field's normal blocking key, so "Smyth " and "SMYTH"
-// are already one value before the transform loosens it further. Null means
-// no usable key, and a null key never joins a bucket.
+// A record's cleaned keys, as PairSight's pair suggestions read them
+// (src/server/pairsight/splink/records.ts): a field's normal key, or one
+// derived from it (src/lib/pairsight/derived-keys.ts). Each derived key starts
+// from the field's normal key, so "Smyth " and "SMYTH" are already one value
+// before the transform loosens it further. Null means no usable key.
 
 const PREFIX_LENGTH = 4
 const PHONE_TAIL_LENGTH = 7
@@ -62,7 +63,7 @@ function transformKey({
 	raw
 }: {
 	transform: KeyTransform
-	// The field's normal blocking key.
+	// The field's normal key.
 	value: string
 	// The field as uploaded, for the transforms that don't trust the key.
 	raw: string | undefined
@@ -93,19 +94,18 @@ function transformKey({
 	}
 }
 
-// A record's key for one rule field, derived or not. For a plain field this
-// is exactly normalizeField, so rules saved before derived fields existed
-// bucket the same records they always did.
-export function ruleFieldKey({
+// A record's key for one field, derived or not. For a plain field this is
+// exactly normalizeField, the value Jev's comparison view reads too.
+export function matchKey({
 	field,
 	fields,
 	country
 }: {
-	field: BlockingField
+	field: KeyField
 	fields: MappedFields
 	country: string
 }): string | null {
-	const { base, transform } = parseRuleField(field)
+	const { base, transform } = parseKeyField(field)
 	if (transform === 'last7') {
 		return transformKey({ transform, value: '', raw: fields.phone })
 	}

@@ -25,9 +25,9 @@ test('a group of n records expands to n(n-1)/2 pairs, deduping members', () => {
 	assert.equal(expandGroup(['solo']).length, 0)
 })
 
-test('the comparison set unions blocked and vendor pairs, once each', () => {
+test('the comparison set unions suggested and vendor pairs, once each', () => {
 	const set = buildComparisonSet({
-		blocked: [{ a: 'r1', b: 'r2', ruleIds: ['email'] }],
+		suggested: [{ a: 'r1', b: 'r2' }],
 		vendorPairs: [
 			{
 				exportId: 'v1',
@@ -40,9 +40,9 @@ test('the comparison set unions blocked and vendor pairs, once each', () => {
 		]
 	})
 	assert.deepEqual(set, [
-		{ a: 'r1', b: 'r2', ruleIds: ['email'], matchedByExportIds: ['v1', 'v2'] },
-		// Outside every blocking rule, but a vendor matched it: always included.
-		{ a: 'r4', b: 'r5', ruleIds: [], matchedByExportIds: ['v1'] }
+		{ a: 'r1', b: 'r2', isSuggested: true, matchedByExportIds: ['v1', 'v2'] },
+		// Not suggested, but a vendor matched it: always included.
+		{ a: 'r4', b: 'r5', isSuggested: false, matchedByExportIds: ['v1'] }
 	])
 })
 

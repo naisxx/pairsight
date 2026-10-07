@@ -1,7 +1,6 @@
 // What PairSight can evaluate: people, organisations or products. Everything
 // that differs by type lives here — the fields a column can be mapped to, the
-// blocking presets and defaults, the record label, and how a pair is put to
-// Jev — so the rest of the code asks this registry instead of assuming people.
+// record label, and how a pair is put to Jev — so the rest of the code asks this registry instead of assuming people.
 // Client-safe: no server imports.
 
 import type { DerivedField } from './derived-keys'
@@ -99,29 +98,15 @@ export const ROLES_BY_TYPE = {
 	]
 } as const satisfies Record<EntityType, readonly IdentityRole[]>
 
-// The composite "name" a blocking rule can key on: whichever name fields the
-// mapping has. A mapping only ever holds one type's roles, so the sources
-// never compete.
-export const NAME_SOURCES: ReadonlyArray<readonly IdentityRole[]> = [
-	['full_name'],
-	['first_name', 'last_name'],
-	['company_name'],
-	['trading_name'],
-	['product_name']
-]
-
-// A field a blocking rule can key on: an identity field, or the composite name.
+// A field a record's cleaned keys are computed from (src/server/pairsight/
+// match-keys.ts): an identity field, or the composite name (whichever name
+// fields the mapping has: a full name, first + last, an organisation's or a
+// product's name).
 export type BaseField = IdentityRole | 'name'
 // ...as it is, or derived from it ("surname sounds like"): derived-keys.ts.
-export type BlockingField = BaseField | DerivedField
-
-export type RulePreset = { id: string; fields: readonly BlockingField[] }
+export type KeyField = BaseField | DerivedField
 
 type EntityConfig = {
-	// Blocking presets the Rules screen offers as toggles, and which are on
-	// for a new evaluation.
-	presets: readonly RulePreset[]
-	defaultRuleIds: readonly string[]
 	// The fields a record is shown by (results, pairs, exports), joined by a
 	// space; the reference when none are filled.
 	labelRoles: ReadonlyArray<readonly IdentityRole[]>
@@ -135,17 +120,6 @@ type EntityConfig = {
 
 export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
 	person: {
-		presets: [
-			{ id: 'email', fields: ['email'] },
-			{ id: 'phone', fields: ['phone'] },
-			{ id: 'name', fields: ['name'] },
-			{ id: 'name_postcode', fields: ['name', 'postcode'] },
-			{ id: 'last_name_postcode', fields: ['last_name', 'postcode'] },
-			{ id: 'surname_sound_birth_year', fields: ['last_name~sound', 'date_of_birth~year'] },
-			{ id: 'name_sound_district', fields: ['name~sound', 'postcode~district'] },
-			{ id: 'email_username', fields: ['email~local'] }
-		],
-		defaultRuleIds: ['email', 'phone', 'name_postcode'],
 		labelRoles: [['full_name'], ['first_name', 'last_name'], ['first_name'], ['last_name']],
 		monoRoles: ['email', 'phone', 'date_of_birth', 'postcode'],
 		question: {
@@ -159,19 +133,6 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
 		}
 	},
 	company: {
-		presets: [
-			{ id: 'website', fields: ['website'] },
-			{ id: 'registration_number', fields: ['registration_number'] },
-			{ id: 'tax_id', fields: ['tax_id'] },
-			{ id: 'phone', fields: ['phone'] },
-			{ id: 'email', fields: ['email'] },
-			{ id: 'name', fields: ['name'] },
-			{ id: 'name_postcode', fields: ['name', 'postcode'] },
-			{ id: 'name_city', fields: ['name', 'city'] },
-			{ id: 'name_words_district', fields: ['name~words', 'postcode~district'] },
-			{ id: 'name_prefix_city', fields: ['name~prefix', 'city'] }
-		],
-		defaultRuleIds: ['website', 'registration_number', 'name_postcode'],
 		labelRoles: [['company_name'], ['trading_name']],
 		monoRoles: ['registration_number', 'tax_id', 'website', 'email', 'phone', 'postcode'],
 		question: {
@@ -185,15 +146,6 @@ export const ENTITY_CONFIG: Record<EntityType, EntityConfig> = {
 		}
 	},
 	product: {
-		presets: [
-			{ id: 'gtin', fields: ['gtin'] },
-			{ id: 'mpn_brand', fields: ['mpn', 'brand'] },
-			{ id: 'sku_brand', fields: ['sku', 'brand'] },
-			{ id: 'name_brand', fields: ['name', 'brand'] },
-			{ id: 'name', fields: ['name'] },
-			{ id: 'name_words_brand', fields: ['name~words', 'brand'] }
-		],
-		defaultRuleIds: ['gtin', 'mpn_brand', 'name_brand'],
 		labelRoles: [['brand', 'product_name'], ['product_name']],
 		monoRoles: ['gtin', 'mpn', 'sku', 'model_number'],
 		question: {
@@ -212,44 +164,13 @@ export function rolesFor(type: EntityType): readonly IdentityRole[] {
 	return ROLES_BY_TYPE[type]
 }
 
-export function presetsFor(type: EntityType): readonly RulePreset[] {
-	return ENTITY_CONFIG[type].presets
-}
-
-// Every preset of every type, once per id (a shared id like "email" means the
-// same rule wherever it appears): how a saved rule is recognised as a preset.
-export const ALL_PRESETS: readonly RulePreset[] = [
-	...new Map(
-		ENTITY_TYPES.flatMap((type) => ENTITY_CONFIG[type].presets).map((preset) => [preset.id, preset])
-	).values()
-]
-
-export const MAX_PRESETS = Math.max(...ENTITY_TYPES.map((type) => presetsFor(type).length))
-
 // The fewest records PairSight can learn which pairs to suggest from
 // (src/server/pairsight/splink/; MIN_RECORDS in
-// services/splink/pairsight_splink/model.py), for every type.
-export const SUGGESTION_MIN_RECORDS = 200
+// services/splink/pairsight_splink/model.py): a smaller file is refused.
+export const MIN_RECORDS = 200
 
-// The rules an evaluation starts with: none where PairSight will suggest the
-// pairs (the rules wait under Advanced), the type's defaults where it can't
-// (too few records to learn from). Without a record count (a new
-// evaluation, before its file), as if it can.
-export function startingRules(
-	type: EntityType,
-	recordCount: number = SUGGESTION_MIN_RECORDS
-): Array<{ id: string; fields: BlockingField[] }> {
-	return recordCount >= SUGGESTION_MIN_RECORDS ? [] : defaultRules(type)
-}
-
-// The type's simple default rules: what a plan falls back to when nothing
-// else picks pairs (src/server/pairsight/plan.ts).
-export function defaultRules(type: EntityType): Array<{ id: string; fields: BlockingField[] }> {
-	const { presets, defaultRuleIds } = ENTITY_CONFIG[type]
-	return presets
-		.filter((preset) => defaultRuleIds.includes(preset.id))
-		.map((preset) => ({ id: preset.id, fields: [...preset.fields] }))
-}
+// Fields Jev must be sent: one alone can't tell two records apart.
+export const MIN_JEV_FIELDS = 2
 
 // A record's display name from its type's label fields, or null.
 export function labelFor(
