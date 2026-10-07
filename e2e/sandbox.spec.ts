@@ -65,10 +65,9 @@ test.describe('Sandbox', () => {
 		await expect(page.getByLabel('Sign up to add or change vendors')).toBeVisible()
 		await expect(page.getByLabel('What’s this vendor called?')).toBeDisabled()
 
-		// Rules: shown, not editable, and never saved.
-		await step(page, 'Rules').click()
+		// What Jev checks: shown, not editable, and never saved.
+		await step(page, 'What Jev checks').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/rules`)
-		await expect(page.getByRole('switch', { name: 'Same email rule' })).toBeDisabled()
 		await expect(page.getByLabel('When are two records the same?', { exact: true })).toBeDisabled()
 		await expect(
 			page
@@ -89,7 +88,7 @@ test.describe('Sandbox', () => {
 		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
 		const card = runs.getByRole('article', { name: /^Run 1 · Customer master/ })
 		await expect(card).toContainText('Complete · Started')
-		await expect(card).toContainText('8 pairs')
+		await expect(card).toContainText('265 pairs')
 		await card.getByRole('link', { name: 'View results' }).click()
 		await page.waitForURL(RESULTS)
 	})
@@ -102,16 +101,15 @@ test.describe('Sandbox', () => {
 		for (const name of NAMES) {
 			await expect(page.getByRole('link', { name, exact: true }).first()).toBeVisible()
 		}
-		// Each opens on its own: an organisation's rules, a product's fields.
+		// Each opens on its own: an organisation's definition, a product's fields.
 		await page
 			.getByRole('link', { name: 'Supplier master — vendor check', exact: true })
 			.first()
 			.click()
 		await page.waitForURL(RESULTS)
 		await expect(page.getByRole('radio', { name: 'Meridian Match' })).toBeVisible()
-		await step(page, 'Rules').click()
+		await step(page, 'What Jev checks').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.company}/rules`)
-		await expect(page.getByRole('switch', { name: 'Same website rule' })).toBeDisabled()
 		await expect(page.getByLabel('When are two records the same?', { exact: true })).toHaveValue(
 			/same organisation/
 		)
@@ -152,13 +150,13 @@ test.describe('Sandbox', () => {
 		const findings = await readWorkbook(await download.path())
 		expect(findings.header).toContain('Northwind Match: group')
 		expect(findings.header).toContain('Clearline Resolve: group')
-		expect(findings.rows).toHaveLength(8)
+		expect(findings.rows).toHaveLength(265)
 		// So is the summary report: both vendors ranked, and the one-line head to head.
 		const summary = await exportFindings(page, 1, /^Summary report/)
 		const report = await readPdfText(await summary.path())
 		expect(report).toContain('PairSight demo · sample data')
 		expect(report).toMatch(/1 Clearline Resolve .* 2 Northwind Match/)
-		expect(report).toContain('Jev sided with Clearline Resolve in 3 of 5')
+		expect(report).toContain('Jev sided with Northwind Match in 61 of 116')
 
 		// The threshold previews live; a run keeps its own, so there's no Apply.
 		await page.getByRole('button', { name: /^Match cut-off/ }).click()
