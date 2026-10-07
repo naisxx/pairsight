@@ -21,8 +21,8 @@ export type SplinkState = 'off' | 'waiting' | 'done' | 'skipped' | 'failed'
 export type SplinkPicks = {
 	state: SplinkState
 	pairs: CanonicalPair[]
-	// Why it was skipped (too few records, a type it doesn't do yet, or not
-	// set up on this server), when it was.
+	// Why it was skipped (too few records, or not set up on this server),
+	// when it was.
 	reason: string | null
 	// Of the pairs it suggests, how many share each reason, most common first
 	// (worked out once when the dataset was scored).
@@ -41,7 +41,7 @@ function reasonTally(summary: unknown): SplinkPicks['reasons'] {
 	)
 }
 
-const REASONS = ['too_few_records', 'not_people', 'not_set_up'] as const
+const REASONS = ['too_few_records', 'not_set_up'] as const
 export type SkipReason = (typeof REASONS)[number]
 
 function skipReason(summary: unknown): SkipReason | null {

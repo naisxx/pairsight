@@ -33,6 +33,8 @@ test('names collapse whitespace and case; postcodes drop spaces', () => {
 test('organisation names drop punctuation and a trailing legal form, never the whole name', () => {
 	assert.equal(normalizeCompanyName('Acme Ltd.'), 'acme')
 	assert.equal(normalizeCompanyName('ACME LIMITED'), 'acme')
+	assert.equal(normalizeCompanyName('Acme Public Limited Company'), 'acme')
+	assert.equal(normalizeCompanyName('Acme PLC'), 'acme')
 	assert.equal(normalizeCompanyName('Smith & Co'), 'smith and')
 	assert.equal(normalizeCompanyName('Müller GmbH'), 'müller')
 	assert.equal(normalizeCompanyName('Inc'), 'inc')

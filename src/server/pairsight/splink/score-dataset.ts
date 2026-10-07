@@ -8,6 +8,7 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { env } from '@/lib/env'
 import { captureError } from '@/lib/observability/capture-error'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db, type Prisma } from '@/server/db/client'
 import { log as rootLog } from '@/server/lib/logger'
 import { loadBlockingRecords } from '../blocking-records'
@@ -136,10 +137,7 @@ export async function scoreDataset(datasetId: string): Promise<void> {
 		where: { id: datasetId },
 		select: { evaluation: { select: { entityType: true, countryCode: true } } }
 	})
-	if (dataset.evaluation.entityType !== 'person') {
-		await finish(datasetId, 'skipped', { skipped: 'not_people' })
-		return
-	}
+	const entityType = entityTypeOf(dataset.evaluation.entityType)
 	const python = splinkPython()
 	if (python == null) {
 		await finish(datasetId, 'skipped', { skipped: 'not_set_up' })
@@ -151,11 +149,14 @@ export async function scoreDataset(datasetId: string): Promise<void> {
 		const outPath = path.join(folder, 'pairs.csv')
 		const records = await loadBlockingRecords(datasetId)
 		await pipeline(
-			Readable.from(splinkRecordLines(records, dataset.evaluation.countryCode)),
+			Readable.from(
+				splinkRecordLines(records, { type: entityType, country: dataset.evaluation.countryCode })
+			),
 			createWriteStream(recordsPath)
 		)
 		const summary: SplinkSummary = await runSplink({
 			python,
+			entityType,
 			recordsPath,
 			outPath,
 			maxPairs: LIMITS.maxPairsPerRun

@@ -1,6 +1,6 @@
 """PairSight's boundary with the Splink service: files in, files out.
 
-    python -m pairsight_splink score --records in.csv --out pairs.csv
+    python -m pairsight_splink score --entity-type person --records in.csv --out pairs.csv
 
 Reads the records PairSight wrote, writes the pairs worth keeping (best
 first, at or above STORE_FLOOR, at most --max-pairs of them), and prints one
@@ -20,7 +20,7 @@ import duckdb
 import pandas as pd
 import splink
 
-from .model import score
+from .model import ENTITY_TYPES, score, spec_for
 from .reasons import reasons
 
 # Pairs scoring below this aren't kept: on the benchmark (scripts/splink-spike/)
@@ -50,15 +50,17 @@ def _logging() -> None:
     splink_logger.setLevel(logging.ERROR)
 
 
-def run(records_path: Path, out_path: Path, max_pairs: int, memory_limit: str) -> dict:
+def run(
+    records_path: Path, out_path: Path, entity_type: str, max_pairs: int, memory_limit: str
+) -> dict:
     records = pd.read_csv(records_path, dtype=str, keep_default_na=False)
-    scored = score(records, memory_limit=memory_limit)
+    scored = score(records, entity_type=entity_type, memory_limit=memory_limit)
     kept = (
         scored.pairs[scored.pairs["match_weight"] >= STORE_FLOOR]
         .sort_values("match_weight", ascending=False)
         .head(max_pairs)
     )
-    kept = kept.assign(reasons=reasons(kept))[
+    kept = kept.assign(reasons=reasons(kept, spec_for(entity_type).level_reasons))[
         ["a", "b", "match_weight", "match_probability", "reasons"]
     ]
     kept.to_csv(out_path, index=False)
@@ -75,6 +77,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="pairsight_splink")
     commands = parser.add_subparsers(dest="command", required=True)
     score_command = commands.add_parser("score", help="score the pairs in a file of records")
+    score_command.add_argument("--entity-type", choices=ENTITY_TYPES, required=True)
     score_command.add_argument("--records", type=Path, required=True)
     score_command.add_argument("--out", type=Path, required=True)
     score_command.add_argument("--max-pairs", type=int, default=DEFAULT_MAX_PAIRS)
@@ -82,7 +85,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
 
     _logging()
-    summary = run(args.records, args.out, args.max_pairs, args.memory_limit)
+    summary = run(args.records, args.out, args.entity_type, args.max_pairs, args.memory_limit)
     print(json.dumps(summary))
     return 0
 

@@ -1,11 +1,12 @@
-"""Benchmark for the Splink service (services/splink, roadmap item 5).
+"""Benchmark for the Splink service (services/splink, roadmap items 5 and 10).
 
 Scores out/<name>/records.csv (written by export.mts) with the service's own
 model, exactly as the run worker would, and writes out/<name>/predictions.parquet
 (every pair in the wide net: a, b, match weight) and out/<name>/splink.json
 (versions, timings, peak memory). score.py then compares it with our rules.
 
-Usage: services/splink/.venv/Scripts/python scripts/splink-spike/run.py <hard|10k|100k>
+Usage: services/splink/.venv/Scripts/python scripts/splink-spike/run.py <type>-<size>
+(a folder export.mts wrote, e.g. company-10k)
 """
 
 import json
@@ -25,8 +26,9 @@ MEMORY_LIMIT = "1500MB"
 
 
 def main(name: str) -> None:
+    meta = json.loads((OUT / name / "meta.json").read_text())
     records = pd.read_csv(OUT / name / "records.csv", dtype=str, keep_default_na=False)
-    scored = score(records, memory_limit=MEMORY_LIMIT)
+    scored = score(records, entity_type=meta["type"], memory_limit=MEMORY_LIMIT)
     scored.pairs.to_parquet(OUT / name / "predictions.parquet", index=False)
     peak = psutil.Process().memory_info().peak_wset if sys.platform == "win32" else None
     report = {
@@ -44,6 +46,6 @@ def main(name: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2 or sys.argv[1] not in ("hard", "10k", "100k"):
-        sys.exit("Usage: run.py <hard|10k|100k>")
+    if len(sys.argv) != 2 or not (OUT / sys.argv[1] / "meta.json").exists():
+        sys.exit("Usage: run.py <type>-<size>, after export.mts")
     main(sys.argv[1])

@@ -226,23 +226,20 @@ export const ALL_PRESETS: readonly RulePreset[] = [
 
 export const MAX_PRESETS = Math.max(...ENTITY_TYPES.map((type) => presetsFor(type).length))
 
-// The types PairSight suggests pairs for by itself
-// (src/server/pairsight/splink/), and the fewest records it can learn from
-// (MIN_RECORDS in services/splink/pairsight_splink/model.py).
-export const SUGGESTED_TYPES: readonly EntityType[] = ['person']
+// The fewest records PairSight can learn which pairs to suggest from
+// (src/server/pairsight/splink/; MIN_RECORDS in
+// services/splink/pairsight_splink/model.py), for every type.
 export const SUGGESTION_MIN_RECORDS = 200
 
 // The rules an evaluation starts with: none where PairSight will suggest the
 // pairs (the rules wait under Advanced), the type's defaults where it can't
-// (another type, or too few records to learn from). Without a record count
-// (a new evaluation, before its file), as if it can.
+// (too few records to learn from). Without a record count (a new
+// evaluation, before its file), as if it can.
 export function startingRules(
 	type: EntityType,
 	recordCount: number = SUGGESTION_MIN_RECORDS
 ): Array<{ id: string; fields: BlockingField[] }> {
-	return SUGGESTED_TYPES.includes(type) && recordCount >= SUGGESTION_MIN_RECORDS
-		? []
-		: defaultRules(type)
+	return recordCount >= SUGGESTION_MIN_RECORDS ? [] : defaultRules(type)
 }
 
 // The type's simple default rules: what a plan falls back to when nothing

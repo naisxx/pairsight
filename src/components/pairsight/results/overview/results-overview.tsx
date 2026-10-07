@@ -1,6 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Reveal } from '@/components/ui/reveal'
 import type { Category } from '@/lib/pairsight/decisions'
+import type { EntityType } from '@/lib/pairsight/entity-types'
 import { SPLINK_RULE_ID } from '@/lib/pairsight/suggested'
 import type { ResultsOverview as OverviewData } from '@/server/pairsight/result-overview'
 import { CategorySummary } from './category-summary'
@@ -34,6 +35,7 @@ export function ResultsOverview({
 	overview,
 	vendorName,
 	vendorId,
+	entityType,
 	threshold,
 	ruleLabels,
 	detailed,
@@ -43,6 +45,7 @@ export function ResultsOverview({
 	overview: OverviewData
 	vendorName: string
 	vendorId: string
+	entityType: EntityType
 	threshold: number
 	ruleLabels: Record<string, string>
 	// The detailed view with some filters set (the rest cleared).
@@ -77,7 +80,11 @@ export function ResultsOverview({
 				<Reveal index={index++} className="@5xl:col-span-4 @5xl:row-span-2">
 					<CoveragePanel
 						coverage={overview.coverage}
-						usedSuggestions={overview.sources.some((source) => source.ruleId === SPLINK_RULE_ID)}
+						suggestedType={
+							overview.sources.some((source) => source.ruleId === SPLINK_RULE_ID)
+								? entityType
+								: null
+						}
 						className="h-full"
 					/>
 				</Reveal>

@@ -24,3 +24,10 @@
 --   - Merge conflict in this file? Keep only your SQL. The other side already ran.
 --
 -- Full policy: docs/rules/migrations.md, "Run-once SQL".
+
+-- Organisations and products now get suggested pairs too: their datasets,
+-- skipped before as "not people", go back in the queue. The next plan that
+-- needs them waits while they're scored.
+UPDATE source_datasets
+SET "scoreStatus" = 'pending', "scoreClaimedAt" = NULL, "scoreSummary" = NULL
+WHERE "scoreStatus" = 'skipped' AND "scoreSummary"->>'skipped' = 'not_people';

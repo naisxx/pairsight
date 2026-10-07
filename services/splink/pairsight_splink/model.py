@@ -1,12 +1,13 @@
-"""Which pairs of people are worth checking, scored by Splink on DuckDB.
+"""Which pairs of records are worth checking, scored by Splink on DuckDB.
 
 Splink is the Fellegi-Sunter model trained without labels: it learns how
-often real duplicates and unrelated people agree on each field, and scores
+often real duplicates and unrelated records agree on each field, and scores
 every pair inside a wide net. It never decides a match; PairSight's Jev
 does (docs/rules/splink-service.md).
 
-The records arrive cleaned by PairSight's own blocking code (the columns in
-RECORD_COLUMNS), so Splink and the comparison rules start from the same keys.
+Each type has its own model (person.py, company.py, product.py). The records
+arrive cleaned by PairSight's own code (each spec's columns), so Splink and
+Jev's comparison view start from the same values.
 """
 
 from __future__ import annotations
@@ -16,40 +17,34 @@ from dataclasses import dataclass, field
 
 import duckdb
 import pandas as pd
-import splink.comparison_library as cl
 from splink import DuckDBAPI, Linker, SettingsCreator, block_on
 
-# The columns PairSight writes (src/server/pairsight/splink/records.ts).
-RECORD_COLUMNS = (
-    "unique_id",
-    "first_name",
-    "last_name",
-    "full_name",
-    "first_dm",
-    "surname_dm",
-    "name_dm",
-    "email",
-    "email_local",
-    "phone",
-    "dob",
-    "dob_year",
-    "postcode",
-    "postcode_district",
-    "city",
-)
+from . import company, person, product
+from .spec import Spec
+
+SPECS: dict[str, Spec] = {
+    "person": person.SPEC,
+    "company": company.SPEC,
+    "product": product.SPEC,
+}
+ENTITY_TYPES = tuple(SPECS)
 
 # Fewer records than this give EM too little to learn from: the scores would
-# be the library's defaults, not this file's.
+# be the library's defaults, not the model's. PairSight refuses smaller files.
 MIN_RECORDS = 200
 # Fixed so the same file always gives the same pairs.
 SEED = 1
-# Pairs sampled to learn how often unrelated people agree on each field.
+# Pairs sampled to learn how often unrelated records agree on each field.
 U_SAMPLE_PAIRS = 2_000_000
-# How often two random records are the same person, estimated from pairs
-# that share an email or a phone, assuming those catch about this share.
+# How often two random records are the same thing, estimated from pairs that
+# share the spec's most precise keys, assuming those catch about this share.
 DETERMINISTIC_RECALL = 0.7
-# A UK postcode's inward code (its last three characters) follows a space.
-INWARD_LENGTH = 3
+# The least share of real duplicates any level may be trained to hold. A file
+# of a couple of thousand records gives EM a handful of examples per level,
+# and it can learn that duplicates "never" have, say, a swapped name or
+# another email (weights of -400 or worse), so one such difference vetoes a
+# real duplicate. Floored, a difference counts against, but never alone.
+M_FLOOR = 0.05
 
 
 @dataclass
@@ -60,94 +55,59 @@ class Scored:
     summary: dict = field(default_factory=dict)
 
 
-def _spaced_postcode(value: str | None) -> str | None:
-    # Splink's postcode comparison reads the usual spaced form ("SO4 5HQ").
-    if value is None or len(value) <= INWARD_LENGTH:
-        return value
-    return f"{value[:-INWARD_LENGTH]} {value[-INWARD_LENGTH:]}"
+def spec_for(entity_type: str) -> Spec:
+    if entity_type not in SPECS:
+        raise ValueError(f"unknown entity type: {entity_type}")
+    return SPECS[entity_type]
 
 
-def prepare(records: pd.DataFrame) -> pd.DataFrame:
+def prepare(records: pd.DataFrame, entity_type: str) -> pd.DataFrame:
     """The records as Splink reads them: empty values as missing."""
-    missing = [column for column in RECORD_COLUMNS if column not in records.columns]
+    spec = spec_for(entity_type)
+    missing = [column for column in spec.columns if column not in records.columns]
     if missing:
         raise ValueError(f"records are missing columns: {', '.join(missing)}")
-    prepared = records.loc[:, list(RECORD_COLUMNS)].astype("object")
+    prepared = records.loc[:, list(spec.columns)].astype("object")
     prepared = prepared.where(prepared.notna() & (prepared != ""), None)
-    prepared["postcode_spaced"] = prepared["postcode"].map(_spaced_postcode)
-    return prepared
+    # As text throughout: a column empty in every row would otherwise reach
+    # DuckDB untyped, and be read as a number.
+    return spec.derive(prepared).astype("string")
 
 
-# Starting guesses for how often a real duplicate lands in each level, for
-# the levels training can't see: a file of a few thousand records may hold no
-# swapped names or close spellings inside the training groups, and Splink's
-# own fallback then rates them as unlikely as a stranger. Training replaces
-# every level it does see. In level order, best first; each adds up to 1.
-NAME_M = [
-    0.55,  # exact full name
-    0.10,  # first and last swapped
-    0.10,  # both names very close (Jaro-Winkler >= 0.92)
-    0.05,  # both names close (>= 0.88)
-    0.10,  # same surname only (a nickname, a new first name)
-    0.05,  # same first name only (a new surname)
-    0.05,  # neither
-]
-DOB_M = [
-    0.75,  # same date
-    0.05,  # one character off (a typo)
-    0.03,  # within a month
-    0.02,  # within a year
-    0.05,  # within ten years
-    0.10,  # further apart
-]
-
-
-def settings() -> SettingsCreator:
+def settings(spec: Spec) -> SettingsCreator:
     return SettingsCreator(
         link_type="dedupe_only",
         unique_id_column_name="unique_id",
-        comparisons=[
-            # Names: graded similarity, a level for first and last swapped,
-            # and term frequency so sharing "Smith" counts for less.
-            cl.ForenameSurnameComparison(
-                "first_name",
-                "last_name",
-                forename_surname_concat_col_name="full_name",
-            ).configure(m_probabilities=NAME_M),
-            cl.DateOfBirthComparison("dob", input_is_string=True).configure(m_probabilities=DOB_M),
-            cl.EmailComparison("email"),
-            cl.ExactMatch("phone"),
-            cl.PostcodeComparison("postcode_spaced"),
-            cl.ExactMatch("city").configure(term_frequency_adjustments=True),
-        ],
-        # The wide net: every pair sharing any of these is scored. What it
-        # misses Splink can never find. Surname sound alone was 73M pairs at
-        # 100K records (common surnames), so it's narrowed by birth year.
-        blocking_rules_to_generate_predictions=[
-            block_on("surname_dm", "dob_year"),
-            block_on("first_dm", "postcode_district"),
-            block_on("email_local"),
-            block_on("phone"),
-            block_on("dob"),
-            block_on("postcode"),
-        ],
+        comparisons=spec.comparisons(),
+        blocking_rules_to_generate_predictions=spec.wide_net(),
         retain_intermediate_calculation_columns=False,
     )
 
 
-# Each EM pass is blocked on something precise (mostly the same person) and
-# trains the fields it isn't blocked on. Loose blocks first (same birth date,
-# same surname sound) made EM settle on "same family", not "same person".
-TRAINING_BLOCKS = (
-    ("email_local",),
-    ("full_name",),
-    ("surname_dm", "dob"),
-)
+def floored(model: dict) -> dict:
+    """The trained model with every learned m at least M_FLOOR, each
+    comparison's m renormalised to add up to 1. Held levels stay as set."""
+    for comparison in model["comparisons"]:
+        levels = [
+            level
+            for level in comparison["comparison_levels"]
+            if not level.get("is_null_level") and level.get("m_probability") is not None
+        ]
+        held = sum(level["m_probability"] for level in levels if level.get("fix_m_probability"))
+        learned = [level for level in levels if not level.get("fix_m_probability")]
+        for level in learned:
+            level["m_probability"] = max(level["m_probability"], M_FLOOR)
+        total = sum(level["m_probability"] for level in learned)
+        if total > 0:
+            for level in learned:
+                level["m_probability"] *= (1 - held) / total
+    return model
 
 
-def score(records: pd.DataFrame, memory_limit: str) -> Scored:
+def score(records: pd.DataFrame, entity_type: str, memory_limit: str) -> Scored:
     """Trains on the records themselves (no labels) and scores the wide net."""
-    prepared = prepare(records)
+    spec = spec_for(entity_type)
+    prepared = prepare(records, entity_type)
     if len(prepared) < MIN_RECORDS:
         return Scored(
             pairs=pd.DataFrame(columns=["a", "b", "match_weight", "match_probability"]),
@@ -164,26 +124,29 @@ def score(records: pd.DataFrame, memory_limit: str) -> Scored:
 
     connection = duckdb.connect()
     connection.execute(f"SET memory_limit = '{memory_limit}'")
-    linker = Linker(prepared, settings(), DuckDBAPI(connection=connection))
+    linker = Linker(prepared, settings(spec), DuckDBAPI(connection=connection))
     training = linker.training
     timed(
         "prior",
         lambda: training.estimate_probability_two_random_records_match(
-            [block_on("email"), block_on("phone")], recall=DETERMINISTIC_RECALL
+            spec.prior_blocks(), recall=DETERMINISTIC_RECALL
         ),
     )
     timed(
         "u",
         lambda: training.estimate_u_using_random_sampling(max_pairs=U_SAMPLE_PAIRS, seed=SEED),
     )
-    for columns in TRAINING_BLOCKS:
+    for columns in spec.training_blocks:
         timed(
             f"em_{'_'.join(columns)}",
             lambda columns=columns: training.estimate_parameters_using_expectation_maximisation(
                 block_on(*columns)
             ),
         )
-    predictions = timed("predict", lambda: linker.inference.predict().as_pandas_dataframe())
+    trained = Linker(
+        prepared, floored(linker.misc.save_model_to_json()), DuckDBAPI(connection=connection)
+    )
+    predictions = timed("predict", lambda: trained.inference.predict().as_pandas_dataframe())
 
     pairs = pd.DataFrame(
         {
@@ -205,6 +168,7 @@ def score(records: pd.DataFrame, memory_limit: str) -> Scored:
     return Scored(
         pairs=pairs,
         summary={
+            "entity_type": entity_type,
             "records": len(prepared),
             "pairs_scored": len(pairs),
             "seconds": timings,

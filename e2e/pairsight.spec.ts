@@ -1029,6 +1029,57 @@ test.describe('PairSight vertical slice', () => {
 		)
 	})
 
+	// 2,000 fictional organisations and products with planted duplicates
+	// (scripts/scale/companies.mts, products.mts; seed 42).
+	for (const { type, file, kind, thing, shared } of [
+		{
+			type: 'organisations',
+			file: 'companies-2000',
+			kind: /^Organisations/,
+			thing: 'organisation',
+			shared: 'a company number'
+		},
+		{
+			type: 'products',
+			file: 'products-2000',
+			kind: /^Products/,
+			thing: 'product',
+			shared: 'a barcode'
+		}
+	]) {
+		test(`PairSight suggests the pairs for ${type} too`, async ({ page }) => {
+			test.slow()
+			await signUp(page)
+			await createEvaluation(page, `Suggested ${type}`)
+			await uploadFile(page, `${file}.csv`)
+			await expect(page.getByRole('radio', { name: kind })).toBeChecked()
+			await page.getByRole('button', { name: 'Next: vendors' }).click()
+			await page.waitForURL('**/vendors')
+			await addVendor(page, `${file}-vendor.csv`)
+			await expectVendorPairs(page, 1)
+			await page.getByRole('link', { name: 'Next: rules' }).click()
+			await page.waitForURL('**/rules')
+
+			const suggestions = page.getByRole('region', { name: 'PairSight suggests the pairs' })
+			await expect(suggestions).toContainText(`most likely to be the same ${thing}`)
+			await expect(suggestions).toContainText(/pairs suggested/, { timeout: 60_000 })
+			await expect(suggestions).toContainText('Most suggested pairs share')
+			await expect(suggestions).toContainText(
+				/These would also find 1 of the 1 pairs Vendor A matched/
+			)
+
+			await reviewPlan(page)
+			await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
+				/Pairs PairSight suggested\s*\+\d+/
+			)
+			await startRun(page)
+			await expect(
+				page.getByText(`PairSight suggested pairs that share something it compares: ${shared}`)
+			).toBeVisible()
+			await expect(page.locator('body')).not.toContainText(/splink/i)
+		})
+	}
+
 	test('a run over the old 5,000 limit plans, starts and finishes', async ({ page }) => {
 		test.slow()
 		await signUp(page)

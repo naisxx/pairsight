@@ -1,19 +1,13 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import {
-	defaultRules,
-	startingRules,
-	SUGGESTED_TYPES,
-	SUGGESTION_MIN_RECORDS
-} from './entity-types'
+import { defaultRules, ENTITY_TYPES, startingRules, SUGGESTION_MIN_RECORDS } from './entity-types'
 
-test('people start with no rules (PairSight suggests); other types start with their defaults', () => {
-	assert.ok(SUGGESTED_TYPES.includes('person'))
-	assert.deepEqual(startingRules('person'), [])
-	assert.deepEqual(startingRules('company'), defaultRules('company'))
-	assert.deepEqual(startingRules('product'), defaultRules('product'))
-	assert.ok(defaultRules('person').length > 0)
-	// Too few records to learn from: the simple rules, saved and on.
-	assert.deepEqual(startingRules('person', SUGGESTION_MIN_RECORDS - 1), defaultRules('person'))
-	assert.deepEqual(startingRules('person', SUGGESTION_MIN_RECORDS), [])
+test('every type starts with no rules (PairSight suggests) once it has enough records', () => {
+	for (const type of ENTITY_TYPES) {
+		assert.deepEqual(startingRules(type), [])
+		assert.deepEqual(startingRules(type, SUGGESTION_MIN_RECORDS), [])
+		// Too few records to learn from: the simple rules, saved and on.
+		assert.ok(defaultRules(type).length > 0)
+		assert.deepEqual(startingRules(type, SUGGESTION_MIN_RECORDS - 1), defaultRules(type))
+	}
 })

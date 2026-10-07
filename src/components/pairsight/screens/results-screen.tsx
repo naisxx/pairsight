@@ -21,6 +21,7 @@ import { RunNotFinished } from '@/components/pairsight/results/run-not-finished'
 import { getRunResults, parseResultFilters } from '@/server/pairsight/results'
 import { getRunProgress } from '@/server/pairsight/runs'
 import { runBase } from '@/lib/pairsight/evaluation-view'
+import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { parseBlockingRules } from '@/server/pairsight/json'
 import type { LoadedWorkspace, loadRun } from '@/server/pairsight/evaluation-pages'
 import { SPLINK_RULE_ID } from '@/server/pairsight/plan-summary'
@@ -174,6 +175,7 @@ export async function ResultsScreen({
 						overview={results.overview}
 						vendorName={vendorName}
 						vendorId={vendorId}
+						entityType={entityTypeOf(run.entityType)}
 						threshold={run.threshold}
 						ruleLabels={ruleLabels}
 						detailed={detailed}
