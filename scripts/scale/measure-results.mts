@@ -21,7 +21,6 @@ import {
 import type { ResultFilters } from '../../src/server/pairsight/result-rows.ts'
 import {
 	buildRunSummary,
-	fuzzyRuleIdsOf,
 	readRunSummary,
 	runVendors
 } from '../../src/server/pairsight/run-summary.ts'
@@ -46,8 +45,7 @@ const run = await db.run.findUniqueOrThrow({ where: { id: runId } })
 await ensureRecordKeys({ datasetId: run.datasetId, entityType: run.entityType })
 const vendors = await runVendors(run.exportIds)
 const vendorId = vendors[0]?.id
-const fuzzyRuleIds = fuzzyRuleIdsOf(run.blockingRules)
-const context: PairContext = { runId, threshold: run.threshold, vendorId, fuzzyRuleIds }
+const context: PairContext = { runId, threshold: run.threshold, vendorId }
 
 await timed('summary built (background, when the run finishes)', () => buildRunSummary(run))
 await timed('Overview read (stored summary + its top pairs)', async () => {
@@ -65,7 +63,7 @@ const lists: Array<[string, ResultFilters]> = [
 	['every pair, by score', { sort: 'score-asc' }],
 	['disagreements', { category: 'disagreements' }],
 	['close calls', { score: 'near' }],
-	['found only by close-match rules', { source: 'fuzzy' }],
+	['suggested by PairSight', { source: 'suggested' }],
 	['Jev says same, by score', { score: 'above', sort: 'score-desc' }]
 ]
 for (const [label, filters] of lists) {

@@ -1,5 +1,5 @@
 import 'server-only'
-import { entityTypeOf, startingRules, type EntityType } from '@/lib/pairsight/entity-types'
+import { entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
 import { env } from '@/lib/env'
 import { db } from '@/server/db/client'
 import { defaultIdentity } from './judgment'
@@ -8,7 +8,6 @@ import { isIdentityRole, type FieldRole } from './fields'
 import { getOwnedEvaluation } from './evaluations'
 import { recordKeys } from './record-keys'
 import { chunks } from './chunks'
-import { parseBlockingRules } from './json'
 
 // Records written per statement.
 const SAVE_BATCH = 5_000
@@ -58,21 +57,14 @@ export async function saveSourceDataset({
 	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
 	const jevFields = [...new Set(Object.values(columnRoles).filter(isIdentityRole))]
 	// A replacement of another kind starts from the new type's identity
-	// definition and rules; the same type keeps what the user set. With no
-	// rules on yet (a new evaluation), its starting rules follow the file:
-	// none where PairSight will suggest the pairs, the defaults where it can't.
+	// definition; the same type keeps what the user set.
 	const isSameType = entityTypeOf(evaluation.entityType) === entityType
-	const hasNoRules = parseBlockingRules(evaluation.blockingRules).length === 0
 	const typeDefaults = isSameType
-		? {
-				entityType,
-				...(hasNoRules ? { blockingRules: startingRules(entityType, rowCount) } : {})
-			}
+		? { entityType }
 		: {
 				entityType,
 				identitySame: defaultIdentity(entityType).same,
-				identityDifferent: defaultIdentity(entityType).different,
-				blockingRules: startingRules(entityType, rowCount)
+				identityDifferent: defaultIdentity(entityType).different
 			}
 	const dataset = await db.sourceDataset.create({
 		data: { evaluationId, fileName, rowCount, referenceColumn, columnRoles, savedAt: null },

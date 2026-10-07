@@ -10,10 +10,14 @@ import path from 'node:path'
 // stripped before reading.
 const RETIRED: Array<[RegExp, string]> = [
 	[/\bbuckets?\b/i, 'say "group"'],
-	[/\bblocking\b/i, 'say "comparison rules"'],
+	[/\bblocking\b/i, 'say "the pairs PairSight suggests"'],
+	[
+		/\b(comparison|close-match) rules?\b|\byour (own )?rules?\b/i,
+		'PairSight picks the pairs to check: there are no rules to set'
+	],
 	[/\bcandidates?\b/i, 'say "pairs to check"'],
-	[/\bcomposite\b/i, 'say "your own rule"'],
-	[/\bpresets?\b/i, 'say "suggested rules"'],
+	[/\bcomposite\b/i, 'say what the records share'],
+	[/\bpresets?\b/i, 'say what the setting does'],
 	[/\bnormali[sz]/i, 'say what was tidied up'],
 	[/\bassess/i, 'say "check"'],
 	[/\bharmonic\b/i, 'say "balances the two"'],

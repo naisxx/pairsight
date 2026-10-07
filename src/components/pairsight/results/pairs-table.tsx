@@ -34,8 +34,7 @@ export function PairsTable({
 	filters,
 	rows,
 	threshold,
-	vendorName,
-	ruleLabels
+	vendorName
 }: {
 	runId: string
 	base: string
@@ -43,7 +42,6 @@ export function PairsTable({
 	rows: ResultRow[]
 	threshold: number
 	vendorName: string
-	ruleLabels: Record<string, string>
 }) {
 	const t = useTranslations('Results')
 	const tFailures = useTranslations('Failures')
@@ -116,12 +114,9 @@ export function PairsTable({
 				<tbody>
 					{rows.map((row) => {
 						const isSelected = row.id === filters.sel
-						const reason =
-							row.ruleIds.length === 0
-								? t('reasonVendor', { vendor: vendorName })
-								: t('reasonRules', {
-										rules: row.ruleIds.map((ruleId) => ruleLabels[ruleId] ?? ruleId).join(', ')
-									})
+						const reason = row.isSuggested
+							? t('reasonSuggested')
+							: t('reasonVendor', { vendor: vendorName })
 						return (
 							<tr
 								key={row.id}

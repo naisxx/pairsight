@@ -22,7 +22,7 @@ function pair(id: string, a: string, b: string, overrides: Partial<PairInput> = 
 		id,
 		recordAId: `id-${a}`,
 		recordBId: `id-${b}`,
-		ruleIds: ['email'],
+		isSuggested: true,
 		matchedByExportIds: [],
 		assessment: { status: 'succeeded', score: 0.9, errorCode: null },
 		...overrides
@@ -33,7 +33,7 @@ const pairs: PairInput[] = [
 	pair('p1', 'R10', 'R2', { matchedByExportIds: ['v1'] }),
 	pair('p2', 'R3', 'R4', { assessment: { status: 'succeeded', score: 0.55, errorCode: null } }),
 	pair('p3', 'R2', 'R3', {
-		ruleIds: [],
+		isSuggested: false,
 		matchedByExportIds: ['v1'],
 		assessment: { status: 'succeeded', score: 0.1, errorCode: null }
 	}),
@@ -76,20 +76,9 @@ test('the list puts disagreements first and filters by category, source, confide
 		applyFilters(rows, { lowConfidence: '1' }).map((row) => row.id),
 		['p2']
 	)
-	// Fuzzy-only: every rule that found the pair is a fuzzy one.
-	const fuzzyRows = buildRows({
-		pairs: [
-			pair('f1', 'R2', 'R3', { ruleIds: ['name_sound_district'] }),
-			pair('f2', 'R3', 'R4', { ruleIds: ['email', 'name_sound_district'] })
-		],
-		records,
-		threshold: 0.5,
-		vendorId: 'v1',
-		fuzzyRuleIds: new Set(['name_sound_district'])
-	})
 	assert.deepEqual(
-		applyFilters(fuzzyRows, { source: 'fuzzy' }).map((row) => row.id),
-		['f1']
+		applyFilters(rows, { source: 'suggested' }).map((row) => row.id),
+		['p2', 'p1', 'p4']
 	)
 	assert.deepEqual(
 		applyFilters(rows, { category: 'incomplete' }).map((row) => row.id),

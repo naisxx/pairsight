@@ -6,20 +6,13 @@ import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { SpinnerIcon } from '@/components/ui/icons'
 import { toast } from '@/lib/toast'
-import { turnOffRuleAction } from '@/server/actions/pairsight/rules'
+import { retrySuggestionsAction } from '@/server/actions/pairsight/rules'
 
 const SPINNER_SIZE = 13
 
-// Switches one rule off from the over-limit list, then recounts the plan.
-export function TurnOffRuleButton({
-	evaluationId,
-	ruleId,
-	label
-}: {
-	evaluationId: string
-	ruleId: string
-	label: string
-}) {
+// Asks PairSight to work out the pairs to check again, after it couldn't;
+// the plan then waits for them and refreshes itself.
+export function RetrySuggestionsButton({ evaluationId }: { evaluationId: string }) {
 	const t = useTranslations('Plan')
 	const router = useRouter()
 	const [isPending, startTransition] = useTransition()
@@ -27,23 +20,21 @@ export function TurnOffRuleButton({
 		<Button
 			variant="secondary"
 			size="sm"
-			className="ml-auto h-7"
+			className="h-7"
 			disabled={isPending}
-			aria-label={t('turnOffLabel', { rule: label })}
 			onClick={() =>
 				startTransition(async () => {
-					const result = await turnOffRuleAction({ evaluationId, ruleId })
+					const result = await retrySuggestionsAction({ evaluationId })
 					if (!result.ok) {
 						toast({ title: result.error, variant: 'destructive' })
 						return
 					}
-					toast({ title: t('turnedOff', { rule: label }) })
 					router.refresh()
 				})
 			}
 		>
 			{isPending && <SpinnerIcon size={SPINNER_SIZE} />}
-			{t('turnOff')}
+			{t('retrySuggestions')}
 		</Button>
 	)
 }

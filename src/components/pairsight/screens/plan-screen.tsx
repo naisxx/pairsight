@@ -17,9 +17,6 @@ import { computePlan } from '@/server/pairsight/plan'
 import { listVendors } from '@/server/pairsight/vendor-exports'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 import { ReadOnlyGate } from '@/components/pairsight/read-only'
-import { runnableRules } from '@/lib/pairsight/rule-fields'
-import { mappedIdentityRoles } from '@/server/pairsight/fields'
-import { parseColumnRoles } from '@/server/pairsight/json'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
 
 const ICON_SIZE = 15
@@ -38,35 +35,21 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	])
 	const counts = ('counts' in plan ? plan.counts : undefined) ?? null
 	const contributors = ('contributors' in plan ? plan.contributors : undefined) ?? []
-	const splink = ('splink' in plan ? plan.splink : undefined) ?? {
-		state: 'off' as const,
-		reason: null
-	}
+	const splink = ('splink' in plan ? plan.splink : undefined) ?? null
 	const drafts = vendors.filter((vendor) => vendor.kind === 'draft').map((vendor) => vendor.name)
-	const ruleMatches = contributors.reduce(
-		(sum, item) => (item.kind === 'rule' ? sum + item.pairCount : sum),
-		0
-	)
-	// Rules that can run on this mapping; one whose field isn't mapped finds nothing.
-	const ruleCount =
-		dataset == null
-			? 0
-			: runnableRules(plan.rules, mappedIdentityRoles(parseColumnRoles(dataset.columnRoles))).length
 	const [firstBlocker] = plan.blockers
 	const blockedReason =
 		firstBlocker == null
 			? null
 			: firstBlocker === 'too_many_pairs'
-				? counts?.isExact === false
-					? t('blockedOverMany')
-					: t('blockedOver', { count: (counts?.uniquePairs ?? 0) - LIMITS.maxPairsPerRun })
+				? t('blockedOver', { count: (counts?.uniquePairs ?? 0) - LIMITS.maxPairsPerRun })
 				: t(firstBlocker)
 
 	return (
 		<>
 			<StepHeader title={t('title')} description={t('description')} />
 			{/* Splink is still looking: the plan fills in by itself when it's done. */}
-			<RefreshWhile isActive={splink.state === 'waiting'} />
+			<RefreshWhile isActive={splink?.state === 'waiting'} />
 
 			{drafts.length > 0 && (
 				<p className="bg-warning-subtle text-warning type-ui mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 rounded-sm p-3">
@@ -89,9 +72,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 						evaluationId={id}
 						blockers={plan.blockers}
 						contributors={contributors}
-						rules={plan.rules}
 						uniquePairs={counts?.uniquePairs ?? 0}
-						isExact={counts?.isExact ?? true}
 						maxPairsPerRun={LIMITS.maxPairsPerRun}
 					/>
 				</div>
@@ -99,12 +80,10 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 
 			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
 				<div className="@5xl:col-span-7">
-					{counts != null && dataset != null && (
+					{counts != null && dataset != null && splink != null && (
 						<PlanLedger
 							counts={counts}
 							fileName={dataset.fileName}
-							ruleMatches={ruleMatches}
-							ruleCount={ruleCount}
 							cost={format.number(estimateCostUsd(counts.toEvaluate), {
 								style: 'currency',
 								currency: 'USD',
@@ -113,9 +92,6 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 							duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
 							splink={splink}
 							entityType={entityTypeOf(workspace.evaluation.entityType)}
-							isUsingDefaultRules={
-								'isUsingDefaultRules' in plan && plan.isUsingDefaultRules === true
-							}
 							isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
 						/>
 					)}

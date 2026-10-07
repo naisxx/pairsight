@@ -28,8 +28,9 @@ someone who built PairSight, rewrite it.
 - **Say why.** Every step intro and every input says what we need, why we
   need it, and what it changes for you. "Vendor files point to records by
   this ID, so we can line their matches up with yours."
-- **Give the consequence, then an example.** "Rules decide which pairs Jev
-  checks (for example, records with the same email)."
+- **Give the consequence, then an example.** "The match cut-off decides
+  which pairs count as the same (for example, 0.62 lets more through than
+  0.80)."
 - **Errors say what happened and what to do**, in the reader's terms —
   never a variable name, a command, an HTTP status or a stack of jargon.
   The technical cause goes to the logs (`docs/rules/logging.md`) and
@@ -46,28 +47,29 @@ Strings to imitate: `Welcome.description`, `Records.noReference`,
 
 ## One word per thing
 
-| Thing                                   | Say                                                                                      | Don't say                                                            |
-| --------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| The AI that checks pairs                | **Jev** — introduced once per screen: "Jev, the AI that checks each pair"                | PairSight (as the judge), PairSight (AI), AI judgment, the reference |
-| What Jev gives a pair                   | **Jev's score** (0 to 1: how sure it is they're the same); **Jev says same / different** | assessment, judgment, decision (for Jev), verdict                    |
-| Doing that                              | **check**                                                                                | assess, evaluate, judge                                              |
-| Two records that might be the same      | **pair**; **pairs to check**                                                             | candidate, planned / evaluated / assessed pairs                      |
-| Rules that pick the pairs               | **comparison rules**; **suggested rules** and **your own rules**                         | blocking, candidate rules, presets, composite or custom rules        |
-| Records that share a value under a rule | **group**                                                                                | bucket, key                                                          |
-| A rule on a similar value               | **close match**                                                                          | fuzzy, derived, looser key                                           |
-| What counts as the same                 | **what counts as the same**                                                              | identity, identity instructions, definition                          |
-| The score a pair needs to be a match    | **match cut-off** (how sure Jev must be)                                                 | threshold, decision threshold                                        |
-| The project                             | **evaluation**                                                                           |                                                                      |
-| One round of Jev checking pairs         | **run**; the button is **Start run**                                                     | "Start evaluation"                                                   |
-| What a vendor gives you                 | **vendor file**: **a list of pairs** or **a list of groups**                             | export, match export, pair format, group format                      |
-| What PairSight gives you                | **download**                                                                             | export                                                               |
-| Your own data                           | **your records**                                                                         | source records, dataset, source file                                 |
-| The column that identifies each row     | **ID column**, **record ID**                                                             | reference, record reference                                          |
-| Saying which column holds what          | "tell us which column holds what"                                                        | map, mapping, role, PairSight field                                  |
-| Work not finished                       | **not checked yet**, **couldn't check**                                                  | pending, incomplete, provisional, partial                            |
-| Precision                               | **Correct merges** (tip: "also called precision")                                        |                                                                      |
-| Recall                                  | **Duplicates found** (tip: "also called recall")                                         |                                                                      |
-| F1                                      | **Overall score** (tip: "also called F1")                                                | harmonic mean                                                        |
+| Thing                                    | Say                                                                                      | Don't say                                                            |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| The AI that checks pairs                 | **Jev** — introduced once per screen: "Jev, the AI that checks each pair"                | PairSight (as the judge), PairSight (AI), AI judgment, the reference |
+| What Jev gives a pair                    | **Jev's score** (0 to 1: how sure it is they're the same); **Jev says same / different** | assessment, judgment, decision (for Jev), verdict                    |
+| Doing that                               | **check**                                                                                | assess, evaluate, judge                                              |
+| Two records that might be the same       | **pair**; **pairs to check**                                                             | candidate, planned / evaluated / assessed pairs                      |
+| The pairs PairSight picks to check       | **pairs PairSight suggests**; on a pair, **Suggested by PairSight**                      | blocking, comparison rules, your own rules, presets, composite       |
+| A pair added because a vendor matched it | **Added because a vendor matched it**                                                    | vendor-only pair, outside the rules                                  |
+| Records that share a value               | **group**                                                                                | bucket, key                                                          |
+| A similar, not identical, value          | **close match**                                                                          | fuzzy, derived, looser key                                           |
+| What counts as the same                  | **what counts as the same**                                                              | identity, identity instructions, definition                          |
+| The score a pair needs to be a match     | **match cut-off** (how sure Jev must be)                                                 | threshold, decision threshold                                        |
+| The project                              | **evaluation**                                                                           |                                                                      |
+| One round of Jev checking pairs          | **run**; the button is **Start run**                                                     | "Start evaluation"                                                   |
+| What a vendor gives you                  | **vendor file**: **a list of pairs** or **a list of groups**                             | export, match export, pair format, group format                      |
+| What PairSight gives you                 | **download**                                                                             | export                                                               |
+| Your own data                            | **your records**                                                                         | source records, dataset, source file                                 |
+| The column that identifies each row      | **ID column**, **record ID**                                                             | reference, record reference                                          |
+| Saying which column holds what           | "tell us which column holds what"                                                        | map, mapping, role, PairSight field                                  |
+| Work not finished                        | **not checked yet**, **couldn't check**                                                  | pending, incomplete, provisional, partial                            |
+| Precision                                | **Correct merges** (tip: "also called precision")                                        |                                                                      |
+| Recall                                   | **Duplicates found** (tip: "also called recall")                                         |                                                                      |
+| F1                                       | **Overall score** (tip: "also called F1")                                                | harmonic mean                                                        |
 
 The technical names (precision, recall, F1, match cut-off as
 "threshold") appear only in hover tips and the PDF glossary, so an
@@ -114,7 +116,9 @@ names, downloads or the PDF. Pairs PairSight picks by itself are
 **suggested by PairSight**; what they share is said in plain words ("the
 same date of birth", "first and last names swapped"). Code, ids and docs may
 keep the real names (`'splink'` among a pair's reasons, `services/splink`).
-`src/i18n/copy.test.mts` fails on the names.
+`src/i18n/copy.test.mts` fails on the names, and on "comparison rules",
+"close-match rules" and "your (own) rules": PairSight picks the pairs, so
+there are no rules to set.
 
 ## Outside the catalog
 

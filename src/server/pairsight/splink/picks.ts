@@ -1,29 +1,25 @@
 import 'server-only'
 import { z } from 'zod'
 import { env } from '@/lib/env'
-import { db } from '@/server/db/client'
+import { db, Prisma } from '@/server/db/client'
 import { LIMITS } from '../limits'
 import type { CanonicalPair } from '../pairs'
+import { SPLINK_PLAN_FLOOR } from './floor'
 import { isSuggestionReason, type SuggestionReason } from './reasons'
 
 // The pairs Splink picked for a dataset, for the Plan (plan.ts): those it
 // scored at or above the floor, best first. One indexed read of
-// `pair_scores`. Splink only picks pairs; Jev still judges every one.
+// `pair_scores`. They're the pairs PairSight checks, with every vendor pair
+// added; Splink only picks them, Jev still judges every one.
 
-// The match weight a pair needs to be picked. On the benchmark
-// (scripts/splink-spike/, docs/PairSight-Scale-Roadmap.md item 5), pairs at
-// or above 0 held about 90% of the planted duplicates at 10K and 100K
-// records, at a fraction of the pairs the close-match rules need.
-export const SPLINK_PLAN_FLOOR = 0
-
-export type SplinkState = 'off' | 'waiting' | 'done' | 'skipped' | 'failed'
+export type SplinkState = 'waiting' | 'done' | 'skipped' | 'failed'
 
 export type SplinkPicks = {
 	state: SplinkState
 	pairs: CanonicalPair[]
 	// Why it was skipped (too few records, or not set up on this server),
 	// when it was.
-	reason: string | null
+	reason: SkipReason | null
 	// Of the pairs it suggests, how many share each reason, most common first
 	// (worked out once when the dataset was scored).
 	suggested: number
@@ -50,21 +46,14 @@ function skipReason(summary: unknown): SkipReason | null {
 	return REASONS.find((known) => known === reason) ?? null
 }
 
-export async function splinkPicks({
-	datasetId,
-	isOn
-}: {
-	datasetId: string
-	isOn: boolean
-}): Promise<SplinkPicks> {
-	const none = (state: SplinkState, reason: string | null = null): SplinkPicks => ({
+export async function splinkPicks(datasetId: string): Promise<SplinkPicks> {
+	const none = (state: SplinkState, reason: SkipReason | null = null): SplinkPicks => ({
 		state,
 		pairs: [],
 		reason,
 		suggested: 0,
 		reasons: []
 	})
-	if (!isOn) return none('off')
 	const dataset = await db.sourceDataset.findUniqueOrThrow({
 		where: { id: datasetId },
 		select: { scoreStatus: true, scoreSummary: true }
@@ -100,6 +89,21 @@ export async function splinkPicks({
 			}
 		}
 	}
+}
+
+// Scores the dataset again: when its suggestions failed or the service
+// wasn't set up, and someone asks to try again. Only a finished job is
+// re-queued, so one already waiting or running is left alone.
+export async function retrySplink(datasetId: string): Promise<void> {
+	await db.sourceDataset.updateMany({
+		where: { id: datasetId, scoreStatus: { in: ['failed', 'skipped'] } },
+		data: {
+			scoreStatus: 'pending',
+			scorePool: env.RUN_WORKER_POOL,
+			scoreClaimedAt: null,
+			scoreSummary: Prisma.DbNull
+		}
+	})
 }
 
 // Why PairSight suggested one pair: its reasons, for the pair page. One

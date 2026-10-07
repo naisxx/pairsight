@@ -6,7 +6,6 @@ import {
 	binPairs,
 	scoreBin,
 	statsCoverage,
-	statsHardCases,
 	statsHeadToHead,
 	statsHistogram,
 	statsMetrics,
@@ -47,17 +46,15 @@ function samplePairs(count: number, seed: number) {
 			status,
 			score,
 			matchedByExportIds: VENDORS.filter(() => next() < 0.4),
-			ruleIds: next() < 0.3 ? [] : next() < 0.5 ? ['close'] : ['email', 'close']
+			isSuggested: next() >= 0.3
 		}
 	})
 }
 
-const fuzzy = new Set(['close'])
-
 for (const threshold of [0.5, 0.35, 0.62, 0.625]) {
 	test(`binned counts equal pair-by-pair metrics at a cut-off of ${threshold}`, () => {
 		const pairs = samplePairs(3_000, Math.round(threshold * 1000))
-		const rows = binPairs({ pairs, vendorIds: VENDORS, threshold, fuzzyRuleIds: fuzzy })
+		const rows = binPairs({ pairs, vendorIds: VENDORS, threshold })
 		VENDORS.forEach((vendor, index) => {
 			const metricPairs = pairs.map((pair) => ({
 				status: pair.status,
@@ -85,25 +82,11 @@ for (const threshold of [0.5, 0.35, 0.62, 0.625]) {
 	})
 }
 
-test('hard cases, head to head and coverage add up from the rows', () => {
+test('head to head and coverage add up from the rows', () => {
 	const threshold = 0.5
 	const pairs = samplePairs(2_000, 7)
-	const rows = binPairs({ pairs, vendorIds: VENDORS, threshold, fuzzyRuleIds: fuzzy })
+	const rows = binPairs({ pairs, vendorIds: VENDORS, threshold })
 	const judged = pairs.filter((pair) => pair.status === 'succeeded' && pair.score != null)
-	const fuzzyOnly = pairs.filter(
-		(pair) => pair.ruleIds.length > 0 && pair.ruleIds.every((rule) => fuzzy.has(rule))
-	)
-	const confirmed = fuzzyOnly.filter(
-		(pair) => pair.status === 'succeeded' && pair.score != null && pair.score >= threshold
-	)
-	assert.deepEqual(statsHardCases(rows, VENDORS), {
-		found: fuzzyOnly.length,
-		confirmed: confirmed.length,
-		byVendor: VENDORS.map((id) => ({
-			id,
-			caught: confirmed.filter((pair) => pair.matchedByExportIds.includes(id)).length
-		}))
-	})
 	const disagreed = judged.filter(
 		(pair) => pair.matchedByExportIds.includes('v1') !== pair.matchedByExportIds.includes('v2')
 	)
@@ -115,11 +98,11 @@ test('hard cases, head to head and coverage add up from the rows', () => {
 		sidedWithA,
 		sidedWithB: disagreed.length - sidedWithA
 	})
-	const fromRules = pairs.filter((pair) => pair.ruleIds.length > 0).length
+	const suggested = pairs.filter((pair) => pair.isSuggested).length
 	assert.deepEqual(statsCoverage(rows), {
 		total: pairs.length,
-		fromRules,
-		addedByVendor: pairs.length - fromRules
+		suggested,
+		addedByVendor: pairs.length - suggested
 	})
 })
 

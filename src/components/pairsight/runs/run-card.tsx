@@ -23,7 +23,6 @@ import { pauseRunAction, resumeRunAction, retryFailedAction } from '@/server/act
 import type { ActionResult } from '@/server/actions/validated-action'
 import type { RunCard as RunCardData } from '@/server/pairsight/run-centre'
 import { ReadOnlyGate } from '../read-only'
-import { ruleLabel } from '../rule-label'
 import { RunElapsed } from './run-elapsed'
 import { useRunsCentre } from './runs-centre'
 import { Count } from '@/components/ui/count'
@@ -316,14 +315,6 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 									</li>
 								))}
 							</ul>
-						</dd>
-						<dt className="text-text-muted">{t('detailRules')}</dt>
-						<dd>
-							{card.settings.rules
-								.map((rule) =>
-									ruleLabel({ ruleId: rule.id, rules: card.settings.rules, tRules, tRoles })
-								)
-								.join(', ')}
 						</dd>
 						<dt className="text-text-muted">{t('detailFields')}</dt>
 						<dd>{card.settings.jevFields.map((field) => tRoles(field)).join(', ')}</dd>

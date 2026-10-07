@@ -10,7 +10,6 @@ import { CATEGORIES, type Category } from '@/lib/pairsight/decisions'
 import {
 	binPairs,
 	statsCoverage,
-	statsHardCases,
 	statsHistogram,
 	statsMetrics,
 	statsOverlap,
@@ -139,17 +138,18 @@ export function fieldPatterns({
 	return finishFieldPatterns(counts, tallies)
 }
 
-// Pairs per rule that found them (null: added by a vendor only), split by
-// what a category needs: judged, Jev says same, which vendors matched.
+// Pairs by where they came from (PairSight suggested them, or only a vendor
+// matched them), split by what a category needs: judged, Jev says same,
+// which vendors matched.
 export type SourceStat = {
-	ruleId: string | null
+	suggested: boolean
 	judged: boolean
 	match: boolean
 	mask: number
 	count: number
 }
 
-export type SourceRow = { ruleId: string | null; counts: CategoryCounts; total: number }
+export type SourceRow = { suggested: boolean; counts: CategoryCounts; total: number }
 
 const matchedBy = (mask: number, vendorIndex: number) =>
 	vendorIndex >= 0 && (mask & (1 << vendorIndex)) !== 0
@@ -160,29 +160,21 @@ function categoryOf(judged: boolean, match: boolean, isVendorMatch: boolean): Re
 	return match ? 'pairsight_only' : 'neither_matched'
 }
 
-// Which rules surfaced each kind of pair, for one vendor. A pair found by
-// several rules counts once under each; pairs outside every rule sit under
-// "added by a vendor" (ruleId null), listed last. Ties keep rule order.
+// Where each kind of pair came from, for one vendor: suggested by PairSight
+// first, then added by a vendor. A source with no pairs isn't listed.
 export function sourceRows(stats: SourceStat[], vendorIndex: number): SourceRow[] {
-	const byRule = new Map<string | null, SourceRow>()
+	const rows = [true, false].map((suggested) => ({
+		suggested,
+		counts: emptyCounts(),
+		total: 0
+	}))
 	for (const stat of stats) {
-		const row = byRule.get(stat.ruleId) ?? { ruleId: stat.ruleId, counts: emptyCounts(), total: 0 }
+		const row = rows[stat.suggested ? 0 : 1]
+		if (row == null) continue
 		row.counts[categoryOf(stat.judged, stat.match, matchedBy(stat.mask, vendorIndex))] += stat.count
 		row.total += stat.count
-		byRule.set(stat.ruleId, row)
 	}
-	return [...byRule.values()].sort((a, b) =>
-		a.ruleId == null || b.ruleId == null
-			? (a.ruleId == null ? 1 : 0) - (b.ruleId == null ? 1 : 0)
-			: b.total - a.total || (a.ruleId < b.ruleId ? -1 : a.ruleId > b.ruleId ? 1 : 0)
-	)
-}
-
-export type HardCases = {
-	// Pairs only fuzzy rules found, and those Jev confirmed as duplicates.
-	found: number
-	confirmed: number
-	byVendor: Array<{ id: string; caught: number }>
+	return rows.filter((row) => row.total > 0)
 }
 
 const statsRowSchema = z.object({
@@ -191,7 +183,7 @@ const statsRowSchema = z.object({
 	match: z.boolean(),
 	near: z.boolean(),
 	mask: z.number().int(),
-	kind: z.enum(['none', 'fuzzy', 'other']),
+	suggested: z.boolean(),
 	count: z.number().int()
 })
 
@@ -215,7 +207,8 @@ const fieldPatternsSchema = z.object({
 // Bump when the shape or the way it's counted changes: older summaries are
 // then rebuilt on their next read.
 // 2: building one also copies each pair's judgment onto run_pairs.
-export const RUN_SUMMARY_VERSION = 2
+// 3: pairs come from PairSight's suggestions or a vendor, not rules.
+export const RUN_SUMMARY_VERSION = 3
 
 // Everything the Overview, the dashboard and the summary report show,
 // stored on the run (runs.summary).
@@ -227,7 +220,7 @@ export const runSummarySchema = z.object({
 	rows: z.array(statsRowSchema),
 	sources: z.array(
 		z.object({
-			ruleId: z.string().nullable(),
+			suggested: z.boolean(),
 			judged: z.boolean(),
 			match: z.boolean(),
 			mask: z.number().int(),
@@ -286,7 +279,6 @@ export function buildOverview({
 						groups: statsOverlap(rows, selectedIndex, indexOf(other.id))
 					},
 		sources: sourceRows(summary.sources, selectedIndex),
-		hardCases: statsHardCases(rows, vendorIds) satisfies HardCases,
 		top,
 		workload: statsWorkload(selectedRows, selectedIndex),
 		coverage: {
@@ -294,7 +286,7 @@ export function buildOverview({
 			assessed: metrics.assessed,
 			pending: metrics.pending,
 			failed: metrics.failed,
-			fromRules: coverage.fromRules,
+			suggested: coverage.suggested,
 			addedByVendor: coverage.addedByVendor,
 			notCompared: Math.max(0, possiblePairs(summary.recordCount) - coverage.total)
 		},
@@ -312,7 +304,7 @@ export type SummaryPair = {
 	id: string
 	recordAId: string
 	recordBId: string
-	ruleIds: string[]
+	isSuggested: boolean
 	matchedByExportIds: string[]
 	assessment: { status: AssessmentStatus; score: number | null; modelReported?: string | null }
 }
@@ -325,7 +317,6 @@ export function summarizePairs({
 	records,
 	vendorIds,
 	threshold,
-	fuzzyRuleIds,
 	columnRoles,
 	country
 }: {
@@ -333,7 +324,6 @@ export function summarizePairs({
 	records: ReadonlyMap<string, { values: Record<string, string> }>
 	vendorIds: string[]
 	threshold: number
-	fuzzyRuleIds: ReadonlySet<string>
 	columnRoles: Record<string, FieldRole>
 	country: string
 }): RunSummary {
@@ -348,19 +338,21 @@ export function summarizePairs({
 	const rows: StatsRow[] = binPairs({
 		pairs: pairs.map((pair) => ({ ...pair, ...pair.assessment })),
 		vendorIds,
-		threshold,
-		fuzzyRuleIds
+		threshold
 	})
 
 	const sources = new Map<string, SourceStat>()
 	for (const pair of pairs) {
-		for (const ruleId of pair.ruleIds.length === 0 ? [null] : pair.ruleIds) {
-			const stat = { ruleId, judged: judged(pair), match: isMatch(pair), mask: maskOf(pair) }
-			const key = JSON.stringify(stat)
-			const existing = sources.get(key)
-			if (existing == null) sources.set(key, { ...stat, count: 1 })
-			else existing.count++
+		const stat = {
+			suggested: pair.isSuggested,
+			judged: judged(pair),
+			match: isMatch(pair),
+			mask: maskOf(pair)
 		}
+		const key = JSON.stringify(stat)
+		const existing = sources.get(key)
+		if (existing == null) sources.set(key, { ...stat, count: 1 })
+		else existing.count++
 	}
 
 	const patterns: RunSummary['patterns'] = {}

@@ -61,11 +61,6 @@ model Evaluation {
 	countryCode       String          @default("US")
 	// Identity roles sent to Jev (src/server/pairsight/fields.ts).
 	jevFields         String[]
-	// BlockingRule[] (src/server/pairsight/blocking.ts).
-	blockingRules     Json
-	// Whether the Plan adds the pairs Splink picked (splink/picks.ts) to the
-	// rules' and vendors' pairs. On unless switched off in Rules.
-	splinkPicks       Boolean         @default(true)
 	threshold         Float           @default(0.5)
 	createdAt         DateTime        @default(now()) @db.Timestamptz(6)
 	updatedAt         DateTime        @default(now()) @updatedAt @db.Timestamptz(6)
@@ -277,7 +272,6 @@ model Run {
 	identityDifferent String
 	countryCode       String
 	jevFields         String[]
-	blockingRules     Json
 	exportIds         String[]
 	judgmentKey       String
 	jevModel          String
@@ -323,9 +317,9 @@ model RunPair {
 	run                Run        @relation(fields: [runId], references: [id], onDelete: Cascade)
 	recordAId          String     @db.Uuid
 	recordBId          String     @db.Uuid
-	// Blocking rules that produced the pair; empty = added only because a
-	// vendor matched it.
-	ruleIds            String[]
+	// PairSight suggested the pair (splink/picks.ts); false = added only
+	// because a vendor matched it.
+	isSuggested        Boolean    @default(false)
 	matchedByExportIds String[]
 	assessmentId       String     @db.Uuid
 	assessment         Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)

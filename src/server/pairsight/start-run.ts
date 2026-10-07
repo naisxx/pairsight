@@ -1,6 +1,7 @@
 import 'server-only'
 import { env } from '@/lib/env'
 import { AppError } from '@/lib/errors/app-error'
+import { MIN_RECORDS } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
 import { chunks } from './chunks'
 import { pairKey } from './pairs'
@@ -33,10 +34,13 @@ const BLOCKER_MESSAGES: Record<PlanBlocker, string> = {
 	no_dataset: 'Upload your records first.',
 	no_vendors: 'Add at least one vendor’s file first.',
 	no_jev_fields: 'Choose at least two values for Jev to see.',
-	no_pairs: 'There’s nothing to check yet. Turn on a comparison rule or add a vendor’s file.',
+	no_pairs:
+		'There’s nothing to check yet: PairSight found no likely pairs and no vendor matched any.',
 	too_many_pairs:
-		'This is more pairs than one run can check. Turn off a rule that picks a lot, or upload fewer records.',
-	still_suggesting: 'PairSight is still looking at your records. Try again in a moment.'
+		'This is more pairs than one run can check. Upload fewer records, or a vendor file with fewer pairs.',
+	still_suggesting: 'PairSight is still looking at your records. Try again in a moment.',
+	suggestions_failed: 'PairSight couldn’t work out which pairs to check. Try again from the Plan.',
+	too_few_records: `This file is too small. Upload a file with at least ${MIN_RECORDS} records.`
 }
 
 export async function startRun({
@@ -51,7 +55,7 @@ export async function startRun({
 	if (blocker != null || plan.dataset == null || !('comparison' in plan)) {
 		throw new AppError(BLOCKER_MESSAGES[blocker ?? 'no_dataset'], { code: blocker ?? 'no_dataset' })
 	}
-	const { evaluation, dataset, comparison, config, judgmentKey: key, rules, exports } = plan
+	const { evaluation, dataset, comparison, config, judgmentKey: key, exports } = plan
 
 	const run = await db.$transaction(
 		async (tx) => {
@@ -72,7 +76,6 @@ export async function startRun({
 					identityDifferent: config.identity.different,
 					countryCode: config.country,
 					jevFields: config.jevFields,
-					blockingRules: rules,
 					exportIds: exports.map((vendorExport) => vendorExport.id),
 					judgmentKey: key,
 					jevModel: config.model,
@@ -136,7 +139,7 @@ export async function startRun({
 								runId: run.id,
 								recordAId: pair.a,
 								recordBId: pair.b,
-								ruleIds: pair.ruleIds,
+								isSuggested: pair.isSuggested,
 								matchedByExportIds: pair.matchedByExportIds,
 								assessmentId
 							}

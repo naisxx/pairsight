@@ -2,7 +2,7 @@ import 'server-only'
 import { notFound } from 'next/navigation'
 import { getLocale, getTranslations } from 'next-intl/server'
 import { redirect } from '@/i18n/routing'
-import { isUuid } from '@/server/pairsight/schemas'
+import { isUuid, parseIdentityRoles } from '@/server/pairsight/schemas'
 import type { PipelineData, PipelineStage } from '@/components/pairsight/shell/pipeline-types'
 import {
 	evaluationStatus,
@@ -21,9 +21,8 @@ import {
 	type EvaluationView
 } from '@/lib/pairsight/evaluation-view'
 import { getProfileName, getSessionUser, requireUserOrRedirect } from '@/server/auth/session'
-import { parseBlockingRules, parseColumnRoles } from '@/server/pairsight/json'
+import { parseColumnRoles } from '@/server/pairsight/json'
 import { mappedIdentityRoles, type IdentityRole } from '@/server/pairsight/fields'
-import { runnableRules } from '@/lib/pairsight/rule-fields'
 import { getVisibleRun } from '@/server/pairsight/runs'
 import { db } from '@/server/db/client'
 import {
@@ -185,9 +184,9 @@ export async function workspacePipeline(
 		workspace.dataset == null
 			? new Set<IdentityRole>()
 			: mappedIdentityRoles(parseColumnRoles(workspace.dataset.columnRoles))
-	const rulesOn = runnableRules(
-		parseBlockingRules(workspace.evaluation.blockingRules),
-		mapped
+	// The values Jev will see that this file actually has.
+	const jevFields = parseIdentityRoles(workspace.evaluation.jevFields).filter((role) =>
+		mapped.has(role)
 	).length
 	const details: Record<StageKey, string> = {
 		records:
@@ -200,7 +199,7 @@ export async function workspacePipeline(
 					? t('vendorsInProgress', { count: workspace.vendorDraftCount })
 					: t('vendorsEmpty')
 				: t('vendors', { count: workspace.vendorExports.length, pairs: vendorPairs }),
-		rules: t('rules', { count: rulesOn }),
+		rules: t('rules', { count: jevFields }),
 		plan: latestRun == null ? t('planReady') : t('plan', { pairs: latestRun.pairCount }),
 		results:
 			latestRun == null

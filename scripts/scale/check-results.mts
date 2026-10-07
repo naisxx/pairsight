@@ -35,7 +35,6 @@ import {
 } from '../../src/server/pairsight/results-query.ts'
 import {
 	buildRunSummary,
-	fuzzyRuleIdsOf,
 	readRunSummary,
 	runVendors
 } from '../../src/server/pairsight/run-summary.ts'
@@ -55,15 +54,14 @@ const FILTERS: ResultFilters[] = [
 	{ score: 'below' },
 	{ score: 'r:0.3-0.4' },
 	{ score: 'r:0.9-1.0' },
-	{ source: 'rules' },
-	{ source: 'fuzzy' },
+	{ source: 'suggested' },
 	{ source: 'vendor', sort: 'score-asc' },
 	{ lowConfidence: '1' },
 	{ status: 'evaluated' },
 	{ status: 'incomplete' },
 	{ status: 'pending' },
 	{ status: 'failed' },
-	{ category: 'disagreements', score: 'near', source: 'rules' }
+	{ category: 'disagreements', score: 'near', source: 'suggested' }
 ]
 // Runs compared pair by pair in memory, up to this size; bigger ones get the
 // plan check only.
@@ -129,7 +127,7 @@ async function checkRun(runId: string) {
 				id: true,
 				recordAId: true,
 				recordBId: true,
-				ruleIds: true,
+				isSuggested: true,
 				matchedByExportIds: true,
 				assessment: {
 					select: { status: true, score: true, errorCode: true, modelReported: true }
@@ -153,7 +151,6 @@ async function checkRun(runId: string) {
 	const summaries = new Map(
 		[...recordsById.values()].map(({ id, reference, label }) => [id, { id, reference, label }])
 	)
-	const fuzzyRuleIds = fuzzyRuleIdsOf(run.blockingRules)
 
 	// The Overview's numbers.
 	const started = performance.now()
@@ -164,7 +161,6 @@ async function checkRun(runId: string) {
 		records: recordsById,
 		vendorIds: vendors.map((vendor) => vendor.id),
 		threshold: run.threshold,
-		fuzzyRuleIds: new Set(fuzzyRuleIds),
 		columnRoles,
 		country: run.countryCode
 	})
@@ -176,15 +172,13 @@ async function checkRun(runId: string) {
 		const context: PairContext = {
 			runId,
 			threshold: run.threshold,
-			vendorId: vendor.id,
-			fuzzyRuleIds
+			vendorId: vendor.id
 		}
 		const rows = buildRows({
 			pairs,
 			records: summaries,
 			threshold: run.threshold,
-			vendorId: vendor.id,
-			fuzzyRuleIds: new Set(fuzzyRuleIds)
+			vendorId: vendor.id
 		})
 		const searches: ResultFilters[] = [
 			{ q: rows[0]?.recordA.reference.slice(0, 2) },
@@ -274,8 +268,7 @@ async function checkPlans(runId: string) {
 	const context: PairContext = {
 		runId,
 		threshold: run.threshold,
-		vendorId: vendors[0]?.id,
-		fuzzyRuleIds: fuzzyRuleIdsOf(run.blockingRules)
+		vendorId: vendors[0]?.id
 	}
 	const queries = FILTERS.flatMap((filters) => [
 		{ name: 'count', filters, sql: requestSql.count(context, filters) },

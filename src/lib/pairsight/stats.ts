@@ -19,8 +19,6 @@ import {
 // the same comparison a cut-off of k/100 makes. Bin 100 is a perfect 1.
 export const SCORE_BINS = 100
 
-export type RuleKind = 'none' | 'fuzzy' | 'other'
-
 export type StatsRow = {
 	status: AssessmentStatus
 	// The score's 0.01 bin; null without a score.
@@ -32,9 +30,8 @@ export type StatsRow = {
 	near: boolean
 	// Bit i set when the run's vendor i matched the pair.
 	mask: number
-	// Why it was checked: no rule (a vendor's match), only close-match rules,
-	// or any other rule.
-	kind: RuleKind
+	// Why it was checked: PairSight suggested it, or only a vendor matched it.
+	suggested: boolean
 	count: number
 }
 
@@ -196,22 +193,6 @@ export function statsWorkload(rows: StatsRow[], vendorIndex: number): Workload {
 	}
 }
 
-// Duplicates found only by close-match rules, and who caught them
-// (result-overview.ts `hardCases`).
-export function statsHardCases(rows: StatsRow[], vendorIds: readonly string[]) {
-	const fuzzy = rows.filter((row) => row.kind === 'fuzzy')
-	const confirmed = fuzzy.filter((row) => isJudged(row) && row.match)
-	const sum = (list: StatsRow[]) => list.reduce((total, row) => total + row.count, 0)
-	return {
-		found: sum(fuzzy),
-		confirmed: sum(confirmed),
-		byVendor: vendorIds.map((id, index) => ({
-			id,
-			caught: sum(confirmed.filter((row) => matchedBy(row, index)))
-		}))
-	}
-}
-
 // Of the judged pairs only one of two vendors matched, how often Jev sided
 // with each (report-summary.ts `headToHead`).
 export function statsHeadToHead(rows: StatsRow[], first: number, second: number) {
@@ -227,15 +208,15 @@ export function statsHeadToHead(rows: StatsRow[], first: number, second: number)
 	return { total, sidedWithA, sidedWithB: total - sidedWithA }
 }
 
-// Pairs found by rules and pairs only a vendor added.
+// Pairs PairSight suggested and pairs only a vendor added.
 export function statsCoverage(rows: StatsRow[]) {
 	let total = 0
-	let fromRules = 0
+	let suggested = 0
 	for (const row of rows) {
 		total += row.count
-		if (row.kind !== 'none') fromRules += row.count
+		if (row.suggested) suggested += row.count
 	}
-	return { total, fromRules, addedByVendor: total - fromRules }
+	return { total, suggested, addedByVendor: total - suggested }
 }
 
 // Bins pairs the way the database does (run-summary.ts): the reference the
@@ -243,18 +224,16 @@ export function statsCoverage(rows: StatsRow[]) {
 export function binPairs({
 	pairs,
 	vendorIds,
-	threshold,
-	fuzzyRuleIds
+	threshold
 }: {
 	pairs: ReadonlyArray<{
 		status: AssessmentStatus
 		score: number | null
 		matchedByExportIds: readonly string[]
-		ruleIds: readonly string[]
+		isSuggested: boolean
 	}>
 	vendorIds: readonly string[]
 	threshold: number
-	fuzzyRuleIds: ReadonlySet<string>
 }): StatsRow[] {
 	const rows = new Map<string, StatsRow>()
 	for (const pair of pairs) {
@@ -266,29 +245,25 @@ export function binPairs({
 			(bits, id, index) => (pair.matchedByExportIds.includes(id) ? bits | (1 << index) : bits),
 			0
 		)
-		const kind: RuleKind =
-			pair.ruleIds.length === 0
-				? 'none'
-				: pair.ruleIds.every((ruleId) => fuzzyRuleIds.has(ruleId))
-					? 'fuzzy'
-					: 'other'
-		const key = `${pair.status}|${bin}|${match}|${near}|${mask}|${kind}`
+		const suggested = pair.isSuggested
+		const key = `${pair.status}|${bin}|${match}|${near}|${mask}|${suggested}`
 		const row = rows.get(key)
-		if (row == null) rows.set(key, { status: pair.status, bin, match, near, mask, kind, count: 1 })
+		if (row == null)
+			rows.set(key, { status: pair.status, bin, match, near, mask, suggested, count: 1 })
 		else row.count += 1
 	}
 	return [...rows.values()]
 }
 
-// One vendor's view of the table, as vendor 0: other vendors and rule kinds
-// folded away. What the threshold preview needs, at most a few hundred rows.
+// One vendor's view of the table, as vendor 0: other vendors and where
+// pairs came from folded away. What the threshold preview needs, at most a few hundred rows.
 export function statsForVendor(rows: StatsRow[], vendorIndex: number): StatsRow[] {
 	const folded = new Map<string, StatsRow>()
 	for (const row of rows) {
 		const mask = matchedBy(row, vendorIndex) ? 1 : 0
 		const key = `${row.status}|${row.bin}|${row.match}|${row.near}|${mask}`
 		const existing = folded.get(key)
-		if (existing == null) folded.set(key, { ...row, mask, kind: 'none' })
+		if (existing == null) folded.set(key, { ...row, mask, suggested: false })
 		else existing.count += row.count
 	}
 	return [...folded.values()]

@@ -1,12 +1,11 @@
-import type { BlockingField, EntityType } from '@/lib/pairsight/entity-types'
-import type { BlockingRecord } from '../blocking'
-import { ruleFieldKey } from '../key-transforms'
+import type { EntityType, KeyField } from '@/lib/pairsight/entity-types'
+import { matchKey } from '../match-keys'
+import type { ScoringRecord } from '../scoring-records'
 
 // The records as the Splink service reads them (services/splink: each type's
-// COLUMNS in person.py, company.py, product.py): each column the key our own
-// blocking code computes, so Splink and the comparison rules start from the
-// same cleaning. Pure, so the benchmark (scripts/splink-spike/export.mts)
-// writes the same file.
+// COLUMNS in person.py, company.py, product.py): each column a cleaned key
+// (match-keys.ts), the same cleaning Jev's comparison view uses. Pure, so the
+// benchmark (scripts/splink-spike/export.mts) writes the same file.
 
 const KEYS = {
 	person: {
@@ -55,7 +54,7 @@ const KEYS = {
 		color: 'color',
 		size: 'size'
 	}
-} as const satisfies Record<EntityType, Record<string, BlockingField>>
+} as const satisfies Record<EntityType, Record<string, KeyField>>
 
 export function splinkColumns(type: EntityType): string[] {
 	return ['unique_id', ...Object.keys(KEYS[type])]
@@ -71,15 +70,13 @@ function cell(value: string | null): string {
 // One CSV line per record, after the header; written a line at a time so a
 // big dataset never sits in memory as one string.
 export function* splinkRecordLines(
-	records: Iterable<BlockingRecord>,
+	records: Iterable<ScoringRecord>,
 	{ type, country }: { type: EntityType; country: string }
 ): Generator<string> {
-	const fields: readonly BlockingField[] = Object.values(KEYS[type])
+	const fields: readonly KeyField[] = Object.values(KEYS[type])
 	yield `${splinkColumns(type).join(',')}\n`
 	for (const record of records) {
-		const keys = fields.map((field) =>
-			cell(ruleFieldKey({ field, fields: record.fields, country }))
-		)
+		const keys = fields.map((field) => cell(matchKey({ field, fields: record.fields, country })))
 		yield `${[cell(record.id), ...keys].join(',')}\n`
 	}
 }

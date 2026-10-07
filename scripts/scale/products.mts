@@ -9,9 +9,8 @@
 // barcode and part number. Pairs of variants are the traps: they look alike
 // and must not count as duplicates (Jev's "same product" question).
 
-import type { BlockingRecord } from '../../src/server/pairsight/blocking.ts'
-import type { KnownDuplicate } from '../../src/server/pairsight/blocking-quality.ts'
-import { random } from './people.mts'
+import type { ScoringRecord } from '../../src/server/pairsight/scoring-records.ts'
+import { random, type KnownDuplicate } from './people.mts'
 
 export const PRODUCT_HEADERS = [
 	'record_id',
@@ -226,9 +225,9 @@ export function generateProducts(
 	return { rows, duplicates, traps }
 }
 
-export function productRecords(rows: Row[]): BlockingRecord[] {
+export function productRecords(rows: Row[]): ScoringRecord[] {
 	return rows.map((row) => {
-		const fields: BlockingRecord['fields'] = {}
+		const fields: ScoringRecord['fields'] = {}
 		for (const header of PRODUCT_HEADERS) {
 			if (header !== 'record_id' && row[header] !== '') fields[header] = row[header]
 		}

@@ -2,11 +2,10 @@ import 'server-only'
 import { possiblePairs } from '@/lib/pairsight/metrics'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db } from '@/server/db/client'
-import { parseBlockingRules, parseColumnRoles, parseRecordValues, parseVendorStats } from './json'
+import { parseColumnRoles, parseRecordValues, parseVendorStats } from './json'
 import { buildReport, reportExample } from './report-summary'
 import { pairRowsByIds } from './results-query'
-import { fuzzyRuleIdsOf, readRunSummary, runVendors } from './run-summary'
-import { SPLINK_RULE_ID } from './plan-summary'
+import { readRunSummary, runVendors } from './run-summary'
 import { getRunProgress, getVisibleRun, runNotFinished } from './runs'
 import { countReusedJudgments } from './run-centre'
 import type { EvaluationScope } from './scope'
@@ -64,7 +63,6 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 		examples: await reportExamples({
 			runId,
 			threshold: run.threshold,
-			fuzzyRuleIds: fuzzyRuleIdsOf(run.blockingRules),
 			summary,
 			columnRoles: parseColumnRoles(dataset.columnRoles),
 			country: run.countryCode
@@ -83,7 +81,6 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 		identityDifferent: run.identityDifferent,
 		countryCode: run.countryCode,
 		jevFields: run.jevFields,
-		rules: parseBlockingRules(run.blockingRules),
 		dataset: {
 			fileName: dataset.fileName,
 			rowCount: dataset.rowCount,
@@ -98,11 +95,12 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 		progress,
 		reused,
 		recordCount: summary.recordCount,
-		// Possible pairs no rule or vendor brought up: the report's blind spot.
+		// Possible pairs PairSight didn't suggest and no vendor matched: the
+		// report's blind spot.
 		notCompared: Math.max(0, possiblePairs(summary.recordCount) - report.pairs.total),
 		// PairSight suggested some of the pairs: the report says what that
 		// covers, for the run's type of record. Null when it didn't.
-		suggestedType: summary.sources.some((source) => source.ruleId === SPLINK_RULE_ID)
+		suggestedType: summary.sources.some((source) => source.suggested)
 			? entityTypeOf(run.entityType)
 			: null,
 		report
@@ -114,14 +112,12 @@ export async function reportData({ scope, runId }: { scope: EvaluationScope; run
 async function reportExamples({
 	runId,
 	threshold,
-	fuzzyRuleIds,
 	summary,
 	columnRoles,
 	country
 }: {
 	runId: string
 	threshold: number
-	fuzzyRuleIds: string[]
 	summary: RunSummary
 	columnRoles: Record<string, FieldRole>
 	country: string
@@ -129,7 +125,7 @@ async function reportExamples({
 	const entries = await Promise.all(
 		summary.vendorIds.map(async (vendorId) => {
 			const top = summary.top[vendorId] ?? { missed: [], merges: [] }
-			const context = { runId, threshold, vendorId, fuzzyRuleIds }
+			const context = { runId, threshold, vendorId }
 			const [misses, merges] = await Promise.all([
 				pairRowsByIds({ context, ids: top.missed }),
 				pairRowsByIds({ context, ids: top.merges })

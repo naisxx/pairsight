@@ -1,20 +1,18 @@
 'use server'
 
 import { z } from 'zod'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/entity-types'
 import { validatedAction } from '@/server/actions/validated-action'
 import { requireUser } from '@/server/auth/session'
+import { getCurrentDataset } from '@/server/pairsight/datasets'
+import { getOwnedEvaluation, updateEvaluationConfig } from '@/server/pairsight/evaluations'
 import {
-	ruleFieldsSchema,
-	blockingRulesSchema,
 	countryCodeSchema,
 	identityDefinitionSchema,
 	identityRoleSchema,
 	thresholdSchema
 } from '@/server/pairsight/schemas'
-import { removeBlockingRule, updateEvaluationConfig } from '@/server/pairsight/evaluations'
-import { previewRuleStats } from '@/server/pairsight/rules-preview'
-import { ownerScope } from '@/server/pairsight/scope'
-import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
+import { retrySplink } from '@/server/pairsight/splink/picks'
 import { idSchema, revalidateEvaluationPages } from './shared'
 
 export const saveRulesAction = validatedAction({
@@ -24,19 +22,9 @@ export const saveRulesAction = validatedAction({
 		countryCode: countryCodeSchema,
 		// One field alone gives Jev too little to tell two people apart.
 		jevFields: z.array(identityRoleSchema).min(MIN_JEV_FIELDS),
-		blockingRules: blockingRulesSchema,
-		threshold: thresholdSchema,
-		splinkPicks: z.boolean()
+		threshold: thresholdSchema
 	}),
-	handler: async ({
-		evaluationId,
-		identity,
-		countryCode,
-		jevFields,
-		blockingRules,
-		threshold,
-		splinkPicks
-	}) => {
+	handler: async ({ evaluationId, identity, countryCode, jevFields, threshold }) => {
 		const user = await requireUser()
 		await updateEvaluationConfig({
 			ownerId: user.id,
@@ -45,41 +33,23 @@ export const saveRulesAction = validatedAction({
 			identityDifferent: identity.different,
 			countryCode,
 			jevFields,
-			blockingRules,
-			threshold,
-			splinkPicks
+			threshold
 		})
 		revalidateEvaluationPages()
 		return { saved: true }
 	}
 })
 
-// Live stats for a custom rule while it's being built, before it's saved.
-export const previewRuleAction = validatedAction({
-	input: z.object({
-		evaluationId: idSchema,
-		fields: ruleFieldsSchema,
-		countryCode: countryCodeSchema
-	}),
-	handler: async ({ evaluationId, fields, countryCode }) => {
+// "Try again" on the Plan when PairSight couldn't work out which pairs to
+// check: the records are scored again in the background.
+export const retrySuggestionsAction = validatedAction({
+	input: z.object({ evaluationId: idSchema }),
+	handler: async ({ evaluationId }) => {
 		const user = await requireUser()
-		return previewRuleStats({
-			scope: ownerScope(user.id),
-			evaluationId,
-			fields,
-			country: countryCode
-		})
-	}
-})
-
-// "Turn off" on the Plan's over-limit list: removes one rule from the saved
-// configuration.
-export const turnOffRuleAction = validatedAction({
-	input: z.object({ evaluationId: idSchema, ruleId: z.string().min(1) }),
-	handler: async ({ evaluationId, ruleId }) => {
-		const user = await requireUser()
-		await removeBlockingRule({ ownerId: user.id, evaluationId, ruleId })
+		await getOwnedEvaluation({ ownerId: user.id, id: evaluationId })
+		const dataset = await getCurrentDataset(evaluationId)
+		if (dataset != null) await retrySplink(dataset.id)
 		revalidateEvaluationPages()
-		return { removed: true }
+		return { retried: true }
 	}
 })

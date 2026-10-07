@@ -135,7 +135,7 @@ function pair(a: string, b: string, matchedBy: string[], assessment: Assessment)
 		id: `p${pairId}`,
 		recordAId: a,
 		recordBId: b,
-		ruleIds: ['email'],
+		isSuggested: true,
 		matchedByExportIds: matchedBy,
 		assessment
 	}
@@ -149,7 +149,6 @@ function summaryOf(pairs: Array<ReturnType<typeof pair>>, vendorIds: string[]) {
 		records,
 		vendorIds,
 		threshold: 0.5,
-		fuzzyRuleIds: new Set(),
 		columnRoles,
 		country: 'US'
 	})
@@ -219,9 +218,7 @@ test('the report ranks vendors, finds their worst disagreements and compares eac
 	)
 	assert.deepEqual(report.leaders, { best: 'a', safest: 'a', mostComplete: 'a' })
 	assert.equal(report.pairs.counts.incomplete, 1)
-	assert.equal(report.fromRules, 4)
-	// No fuzzy rules in this run, so no hard cases.
-	assert.equal(report.hardCases.found, 0)
+	assert.equal(report.suggested, 4)
 
 	const b = report.vendors.find((entry) => entry.id === 'b')
 	const merge = b?.examples.merges[0]

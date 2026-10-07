@@ -1,14 +1,14 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { ruleFieldKey } from './key-transforms'
+import { matchKey } from './match-keys'
 import { normalizeField } from './normalize'
-import type { BlockingField } from '@/lib/pairsight/entity-types'
+import type { KeyField } from '@/lib/pairsight/entity-types'
 import type { MappedFields } from './normalize'
 
-const key = (field: BlockingField, fields: MappedFields, country = 'GB') =>
-	ruleFieldKey({ field, fields, country })
+const key = (field: KeyField, fields: MappedFields, country = 'GB') =>
+	matchKey({ field, fields, country })
 
-test('a plain field keys exactly as before derived fields existed', () => {
+test('a plain field keys exactly as normalizeField cleans it', () => {
 	const fields = { email: ' Jane@X.com ', phone: '07700 900123', last_name: 'Smith' }
 	for (const field of ['email', 'phone', 'last_name'] as const) {
 		assert.equal(key(field, fields), normalizeField({ field, fields, country: 'GB' }))

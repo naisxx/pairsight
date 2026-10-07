@@ -477,9 +477,8 @@ are noted; the later items assume the earlier ones exist.
     say plainly that suggested pairs share something PairSight compares (a
     name, date of birth, email, phone or postcode), and pairs sharing none
     of these weren't checked.
-- **Left for later:** Jev's answers sharpening the next run; removing the
-  TypeScript rules once nothing needs them (organisations and products got
-  suggestions in item 10; the rules go next).
+- **Left for later:** Jev's answers sharpening the next run. (Removing the
+  TypeScript rules: done in item 11.)
 
 - **What:**
   - The funnel replaces hand-built rules as the default: wide net,
@@ -603,8 +602,7 @@ The plan as first written:
 - **Why:** item 6 only suggested pairs for people; organisations and
   products still started from hand-written rules. Every type now gets
   PairSight's suggestions, the first step to removing the TypeScript rules
-  entirely (next: rules, the switch and the "Advanced" section go, and
-  every plan is suggested pairs plus vendor pairs).
+  entirely (item 11).
 - **Built:**
   - **One model per type** in `services/splink/` (`person.py`, `company.py`,
     `product.py`), chosen by `score --entity-type`; `model.py` trains and
@@ -665,6 +663,44 @@ The plan as first written:
     from 27,720 to 31,154 pairs with the floor, for the same duplicates.
   - The data is synthetic: the generators plant the kinds of duplicate a
     records team meets, but real files will differ. Item 0's caveat stands.
+
+### 11. PairSight picks every pair: the rules removed (built, 2026-10-07)
+
+- **Why:** with suggestions working for every type (item 10), two engines
+  picking pairs could only disagree. The hand-written rules, the switch for
+  suggestions and the "Advanced" section go: every plan is the pairs
+  PairSight suggests plus every pair a vendor matched.
+- **Built:**
+  - **No rules anywhere.** The rule engine (`blocking.ts`, presets, custom
+    and close-match rules, the rules preview, `pnpm blocking:check`), the
+    Rules screen's rule list and editor, the Plan's "Turn off" and the
+    "hard cases" readout are gone. The key code the service still needs
+    moved: `match-keys.ts` (`matchKey`) and `scoring-records.ts`.
+  - **Data:** `evaluations.blockingRules`, `evaluations.splinkPicks` and
+    `runs.blockingRules` dropped; `run_pairs.ruleIds` became
+    `run_pairs.isSuggested`, backfilled by a hand-written migration (a pair
+    any rule or suggestion picked counts as suggested). Run summaries move
+    to version 3 and rebuild on their next read.
+  - **Small files are refused.** A records file under 200 records can't
+    teach the model anything, and there's nothing to fall back on, so the
+    upload says how many it needs. Files saved before that say so on the
+    Plan.
+  - **When suggestions can't run,** the Plan says so and offers Try again,
+    which queues the scoring again. Start still waits while PairSight works
+    the pairs out.
+  - **"What Jev checks"** is the step's new name: what counts as the same,
+    what Jev sees, the country and the match cut-off, beside the pairs
+    PairSight suggests and what they share.
+  - **Results, the pair page, exports and the report** say "Suggested by
+    PairSight" or "Added because a vendor matched it".
+  - **Two fixes to the service** found on small, sparse files: a training
+    pass with no pairs is skipped up front (Splink took its fields out of
+    the model before failing), and when nothing anchors the estimate of how
+    many pairs are duplicates it assumes about 5% of records have one. The
+    benchmark is unchanged.
+  - **End-to-end tests** pad each fixture past 200 records with distinct
+    fictional filler (`e2e/padding.ts`), so each test's own pairs still
+    decide its outcome.
 
 ### Later
 

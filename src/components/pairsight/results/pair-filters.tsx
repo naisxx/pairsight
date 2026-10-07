@@ -166,8 +166,7 @@ export function PairFilters({
 					t('source'),
 					[
 						{ value: '', label: t('anySource') },
-						{ value: 'rules', label: t('fromRules') },
-						{ value: 'fuzzy', label: t('fuzzyRulesOnly') },
+						{ value: 'suggested', label: t('suggestedByPairSight') },
 						{ value: 'vendor', label: t('addedByVendor') }
 					],
 					'w-[160px]'

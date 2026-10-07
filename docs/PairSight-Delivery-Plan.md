@@ -9,7 +9,7 @@ build it: the architecture, the milestones, and how we verify each one.
 **Friday target (2026-10-02):** one usable slice.
 
 > sign in → create evaluation → upload source CSV and one vendor pair CSV →
-> map fields and fix validation errors → identity and blocking → review the
+> map fields and fix validation errors → identity and pairs to check → review the
 > plan → run real Jev with visible progress and failures → four-category
 > comparison with filters → inspect a disagreement → reopen later
 
@@ -34,14 +34,14 @@ the start, without duplicating any Jev work.
 
 ## Architecture
 
-| Layer                            | Location                             | Responsibility                                                                                                                                                                                                                                |
-| -------------------------------- | ------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Domain logic (pure, unit-tested) | `src/server/pairsight/`              | `csv.ts` (parse and validate), `normalize.ts`, `blocking.ts`, `pairs.ts` (canonical order, dedupe, group expansion, union), `limits.ts`, `decisions.ts` (threshold and categories), `judgment.ts` (Jev request, response parsing, config key) |
-| Data access                      | `src/server/pairsight/store.ts`      | Every function takes `ownerId`. Another user's evaluation returns 404.                                                                                                                                                                        |
-| Run engine                       | `src/server/pairsight/run-engine.ts` | Claims pending assessments and calls Jev                                                                                                                                                                                                      |
-| Jev provider                     | `src/server/ai/typesafe.ts`          | The only file that calls TypeSafe. Wraps `trackAiCall`, following the `anthropic.ts` pattern.                                                                                                                                                 |
-| Session                          | `src/server/auth/session.ts`         | `requireUser()`: Supabase session → `provisionUser` → `User`                                                                                                                                                                                  |
-| Mutations                        | server actions via `validatedAction` | Zod input; `AppError` for user-caused failures                                                                                                                                                                                                |
+| Layer                            | Location                             | Responsibility                                                                                                                                                                                                                                  |
+| -------------------------------- | ------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Domain logic (pure, unit-tested) | `src/server/pairsight/`              | `csv.ts` (parse and validate), `normalize.ts`, `match-keys.ts`, `pairs.ts` (canonical order, dedupe, group expansion, union), `limits.ts`, `decisions.ts` (threshold and categories), `judgment.ts` (Jev request, response parsing, config key) |
+| Data access                      | `src/server/pairsight/store.ts`      | Every function takes `ownerId`. Another user's evaluation returns 404.                                                                                                                                                                          |
+| Run engine                       | `src/server/pairsight/run-engine.ts` | Claims pending assessments and calls Jev                                                                                                                                                                                                        |
+| Jev provider                     | `src/server/ai/typesafe.ts`          | The only file that calls TypeSafe. Wraps `trackAiCall`, following the `anthropic.ts` pattern.                                                                                                                                                   |
+| Session                          | `src/server/auth/session.ts`         | `requireUser()`: Supabase session → `provisionUser` → `User`                                                                                                                                                                                    |
+| Mutations                        | server actions via `validatedAction` | Zod input; `AppError` for user-caused failures                                                                                                                                                                                                  |
 
 **AI tracking:**
 
@@ -107,28 +107,29 @@ the start, without duplicating any Jev work.
   network rather than the CPU, so they don't slow pages. `RUN_WORKER_CONCURRENCY=0`
   turns the worker off on a server that should serve pages only.
 
-**Pair scoring: Splink picks extra pairs** (Scale Roadmap item 5,
-`docs/rules/splink-service.md`).
+**Pair scoring: Splink picks the pairs** (Scale Roadmap items 5, 6, 10 and
+11, `docs/rules/splink-service.md`).
 
 - When records are saved, the dataset is queued (`scoreStatus` pending). The
-  run worker scores one dataset at a time: it writes the records cleaned by
-  the blocking code to a temp file, runs the Python service
-  (`services/splink`, Splink on DuckDB, trained on the records with no
-  labels) and stores the pairs it scores in `pair_scores`.
-- The Plan adds Splink's picks (match weight 0 or more) to the rules' and
-  vendors' pairs as one more reason a pair is checked (`splink` in
-  `run_pairs.ruleIds`). A switch in Rules turns it off. Splink only picks
-  pairs: Jev judges every one.
-- It never blocks anything: under 200 records, Splink not set up, or a
-  failure, the plan goes on with rules and vendor pairs and says why in one
-  line.
-- Since item 6 it's the default: a new evaluation of 200 records or more
-  starts with no rules (they sit under "Advanced" on the Rules screen), for
-  people, organisations and products alike (item 10: one model per type);
-  smaller files start with the type's default rules, and a
-  plan with no rules and no suggestions available falls back to the
-  defaults (`rulesForPlan`). On screen these are "Suggested by PairSight";
-  the technology is never named.
+  run worker scores one dataset at a time: it writes the records, cleaned
+  by `match-keys.ts` (`loadScoringRecords` in `scoring-records.ts`), to a
+  temp file, runs the Python service (`services/splink`, Splink on DuckDB,
+  trained on the records with no labels, one model per type) and stores
+  the pairs it scores in `pair_scores`.
+- **Every plan is Splink's picks ∪ every vendor pair.** Its picks are the
+  pairs at match weight 0 or more (`SPLINK_PLAN_FLOOR` in `splink/floor.ts`),
+  at most 100K. Each run pair records whether it was suggested
+  (`run_pairs.isSuggested`); a vendor pair it didn't suggest is still
+  checked. Splink only picks pairs: Jev judges every one.
+- There are no rules and no fallback (item 11 removed the hand-written
+  rules, their presets and close-match keys, the suggestions switch and the
+  hard-cases readout). Records files under 200 records (`MIN_RECORDS`) are
+  refused at upload. The Plan's blockers say why it can't start yet:
+  `still_suggesting` (Start waits), `suggestions_failed` (scoring failed or
+  the service isn't set up; **Try again** queues it again) and
+  `too_few_records` (a dataset saved before small files were refused).
+- On screen these are "Suggested by PairSight", with what the two records
+  share (from `pair_scores.reasons`); the technology is never named.
 
 **Reading results: from the database, never the whole run** (Scale Roadmap
 item 2).
@@ -138,14 +139,16 @@ item 2).
   stores it on the run (`runs.summary`, `summaryVersion`). It holds:
   - a count table: pairs grouped by status, 0.01 score bin, Jev's decision
     and close call at the run's cut-off, which vendors matched (a bitmask)
-    and why it was checked. Every Overview number, the dashboard's and the
+    and why it was checked (suggested, or only a vendor matched it). Every
+    Overview number, the dashboard's and the
     report's come from it exactly (`src/lib/pairsight/stats.ts`), including
     the 0.05 cut-off sweep and the threshold preview's 0.01 steps.
-  - pairs per rule, the field patterns per vendor over **every** judged pair
+  - pairs by where they came from, the field patterns per vendor over **every** judged pair
     (walked a page at a time), each vendor's top disagreements, the Jev
     versions and the record count.
     Results read it in milliseconds whatever the run's size. A run finished
-    before summaries existed builds one on its first read.
+    before summaries existed, or with an older summary version (now 3),
+    builds one on its first read.
 - **Kept current.** Judgments are shared between runs of the same records and
   settings, so when a run finishes or a pair page re-checks a pair, the
   summaries of the other finished runs sharing them are cleared and rebuilt.
@@ -172,18 +175,18 @@ item 2).
 **Data model** (`prisma/schema/pairsight.prisma`; every table gets an RLS
 migration):
 
-| Model                | Key fields                                                                                                                                                                                                                                                 |
-| -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Evaluation`         | `ownerId?` (null for the demo), `name`, `kind` (live or demo). Draft configuration: `identitySame`, `identityDifferent`, `countryCode`, `jevFields[]`, `blockingRules` (JSON), `threshold`                                                                 |
-| `SourceDataset`      | `evaluationId`, `fileName`, `rowCount`, `referenceColumn`, `columnRoles`. Immutable: replacing the file creates a new dataset. `savedAt` is set once every record is in; only saved datasets are current.                                                  |
-| `SourceRecord`       | `datasetId`, `reference` (unique per dataset), `rowNumber`, `values` (original values, JSON), and for reading results `label`, `sortKey`, `searchText`                                                                                                     |
-| `VendorExport`       | `evaluationId`, `datasetId`, `name`, `format` (pair, later group), `mapping`, `confirmedCompleteAt`, `pairCount`                                                                                                                                           |
-| `VendorMatch`        | `exportId`, `recordAId`, `recordBId` (canonical order, unique)                                                                                                                                                                                             |
-| `Run`                | `evaluationId`, `datasetId`, `number`, `origin` (live or prepared), `status`, and a frozen snapshot: identity definition, `jevFields`, country, rules, `exportIds[]`, `judgmentKey`, requested model, `threshold`; `summary` (the Overview, once finished) |
-| `RunPair`            | `runId`, `recordAId`, `recordBId`, `ruleIds[]`, `matchedByExportIds[]`, `assessmentId`, and as of the summary `status`, `score`, `sortKey`, `searchText`                                                                                                   |
-| `Assessment`         | `datasetId`, record A/B, `judgmentKey`, `status` (pending, running, succeeded or failed), `score?`, `modelReported`, `requestId`, `attempts`, `errorCode`, `claimedAt`, `completedAt`, `origin`                                                            |
-| `Upload`             | `ownerId`, `evaluationId`, `kind` (records or vendor), `fileName`, `size`, `bytes`. A file kept while it is checked; deleted once saved or after a day.                                                                                                    |
-| `HumanReview` (next) | `runPairId`, `reviewerId`, `verdict` (same, different or unsure), `note`. Kept separate from AI judgments.                                                                                                                                                 |
+| Model                | Key fields                                                                                                                                                                                                                                          |
+| -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `Evaluation`         | `ownerId?` (null for the demo), `name`, `kind` (live or demo). Draft configuration: `identitySame`, `identityDifferent`, `countryCode`, `jevFields[]`, `threshold`                                                                                  |
+| `SourceDataset`      | `evaluationId`, `fileName`, `rowCount`, `referenceColumn`, `columnRoles`. Immutable: replacing the file creates a new dataset. `savedAt` is set once every record is in; only saved datasets are current.                                           |
+| `SourceRecord`       | `datasetId`, `reference` (unique per dataset), `rowNumber`, `values` (original values, JSON), and for reading results `label`, `sortKey`, `searchText`                                                                                              |
+| `VendorExport`       | `evaluationId`, `datasetId`, `name`, `format` (pair, later group), `mapping`, `confirmedCompleteAt`, `pairCount`                                                                                                                                    |
+| `VendorMatch`        | `exportId`, `recordAId`, `recordBId` (canonical order, unique)                                                                                                                                                                                      |
+| `Run`                | `evaluationId`, `datasetId`, `number`, `origin` (live or prepared), `status`, and a frozen snapshot: identity definition, `jevFields`, country, `exportIds[]`, `judgmentKey`, requested model, `threshold`; `summary` (the Overview, once finished) |
+| `RunPair`            | `runId`, `recordAId`, `recordBId`, `isSuggested`, `matchedByExportIds[]`, `assessmentId`, and as of the summary `status`, `score`, `sortKey`, `searchText`                                                                                          |
+| `Assessment`         | `datasetId`, record A/B, `judgmentKey`, `status` (pending, running, succeeded or failed), `score?`, `modelReported`, `requestId`, `attempts`, `errorCode`, `claimedAt`, `completedAt`, `origin`                                                     |
+| `Upload`             | `ownerId`, `evaluationId`, `kind` (records or vendor), `fileName`, `size`, `bytes`. A file kept while it is checked; deleted once saved or after a day.                                                                                             |
+| `HumanReview` (next) | `runPairId`, `reviewerId`, `verdict` (same, different or unsure), `note`. Kept separate from AI judgments.                                                                                                                                          |
 
 - **Reuse:** `judgmentKey` is a hash of the identity definition,
   `jevFields`, country, requested model and request-template version. The
@@ -196,7 +199,8 @@ migration):
 ## v1 choices
 
 - **Source file:** CSV (UTF-8, BOM allowed, header row, comma-delimited) or
-  Excel, ≤ 10 MB, ≤ 10,000 rows. It's uploaded once to
+  Excel, ≤ 10 MB, 200 to 10,000 rows (fewer than 200 is refused: PairSight
+  can't learn from them which pairs to suggest). It's uploaded once to
   `PUT /api/evaluations/[id]/uploads` and kept in `uploads` while it's
   checked; it's read and saved a batch of rows at a time (Scale Roadmap item
   3). An empty cell is missing. The reference is trimmed, required and
@@ -213,18 +217,19 @@ migration):
 - **Field roles:** full name, first name, last name, email, phone, date of
   birth, address, city, postcode, country, other. Jev receives the
   user-selected mapped fields (default: all), with original values.
-- **Blocking:**
-  - Presets: Email, Phone, Name, Name + postcode.
+- **Pairs to check:** the pairs PairSight suggests plus every vendor pair
+  (see "Pair scoring" above; v1's hand-written rules and presets are gone).
   - Postcode normalization: trim, uppercase, remove spaces. The other
-    normalization rules and missing-value handling are in the scope doc.
+    normalization rules are in the scope doc.
 - **Identity definition:** two text areas, "Counts as the same individual"
   and "Does not count", prefilled with editable defaults. They map onto
   `criteria.true` and `criteria.false`. The `state` holds only the two
   records' fields and the country.
 - **Threshold:**
   - A pair is a match when `noul ≥ threshold`. The threshold is set in
-    Rules (presets 0.35 / 0.50 / 0.70, or custom), and each run keeps its
-    own. Results preview other values but never change a run's.
+    What Jev checks (Lenient 0.35, Balanced 0.50, Strict 0.70, or a value
+    of your own), and each run keeps its own. Results preview other values
+    but never change a run's. (The step's route and stage key stay `rules`.)
   - The default, 0.5, was confirmed by the M1 test.
   - A band around the threshold raises a "low confidence" filter, not a
     category.
@@ -238,22 +243,22 @@ migration):
 
 ## Screens
 
-| Screen                        | Contents                                                                                                                                                                                            | States                                                                         |
-| ----------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| `/` landing (minimal)         | The problem, three steps, **Explore the sandbox**, **Start evaluation**                                                                                                                             | —                                                                              |
-| `/sign-in`, `/sign-up`        | Email and password                                                                                                                                                                                  | Invalid credentials, redirect on success                                       |
-| `/evaluations`                | Saved evaluations                                                                                                                                                                                   | Empty state with create and sandbox actions                                    |
-| Workspace `/evaluations/[id]` | Stepper: Records → Vendors → Rules → Plan → Results (runs: the Runs centre)                                                                                                                         | Each step: complete or needs attention                                         |
-| Records                       | Upload, preview of the first 10 rows, reference column, role per column                                                                                                                             | Parsing; file errors; missing or duplicate reference table; success            |
-| Vendors                       | Name, file, A/B columns, completeness checkbox, vendor list                                                                                                                                         | Unknown-reference table; self-pair and duplicate counts                        |
-| Rules                         | Identity text areas, country, fields sent to Jev, rules with live counts                                                                                                                            | Warning above 50 records per bucket; no-rules state                            |
-| Plan                          | Pair counts by source, pairs outside blocking, reduction, reused assessments, limit check, **Start evaluation**                                                                                     | Over-limit block with its cause; open validation errors block starting         |
-| Runs centre (top bar)         | Every run as a card: progress and counts, details, Retry failed, Resume                                                                                                                             | Running, paused/resume, config error, failures with **Retry failed**, complete |
-| Results                       | Vendor tabs, four category counts plus an incomplete count, threshold control, "agreement, not correctness" wording, filters (category, outside blocking, low confidence, incomplete), pairs table  | Empty filter result; incomplete-run warning                                    |
-| Pair inspection               | Records side by side with differences highlighted, each vendor's decision, Jev score/model/time, decision at the threshold, rules that produced the pair (or "added by vendor")                     | Pending and failed shown explicitly                                            |
-| `/sandbox`                    | Every screen above (dashboard to pair inspection) on one prepared evaluation, read-only, no login; banner "Sandbox · fictional data · read-only. Judgments recorded from Jev \<model\> on \<date\>" | —                                                                              |
+| Screen                        | Contents                                                                                                                                                                                                                             | States                                                                                                                                                                                                                              |
+| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `/` landing (minimal)         | The problem, three steps, **Explore the sandbox**, **Start evaluation**                                                                                                                                                              | —                                                                                                                                                                                                                                   |
+| `/sign-in`, `/sign-up`        | Email and password                                                                                                                                                                                                                   | Invalid credentials, redirect on success                                                                                                                                                                                            |
+| `/evaluations`                | Saved evaluations                                                                                                                                                                                                                    | Empty state with create and sandbox actions                                                                                                                                                                                         |
+| Workspace `/evaluations/[id]` | Stepper: Records → Vendors → What Jev checks (`rules`) → Plan → Results (runs: the Runs centre)                                                                                                                                      | Each step: complete or needs attention                                                                                                                                                                                              |
+| Records                       | Upload, preview of the first 10 rows, reference column, role per column                                                                                                                                                              | Parsing; file errors (including under 200 records); missing or duplicate reference table; success                                                                                                                                   |
+| Vendors                       | Name, file, A/B columns, completeness checkbox, vendor list                                                                                                                                                                          | Unknown-reference table; self-pair and duplicate counts                                                                                                                                                                             |
+| What Jev checks               | Identity text areas, fields sent to Jev (at least two), country, match cut-off; beside them "The pairs Jev will check": how many pairs PairSight suggests, what they share, how many of each vendor's pairs they include             | Still suggesting; suggestions failed                                                                                                                                                                                                |
+| Plan                          | Pair counts by source (suggested, vendor-only), reduction, reused assessments, limit check, **Start run**                                                                                                                            | Still suggesting (Start waits); suggestions failed with **Try again**; too few records; over-limit block showing where the pairs come from, with links to change the records or vendor files; open validation errors block starting |
+| Runs centre (top bar)         | Every run as a card: progress and counts, details, Retry failed, Resume                                                                                                                                                              | Running, paused/resume, config error, failures with **Retry failed**, complete                                                                                                                                                      |
+| Results                       | Vendor tabs, four category counts plus an incomplete count, threshold control, "agreement, not correctness" wording, filters (category, why it was checked: suggested or added by a vendor, low confidence, incomplete), pairs table | Empty filter result; incomplete-run warning                                                                                                                                                                                         |
+| Pair inspection               | Records side by side with differences highlighted, each vendor's decision, Jev score/model/time, decision at the threshold, why it was checked ("Suggested by PairSight" with what the records share, or that a vendor matched it)   | Pending and failed shown explicitly                                                                                                                                                                                                 |
+| `/sandbox`                    | Every screen above (dashboard to pair inspection) on one prepared evaluation, read-only, no login; banner "Sandbox · fictional data · read-only. Judgments recorded from Jev \<model\> on \<date\>"                                  | —                                                                                                                                                                                                                                   |
 
-**Visual references wanted** for field mapping, the rules builder, the
+**Visual references wanted** for field mapping, the pairs-to-check card, the
 category summary with the pairs table, and the side-by-side diff. They
 should aim for dense but readable tables and a calm, neutral look.
 
@@ -272,6 +277,10 @@ together.
 | **M4** `feat/sandbox`            | Fictional dataset, prepared snapshot, idempotent `pnpm demo:seed`, public read-only `/sandbox` (replaces the planned `/demo`), landing entry points, e2e with a Jev stub, manual checklist                                                                                                                                                            | Friday gate: `local-review`, e2e and the manual flow all pass                                                                                                                                                                         |
 | Optional                         | Up to 3 vendors with vendor tabs                                                                                                                                                                                                                                                                                                                      | Only once the Friday gate is green                                                                                                                                                                                                    |
 
+M1 and M2 built hand-written blocking rules (the email rule, the rules
+builder, bucket warnings); Scale Roadmap items 6, 10 and 11 later replaced
+them with the pairs PairSight suggests.
+
 **Cut line if time runs short:** drop multiple vendors first, then the
 landing page, then the plan's reduction statistic. Never cut the loop,
 inspection, save/reopen or the sandbox.
@@ -283,11 +292,13 @@ inspection, save/reopen or the sandbox.
 - **CSV:** BOM, quoted commas and newlines, missing or duplicate
   references, limits
 - **Normalization:** email, phone with country, name, postcode
-- **Blocking:** overlapping buckets; blanks never share a bucket; bucket
-  warnings
+- **Match keys:** each field's cleaned key and its derived keys
+  (`match-keys.test.mts`); the records the scoring service reads match its
+  columns (`splink/records.test.mts`)
 - **Pairs:** canonical order, reversed pairs collapse, no self-pairs,
-  dedupe across buckets and vendors, vendor pairs outside blocking
-  included, group expansion n(n−1)/2
+  dedupe across suggestions and vendors, vendor pairs PairSight didn't
+  suggest included, group expansion n(n−1)/2
+- **Splink service:** pytest in `services/splink/tests` (`pnpm python:check`)
 - **Limits:** the cap explanation; vendor pairs never dropped
 - **Decisions:** the `≥` boundary, all four categories, failed and pending
   never categorized
@@ -300,7 +311,7 @@ inspection, save/reopen or the sandbox.
 - A local Jev stub is used via a `TYPESAFE_BASE_URL` override, so CI needs
   no key. It returns scripted scores, one 529-then-success and one
   permanent failure.
-- The flow: sign up → upload → rules → plan counts → run → categories →
+- The flow: sign up → upload → what Jev checks → plan counts → run → categories →
   inspection → retry failed; plus the public demo; plus a two-user
   isolation check.
 
@@ -309,19 +320,20 @@ that no record content reaches logs, analytics or `ai_usage`.
 
 ## Demo scenario
 
-About 24 fictional people, Vendor A as a pair CSV, and rules Email, Phone,
-and Last name + postcode.
+Fictional people with Vendor A as a pair CSV. The first scenario had about
+24 people and hand-written rules; since suggestions need at least 200
+records, the sandbox is being re-recorded at about 2,000 fictional records
+per type.
 
-| Case                                                                         | Vendor A               | Expected category                  |
-| ---------------------------------------------------------------------------- | ---------------------- | ---------------------------------- |
-| Same person, email case and phone format differ                              | Matched                | Both matched                       |
-| Misspelled surname, same email and date of birth                             | Missed                 | PairSight only                     |
-| Relatives sharing a phone and address, different first names and birth dates | Matched                | Vendor only                        |
-| Common name and postcode, different birth date and email                     | Not matched            | Neither matched                    |
-| Same person who moved (new email, phone and postcode)                        | Matched, outside rules | Both matched, **outside blocking** |
-| Two unrelated people                                                         | Matched, outside rules | Vendor only, outside blocking      |
-| Nickname with a missing birth date                                           | —                      | Low-confidence flag                |
-| Blank emails or phones                                                       | —                      | No giant blank bucket              |
+| Case                                                                         | Vendor A               | Expected category                   |
+| ---------------------------------------------------------------------------- | ---------------------- | ----------------------------------- |
+| Same person, email case and phone format differ                              | Matched                | Both matched                        |
+| Misspelled surname, same email and date of birth                             | Missed                 | PairSight only                      |
+| Relatives sharing a phone and address, different first names and birth dates | Matched                | Vendor only                         |
+| Common name and postcode, different birth date and email                     | Not matched            | Neither matched                     |
+| Same person who moved (new email, phone and postcode)                        | Matched, not suggested | Both matched, **added by a vendor** |
+| Two unrelated people                                                         | Matched, not suggested | Vendor only, added by a vendor      |
+| Nickname with a missing birth date                                           | —                      | Low-confidence flag                 |
 
 These are designed expectations. Run real Jev on the dataset and adjust
 the fixtures until every category is populated. The prepared snapshot is
@@ -330,14 +342,14 @@ stubbed e2e, not in the demo data.
 
 ## Roadmap
 
-| Feature                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | When                                                 |
-| --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| Login, saved evaluations, upload/validation/mapping, pair and group CSVs, identity and blocking, the match threshold in Rules, plan preview, Jev runs with progress and retry (the Runs centre), comparison, inspection, up to 3 vendors, delete an evaluation, qualified metrics (AI-estimated, evaluated pairs only), the sandbox, a polished landing, fuzzy blocking with derived rule fields, CSV and Excel import and findings export, the PDF summary report, people, organisations and products (type detected from the file, a larger field dictionary) | Built (M1–M4, October 2026)                          |
-| Human review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Next                                                 |
-| Analytics events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Next                                                 |
-| Background worker, larger scale (100K pairs per run, 10K records), Jev throughput, pairs suggested by PairSight by default, for every type                                                                                                                                                                                                                                                                                                                                                                                                                      | Built (Scale Roadmap items 1–6, 8, 10, October 2026) |
-| Vendor-specific adapters, legacy `.xls`, verified ground-truth labels, more entity types                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Deferred                                             |
-| Live deployment: on-premises, with Jev on the customer's own infrastructure, so their data never leaves it                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Deferred                                             |
+| Feature                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         | When                                                     |
+| ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| Login, saved evaluations, upload/validation/mapping, pair and group CSVs, identity and blocking (later replaced by suggestions), the match threshold in Rules, plan preview, Jev runs with progress and retry (the Runs centre), comparison, inspection, up to 3 vendors, delete an evaluation, qualified metrics (AI-estimated, evaluated pairs only), the sandbox, a polished landing, fuzzy blocking with derived rule fields (removed with the rules, Scale Roadmap item 11), CSV and Excel import and findings export, the PDF summary report, people, organisations and products (type detected from the file, a larger field dictionary) | Built (M1–M4, October 2026)                              |
+| Human review                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    | Next                                                     |
+| Analytics events                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Next                                                     |
+| Background worker, larger scale (100K pairs per run, 10K records), Jev throughput, pairs suggested by PairSight for every type, replacing the hand-written rules                                                                                                                                                                                                                                                                                                                                                                                                                                                                                | Built (Scale Roadmap items 1–6, 8, 10, 11, October 2026) |
+| Vendor-specific adapters, legacy `.xls`, verified ground-truth labels, more entity types                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Deferred                                                 |
+| Live deployment: on-premises, with Jev on the customer's own infrastructure, so their data never leaves it                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Deferred                                                 |
 
 The scaling work (background worker, results from the database, large
 uploads, Jev throughput, Splink, automatic pair selection) is ordered and

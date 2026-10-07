@@ -11,7 +11,6 @@ import { COLORS, styles, VENDOR_SERIES } from './styles'
 export type ReportText = {
 	t: Awaited<ReturnType<typeof getTranslations>>
 	role: (role: string) => string
-	rule: (ruleId: string) => string
 	failure: (reason: FailureReason) => string
 	date: (date: Date) => string
 	dateTime: (date: Date) => string
@@ -237,10 +236,7 @@ export function ExampleCard({
 	text: ReportText
 }) {
 	const { t } = text
-	const source =
-		example.ruleIds.length === 0
-			? t('addedByVendor')
-			: example.ruleIds.map((ruleId) => text.rule(ruleId)).join(', ')
+	const source = example.isSuggested ? t('suggestedByPairSight') : t('addedByVendor')
 	return (
 		<View wrap={false}>
 			{heading != null && <Text style={styles.h3}>{heading}</Text>}

@@ -7,16 +7,14 @@ export const LIMITS = {
 	maxFileBytes: MAX_FILE_BYTES,
 	maxSourceRecords: 10_000,
 	// Rows in a vendor's file: its own limit, not the pair cap, since a run's
-	// pairs are mostly what the comparison rules find.
+	// pairs are mostly the ones PairSight suggests.
 	maxVendorRows: 100_000,
 	maxColumns: 40,
 	maxVendors: 3,
 	// Pairs one run may check (docs/PairSight-Scale-Roadmap.md, item 8): about
-	// 10 minutes of Jev at today's speed. The Rules and Plan pages build a
-	// plan's pairs on every view, which stays quick up to here; going past it
-	// waits for pairs worked out once and stored (item 6).
-	maxPairsPerRun: 100_000,
-	bucketWarningSize: 50
+	// 10 minutes of Jev at today's speed. PairSight suggests at most this many
+	// (splink/service.ts), and the Plan adds the vendors' pairs.
+	maxPairsPerRun: 100_000
 } as const
 
 // Validation issue lists show this many rows, then "and N more".

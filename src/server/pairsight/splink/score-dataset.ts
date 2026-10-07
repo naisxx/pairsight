@@ -11,10 +11,10 @@ import { captureError } from '@/lib/observability/capture-error'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import { db, type Prisma } from '@/server/db/client'
 import { log as rootLog } from '@/server/lib/logger'
-import { loadBlockingRecords } from '../blocking-records'
+import { loadScoringRecords } from '../scoring-records'
 import { chunks } from '../chunks'
 import { LIMITS } from '../limits'
-import { SPLINK_PLAN_FLOOR } from './picks'
+import { SPLINK_PLAN_FLOOR } from './floor'
 import { parseReasons, tallyReasons, type SuggestionReason } from './reasons'
 import { splinkRecordLines } from './records'
 import { runSplink, splinkPython, type SplinkSummary } from './service'
@@ -22,8 +22,8 @@ import { runSplink, splinkPython, type SplinkSummary } from './service'
 // One dataset scored by Splink, as a background job of the run worker
 // (worker/run-worker.ts). The dataset row is the job: `scoreStatus` pending
 // → running (claimed) → done, skipped or failed. Its pairs go to
-// `pair_scores`, for the Plan (picks.ts). Never blocks anything: a dataset
-// Splink can't score just plans with rules and vendor pairs.
+// `pair_scores`, for the Plan (picks.ts). A dataset it couldn't score holds
+// its plan back, with a way to try again (picks.ts retrySplink).
 
 const log = rootLog.child({ source: 'splink' })
 // A claim older than the service's own time limit, with room to spare, was
@@ -147,7 +147,7 @@ export async function scoreDataset(datasetId: string): Promise<void> {
 	try {
 		const recordsPath = path.join(folder, 'records.csv')
 		const outPath = path.join(folder, 'pairs.csv')
-		const records = await loadBlockingRecords(datasetId)
+		const records = await loadScoringRecords(datasetId)
 		await pipeline(
 			Readable.from(
 				splinkRecordLines(records, { type: entityType, country: dataset.evaluation.countryCode })

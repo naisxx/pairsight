@@ -1,25 +1,2001 @@
-Product ID,Title,Brand,GTIN,MPN,Category,Colour,Size
-P01,"Trailrunner 2 Running Shoe - Red, Size 42",Northpeak,4006381333931,TR2-RED-42,Footwear,Red,42
-P02,NORTHPEAK TRAILRUNNER 2 RED 42,Northpeak,04006381333931,TR2RED42,Running shoes,red,42
-P03,"Trailrunner 2 Running Shoe - Red, Size 44",Northpeak,,TR2-RED-44,Footwear,Red,44
-P04,Halcyon Steel Bottle 750ml,Halcyon,012345678905,HB-750,Drinkware,Silver,750 ml
-P05,"Halcyon Insulated Bottle, 0.75 L",Halcyon,0012345678905,,Bottles,Silver,750 ml
-P06,Halcyon Steel Bottle 500ml,Halcyon,,HB-500,Drinkware,Silver,500 ml
-P07,Classic Wireless Mouse,Vantor,,VM-100,Accessories,Black,
-P08,Classic Wireless Mouse,Kestrel,,KM-2,Accessories,Black,
-P09,Aero Backpack 30L,Northpeak,,AERO30-BLK,Bags,Black,30 L
-P10,Aero Backpack 30L,Northpeak,,AERO30-OLV,Bags,Olive,30 L
-P11,Kestrel Pro USB-C Hub 7-in-1,Kestrel,,KH-7C,Electronics,Grey,
-P12,Kestrel Pro 7 port USB C hub,Kestrel,,KH-7C,Hubs,Grey,
-P13,Sparkling Water 330ml Can,Fjell,,FJ-SW330,Drinks,,330 ml
-P14,"Sparkling Water 330ml Can, Pack of 6",Fjell,,FJ-SW330-6,Drinks,,6 x 330 ml
-P15,Lumen LED Desk Lamp,Lumen,,LM-DL1,Lighting,White,
-P16,LUMEN LED DESK LAMP WHITE,Lumen,,LMDL1,Lamps,white,
-P17,Copperleaf Notebook A5 Dotted,Copperleaf,,CL-A5-DOT,Stationery,Green,A5
-P18,Copperleaf Notebook A5 Lined,Copperleaf,,CL-A5-LIN,Stationery,Green,A5
-P19,Summit Trekking Pole Pair,Summit,,ST-POLE-2,Outdoor,Blue,
-P20,Summit Trekking Poles (2 pack),Summit,,ST-POLE-2,Outdoor,Blue,
-P21,Orbis Wireless Charger 15W,Orbis,,OR-WC15,Electronics,Black,
-P22,Orbis Wireless Charger 10W,Orbis,,OR-WC10,Electronics,Black,
-P23,Riverside Coffee Beans 1kg,Riverside,,RV-CB1K,Coffee,,1 kg
-P24,Riverside Coffee Beans 250g,Riverside,,RV-CB250,Coffee,,250 g
+record_id,product_name,brand,manufacturer,gtin,mpn,sku,model_number,category,color,size
+G000001,Arar Desk Lamp,Arfimen,,5034207437043,,5188591,ARF031,Home,Blue,Small
+G000002,Arar Desk Lamp,Arfimen,,5092147841245,ARF-7902-10,2894610,ARF031,Home,Blue,Large
+G000003,Menor Soundbar,Fizen,Vaor Group,5076745846727,FIZ-1872-00,7164464,,Audio,Red,2.1
+G000004,Menor Soundbar,Fizen,,5044237928183,,,,Audio,Red,5.1
+G000005,Sova Heater,Nocaar,Nocaar Group,5080603698427,NOC-8453-00,8035370,NOC009,Home,Blue,
+G000006,Arki Mini Speaker,Texa,,5050328462405,TEX-2035-00,,TEX231,Audio,Matt Grey,
+G000007,Arki Mini Speaker,Texa,Soxa Group,,,4620833,TEX231,Audio,Red,
+G000008,Orno Plus Soundbar,Ellu Home,Teria Group,5016697073680,ELL-4420-00,0880484,,Audio,Blue,2.1
+G000009,ORNO PLUS SOUNDBAR,Ellu Home,,5016697073680,,2778081,,Audio,Blue,2.1
+G000010,Orno Plus Soundbar,Ellu Home,,5084705403958,,1219424,,Audio,Blue,5.1
+G000011,Ludor Pro Hair Dryer,Lumo Home,,5005946144646,LUM-9997-00,9291455,,Personal care,White,
+G000012,Ludor Pro Hair Dryer,Lumo Home,Lumo Group,5006184634272,LUM-9997-01,0481145,,Personal care,Blue,
+G000013,Kiar Classic Desk Lamp,Rifiia,Soxa Group,5040055312289,RIF-5368-00,4838875,RIF682,Home,Silver,
+G000014,Kiar Classic Desk Lamp,Rifiia,Soxa Group,5088075925157,,1648515,RIF682,Home,Red,
+G000015,Kiar Classic Desk Lamp,Rifiia,,5043112934646,RIF-5368-02,,RIF682,Home,Blue,
+G000016,Nozen Classic Drill,Ellu Home,,5002810781709,ELL-6000-00,,,Tools,White,12V
+G000017,Nozen Classic Drill,Ellu Home,,,,,,Tools,White,18V
+G000018,Vava Classic Hair Dryer,Soso,,,,2037180,,Personal care,Silver,1800W
+G000019,Vava Classic Hair Dryer,Soso,Soso Group,5030066811468,SOS-0019-10,3146061,,Personal care,Silver,2200W
+G000020,Vava Classic Hair Dryer,SOSO Ltd,,,SOS-0019-10,1588279,,Personal care,Silver,2200W
+G000021,Iaor Pro Heater,Lumo Home,,5062353760593,LUM-8699-00,,,Home,Black,
+G000022,Iaor Pro Heater,Lumo Home,,5072654513200,LUM-8699-01,0493429,,Home,Blue,
+G000023,Armo Plus Desk Lamp,Terso,,5016602736006,,2346409,TER094,Home,White,
+G000024,Soso Plus Speaker,Fizen,,5050592447009,FIZ-2324-00,6637647,,Audio,Silver,
+G000025,Soso Plus Speaker,Fizen,,5015117996745,,4311023,,Audio,White,
+G000026,Soso Plus Speaker,Fizen,Vaor Group,5003819733096,,,,Audio,Red,
+G000027,Luel Classic Coffee Maker,Lumo Home,,5069767342315,,,LUM912,Kitchen,White,
+G000028,LUEL CLASSIC COFFEE MAKER,Lumo Home,,5069767342315,,8215710,LUM912,Kitchen,White,
+G000029,Luel Classic Coffee Maker,Lumo Home,Lumo Group,5074604721949,LUM-9736-01,,LUM912,Kitchen,Black,
+G000030,Luel Classic Coffee Maker,Lumo Home,,5072744430578,LUM-9736-02,,LUM912,Kitchen,Red,
+G000031,Texa Coffee Maker,Fizen,,5017184326173,,,,Kitchen,Red,1.2L
+G000032,Texa Coffee Maker,Fizen,Vaor Group,5073121540118,FIZ-6376-10,2902589,,Kitchen,Red,1.8L
+G000033,Mono Headphones,Texaki,,5064092304298,TEX-9866-00,0511946,TEX810,Audio,Black,
+G000034,Mono Headphones,Texaki,,5039949245772,TEX-9866-01,,TEX810,Audio,Blue,
+G000035,Xaxa Toaster,Dorxa,,5042256255204,,,,Kitchen,Red,
+G000036,Xaxa Toaster,DORXA Ltd,,,,2462226,,Kitchen,Red,
+G000037,Xaxa Toaster,Dorxa,,5011727715738,DOR-5263-01,8404296,,Kitchen,Blue,
+G000038,Orzen Plus Headphones,Soso,,5076998075509,SOS-6518-00,,,Audio,Blue,
+G000039,ORZEN PLUS HEADPHONES,Soso,,5076998075509,,0841037,,Audio,Blue,
+G000040,Orzen Plus Headphones,Soso,Soso Group,5078096680111,SOS-6518-01,4044588,,Audio,Matt Grey,
+G000041,ORZEN PLUS HEADPHONES,Soso,,5078096680111,,2712755,,Audio,Matt Grey,
+G000042,Veter Classic Hair Dryer,Nocaar,Nocaar Group,5035746306388,NOC-8352-00,4359417,,Personal care,Red,
+G000043,Veter Classic Hair Dryer,Nocaar,,,,1500298,,Personal care,,
+G000044,Veter Classic Hair Dryer,Nocaar,Nocaar Group,5055417836211,,8226822,,Personal care,Black,
+G000045,Veter Classic Hair Dryer,NOCAAR Ltd,,,,5240914,,Personal care,Black,
+G000046,Vaca Heater,Sono,Ororso Group,5054104049668,SON-5492-00,7887220,,Home,Silver,1kW
+G000047,Vaca Heater,Sono,,5060227412098,SON-5492-10,3360362,,Home,Silver,2kW
+G000048,Dormen Headphones,Zenri,Vacafi Group,5083650559376,ZEN-3068-00,,,Audio,Red,
+G000049,Sono Plus Heater,Terkive Home,Nocaar Group,,TER-5153-00,,TER750,Home,Matt Grey,1kW
+G000050,Sono Plus Heater,Terkive Home,Nocaar Group,,,9316521,TER750,Home,Matt Grey,2kW
+G000051,Riia Classic Coffee Maker,Vadorri Home,Vadorri Group,5099769200559,,,VAD870,Kitchen,Red,
+G000052,Riia Classic Coffee Maker,Vadorri Home,Vadorri Group,5066934200102,VAD-9589-01,3240443,VAD870,Kitchen,Black,
+G000053,Iafi Pro Blender,Monodor,Kizenor Group,5092876226245,MON-1229-00,1922393,MON755,Kitchen,Blue,600W
+G000054,Iafi Pro Blender,Monodor,,5054763830904,,,MON755,Kitchen,Blue,1000W
+G000055,Dorter Fan,Terso,,5030288521442,TER-2936-00,0702754,,Home,Matt Grey,
+G000056,Dorter Fan,Terso,Lumo Group,,TER-2936-01,,,Home,Red,
+G000057,Mofi Pro Soundbar,Arfimen,Lumo Group,5021493561323,,4892160,,Audio,Black,2.1
+G000058,Mofi Pro Soundbar,Arfimen,,5026412360285,ARF-4646-10,7778119,,Audio,Black,5.1
+G000059,Dorter Heater,Dorxa,Dorxa Group,5025533688742,DOR-1180-00,,,Home,White,
+G000060,Dorter Heater,Dorxa,,5074867300585,,0385962,,Home,Black,
+G000061,Lumo Heater,Nova,Nocaar Group,5097427767857,NOV-5399-00,7246939,,Home,Matt Grey,
+G000062,Lumo Heater,Nova,Nocaar Group,5082543050747,,,,Home,Silver,
+G000063,Mendor Plus Coffee Maker,Ororso,,5058002863838,ORO-5038-00,2878665,ORO943,Kitchen,White,
+G000064,Mendor Plus Coffee Maker,Ororso,,5089786134500,,6967640,ORO943,Kitchen,Silver,
+G000065,MENDOR PLUS COFFEE MAKER,Ororso,,5089786134500,,1203284,ORO943,Kitchen,Silver,
+G000066,Mendor Plus Coffee Maker,Ororso,,5093901782187,ORO-5038-02,4176842,ORO943,Kitchen,Matt Grey,
+G000067,Iate Pro Soundbar,Teria,,5082142316695,TER-0119-00,,TER818,Audio,Red,2.1
+G000068,Iate Pro Soundbar,Teria,Teria Group,5028833734614,TER-0119-10,1707414,TER818,Audio,Red,5.1
+G000069,Iate Pro Soundbar,Teria,,,ter011910,0397584,TER818,Audio,Red,5.1
+G000070,Elri Pro Hair Dryer,Caar,,5019624174405,,2938235,CAA556,Personal care,White,1800W
+G000071,Elri Pro Hair Dryer,Caar,Soso Group,5087523492203,CAA-4159-10,6971140,CAA556,Personal care,White,2200W
+G000072,Kive Classic Shaver,Vaor,Vaor Group,5067487344657,VAO-5278-00,5600995,VAO889,Personal care,Blue,
+G000073,Kive Classic Shaver,Vaor,Vaor Group,5050167886806,VAO-5278-01,4811016,VAO889,Personal care,White,
+G000074,Kite Classic Heater,Rite,,5092101653235,,3590805,,Home,Silver,1kW
+G000075,Kite Classic Heater,Rite,,5065574019853,RIT-7327-10,,,Home,Silver,2kW
+G000076,Elia Hair Dryer,Zenelte,,5019717910057,ZEN-3329-00,,,Personal care,Red,1800W
+G000077,Elia Hair Dryer,Zenelte,,5076512104999,ZEN-3329-10,,,Personal care,Red,2200W
+G000078,Riso Blender,Nova,Nocaar Group,,NOV-2287-00,8972963,,Kitchen,Matt Grey,
+G000079,Vemo Pro Kettle,Terso,,5029357281035,TER-9539-00,3536913,TER325,Kitchen,Black,
+G000080,Kimo Kettle,Lumo Home,,,,,,Kitchen,Blue,1.5L
+G000081,Kimo Kettle,Lumo Home,Lumo Group,5019973866570,,2348197,,Kitchen,Blue,1.7L
+G000082,Soel Speaker,Vezenor,,5016204558280,,0537947,,Audio,White,Mini
+G000083,Soel Speaker,Vezenor,,5016407686599,VEZ-4410-10,6747861,,Audio,White,Max
+G000084,Menca Headphones,Soso,,5054832601527,,,,Audio,Silver,
+G000085,Menca Headphones,Soso,Soso Group,5046809563556,SOS-2980-01,3801703,,Audio,White,
+G000086,Lumen Drill,Zenor,Armenar Group,5098387250663,ZEN-6688-00,,,Tools,White,
+G000087,Lumen Drill,Zenor,,5027937143483,,7543131,,Tools,Silver,
+G000088,Riso Mini Soundbar,Lumo Home,Lumo Group,5069120573462,,6217877,,Audio,Red,
+G000089,Riso Mini Soundbar,Lumo Home,Lumo Group,,LUM-5319-01,8957347,,Audio,Silver,
+G000090,Zenel Coffee Maker,Noor Home,Rite Group,,NOO-7513-00,0455973,,Kitchen,White,1.2L
+G000091,Zenel Coffee Maker,Noor Home,Rite Group,5060266965142,NOO-7513-10,,,Kitchen,White,1.8L
+G000092,Terca Mini Drill,Kizenor,,5013027460455,,,,Tools,Silver,12V
+G000093,Terca Mini Drill,Kizenor,,5038683112333,KIZ-1380-10,0665912,,Tools,Silver,18V
+G000094,Rimo Classic Desk Lamp,Iasofi,,5067404919074,IAS-9596-00,6986482,,Home,Silver,Small
+G000095,Rimo Classic Desk Lamp,Iasofi,Teria Group,5041838562907,,2344062,,Home,Silver,Large
+G000096,Vedor Classic Kettle,Elteso Home,Soso Group,,ELT-8830-00,,ELT487,Kitchen,Red,
+G000097,Vedor Classic Kettle,Elteso Home,Soso Group,5067535423341,ELT-8830-01,1249425,ELT487,Kitchen,Matt Grey,
+G000098,Vedor Classic Kettle,Elteso Home,,5040334840717,ELT-8830-02,,ELT487,Kitchen,Silver,
+G000099,Eldor Plus Soundbar,Arfimen,Lumo Group,5002429717601,ARF-3826-00,,,Audio,White,2.1
+G000100,Eldor Plus Soundbar,Arfimen,,,,8223411,,Audio,White,5.1
+G000101,Terzen Headphones,Soxa Home,Soxa Group,,SOX-4649-00,,,Audio,Silver,
+G000102,Terzen Headphones,Soxa Home,,,,3009599,,Audio,,
+G000103,Terzen Headphones,Soxa Home,Soxa Group,,,8558797,,Audio,Red,
+G000104,Terzen Headphones,Soxa Home,Soxa Group,5094584880474,SOX-4649-02,5381534,,Audio,Blue,
+G000105,Luxa Soundbar,Lumo Home,Lumo Group,,LUM-3730-00,7862459,,Audio,Silver,
+G000106,Luxa Soundbar,Lumo Home,Lumo Group,5021534468536,LUM-3730-01,0288898,,Audio,White,
+G000107,Luxa Soundbar,Lumo Home,,,,3185080,,Audio,,
+G000108,Luxa Soundbar,Lumo Home,Lumo Group,5048656302135,LUM-3730-02,,,Audio,Black,
+G000109,Noter Pro Blender,Lumenia,Rite Group,5018397191824,LUM-1037-00,6864192,LUM036,Kitchen,Red,600W
+G000110,Noter Pro Blender,Lumenia,Rite Group,5057563926365,LUM-1037-10,3527252,LUM036,Kitchen,Red,1000W
+G000111,Menri Kettle,Lumo Home,,5072789108210,LUM-8646-00,,LUM844,Kitchen,Blue,
+G000112,Luzen Pro Sander,Nocaar,,5069817356606,NOC-2181-00,6431872,,Tools,Red,
+G000113,Luzen Pro Sander,Nocaar,Nocaar Group,5054995393437,,2047275,,Tools,Silver,
+G000114,Luzen Pro Sander,Nocaar,,5030846167808,,8725133,,Tools,Matt Grey,
+G000115,Termo Pro Sander,Valu,,5081911955479,VAL-0190-00,,,Tools,Blue,
+G000116,Termo Pro Sander,Valu,,5057239500530,VAL-0190-01,2449644,,Tools,Black,
+G000117,Pro Sander Termo,Valu,,,,9554253,,Tools,Black,
+G000118,Menso Mini Speaker,Rifiia,,5096037797223,RIF-5289-00,,RIF616,Audio,Red,Mini
+G000119,Menso Mini Speaker,Rifiia,Soxa Group,,,,RIF616,Audio,Red,Max
+G000120,Fite Mini Fan,Lumo Home,,5009529151502,LUM-5293-00,,LUM367,Home,Blue,
+G000121,Fite Mini Fan,Lumo Home,,5087077400150,,,LUM367,Home,White,
+G000122,Veri Plus Soundbar,Vacafi Home,Vacafi Group,5090443533833,,5722198,,Audio,Blue,2.1
+G000123,Veri Plus Soundbar,Vacafi Home,Vacafi Group,5076577877418,VAC-5460-10,6667356,,Audio,Blue,5.1
+G000124,Elca Pro Kettle,Fizen,,5088709244135,FIZ-2543-00,5032354,,Kitchen,Black,1.5L
+G000125,Elca Pro Kettle,Fizen,,5041839256478,,,,Kitchen,Black,1.7L
+G000126,Elxa Pro Soundbar,Kite,Kite Group,,KIT-6939-00,8002263,KIT949,Audio,Black,2.1
+G000127,Elxa Pro Soundbar,Kite,Kite Group,5077913308252,KIT-6939-10,8008453,KIT949,Audio,Black,5.1
+G000128,Noter Classic Heater,Arfimen,Lumo Group,5010742632884,ARF-7925-00,,,Home,Red,1kW
+G000129,Noter Classic Heater,Arfimen,Lumo Group,5006405183558,,,,Home,Red,2kW
+G000130,Kior Pro Hair Dryer,Lumo Home,Lumo Group,5068469242664,LUM-9251-00,8874015,,Personal care,White,
+G000131,Xaki Plus Speaker,Vaorva,,5001995588325,VAO-8002-00,4854487,,Audio,Red,Mini
+G000132,Xaki Plus Speaker,Vaorva,Vaorva Group,5096999488030,VAO-8002-10,,,Audio,Red,Max
+G000133,Arri Coffee Maker,Arrixa Home,Kite Group,5031534539525,,9912641,,Kitchen,Matt Grey,
+G000134,Arri Coffee Maker,Arrixa Home,,5042575076962,ARR-4135-01,,,Kitchen,Black,
+G000135,Riki Mini Kettle,Nova,Nocaar Group,5033937932545,NOV-6105-00,2354167,,Kitchen,Silver,1.5L
+G000136,Riki Mini Kettle,Nova,Nocaar Group,5031798002858,NOV-6105-10,,,Kitchen,Silver,1.7L
+G000137,Luve Desk Lamp,Lumo Home,,,LUM-4886-00,1477713,,Home,Silver,
+G000138,Luve Desk Lamp,Lumo Home,Lumo Group,5031408222621,LUM-4886-01,,,Home,Black,
+G000139,Zenki Toaster,Iasofi,Teria Group,5020522459358,,3339460,,Kitchen,Black,
+G000140,Zenki Toaster,Iasofi,Teria Group,5037032878890,IAS-5348-01,1797723,,Kitchen,White,
+G000141,Zenki Toaster,Iasofi,,5028608759590,IAS-5348-02,6574496,,Kitchen,Silver,
+G000142,Menter Pro Sander,Fiki,Xateno Group,5034847901263,FIK-7417-00,6357762,,Tools,Matt Grey,
+G000143,Menter Pro Sander,Fiki,,5099031654165,FIK-7417-01,5764222,,Tools,Red,
+G000144,Vexa Mini Headphones,Fizen,,5042007915449,,8802838,,Audio,White,
+G000145,Noar Sander,Noor Home,Rite Group,5077570162839,,1148592,NOO062,Tools,White,
+G000146,Sove Plus Fan,Armenar,,5039284046232,,7694874,ARM127,Home,Black,
+G000147,Sove Plus Fan,Armenar,,5040373815028,ARM-2316-01,,ARM127,Home,White,
+G000148,Kiel Pro Coffee Maker,Vadorri Home,,5035846706699,,,VAD414,Kitchen,Blue,
+G000149,Kiel Pro Coffee Maker,Vadorri Home,Vadorri Group,5037830914103,VAD-5407-01,,VAD414,Kitchen,White,
+G000150,Kiel Pro Coffee Maker,Vadorri Home,,5059768048156,VAD-5407-02,2837080,VAD414,Kitchen,Black,
+G000151,Xave Speaker,Sono,Ororso Group,5024629679015,SON-7475-00,,,Audio,Silver,Mini
+G000152,Xave Speaker,Sono,Ororso Group,5008097151174,SON-7475-10,0221658,,Audio,Silver,Max
+G000153,Iari Plus Coffee Maker,Nova,Nocaar Group,5059420798962,,0305791,NOV511,Kitchen,Red,1.2L
+G000154,Iari Plus Coffee Maker,Nova,,,NOV-8133-10,2986263,NOV511,Kitchen,Red,1.8L
+G000155,Fidor Classic Coffee Maker,Sono,Ororso Group,,SON-4301-00,,SON857,Kitchen,Silver,
+G000156,Vefi Coffee Maker,Nocaar,Nocaar Group,5081502572702,NOC-8938-00,3061288,NOC265,Kitchen,White,
+G000157,Zenno Blender,Moordor Home,Vaorva Group,,MOO-9142-00,3984890,,Kitchen,Silver,
+G000158,Zenno Blender,Moordor Home,,5023236093009,MOO-9142-01,4309554,,Kitchen,White,
+G000159,Iava Hair Dryer,Arxari,Arxari Group,5063933481495,ARX-6963-00,,ARX012,Personal care,Silver,1800W
+G000160,Iava Hair Dryer,Arxari,,5046949800184,ARX-6963-10,,ARX012,Personal care,Silver,2200W
+G000161,Vemen Mini Kettle,Caso,,5067698545355,,,,Kitchen,Blue,1.5L
+G000162,Vemen Mini Kettle,Caso,Vaorva Group,5038322442098,CAS-9874-10,9045194,,Kitchen,Blue,1.7L
+G000163,Nova Plus Fan,Moordor Home,Vaorva Group,5068303824353,MOO-7614-00,,MOO893,Home,Matt Grey,
+G000164,Terso Classic Speaker,Monodor,Kizenor Group,5093043758644,MON-1179-00,,MON041,Audio,Silver,
+G000165,Terso Classic Speaker,Monodor,Kizenor Group,5072753684306,MON-1179-01,7283725,MON041,Audio,Red,
+G000166,Iael Pro Shaver,Nocaar,,5050732792006,NOC-8311-00,9953531,,Personal care,Silver,
+G000167,Iael Pro Shaver,Nocaar,Nocaar Group,5071733046912,NOC-8311-01,,,Personal care,Black,
+G000168,IAEL PRO SHAVER,Nocaar,,5071733046912,,9934657,,Personal care,Black,
+G000169,Iafi Sander,Kizenor,,5052991055052,,9236060,,Tools,Black,
+G000170,Iafi Sander,Kizenor,,5043394522920,KIZ-4081-01,9720785,,Tools,White,
+G000171,Orfi Pro Speaker,Lumo Home,Lumo Group,5087778445191,,7711027,,Audio,White,Mini
+G000172,Orfi Pro Speaker,Lumo Home,Lumo Group,5035979465302,LUM-6681-10,,,Audio,White,Max
+G000173,Teia Blender,Arfimen,Lumo Group,5056652985351,,0904172,,Kitchen,Red,600W
+G000174,Teia Blender,Arfimen,,5066395098423,ARF-6759-10,1122986,,Kitchen,Red,1000W
+G000175,Xaor Heater,Caar,,5066701255762,CAA-4209-00,5399532,CAA144,Home,Red,1kW
+G000176,Xaor Heater,Caar,Soso Group,,,,CAA144,Home,Red,2kW
+G000177,Luzen Soundbar,Caso,Vaorva Group,5072189434407,CAS-1406-00,,,Audio,White,2.1
+G000178,Luzen Soundbar,Caso,,5060654314149,CAS-1406-10,,,Audio,White,5.1
+G000179,LUZEN SOUNDBAR,Caso,,5060654314149,,7755677,,Audio,White,5.1
+G000180,Vamo Sander,Lumo Home,Lumo Group,5037185277465,,,,Tools,Blue,
+G000181,Vamo Sander,Lumo Home,,,LUM-7527-01,,,Tools,Matt Grey,
+G000182,Vael Pro Fan,Valu,Soso Group,5069599817685,VAL-5748-00,0600621,VAL697,Home,Blue,12in
+G000183,Vael Pro Fan,Valu,Soso Group,5077800023442,,9240106,VAL697,Home,Blue,16in
+G000184,Noel Mini Toaster,Terso,Lumo Group,5006073599941,TER-4817-00,5809385,,Kitchen,Silver,2 Slice
+G000185,Noel Mini Toaster,Terso,,5075174333297,,3934940,,Kitchen,Silver,4 Slice
+G000186,Noel Mini Toaster,TERSO Ltd,,,,1638165,,Kitchen,Silver,4 Slice
+G000187,Nolu Heater,Fiterve,Dorxa Group,5069402049333,FIT-4850-00,4739542,,Home,Red,1kW
+G000188,Nolu Heater,Fiterve,,5080757812380,FIT-4850-10,6056732,,Home,Red,2kW
+G000189,Vamen Plus Desk Lamp,Lumo Home,,5072678102015,LUM-7624-00,,,Home,Silver,Small
+G000190,Vamen Plus Desk Lamp,Lumo Home,,5053480796203,LUM-7624-10,,,Home,Silver,Large
+G000191,Kiter Mini Fan,Lumo Home,Lumo Group,5056537055216,LUM-4602-00,5736624,LUM513,Home,Red,12in
+G000192,Kiter Mini Fan,Lumo Home,Lumo Group,5085739966372,,9453786,LUM513,Home,Red,16in
+G000193,Elri Plus Heater,Nova,Nocaar Group,5092625917431,,,NOV838,Home,Black,1kW
+G000194,Elri Plus Heater,Nova,,5085045933266,NOV-2755-10,6969780,NOV838,Home,Black,2kW
+G000195,Rizen Mini Heater,Caso,Vaorva Group,5031183669055,,,,Home,Black,
+G000196,Rizen Mini Heater,Caso,,5052814115055,CAS-7073-01,,,Home,Blue,
+G000197,Iamo Shaver,Soxa Home,,,SOX-3164-00,1656329,,Personal care,Black,
+G000198,Iamo Shaver,Soxa Home,,5075736139398,,,,Personal care,Silver,
+G000199,Iamo Classic Shaver,Fizen,,5000248213281,FIZ-7493-00,,FIZ178,Personal care,Blue,
+G000200,Iamo Classic Shaver,Fizen,,5075966732918,FIZ-7493-01,,FIZ178,Personal care,Silver,
+G000201,Iamo Classic Shaver,Fizen,,5059869148373,FIZ-7493-02,,FIZ178,Personal care,Matt Grey,
+G000202,Ordor Plus Kettle,Rifiia,Soxa Group,5041393984190,RIF-2874-00,4581000,,Kitchen,Silver,
+G000203,Luva Kettle,Armenar,,5070447784387,ARM-7053-00,9328441,,Kitchen,Matt Grey,1.5L
+G000204,Luva Kettle,Armenar,,5019518639058,ARM-7053-10,9989344,,Kitchen,Matt Grey,1.7L
+G000205,Aror Pro Heater,Arfimen,Lumo Group,5059802901416,ARF-0418-00,8223714,,Home,Silver,1kW
+G000206,Aror Pro Heater,Arfimen,,5028482864052,ARF-0418-10,6710330,,Home,Silver,2kW
+G000207,Rica Classic Toaster,Caso,Vaorva Group,,CAS-3332-00,,,Kitchen,White,2 Slice
+G000208,Rica Classic Toaster,Caso,,5046728472601,CAS-3332-10,,,Kitchen,White,4 Slice
+G000209,Moki Pro Kettle,Teria,Teria Group,5013469583972,,2541015,,Kitchen,Blue,
+G000210,Moki Pro Kettle,Teria,,5057791327408,TER-1388-01,,,Kitchen,Silver,
+G000211,Nomen Plus Blender,Zenor,,5073650502397,ZEN-4836-00,0847751,ZEN941,Kitchen,Matt Grey,600W
+G000212,Nomen Plus Blender,Zenor,,5077131877523,ZEN-4836-10,,ZEN941,Kitchen,Matt Grey,1000W
+G000213,Arter Blender,Zenca,,5004219361919,,,,Kitchen,White,
+G000214,Arter Blender,Zenca,,5052649591765,ZEN-6502-01,4897431,,Kitchen,Red,
+G000215,Kixa Soundbar,Mori,,5025026689751,MOR-9620-00,7296663,,Audio,Silver,2.1
+G000216,Kixa Soundbar,Mori,Vadorri Group,5069085398919,MOR-9620-10,0666094,,Audio,Silver,5.1
+G000217,Xamen Mini Speaker,Arxari,Arxari Group,5087612192373,,0118719,,Audio,Matt Grey,Mini
+G000218,Xamen Mini Speaker,Arxari,,,ARX-5038-10,,,Audio,Matt Grey,Max
+G000219,Xamen Mini Speaker,Arxari,,,,9703584,,Audio,,
+G000220,Dorxa Drill,Arfimen,,5082033669237,ARF-5677-00,,,Tools,Silver,
+G000221,Dorxa Drill,Arfimen,,,ARF-5677-01,9449323,,Tools,Red,
+G000222,Dorxa Drill,Arfimen,,5021117102192,ARF-5677-02,2414935,,Tools,White,
+G000223,Dorxa Drlil,Arfimen,,,,0753110,,Tools,White,
+G000224,Ridor Coffee Maker,Lumo Home,,5093820918698,,,LUM945,Kitchen,Red,1.2L
+G000225,Ridor Coffee Maker,Lumo Home,Lumo Group,5019149725731,,1781033,LUM945,Kitchen,Red,1.8L
+G000226,Kiia Fan,Iaar Home,Kizenor Group,5012959556557,,2912307,IAA267,Home,Silver,12in
+G000227,Kiia Fan,Iaar Home,Kizenor Group,5066814707493,IAA-0916-10,,IAA267,Home,Silver,16in
+G000228,Terte Classic Drill,Terkive Home,Nocaar Group,5047245175884,TER-8020-00,0564340,,Tools,White,
+G000229,TERTE CLASSIC DRILL,Terkive Home,,5047245175884,,9121641,,Tools,White,
+G000230,Terte Classic Drill,Terkive Home,Nocaar Group,5044635821673,TER-8020-01,4098638,,Tools,Matt Grey,
+G000231,Dorva Pro Toaster,Texa,,5017891477144,TEX-7456-00,1414320,,Kitchen,White,2 Slice
+G000232,Dorva Pro Toaster,Texa,Soxa Group,5098149922715,TEX-7456-10,9277673,,Kitchen,White,4 Slice
+G000233,Cater Mini Sander,Kizenor,Kizenor Group,5011793869328,KIZ-4920-00,1206905,KIZ939,Tools,Black,
+G000234,Cater Mini Sander,Kizenor,,5056468742438,KIZ-4920-01,6890649,KIZ939,Tools,Blue,
+G000235,Cater Mini Sandre,Kizenor,,,,8558309,KIZ939,Tools,Blue,
+G000236,Orve Mini Hair Dryer,Terrifi,Xateno Group,5097067359047,TER-2607-00,0054673,,Personal care,White,1800W
+G000237,Orve Mini Hair Dryer,Terrifi,Xateno Group,5048897175284,TER-2607-10,7981472,,Personal care,White,2200W
+G000238,Iamo Drill,Lumo Home,Lumo Group,5045957581979,LUM-1506-00,8333149,LUM421,Tools,White,
+G000239,Iamo Drill,Lumo Home,Lumo Group,5072810483811,LUM-1506-01,5974824,LUM421,Tools,Matt Grey,
+G000240,Iamo Drill,Lumo Home,Lumo Group,5057625480019,LUM-1506-02,,LUM421,Tools,Black,
+G000241,Nozen Mini Coffee Maker,Texa,,5025824557689,TEX-1082-00,4624431,TEX165,Kitchen,Blue,1.2L
+G000242,Nozen Mini Coffee Maker,Texa,Soxa Group,5009354310174,,0346371,TEX165,Kitchen,Blue,1.8L
+G000243,Vava Shaver,Dorxa,,5003448045164,DOR-7780-00,9580276,DOR555,Personal care,Blue,
+G000244,Vava Shaver,Dorxa,Dorxa Group,5052888991876,,,DOR555,Personal care,White,
+G000245,Eldor Speaker,Zenelte,,5077313199405,ZEN-5896-00,0271975,,Audio,Red,Mini
+G000246,Eldor Speaker,Zenelte,,5073223729619,,,,Audio,Red,Max
+G000247,Riva Classic Heater,Fizen,,5061235789790,FIZ-1557-00,6046390,FIZ650,Home,Black,1kW
+G000248,Riva Classic Heater,Fizen,Vaor Group,5008100450300,FIZ-1557-10,8498200,FIZ650,Home,Black,2kW
+G000249,Soar Plus Drill,Zenelte,,5004833500176,,2062007,,Tools,Matt Grey,12V
+G000250,Soar Plus Drill,Zenelte,,5027352336675,ZEN-8452-10,,,Tools,Matt Grey,18V
+G000251,Cael Plus Fan,Lumo Home,,5027178800091,,0621796,,Home,Black,12in
+G000252,Cael Plus Fan,Lumo Home,Lumo Group,,LUM-1177-10,,,Home,Black,16in
+G000253,Oror Plus Kettle,Lumo Home,Lumo Group,5083907315892,LUM-2801-00,8596898,,Kitchen,White,1.5L
+G000254,Oror Plus Kettle,Lumo Home,Lumo Group,5072418359389,LUM-2801-10,,,Kitchen,White,1.7L
+G000255,Elso Desk Lamp,Vaorva,Vaorva Group,5075362971782,VAO-6574-00,4198515,,Home,Matt Grey,Small
+G000256,Elso Desk Lamp,Vaorva,,5012208727165,VAO-6574-10,,,Home,Matt Grey,Large
+G000257,Menxa Plus Headphones,Iaar Home,,5013887203254,,,,Audio,Matt Grey,
+G000258,Menxa Plus Headphones,Iaar Home,,5083966764051,IAA-9116-01,9864165,,Audio,Black,
+G000259,Menxa Plus Headphones,Iaar Home,,,IAA-9116-02,8677359,,Audio,White,
+G000260,Menxa Plus Headphones,IAAR Ltd,,,IAA-9116-02,7137538,,Audio,White,
+G000261,Orca Sander,Lumo Home,,5079470350651,LUM-0733-00,,,Tools,Black,
+G000262,Orca Sander,Lumo Home,,5026239798414,,9578195,,Tools,Silver,
+G000263,Iate Plus Drill,Cador,,5032528878750,,,CAD305,Tools,Silver,
+G000264,Iate Plus Drill,Cador,,,,0848378,CAD305,Tools,,
+G000265,Iate Plus Drill,Cador,,5084297729061,,7018211,CAD305,Tools,Black,
+G000266,Iate Plus Drill,Cador,Cador Group,5075459754021,CAD-3894-02,,CAD305,Tools,Blue,
+G000267,Kior Plus Toaster,Fizen,,5069110471143,,6902297,,Kitchen,Blue,2 Slice
+G000268,Kior Plus Toaster,Fizen,,,FIZ-3415-10,,,Kitchen,Blue,4 Slice
+G000269,Soter Toaster,Iasofi,,5088016403775,IAS-1039-00,8925230,,Kitchen,Black,2 Slice
+G000270,Soter Toaster,Iasofi,,,IAS-1039-10,,,Kitchen,Black,4 Slice
+G000271,Lute Classic Hair Dryer,Fizen,,5033190338948,,6284591,,Personal care,White,1800W
+G000272,LUTE CLASSIC HAIR DRYER,Fizen,,5033190338948,,9808160,,Personal care,White,1800W
+G000273,Lute Classic Hair Dryer,Fizen,,5018026255279,FIZ-4951-10,6856991,,Personal care,White,2200W
+G000274,Veca Mini Sander,Fizen,Vaor Group,5055637200717,FIZ-4737-00,8173704,,Tools,White,
+G000275,Veca Mini Sander,Fizen,Vaor Group,5035145956979,FIZ-4737-01,3218072,,Tools,Silver,
+G000276,Kica Pro Speaker,Nova,Nocaar Group,5084084270462,NOV-8754-00,1696336,,Audio,Silver,
+G000277,Luso Mini Toaster,Vacafi Home,Vacafi Group,5019309331161,VAC-3351-00,1291609,VAC713,Kitchen,Matt Grey,2 Slice
+G000278,Luso Mini Toaster,Vacafi Home,Vacafi Group,,VAC-3351-10,,VAC713,Kitchen,Matt Grey,4 Slice
+G000279,Terno Pro Toaster,Xateno,,5033146476380,XAT-5456-00,5760060,,Kitchen,White,
+G000280,Terno Pro Toaster,Xateno,,5002828905814,XAT-5456-01,,,Kitchen,Black,
+G000281,Terno Pro Toaster,Xateno,Xateno Group,5048555087423,XAT-5456-02,6621189,,Kitchen,Blue,
+G000282,Terno Pro Toaster,Xateno,,,,3781859,,Kitchen,,
+G000283,Zenxa Kettle,Lumo Home,,5005296838691,LUM-6902-00,8276961,,Kitchen,White,1.5L
+G000284,Zenxa Kettle,Lumo Home,,,lum690200,8205094,,Kitchen,White,1.5L
+G000285,Zenxa Kettle,Lumo Home,Lumo Group,5074239062318,LUM-6902-10,8937995,,Kitchen,White,1.7L
+G000286,Kizen Shaver,Cador,Cador Group,,CAD-0822-00,5747053,,Personal care,Matt Grey,
+G000287,Mova Plus Speaker,Soso,Soso Group,5034199975813,SOS-2243-00,6716057,SOS651,Audio,Silver,
+G000288,Mova Plus Speaker,Soso,Soso Group,5026140389299,SOS-2243-01,,SOS651,Audio,White,
+G000289,Mova Plus Speaker,Soso,,5017297794067,,,SOS651,Audio,Black,
+G000290,Arlu Speaker,Teria,Teria Group,5019937781260,,8577960,,Audio,Blue,
+G000291,Xalu Classic Soundbar,Armenar,,5015387670949,ARM-4603-00,,,Audio,Silver,2.1
+G000292,Xalu Classic Soundbar,Armenar,Armenar Group,,ARM-4603-10,1136101,,Audio,Silver,5.1
+G000293,Fiki Classic Headphones,Lumo Home,Lumo Group,5081669450448,LUM-3739-00,,,Audio,Red,
+G000294,Fiki Classic Headphones,Lumo Home,Lumo Group,5046712889637,LUM-3739-01,,,Audio,Silver,
+G000295,Orte Mini Drill,Lumo Home,Lumo Group,5053795392923,,,,Tools,White,12V
+G000296,Orte Mini Drill,Lumo Home,,5042047305835,LUM-1324-10,1009364,,Tools,White,18V
+G000297,Iamen Sander,Luiamen,,5081351015559,LUI-0520-00,,,Tools,Blue,
+G000298,Iamen Sander,Luiamen,,5078662452760,LUI-0520-01,1669528,,Tools,White,
+G000299,Iamen Sander,Luiamen,,5084941304286,LUI-0520-02,3020105,,Tools,Matt Grey,
+G000300,Teia Blender,Lumo Home,Lumo Group,5053806359860,LUM-5325-00,,LUM102,Kitchen,Silver,600W
+G000301,Teia Blender,Lumo Home,,5017365221211,,3374524,LUM102,Kitchen,Silver,1000W
+G000302,Elve Fan,Soso,Soso Group,,SOS-1182-00,,SOS054,Home,Black,12in
+G000303,Elve Fan,Soso,,5023970714505,SOS-1182-10,,SOS054,Home,Black,16in
+G000304,Dorfi Pro Blender,Terso,Lumo Group,5054421052778,TER-4289-00,7390617,TER125,Kitchen,Red,600W
+G000305,Dorfi Pro Blender,Terso,Lumo Group,,TER-4289-10,3763315,TER125,Kitchen,Red,1000W
+G000306,Tefi Plus Headphones,Nocaar,Nocaar Group,5095596458026,NOC-5219-00,4592428,,Audio,Black,
+G000307,Tefi Plus Headphones,Nocaar,,5036694593530,NOC-5219-01,5479088,,Audio,Blue,
+G000308,Arar Mini Headphones,Lumo Home,,5049508480520,LUM-1930-00,,LUM123,Audio,Matt Grey,
+G000309,Menlu Toaster,Vezenki,,5026521922091,VEZ-4729-00,,VEZ890,Kitchen,Black,2 Slice
+G000310,Menlu Toaster,Vezenki,,5011629719322,VEZ-4729-10,8433829,VEZ890,Kitchen,Black,4 Slice
+G000311,Cava Coffee Maker,Lumo Home,Lumo Group,5081507096630,LUM-5013-00,3679383,,Kitchen,White,1.2L
+G000312,Cava Coffee Maker,Lumo Home,,5002398843271,LUM-5013-10,6837406,,Kitchen,White,1.8L
+G000313,CAVA COFFEE MAKER,Lumo Home,,5002398843271,,6517194,,Kitchen,White,1.8L
+G000314,Menno Pro Drill,Rite,Rite Group,,RIT-2624-00,,,Tools,White,
+G000315,Menno Pro Drill,Rite,,,rit262400,7102757,,Tools,White,
+G000316,Orte Classic Hair Dryer,Nova,,5053673312111,,4445120,NOV234,Personal care,Black,
+G000317,Orte Classic Hair Dryer,Nova,,5017933313539,NOV-6258-01,4429100,NOV234,Personal care,White,
+G000318,Rica Drill,Iaar Home,Kizenor Group,5005761562892,,6062139,IAA733,Tools,White,12V
+G000319,RICA DRILL,Iaar Home,,5005761562892,,5185685,IAA733,Tools,White,12V
+G000320,Rica Drill,Iaar Home,,5066511862419,IAA-6084-10,9589839,IAA733,Tools,White,18V
+G000321,Nolu Pro Blender,Mori,,5011279680751,MOR-6576-00,3720542,MOR900,Kitchen,Matt Grey,600W
+G000322,Nolu Pro Blender,Mori,Vadorri Group,5004887552398,,1153428,MOR900,Kitchen,Matt Grey,1000W
+G000323,Xater Classic Coffee Maker,Fizen,Vaor Group,5034520266832,FIZ-5958-00,7232362,FIZ042,Kitchen,White,1.2L
+G000324,Xater Classic Coffee Maker,Fizen,Vaor Group,5072681943322,FIZ-5958-10,,FIZ042,Kitchen,White,1.8L
+G000325,Veso Pro Toaster,Lumo Home,,5048799285548,LUM-2839-00,1161761,,Kitchen,Blue,2 Slice
+G000326,Veso Pro Toaster,Lumo Home,Lumo Group,5005786602238,LUM-2839-10,,,Kitchen,Blue,4 Slice
+G000327,Veso Pro Toaster,LUMO Ltd,,,LUM-2839-10,6359778,,Kitchen,Blue,4 Slice
+G000328,Moia Plus Headphones,Monodor,Kizenor Group,5081160397587,MON-1308-00,5862713,MON002,Audio,Silver,
+G000329,Vari Hair Dryer,Nova,Nocaar Group,5010353883644,,9731189,NOV856,Personal care,Red,1800W
+G000330,Vari Hair Dryer,Nova,Nocaar Group,,NOV-0207-10,6926604,NOV856,Personal care,Red,2200W
+G000331,Xaor Classic Speaker,Vadorri Home,Vadorri Group,5013104564649,,,,Audio,Red,
+G000332,Xaor Classic Speaker,Vadorri Home,Vadorri Group,5036166610260,,,,Audio,Matt Grey,
+G000333,Xaor Classic Speaker,Vadorri Home,Vadorri Group,5073172969319,VAD-4829-02,1664697,,Audio,White,
+G000334,Sozen Plus Speaker,Fizen,,5057081079208,FIZ-7380-00,1920430,,Audio,White,Mini
+G000335,Sozen Plus Speaker,Fizen,Vaor Group,5025399977622,FIZ-7380-10,1819791,,Audio,White,Max
+G000336,Note Soundbar,Zenor,Armenar Group,5045653001504,ZEN-3431-00,,,Audio,White,
+G000337,Note Soundbar,Zenor,,,ZEN-3431-01,3656127,,Audio,Blue,
+G000338,Lulu Plus Headphones,Nocaar,,5041310606044,NOC-0119-00,,NOC252,Audio,Blue,
+G000339,Lulu Plus Headphones,Nocaar,,5099046794337,NOC-0119-01,,NOC252,Audio,Matt Grey,
+G000340,Elel Classic Soundbar,Vaorva,,,VAO-4084-00,5172853,VAO374,Audio,Matt Grey,
+G000341,Elel Classic Soundbar,Vaorva,,5014075849247,VAO-4084-01,,VAO374,Audio,Blue,
+G000342,Dorter Headphones,Arxari,Arxari Group,5004993355609,,2959028,,Audio,Black,
+G000343,Iaxa Fan,Terkive Home,Nocaar Group,5033581590559,TER-5921-00,5029109,TER020,Home,Silver,12in
+G000344,Iaxa Fan,Terkive Home,Nocaar Group,5058059075239,,8075371,TER020,Home,Silver,16in
+G000345,Fiva Heater,Terso,,5070026063865,TER-2089-00,7237099,,Home,Matt Grey,1kW
+G000346,Fiva Heater,Terso,,5009616409417,TER-2089-10,1210804,,Home,Matt Grey,2kW
+G000347,Solu Pro Headphones,Arrixa Home,Kite Group,5089588689147,ARR-5816-00,2544581,ARR087,Audio,Silver,
+G000348,Solu Pro Headphones,Arrixa Home,,5025588506534,ARR-5816-01,,ARR087,Audio,Black,
+G000349,Mente Classic Sander,Lumenia,Rite Group,5045440440295,LUM-1328-00,3478464,,Tools,Black,
+G000350,Mente Classic Sander,Lumenia,Rite Group,5031090778246,LUM-1328-01,,,Tools,Matt Grey,
+G000351,Fimen Classic Sander,Dormoar,Texaki Group,5016573381199,DOR-1646-00,,,Tools,Black,
+G000352,Fimen Classic Sander,Dormoar,Texaki Group,5036099698311,,,,Tools,Blue,
+G000353,Menso Blender,Armenar,,5091218821568,ARM-0547-00,,,Kitchen,Blue,
+G000354,Solu Pro Desk Lamp,Soxa Home,Soxa Group,5070214725834,SOX-1849-00,2794333,,Home,White,Small
+G000355,Solu Pro Desk Lamp,Soxa Home,,5091973434959,,7792512,,Home,White,Large
+G000356,Terve Desk Lamp,Lumo Home,Lumo Group,5088244885862,,1862267,,Home,Matt Grey,
+G000357,Terve Desk Lamp,Lumo Home,Lumo Group,5043996354233,,0784707,,Home,Black,
+G000358,TERVE DESK LAMP,Lumo Home,,5043996354233,,8398892,,Home,Black,
+G000359,Terve Desk Lamp,Lumo Home,,,LUM-9416-02,9957001,,Home,White,
+G000360,Nono Speaker,Nova,,5078646645164,NOV-1163-00,,,Audio,Black,Mini
+G000361,Nono Speaker,Nova,Nocaar Group,5044328730763,NOV-1163-10,1185845,,Audio,Black,Max
+G000362,Filu Classic Soundbar,Caar,,5018746462643,,4333961,,Audio,Silver,2.1
+G000363,Filu Classic Soundbar,Caar,,5090907825030,,0320488,,Audio,Silver,5.1
+G000364,Zenzen Pro Soundbar,Zenri,Vacafi Group,,,6338679,,Audio,Matt Grey,
+G000365,Zenzen Pro Soundbar,Zenri,Vacafi Group,5084571870151,ZEN-6956-01,5503218,,Audio,Silver,
+G000366,Zenfi Shaver,Elteso Home,,5044569200223,ELT-3347-00,8211600,,Personal care,Matt Grey,
+G000367,Zenel Classic Headphones,Monodor,,5085779300303,MON-4602-00,6331207,,Audio,Red,
+G000368,Soso Plus Blender,Rite,Rite Group,5009989190431,,8703148,RIT383,Kitchen,Matt Grey,600W
+G000369,Soso Plus Blender,Rite,Rite Group,5084387473270,RIT-7359-10,7247847,RIT383,Kitchen,Matt Grey,1000W
+G000370,Sove Plus Kettle,Somo,,5084416821850,,,SOM076,Kitchen,Red,
+G000371,Noca Pro Headphones,Dorxa,,5003769775085,DOR-9732-00,3220938,DOR044,Audio,Red,
+G000372,Noca Pro Headphones,Dorxa,,5042156871023,DOR-9732-01,7368808,DOR044,Audio,Black,
+G000373,Noca Pro Headphones,Dorxa,Dorxa Group,,DOR-9732-02,1271294,DOR044,Audio,Blue,
+G000374,Riar Mini Fan,Ellu Home,,5085190058036,,,ELL006,Home,White,
+G000375,Kiar Blender,Caar,Soso Group,5084883244718,CAA-9887-00,8708880,CAA383,Kitchen,Matt Grey,
+G000376,Caia Classic Coffee Maker,Vaor,,5064806478345,VAO-6420-00,0908697,VAO210,Kitchen,Black,1.2L
+G000377,Caia Classic Coffee Maker,Vaor,Vaor Group,5046709607503,VAO-6420-10,,VAO210,Kitchen,Black,1.8L
+G000378,Arfi Speaker,Kizenor,,5054175448155,KIZ-3093-00,1009053,,Audio,White,
+G000379,Arfi Speaker,KIZENOR Ltd,,,KIZ-3093-00,5526715,,Audio,White,
+G000380,Arfi Speaker,Kizenor,,5063419711436,KIZ-3093-01,,,Audio,Black,
+G000381,Arfi Speaker,Kizenor,,5034950439493,,8101061,,Audio,Matt Grey,
+G000382,ARFI SPEAKER,Kizenor,,5034950439493,,0116838,,Audio,Matt Grey,
+G000383,Nomen Pro Drill,Vacafi Home,,,VAC-2162-00,,,Tools,Black,
+G000384,Zenve Soundbar,Fizen,Vaor Group,5008603917980,FIZ-5122-00,,,Audio,Matt Grey,2.1
+G000385,Zenve Soundbar,Fizen,Vaor Group,5085232002911,,7684139,,Audio,Matt Grey,5.1
+G000386,Sote Classic Fan,Arxari,Arxari Group,5085102092578,,7623445,,Home,Matt Grey,12in
+G000387,Sote Classic Fan,Arxari,,,ARX-7968-10,7989265,,Home,Matt Grey,16in
+G000388,Oror Classic Hair Dryer,Vezenor,,5065896412257,VEZ-6825-00,,VEZ834,Personal care,Black,
+G000389,Oror Classic Hair Dryer,Vezenor,Armenar Group,,VEZ-6825-01,6957920,VEZ834,Personal care,White,
+G000390,Oror Classic Hair Dryer,Vezenor,Armenar Group,5023999952247,VEZ-6825-02,,VEZ834,Personal care,Red,
+G000391,Riar Soundbar,Fizen,,5059891383148,FIZ-8450-00,,,Audio,White,2.1
+G000392,RIAR SOUNDBAR,Fizen,,5059891383148,,3981664,,Audio,White,2.1
+G000393,Riar Soundbar,Fizen,,5006426864764,FIZ-8450-10,,,Audio,White,5.1
+G000394,Nova Classic Coffee Maker,Elteso Home,,5076034789131,ELT-2399-00,,ELT011,Kitchen,Silver,1.2L
+G000395,Nova Classic Coffee Maker,Elteso Home,,,elt239900,1199266,ELT011,Kitchen,Silver,1.2L
+G000396,Nova Classic Coffee Maker,Elteso Home,,5064409991647,ELT-2399-10,0183544,ELT011,Kitchen,Silver,1.8L
+G000397,Firi Desk Lamp,Noor Home,,5096448106652,NOO-8938-00,,,Home,Silver,Small
+G000398,Firi Desk Lamp,Noor Home,,5080055739433,NOO-8938-10,2962201,,Home,Silver,Large
+G000399,Fiia Mini Sander,Iaelte,,5068915150475,,2141312,,Tools,Matt Grey,
+G000400,Vave Speaker,Ororso,,5049796457006,ORO-4006-00,,ORO583,Audio,Black,Mini
+G000401,Vave Speaker,Ororso,,5092326332502,,3824095,ORO583,Audio,Black,Max
+G000402,Terca Classic Coffee Maker,Moordor Home,Vaorva Group,5076131074062,MOO-2091-00,5972416,,Kitchen,Red,1.2L
+G000403,Terca Classic Coffee Maker,Moordor Home,Vaorva Group,5092338053006,MOO-2091-10,,,Kitchen,Red,1.8L
+G000404,Cater Coffee Maker,Terso,Lumo Group,5066927243970,TER-8908-00,,TER670,Kitchen,Red,1.2L
+G000405,Cater Coffee Maker,Terso,Lumo Group,5013503155356,TER-8908-10,0071416,TER670,Kitchen,Red,1.8L
+G000406,Teki Fan,Zenor,,5048611192047,ZEN-2940-00,,,Home,Silver,
+G000407,Soel Pro Soundbar,Zenelte,Vaor Group,5021468767774,ZEN-2156-00,1091111,,Audio,Red,2.1
+G000408,Soel Pro Soundbar,Zenelte,Vaor Group,5057513949147,ZEN-2156-10,5658872,,Audio,Red,5.1
+G000409,Elso Speaker,Luiamen,Vadorri Group,5021135134458,LUI-8868-00,,,Audio,Blue,
+G000410,Elso Speaker,Luiamen,Vadorri Group,,LUI-8868-01,,,Audio,Matt Grey,
+G000411,Elso Speaker,LUIAMEN Ltd,,,LUI-8868-01,2454080,,Audio,Matt Grey,
+G000412,Elso Speaker,Luiamen,Vadorri Group,5045916902326,,,,Audio,Black,
+G000413,ELSO SPEAKER,Luiamen,,5045916902326,,2313253,,Audio,Black,
+G000414,Rilu Pro Desk Lamp,Zenor,Armenar Group,,ZEN-2239-00,8496877,ZEN319,Home,Black,Small
+G000415,Rilu Pro Desk Lamp,Zenor,,5078999441840,ZEN-2239-10,4570696,ZEN319,Home,Black,Large
+G000416,Menia Speaker,Texaki,Texaki Group,5001463567135,,1810218,,Audio,Silver,
+G000417,Menia Speaker,Texaki,Texaki Group,5037404888861,TEX-1510-01,,,Audio,Blue,
+G000418,Ludor Kettle,Nocaar,Nocaar Group,5024595289782,,,NOC384,Kitchen,Blue,1.5L
+G000419,Ludor Kettle,Nocaar,Nocaar Group,5002195707707,NOC-7527-10,,NOC384,Kitchen,Blue,1.7L
+G000420,Tefi Plus Toaster,Zenor,,,ZEN-5997-00,3541672,,Kitchen,Blue,
+G000421,Tefi Plus Toaster,Zenor,Armenar Group,5000420514397,ZEN-5997-01,,,Kitchen,Silver,
+G000422,Kiso Sander,Sono,Ororso Group,5069959076097,SON-4643-00,0476385,SON638,Tools,Black,
+G000423,Kiso Sander,Sono,Ororso Group,5049832729029,,,SON638,Tools,Matt Grey,
+G000424,Noxa Toaster,Texa,,5093752184390,,2914240,TEX912,Kitchen,Blue,
+G000425,Noxa Toaster,Texa,,5053566971159,,5886558,TEX912,Kitchen,Black,
+G000426,Tefi Toaster,Kizenor,Kizenor Group,,KIZ-3171-00,,KIZ126,Kitchen,Matt Grey,
+G000427,Tef iToaster,Kizenor,,,,9822846,KIZ126,Kitchen,Matt Grey,
+G000428,Tefi Toaster,Kizenor,,5093633840568,,7305917,KIZ126,Kitchen,Silver,
+G000429,Tefi Toaster,Kizenor,Kizenor Group,5010459943662,,,KIZ126,Kitchen,White,
+G000430,Soki Mini Blender,Lumo Home,Lumo Group,,LUM-9562-00,3004995,LUM728,Kitchen,Blue,600W
+G000431,Soki Mini Blender,Lumo Home,Lumo Group,5098526652372,,,LUM728,Kitchen,Blue,1000W
+G000432,Teia Sander,Nova,,5067053732598,,,,Tools,Blue,
+G000433,Teia Sander,Nova,,5026751625939,NOV-5144-01,0905411,,Tools,White,
+G000434,Nomen Desk Lamp,Lumo Home,,5000510817872,,1805794,LUM341,Home,White,
+G000435,Nomen Desk Lamp,Lumo Home,,5032993380659,LUM-9424-01,2747784,LUM341,Home,Black,
+G000436,Nomen Desk Lamp,Lumo Home,Lumo Group,5029529909620,LUM-9424-02,5201338,LUM341,Home,Silver,
+G000437,Mente Mini Speaker,Kizenor,Kizenor Group,5033543191435,KIZ-5188-00,,KIZ732,Audio,Silver,Mini
+G000438,Mente Mini Speaker,Kizenor,Kizenor Group,,KIZ-5188-10,1350345,KIZ732,Audio,Silver,Max
+G000439,Dordor Kettle,Dormoar,,5033395710822,DOR-7043-00,2084865,DOR898,Kitchen,Red,1.5L
+G000440,Dordor Kettle,Dormoar,Texaki Group,,DOR-7043-10,7111535,DOR898,Kitchen,Red,1.7L
+G000441,Teter Classic Hair Dryer,Zenelte,,5090056757145,ZEN-3917-00,,,Personal care,Black,
+G000442,Teter Classic Hair Dryer,Zenelte,Vaor Group,5052421733109,ZEN-3917-01,2256638,,Personal care,White,
+G000443,Teter Classic Hair Dryer,ZENELTE Ltd,,,ZEN-3917-01,4153408,,Personal care,White,
+G000444,Terno Classic Coffee Maker,Kizenor,Kizenor Group,5006230930112,,,,Kitchen,Matt Grey,
+G000445,Terno Classic Coffee Maker,Kizenor,Kizenor Group,5042447241849,,7514333,,Kitchen,White,
+G000446,Terter Pro Coffee Maker,Nova,Nocaar Group,5080288864469,NOV-4742-00,,,Kitchen,Black,1.2L
+G000447,Terter Pro Coffee Maker,Nova,Nocaar Group,,NOV-4742-10,,,Kitchen,Black,1.8L
+G000448,Dorno Classic Soundbar,Vezenki,,5057392348260,VEZ-4489-00,,,Audio,Matt Grey,
+G000449,Dorno Classic Soundbar,Vezenki,,5032286844981,VEZ-4489-01,8527241,,Audio,Black,
+G000450,Dorno Classic Soundbar,Vezenki,,5017011995275,VEZ-4489-02,,,Audio,Silver,
+G000451,Orxa Classic Heater,Vezenor,,5061441809046,VEZ-0926-00,2085455,,Home,Black,1kW
+G000452,Orxa Classic Heater,Vezenor,,5005012884650,VEZ-0926-10,,,Home,Black,2kW
+G000453,Menlu Kettle,Soso,,5032434613551,,,,Kitchen,Matt Grey,1.5L
+G000454,Menlu Kettle,Soso,Soso Group,5028340245689,SOS-7746-10,3369466,,Kitchen,Matt Grey,1.7L
+G000455,Elzen Pro Headphones,Soso Home,,,SOS-7804-00,0452934,SOS782,Audio,Silver,
+G000456,Elzen Pro Headphones,SOSO Ltd,,,SOS-7804-00,5173094,SOS782,Audio,Silver,
+G000457,Ridor Fan,Terkive Home,,5030114982508,TER-3846-00,0430057,TER579,Home,Matt Grey,12in
+G000458,Ridor Fan,Terkive Home,,5071441402000,TER-3846-10,,TER579,Home,Matt Grey,16in
+G000459,Moor Plus Headphones,Vaor,Vaor Group,,VAO-1208-00,0955377,,Audio,Red,
+G000460,Luar Pro Headphones,Iaelte,Soso Group,5051328844642,,8695043,IAE831,Audio,Matt Grey,
+G000461,Luar Pro Headphones,Iaelte,,5040977942823,,9710412,IAE831,Audio,Blue,
+G000462,Vamo Pro Blender,Lumenia,Rite Group,5035271244827,,,,Kitchen,Blue,600W
+G000463,VAMO PRO BLENDER,Lumenia,,5035271244827,,1763899,,Kitchen,Blue,600W
+G000464,Vamo Pro Blender,Lumenia,Rite Group,5062813124507,,7340395,,Kitchen,Blue,1000W
+G000465,Iaxa Sander,Vezenor,Armenar Group,5076119808580,VEZ-9781-00,4790818,VEZ205,Tools,Matt Grey,
+G000466,Iaxa Sander,Vezenor,Armenar Group,,,,VEZ205,Tools,Red,
+G000467,Noar Classic Speaker,Lumo Home,,5077045823654,LUM-7041-00,2773767,LUM013,Audio,White,Mini
+G000468,Noar Classic Speaker,Lumo Home,Lumo Group,5064090550826,,3582760,LUM013,Audio,White,Max
+G000469,Vezen Mini Hair Dryer,Rite,,5058077260914,RIT-2210-00,6001857,RIT920,Personal care,Black,
+G000470,Vate Shaver,Lumo Home,,5079913016762,,,,Personal care,Silver,
+G000471,Luar Mini Speaker,Terkive Home,,5074810419074,TER-7224-00,,TER415,Audio,Red,
+G000472,Teno Pro Heater,Elteso Home,Soso Group,5026411675939,ELT-8283-00,6982974,ELT393,Home,White,1kW
+G000473,Teno Pro Heater,Elteso Home,,5029514623937,ELT-8283-10,3590459,ELT393,Home,White,2kW
+G000474,Somen Coffee Maker,Vaorva,,5072449734698,,,VAO463,Kitchen,White,
+G000475,Somen Coffee Maker,Vaorva,,,VAO-6018-01,3310768,VAO463,Kitchen,Matt Grey,
+G000476,Lumo Pro Heater,Vezenor,Armenar Group,5034227287925,VEZ-7897-00,,,Home,Blue,1kW
+G000477,Lumo Pro Heater,Vezenor,,5097653440470,VEZ-7897-10,5060544,,Home,Blue,2kW
+G000478,Teor Classic Fan,Terso,,5075351313029,TER-8952-00,4703175,TER837,Home,Red,
+G000479,Teor Classic Fan,Terso,,5074418514140,TER-8952-01,,TER837,Home,White,
+G000480,TEOR CLASSIC FAN,Terso,,5074418514140,,6298703,TER837,Home,White,
+G000481,Teor Classic Fan,Terso,Lumo Group,5034380275500,TER-8952-02,,TER837,Home,Blue,
+G000482,Arso Classic Drill,Arrixa Home,Kite Group,5000327785159,ARR-2668-00,,,Tools,Black,12V
+G000483,Classic Drill Arso,Arrixa Home,,,,6102643,,Tools,Black,12V
+G000484,Arso Classic Drill,Arrixa Home,,5003963031062,,5908145,,Tools,Black,18V
+G000485,Moso Mini Coffee Maker,Nova,Nocaar Group,5071651235917,NOV-9021-00,2583412,,Kitchen,Red,1.2L
+G000486,Moso Mini Coffee Maker,Nova,,5036212259955,,,,Kitchen,Red,1.8L
+G000487,Caxa Desk Lamp,Vadorri Home,,5062525203491,VAD-8337-00,4942991,,Home,Blue,
+G000488,Sodor Classic Soundbar,Zenelte,,5025139999600,,9139784,ZEN813,Audio,Blue,
+G000489,Sodor Classic Soundbar,Zenelte,,5041670979048,ZEN-4711-01,,ZEN813,Audio,Black,
+G000490,Terva Heater,Lumo Home,,5023570307763,LUM-9006-00,6714154,,Home,Matt Grey,1kW
+G000491,Terva Heater,Lumo Home,,5062597987633,,,,Home,Matt Grey,2kW
+G000492,TERVA HEATER,Lumo Home,,5062597987633,,8563206,,Home,Matt Grey,2kW
+G000493,Vaia Toaster,Teria,,5038527931861,TER-0962-00,6788978,,Kitchen,Matt Grey,2 Slice
+G000494,Vaia Toaster,Teria,Teria Group,5090135457966,TER-0962-10,,,Kitchen,Matt Grey,4 Slice
+G000495,Veso Sander,Armenar,Armenar Group,5003144431827,ARM-4562-00,0226213,,Tools,White,
+G000496,Veso Sander,Armenar,Armenar Group,5046484076204,,0942967,,Tools,Red,
+G000497,Elva Toaster,Rite,Rite Group,5035432762641,RIT-5390-00,7409137,,Kitchen,Red,2 Slice
+G000498,Elva Toaster,Rite,Rite Group,5024718481239,,3381083,,Kitchen,Red,4 Slice
+G000499,Menzen Pro Kettle,Zenri,Vacafi Group,5083378024910,ZEN-8757-00,1425442,,Kitchen,Silver,
+G000500,MENZEN PRO KETTLE,Zenri,,5083378024910,,5693690,,Kitchen,Silver,
+G000501,Menzen Pro Kettle,Zenri,Vacafi Group,5073052335463,ZEN-8757-01,,,Kitchen,Red,
+G000502,Dormen Classic Blender,Xateno,Xateno Group,,XAT-7550-00,,,Kitchen,Black,600W
+G000503,Dormen Classic Blender,Xateno,,5016380842913,XAT-7550-10,3180257,,Kitchen,Black,1000W
+G000504,Five Classic Desk Lamp,Vacafi Home,,5067149197645,VAC-6130-00,,VAC427,Home,Matt Grey,
+G000505,Five Classic Desk Lamp,Vacafi Home,,,VAC-6130-01,5363072,VAC427,Home,Red,
+G000506,Rixa Mini Headphones,Terrifi,Xateno Group,5098269185878,,5709539,TER679,Audio,Blue,
+G000507,RIXA MINI HEADPHONES,Terrifi,,5098269185878,,9065917,TER679,Audio,Blue,
+G000508,Rixa Mini Headphones,Terrifi,Xateno Group,5068691191310,,0154096,TER679,Audio,Silver,
+G000509,Rixa Mini Headphones,Terrifi,,5043251679309,TER-3455-02,3211742,TER679,Audio,White,
+G000510,Elmo Fan,Kizenor,,5041107404037,KIZ-3872-00,9092448,,Home,Blue,12in
+G000511,Elmo Fan,Kizenor,,5074502475937,KIZ-3872-10,5796391,,Home,Blue,16in
+G000512,Vaxa Kettle,Moordor Home,,5071748502311,MOO-8143-00,,,Kitchen,Black,1.5L
+G000513,Vaxa Kettle,Moordor Home,Vaorva Group,5082907793211,MOO-8143-10,2736593,,Kitchen,Black,1.7L
+G000514,Cano Speaker,Lumo Home,Lumo Group,5086942000235,LUM-8878-00,6015434,,Audio,Silver,Mini
+G000515,Cano Speaker,Lumo Home,Lumo Group,5026379041845,LUM-8878-10,,,Audio,Silver,Max
+G000516,Vete Mini Blender,Vezenor,,5035341241732,VEZ-7866-00,,,Kitchen,Blue,600W
+G000517,Vete Mini Blender,Vezenor,Armenar Group,5088511844400,VEZ-7866-10,7600148,,Kitchen,Blue,1000W
+G000518,Menor Pro Fan,Lumo Home,Lumo Group,5061327146852,LUM-2668-00,3570659,,Home,White,12in
+G000519,Menor Pro Fan,Lumo Home,Lumo Group,5028803729442,LUM-2668-10,,,Home,White,16in
+G000520,Dorno Coffee Maker,Sono,Ororso Group,5052179867453,,,,Kitchen,White,1.2L
+G000521,Dorno Coffee Maker,Sono,,,,,,Kitchen,White,1.8L
+G000522,Vador Speaker,Teria,,5023417145046,TER-4095-00,7148829,,Audio,White,
+G000523,Rica Plus Toaster,Terso,Lumo Group,,TER-4185-00,8532615,,Kitchen,Red,
+G000524,Zenva Plus Coffee Maker,Orelno,,,ORE-3188-00,4266582,,Kitchen,Silver,1.2L
+G000525,Zenva Plus Coffee Maker,Orelno,Vacafi Group,5032648027212,ORE-3188-10,9797955,,Kitchen,Silver,1.8L
+G000526,Xalu Plus Fan,Iasofi,Teria Group,5085729318129,IAS-8184-00,3085917,IAS627,Home,Black,12in
+G000527,Xalu Plus Fan,Iasofi,,5036852087635,,1025725,IAS627,Home,Black,16in
+G000528,Vexa Pro Desk Lamp,Rifiia,,5038634015195,RIF-2948-00,8316688,,Home,Black,
+G000529,Vexa Pro Desk Lamp,Rifiia,Soxa Group,5020151755524,RIF-2948-01,,,Home,Silver,
+G000530,Nori Drill,Lumo Home,,5048175454629,LUM-8185-00,4790638,,Tools,Black,12V
+G000531,Nori Drill,Lumo Home,,,,,,Tools,Black,18V
+G000532,Caia Speaker,Lumo Home,,5078298275382,,,,Audio,Silver,
+G000533,Caia Speaker,Lumo Home,,5003928239069,LUM-8681-01,,,Audio,Matt Grey,
+G000534,Caia Speaker,Lumo Home,,,,5744440,,Audio,,
+G000535,Luia Heater,Mori,Vadorri Group,5087993071403,,0749170,MOR749,Home,Matt Grey,
+G000536,Luia Heater,Mori,,,MOR-5194-01,4827640,MOR749,Home,Red,
+G000537,Luai Heater,Mori,,,,8864556,MOR749,Home,Red,
+G000538,Luia Heater,Mori,,5031097863242,MOR-5194-02,,MOR749,Home,Silver,
+G000539,Terve Speaker,Arrixa Home,,,ARR-8517-00,2527348,,Audio,Black,Mini
+G000540,Terve Speaker,Arrixa Home,Kite Group,5096399221596,,6233805,,Audio,Black,Max
+G000541,Lumen Plus Kettle,Valu,Soso Group,5070740548198,VAL-7498-00,,,Kitchen,Matt Grey,
+G000542,Lumen Plus Kettle,Valu,Soso Group,5002181131523,VAL-7498-01,1630588,,Kitchen,Silver,
+G000543,Soso Headphones,Luiamen,,5067882305895,LUI-3788-00,,LUI694,Audio,Silver,
+G000544,Soso Headphones,Luiamen,,5095814801733,,5228333,LUI694,Audio,Black,
+G000545,Menso Pro Soundbar,Arrixa Home,,5066699720969,,,,Audio,Silver,2.1
+G000546,Menso Pro Soundbar,Arrixa Home,Kite Group,5095840364738,ARR-2263-10,3069744,,Audio,Silver,5.1
+G000547,Menca Pro Soundbar,Kite,Kite Group,5095881489308,KIT-7122-00,8377626,KIT811,Audio,White,
+G000548,Menca Pro Soundbar,Kite,Kite Group,5082199455514,KIT-7122-01,6869100,KIT811,Audio,Blue,
+G000549,Menca Pro Soundbar,Kite,,,,2076401,KIT811,Audio,,
+G000550,Menca Pro Soundbar,Kite,Kite Group,5050746872930,KIT-7122-02,,KIT811,Audio,Matt Grey,
+G000551,Moso Soundbar,Texaki,Texaki Group,5041125566595,TEX-4049-00,6289165,,Audio,Black,
+G000552,Fiki Hair Dryer,Lumo Home,Lumo Group,,LUM-9597-00,2146286,LUM283,Personal care,Red,1800W
+G000553,Fiki Hair Dryer,Lumo Home,,5005450756182,,5418996,LUM283,Personal care,Red,2200W
+G000554,Luia Soundbar,Arxari,,,ARX-2079-00,1465098,ARX981,Audio,Red,2.1
+G000555,Luia Soundbar,Arxari,,,ARX-2079-10,6982108,ARX981,Audio,Red,5.1
+G000556,Terca Toaster,Fizen,,,,8150011,,Kitchen,White,2 Slice
+G000557,Terca Toaster,Fizen,Vaor Group,,FIZ-8247-10,5995342,,Kitchen,White,4 Slice
+G000558,Zenva Classic Fan,Lumo Home,,5000980012593,LUM-4383-00,3718731,LUM123,Home,Silver,12in
+G000559,Zenva Classic Fan,Lumo Home,,,lum438300,7828530,LUM123,Home,Silver,12in
+G000560,Zenva Classic Fan,Lumo Home,Lumo Group,5056147709868,,,LUM123,Home,Silver,16in
+G000561,Vaar Mini Speaker,Lumo Home,,5069219077178,LUM-6963-00,6157768,LUM908,Audio,Blue,
+G000562,Vaar Mini Speaker,Lumo Home,Lumo Group,5096007741225,LUM-6963-01,,LUM908,Audio,White,
+G000563,Vador Classic Speaker,Texaki,,5016952911856,,,,Audio,Black,
+G000564,Vador Classic Speaker,Texaki,Texaki Group,5097915230849,TEX-9620-01,1256004,,Audio,Silver,
+G000565,Noia Soundbar,Lumo Home,Lumo Group,5055185560325,,1770620,LUM982,Audio,Silver,2.1
+G000566,Noia Soundbar,Lumo Home,Lumo Group,5088924587505,LUM-6118-10,3174819,LUM982,Audio,Silver,5.1
+G000567,Caia Toaster,Teria,,5017720628990,TER-8804-00,6024045,TER241,Kitchen,Blue,
+G000568,Caia Toaster,Teria,Teria Group,,TER-8804-01,5222025,TER241,Kitchen,Matt Grey,
+G000569,Veca Mini Headphones,Nova,Nocaar Group,5083762064782,,,NOV707,Audio,Black,
+G000570,Teror Classic Coffee Maker,Kizenor,,5082203950035,,,KIZ239,Kitchen,Black,
+G000571,TEROR CLASSIC COFFEE MAKER,Kizenor,,5082203950035,,0891689,KIZ239,Kitchen,Black,
+G000572,Terri Classic Toaster,Terkive Home,Nocaar Group,5041848952521,TER-8020-00,0063060,,Kitchen,Blue,2 Slice
+G000573,Terri Classic Toaster,Terkive Home,Nocaar Group,5027549794103,TER-8020-10,,,Kitchen,Blue,4 Slice
+G000574,Fixa Desk Lamp,Lumo Home,,5006950915284,,,LUM634,Home,Red,Small
+G000575,Fixa Desk Lamp,Lumo Home,Lumo Group,5026787083703,,,LUM634,Home,Red,Large
+G000576,Iael Mini Desk Lamp,Armenar,Armenar Group,5084189787803,ARM-4049-00,,ARM493,Home,Red,Small
+G000577,Iael Mini Desk Lamp,Armenar,,5062145276134,ARM-4049-10,,ARM493,Home,Red,Large
+G000578,Teor Speaker,Arfimen,Lumo Group,5095796616059,ARF-0591-00,7367934,,Audio,Silver,
+G000579,Teor Speaker,Arfimen,,5098953072033,ARF-0591-01,9644084,,Audio,Black,
+G000580,Dorzen Mini Hair Dryer,Caar,,,,2387506,,Personal care,Black,1800W
+G000581,Dorzen Mini Hair Dryer,Caar,Soso Group,5090936953605,CAA-1112-10,0093724,,Personal care,Black,2200W
+G000582,Zenor Classic Shaver,Nova,Nocaar Group,5000151808260,NOV-0559-00,,NOV743,Personal care,Blue,
+G000583,Veca Coffee Maker,Terso,,5086903137604,TER-4031-00,,TER828,Kitchen,Blue,1.2L
+G000584,Veca Coffee Maker,Terso,Lumo Group,5087747489133,TER-4031-10,,TER828,Kitchen,Blue,1.8L
+G000585,Zenlu Classic Coffee Maker,Terso,,,TER-6846-00,5074769,,Kitchen,Black,
+G000586,Noia Plus Hair Dryer,Kizenor,Kizenor Group,5024316738216,KIZ-6645-00,,,Personal care,Red,1800W
+G000587,Noia Plus Hair Dryer,Kizenor,Kizenor Group,5092481035379,KIZ-6645-10,8996451,,Personal care,Red,2200W
+G000588,Ialu Sander,Terso,,5051881885410,TER-9436-00,9858001,TER074,Tools,Matt Grey,
+G000589,Solu Plus Shaver,Kizenor,Kizenor Group,5058859419516,KIZ-2221-00,,KIZ315,Personal care,Blue,
+G000590,Solu Plus Shaver,Kizenor,Kizenor Group,5084977801780,KIZ-2221-01,9826454,KIZ315,Personal care,White,
+G000591,Xano Pro Fan,Monodor,,5097923905906,MON-0706-00,6447983,MON458,Home,Silver,
+G000592,Arter Fan,Vezenor,,5057752431748,VEZ-5848-00,5564752,,Home,Red,12in
+G000593,Arter Fan,Vezenor,Armenar Group,5022151447041,VEZ-5848-10,9506173,,Home,Red,16in
+G000594,Orter Classic Heater,Lumo Home,Lumo Group,5083847144781,LUM-8439-00,,LUM133,Home,Blue,1kW
+G000595,Orter Classic Heater,Lumo Home,Lumo Group,5016099104647,LUM-8439-10,,LUM133,Home,Blue,2kW
+G000596,Oror Coffee Maker,Mori,,5022295356964,,4923711,,Kitchen,Black,1.2L
+G000597,Oror Coffee Maker,Mori,,5092749032980,MOR-7454-10,4488028,,Kitchen,Black,1.8L
+G000598,Riia Plus Heater,Fizen,,5091673213625,,7636537,,Home,Silver,1kW
+G000599,Riia Plus Heater,Fizen,Vaor Group,5076812562390,FIZ-6633-10,,,Home,Silver,2kW
+G000600,Cater Speaker,Vezenor,Armenar Group,,VEZ-2514-00,3146072,,Audio,Blue,Mini
+G000601,Cater Speaker,Vezenor,,5061361969608,VEZ-2514-10,,,Audio,Blue,Max
+G000602,Cater Speaker,VEZENOR Ltd,,,VEZ-2514-10,5168061,,Audio,Blue,Max
+G000603,Rifi Blender,Dorca,Cador Group,5056769315607,DOR-1411-00,,,Kitchen,Matt Grey,600W
+G000604,Rifi Blender,Dorca,Cador Group,,DOR-1411-10,,,Kitchen,Matt Grey,1000W
+G000605,Lumen Mini Sander,Arnoel,,5072461556698,ARN-8340-00,,ARN806,Tools,Silver,
+G000606,Lumen Mini Sander,Arnoel,Cador Group,5099334928574,,3447892,ARN806,Tools,White,
+G000607,Tete Mini Kettle,Nova,Nocaar Group,5011664186066,NOV-4947-00,,,Kitchen,Black,1.5L
+G000608,Tete Mini Kettle,Nova,Nocaar Group,5066485036830,,5133244,,Kitchen,Black,1.7L
+G000609,Temo Pro Toaster,Terkive Home,Nocaar Group,5045241145955,,,,Kitchen,Black,2 Slice
+G000610,Temo Pro Toaster,Terkive Home,,5079011092538,,7841715,,Kitchen,Black,4 Slice
+G000611,Veso Fan,Lumo Home,,5022534158212,LUM-3501-00,,LUM733,Home,Red,
+G000612,Veso Fan,Lumo Home,,5097106465531,LUM-3501-01,9254841,LUM733,Home,Blue,
+G000613,Veso Fan,Lumo Home,Lumo Group,5076458123610,,4011262,LUM733,Home,Silver,
+G000614,Terri Classic Kettle,Soxa Home,Soxa Group,5036212942710,SOX-5241-00,,,Kitchen,White,
+G000615,Terri Classic Kettle,SOXA Ltd,,,SOX-5241-00,7776537,,Kitchen,White,
+G000616,Terri Classic Kettle,Soxa Home,Soxa Group,5036936181242,SOX-5241-01,4419790,,Kitchen,Red,
+G000617,Terri Classic Kettle,Soxa Home,Soxa Group,5015110895687,,,,Kitchen,Matt Grey,
+G000618,Riri Pro Kettle,Vaorva,Vaorva Group,5033228274026,VAO-5567-00,6315367,VAO793,Kitchen,Red,1.5L
+G000619,Riri Pro Kettle,Vaorva,Vaorva Group,,,0577112,VAO793,Kitchen,Red,1.7L
+G000620,Vamo Mini Sander,Ellu Home,Teria Group,5078645447004,,,,Tools,White,
+G000621,Vamo Mini Sander,Ellu Home,Teria Group,5001980960235,,8184716,,Tools,Matt Grey,
+G000622,Vamo Mini Sander,Ellu Home,Teria Group,5058426323659,,9719824,,Tools,Blue,
+G000623,Terte Plus Desk Lamp,Soso Home,,5008089428819,SOS-1275-00,,,Home,Blue,Small
+G000624,Terte Plus Desk Lamp,Soso Home,,5085606752015,SOS-1275-10,,,Home,Blue,Large
+G000625,Vaso Mini Drill,Lumo Home,,5077797233077,LUM-2629-00,7279776,,Tools,Black,12V
+G000626,Vaso Mini Drill,Lumo Home,,,LUM-2629-10,,,Tools,Black,18V
+G000627,Zenva Shaver,Terso,Lumo Group,5035079271520,TER-1979-00,,TER010,Personal care,Black,
+G000628,Zenva Shaver,Terso,,5048918875001,,1343240,TER010,Personal care,Blue,
+G000629,Zenva Shaver,Terso,,,,0434960,TER010,Personal care,Blue,
+G000630,Menfi Pro Fan,Cador,Cador Group,,CAD-6271-00,0404108,,Home,Matt Grey,12in
+G000631,Menfi Pro Fan,Cador,,5010238288960,CAD-6271-10,1499034,,Home,Matt Grey,16in
+G000632,Kior Pro Desk Lamp,Noor Home,,5031404829671,NOO-8401-00,,NOO968,Home,Matt Grey,
+G000633,Zenzen Headphones,Terso,Lumo Group,5084615574885,TER-9816-00,3707279,,Audio,Blue,
+G000634,Zenzen Headphones,Terso,,5059889317780,,,,Audio,White,
+G000635,Sozen Classic Desk Lamp,Arfimen,Lumo Group,5087823703856,ARF-9240-00,0024245,,Home,Black,
+G000636,Sozen Classic Desk Lamp,Arfimen,Lumo Group,5085533292103,ARF-9240-01,6252857,,Home,Red,
+G000637,Terve Pro Soundbar,Soso,,5057942611202,SOS-0013-00,,,Audio,White,2.1
+G000638,Terve Pro Soundbar,Soso,Soso Group,5064530012297,,7706794,,Audio,White,5.1
+G000639,Terve Pro Soundbar,SOSO Ltd,,,,1027078,,Audio,White,5.1
+G000640,Sofi Plus Coffee Maker,Lumo Home,Lumo Group,5073881090878,LUM-3812-00,6053549,,Kitchen,White,
+G000641,Mori Pro Sander,Vezenki,Arxari Group,,VEZ-5880-00,,,Tools,Red,
+G000642,Mori Pro Sander,Vezenki,,5026895873159,VEZ-5880-01,1957618,,Tools,Matt Grey,
+G000643,Vater Plus Headphones,Luorca,Ororso Group,5060605296142,LUO-5159-00,,LUO922,Audio,Matt Grey,
+G000644,Arlu Headphones,Vaor,,,,,VAO548,Audio,Matt Grey,
+G000645,Arlu Headphones,Vaor,,,VAO-0671-01,2059581,VAO548,Audio,Silver,
+G000646,Soar Classic Speaker,Zenelte,,5022943389733,ZEN-1561-00,3873051,ZEN385,Audio,Red,
+G000647,Nova Fan,Caso,Vaorva Group,5007882390897,,,,Home,Matt Grey,
+G000648,Nova Fan,Caso,Vaorva Group,5055778121759,CAS-0123-01,9716864,,Home,Blue,
+G000649,Vete Mini Heater,Sono,,5071270334121,SON-3395-00,1686597,SON124,Home,White,
+G000650,Vemo Plus Kettle,Zenelte,,5020575906762,ZEN-9174-00,,ZEN359,Kitchen,Blue,1.5L
+G000651,Vemo Plus Kettle,Zenelte,,,ZEN-9174-10,,ZEN359,Kitchen,Blue,1.7L
+G000652,Ialu Mini Speaker,Lumo Home,,5020666776649,,,LUM135,Audio,White,Mini
+G000653,Ialu Mini Speaker,Lumo Home,,5041126298686,LUM-0050-10,3674507,LUM135,Audio,White,Max
+G000654,Rior Drill,Zenor,Armenar Group,,ZEN-8554-00,2488149,,Tools,Red,12V
+G000655,Rior Drill,Zenor,,5099087029153,ZEN-8554-10,6814804,,Tools,Red,18V
+G000656,Xaca Sander,Vadorri Home,Vadorri Group,,VAD-2430-00,4305649,,Tools,Silver,
+G000657,Teki Coffee Maker,Arfimen,Lumo Group,5061069855074,,,ARF882,Kitchen,Blue,1.2L
+G000658,Teki Coffee Maker,Arfimen,Lumo Group,,ARF-9758-10,3705132,ARF882,Kitchen,Blue,1.8L
+G000659,Orlu Mini Coffee Maker,Zenor,Armenar Group,,ZEN-5244-00,2879192,,Kitchen,Black,
+G000660,Orlu Mini Coffee Maker,Zenor,Armenar Group,,ZEN-5244-01,1516668,,Kitchen,Matt Grey,
+G000661,Soca Plus Toaster,Arfimen,,5082827465229,ARF-0726-00,,,Kitchen,Blue,
+G000662,SOCA PLUS TOASTER,Arfimen,,5082827465229,,1065239,,Kitchen,Blue,
+G000663,Soca Plus Toaster,Arfimen,,5041847382589,ARF-0726-01,1030620,,Kitchen,Silver,
+G000664,Elmo Plus Blender,Nocaar,Nocaar Group,5029406904717,NOC-9485-00,,NOC802,Kitchen,Red,600W
+G000665,Elmo Plus Blender,Nocaar,Nocaar Group,5082350942556,NOC-9485-10,,NOC802,Kitchen,Red,1000W
+G000666,Caca Plus Toaster,Terso,,5022228159594,TER-3255-00,8664351,,Kitchen,Blue,2 Slice
+G000667,Caca Plus Toaster,Terso,,,TER-3255-10,0718415,,Kitchen,Blue,4 Slice
+G000668,Caca Plus Toaster,Terso,,,,6755023,,Kitchen,,
+G000669,Tete Pro Shaver,Arfimen,Lumo Group,,ARF-0281-00,7535894,,Personal care,Silver,
+G000670,Pro Shaver Tete,Arfimen,,,,5653034,,Personal care,Silver,
+G000671,Xazen Classic Desk Lamp,Valu,,5074943771612,VAL-3465-00,4812999,,Home,Silver,Small
+G000672,Xazen Classic Desk Lamp,Valu,Soso Group,5069795381799,VAL-3465-10,4773821,,Home,Silver,Large
+G000673,Soso Kettle,Sono,Ororso Group,5021071606620,SON-9824-00,,SON337,Kitchen,Red,1.5L
+G000674,Soso Kettle,Sono,Ororso Group,5019767411603,SON-9824-10,2172864,SON337,Kitchen,Red,1.7L
+G000675,Zenmo Plus Kettle,Lumo Home,,5029723043243,LUM-5763-00,3981125,,Kitchen,Matt Grey,
+G000676,Zenmo Plus Kettle,Lumo Home,Lumo Group,,,,,Kitchen,Blue,
+G000677,Terxa Plus Speaker,Nova,,5090791291447,NOV-1440-00,,,Audio,Black,
+G000678,TERXA PLUS SPEAKER,Nova,,5090791291447,,9741962,,Audio,Black,
+G000679,Terte Pro Speaker,Soso Home,Texaki Group,,SOS-5928-00,,SOS404,Audio,Blue,Mini
+G000680,Terte Pro Speaker,Soso Home,,5032393680250,SOS-5928-10,7649137,SOS404,Audio,Blue,Max
+G000681,Kiki Pro Fan,Nova,,5059258375946,NOV-5903-00,0253405,,Home,White,12in
+G000682,Kiki Pro Fan,Nova,,5001334423904,NOV-5903-10,,,Home,White,16in
+G000683,Menar Toaster,Terso,,5048682027972,TER-1647-00,1742031,,Kitchen,Matt Grey,
+G000684,Zenve Fan,Soso,Soso Group,5021301928270,,1932151,SOS378,Home,Black,
+G000685,Zenve Fan,Soso,,5095507824452,SOS-8255-01,3060031,SOS378,Home,Blue,
+G000686,Vezen Shaver,Fiki,Xateno Group,5048504688947,FIK-2952-00,3362263,,Personal care,Matt Grey,
+G000687,Vezen Shaver,Fiki,,5078323443458,,,,Personal care,Black,
+G000688,Vezen Shaver,Fiki,,5081803103780,FIK-2952-02,1654249,,Personal care,Red,
+G000689,Luor Pro Kettle,Caso,Vaorva Group,5049982075052,CAS-1361-00,2464878,,Kitchen,Silver,
+G000690,Luor Pro Kettle,Caso,,5054316256458,CAS-1361-01,5773733,,Kitchen,Red,
+G000691,Menki Classic Speaker,Arfimen,Lumo Group,5067528522853,ARF-0717-00,0245276,,Audio,Black,
+G000692,Menki Classic Speaker,Arfimen,,5099861625007,ARF-0717-01,9602895,,Audio,Blue,
+G000693,Nolu Coffee Maker,Moordor Home,,5092377286229,MOO-4384-00,7176534,,Kitchen,Matt Grey,1.2L
+G000694,Nolu Coffee Maker,Moordor Home,,5092886053367,MOO-4384-10,6206326,,Kitchen,Matt Grey,1.8L
+G000695,Cafi Classic Hair Dryer,Moordor Home,Vaorva Group,5049792403731,,9735029,,Personal care,Silver,1800W
+G000696,Cafi Classic Hair Dryer,Moordor Home,Vaorva Group,5074647654983,MOO-6720-10,2834268,,Personal care,Silver,2200W
+G000697,Arzen Classic Desk Lamp,Fiterve,,,FIT-1847-00,,,Home,Blue,Small
+G000698,Arzen Classic Desk Lamp,Fiterve,Dorxa Group,,FIT-1847-10,,,Home,Blue,Large
+G000699,Iaso Mini Hair Dryer,Dorca,Cador Group,5034150530389,DOR-0862-00,9370688,,Personal care,Black,
+G000700,Kiel Desk Lamp,Zenor,Armenar Group,,ZEN-3637-00,,ZEN045,Home,Blue,Small
+G000701,Kiel Desk Lamp,Zenor,Armenar Group,,ZEN-3637-10,2361128,ZEN045,Home,Blue,Large
+G000702,Soter Shaver,Zenri,,5063262767048,ZEN-0298-00,5377719,,Personal care,White,
+G000703,Elia Pro Sander,Luiamen,,,,,,Tools,Black,
+G000704,Elia Pro Sander,Luiamen,Vadorri Group,5071742547158,LUI-5858-01,4084368,,Tools,White,
+G000705,Telu Classic Toaster,Dormoar,Texaki Group,5008055912762,DOR-2661-00,0833999,,Kitchen,Blue,
+G000706,TELU CLASSIC TOASTER,Dormoar,,5008055912762,,2133293,,Kitchen,Blue,
+G000707,Menar Hair Dryer,Terrifi,,5092232332450,TER-9483-00,,,Personal care,Silver,
+G000708,Menar Hair Dryer,Terrifi,Xateno Group,5099049341699,TER-9483-01,9188127,,Personal care,Black,
+G000709,Menar Hair Dryer,Terrifi,,,,1857049,,Personal care,,
+G000710,Arte Plus Kettle,Ororso,Ororso Group,5049516730839,ORO-2160-00,5326620,,Kitchen,Silver,
+G000711,Luve Hair Dryer,Vaor,Vaor Group,5055607081506,,,VAO409,Personal care,Matt Grey,1800W
+G000712,Luve Hair Dryer,Vaor,Vaor Group,5044287336181,,6255252,VAO409,Personal care,Matt Grey,2200W
+G000713,Moso Plus Kettle,Vaorva,,5018363689478,,7058031,,Kitchen,Matt Grey,1.5L
+G000714,Moso Plus Kettle,Vaorva,Vaorva Group,5037181047666,VAO-7041-10,7728124,,Kitchen,Matt Grey,1.7L
+G000715,Ordor Plus Drill,Sono,,5072623285107,SON-2534-00,,SON339,Tools,Silver,
+G000716,Rica Plus Soundbar,Zenelte,,5054780033180,,9945597,,Audio,Matt Grey,2.1
+G000717,Rica Plus Soundbar,Zenelte,Vaor Group,5026551031893,ZEN-9010-10,2466179,,Audio,Matt Grey,5.1
+G000718,Terxa Mini Headphones,Valu,Soso Group,5099323138052,VAL-0523-00,,VAL067,Audio,Silver,
+G000719,Riso Headphones,Kizenor,Kizenor Group,5053389928880,KIZ-7012-00,,,Audio,Silver,
+G000720,Veca Hair Dryer,Iaar Home,,5099258580902,IAA-2194-00,6387311,,Personal care,Red,1800W
+G000721,VECA HAIR DRYER,Iaar Home,,5099258580902,,3821499,,Personal care,Red,1800W
+G000722,Veca Hair Dryer,Iaar Home,Kizenor Group,5087510780863,IAA-2194-10,2996484,,Personal care,Red,2200W
+G000723,Vaar Plus Toaster,Soso Home,,5032256040320,,4944232,SOS249,Kitchen,Blue,2 Slice
+G000724,Vaar Plus Toaster,Soso Home,,,SOS-7827-10,,SOS249,Kitchen,Blue,4 Slice
+G000725,Terno Classic Fan,Vaor,,,,,,Home,Black,
+G000726,Temen Blender,Kizenor,Kizenor Group,5019322010944,KIZ-4192-00,,KIZ799,Kitchen,Black,
+G000727,Xaar Mini Toaster,Zenelte,,,ZEN-5904-00,5479218,,Kitchen,Black,
+G000728,Menmen Shaver,Lumo Home,Lumo Group,5044047205238,,6693806,,Personal care,Silver,
+G000729,Rilu Pro Soundbar,Vaorva,,5062749399543,VAO-6661-00,,VAO092,Audio,Blue,2.1
+G000730,Rilu Pro Soundbar,Vaorva,,5083077488877,,0335775,VAO092,Audio,Blue,5.1
+G000731,Vaca Mini Drill,Kizenor,Kizenor Group,5054959971220,KIZ-5582-00,6982176,,Tools,Matt Grey,
+G000732,Iaca Plus Headphones,Elteso Home,,5091627937010,ELT-6541-00,7004670,ELT938,Audio,Black,
+G000733,Iaca Plus Headphones,Elteso Home,,5078782879485,,,ELT938,Audio,Red,
+G000734,Vaia Toaster,Lumenia,,,LUM-3412-00,6174668,,Kitchen,Black,2 Slice
+G000735,Vaia Toaster,Lumenia,Rite Group,,LUM-3412-10,2023502,,Kitchen,Black,4 Slice
+G000736,Vaar Plus Coffee Maker,Fiki,,5043006764878,FIK-5440-00,2473753,,Kitchen,Black,
+G000737,Vaar Plus Coffee Maker,Fiki,Xateno Group,5029812516276,FIK-5440-01,4406798,,Kitchen,White,
+G000738,Elel Shaver,Soso Home,Texaki Group,,,,SOS158,Personal care,Black,
+G000739,Note Mini Toaster,Lumo Home,,5005810587388,LUM-0177-00,,,Kitchen,Black,
+G000740,Cano Pro Fan,Ororso,,5034074416875,ORO-4526-00,2543309,,Home,Blue,12in
+G000741,Cano Pro Fan,Ororso,,5049635278724,,9424693,,Home,Blue,16in
+G000742,Zenmen Mini Soundbar,Lumo Home,Lumo Group,5090161794035,,,LUM800,Audio,Black,2.1
+G000743,Zenmen Mini Soundbar,Lumo Home,,5084622998100,,1831612,LUM800,Audio,Black,5.1
+G000744,Kiter Classic Heater,Kizenor,,,KIZ-8386-00,,,Home,Matt Grey,
+G000745,Kiter Classic Heater,Kizenor,Kizenor Group,5042239034123,KIZ-8386-01,8654094,,Home,Blue,
+G000746,Soter Blender,Monodor,,5060588519702,,,,Kitchen,Matt Grey,600W
+G000747,Soter Blender,Monodor,Kizenor Group,5092299398499,,9173881,,Kitchen,Matt Grey,1000W
+G000748,Mono Mini Coffee Maker,Vaorva,,5015931730570,,,,Kitchen,Matt Grey,1.2L
+G000749,Mono Mini Coffee Maker,Vaorva,,5058055070795,VAO-8324-10,0656713,,Kitchen,Matt Grey,1.8L
+G000750,Veno Fan,Fiterve,,5083064857266,FIT-5634-00,4259068,,Home,Red,
+G000751,Veno Fan,Fiterve,Dorxa Group,5093410804660,FIT-5634-01,3655719,,Home,Silver,
+G000752,Elzen Classic Soundbar,Dormoar,Texaki Group,5008317644813,DOR-7282-00,5227113,,Audio,Matt Grey,2.1
+G000753,Elzen Classic Soundbar,Dormoar,Texaki Group,,DOR-7282-10,2154337,,Audio,Matt Grey,5.1
+G000754,Caso Shaver,Xador,,5016538834791,XAD-8989-00,,,Personal care,Red,
+G000755,Caso Shaver,Xador,,5016094596584,XAD-8989-01,8687928,,Personal care,White,
+G000756,Veri Pro Soundbar,Lumo Home,,5014942641073,LUM-0510-00,9860514,,Audio,Blue,2.1
+G000757,Veri Pro Soundbar,Lumo Home,Lumo Group,5081026516022,,,,Audio,Blue,5.1
+G000758,Rimo Shaver,Vaor,,5018152327437,,8754849,VAO490,Personal care,Black,
+G000759,Rimo Shaver,Vaor,Vaor Group,,VAO-5528-01,,VAO490,Personal care,White,
+G000760,Dormen Headphones,Nocaar,,5032754359887,NOC-4072-00,1517475,,Audio,Black,
+G000761,Dormen Headphones,Nocaar,,5046632831112,,1974637,,Audio,Red,
+G000762,DORMEN HEADPHONES,Nocaar,,5046632831112,,1417548,,Audio,Red,
+G000763,Elia Mini Headphones,Lumo Home,,5044964385648,LUM-9247-00,0701272,LUM097,Audio,Blue,
+G000764,Elia Mini Headphones,Lumo Home,Lumo Group,,,,LUM097,Audio,White,
+G000765,Ludor Mini Heater,Vaor,Vaor Group,,VAO-6581-00,5616743,,Home,White,1kW
+G000766,Ludor Mini Heater,Vaor,Vaor Group,5005150885168,VAO-6581-10,8044978,,Home,White,2kW
+G000767,Xamo Classic Sander,Fiterve,,5075291096907,FIT-4402-00,0118131,,Tools,White,
+G000768,Xamo Classic Sander,Fiterve,,,FIT-4402-01,0606793,,Tools,Silver,
+G000769,Xamo Classic Sander,Fiterve,Dorxa Group,5001935275070,FIT-4402-02,6478935,,Tools,Black,
+G000770,Fiar Kettle,Nova,,5067698943878,,7653729,,Kitchen,White,
+G000771,Riter Mini Heater,Vaor,,5076200915432,VAO-6380-00,,VAO705,Home,Blue,1kW
+G000772,Riter Mini Heater,Vaor,,5018581517959,,,VAO705,Home,Blue,2kW
+G000773,Dorter Shaver,Vezenki,Arxari Group,,VEZ-9943-00,,,Personal care,Blue,
+G000774,Dorter Shaver,Vezenki,,5082096072661,VEZ-9943-01,9748118,,Personal care,Matt Grey,
+G000775,DORTER SHAVER,Vezenki,,5082096072661,,2375930,,Personal care,Matt Grey,
+G000776,Cador Classic Drill,Lumo Home,Lumo Group,5092406802451,LUM-3957-00,6689977,,Tools,Black,12V
+G000777,Cador Classic Drill,Lumo Home,,5040431338810,LUM-3957-10,1436369,,Tools,Black,18V
+G000778,Vador Pro Soundbar,Soxa Home,,5096582893715,SOX-3817-00,,,Audio,Black,2.1
+G000779,Vador Pro Soundbar,Soxa Home,,5014564772094,SOX-3817-10,7322703,,Audio,Black,5.1
+G000780,Rixa Plus Coffee Maker,Vadorri Home,Vadorri Group,5038959382255,VAD-1452-00,2545234,VAD289,Kitchen,Red,1.2L
+G000781,Rixa Plus Coffee Maker,Vadorri Home,,5072436098994,VAD-1452-10,4676528,VAD289,Kitchen,Red,1.8L
+G000782,Nolu Toaster,Rifiia,Soxa Group,5011553525518,RIF-7812-00,5061385,RIF787,Kitchen,Matt Grey,
+G000783,NOLU TOASTER,Rifiia,,5011553525518,,0814227,RIF787,Kitchen,Matt Grey,
+G000784,Iaki Classic Soundbar,Nova,Nocaar Group,5014460666817,NOV-1117-00,,NOV627,Audio,Matt Grey,2.1
+G000785,Iaki Classic Soundbar,Nova,Nocaar Group,5053376693685,NOV-1117-10,0475089,NOV627,Audio,Matt Grey,5.1
+G000786,Zenri Plus Fan,Dorxa,,5041461361144,DOR-8177-00,,DOR230,Home,Red,12in
+G000787,Zenri Plus Fan,Dorxa,,,DOR-8177-10,,DOR230,Home,Red,16in
+G000788,Zenri Plus Fan,Dorxa,,,dor817710,4485924,DOR230,Home,Red,16in
+G000789,Luter Drill,Rifiia,Soxa Group,5077778459724,,,,Tools,White,12V
+G000790,LUTER DRILL,Rifiia,,5077778459724,,0968939,,Tools,White,12V
+G000791,Luter Drill,Rifiia,Soxa Group,5058770366890,RIF-1614-10,,,Tools,White,18V
+G000792,Cador Classic Drill,Lumo Home,Lumo Group,5046903862043,LUM-9609-00,2848817,LUM400,Tools,Matt Grey,12V
+G000793,Cador Classic Drill,Lumo Home,,5044239142365,LUM-9609-10,,LUM400,Tools,Matt Grey,18V
+G000794,Orva Mini Drill,Soso,Soso Group,5071876800235,,4713491,,Tools,Blue,
+G000795,Orva Mini Drill,Soso,,5026560898791,SOS-3772-01,,,Tools,White,
+G000796,Orva Mini Drill,Soso,,5086480024298,SOS-3772-02,4525066,,Tools,Red,
+G000797,Kiia Pro Toaster,Nova,,5084261793296,NOV-7967-00,3659482,,Kitchen,Silver,2 Slice
+G000798,Kiia Pro Toaster,Nova,,,NOV-7967-10,2935294,,Kitchen,Silver,4 Slice
+G000799,Orfi Desk Lamp,Xador,,5000924630203,XAD-7836-00,,,Home,Matt Grey,Small
+G000800,ORFI DESK LAMP,Xador,,5000924630203,,6493381,,Home,Matt Grey,Small
+G000801,Orfi Desk Lamp,Xador,Dorxa Group,5044730250019,XAD-7836-10,,,Home,Matt Grey,Large
+G000802,Terter Speaker,Terrifi,,,TER-8255-00,,,Audio,Matt Grey,Mini
+G000803,Terter Speaker,Terrifi,,,,,,Audio,Matt Grey,Max
+G000804,Note Classic Speaker,Iaar Home,Kizenor Group,5076697167840,,1116403,,Audio,Matt Grey,Mini
+G000805,Note Classic Speaker,Iaar Home,Kizenor Group,5060062362268,,0607817,,Audio,Matt Grey,Max
+G000806,Nove Plus Toaster,Lumo Home,Lumo Group,5002509147007,LUM-5738-00,8741356,,Kitchen,White,2 Slice
+G000807,Nove Plus Toaster,Lumo Home,,5000378649288,LUM-5738-10,5451976,,Kitchen,White,4 Slice
+G000808,Menxa Plus Sander,Zenelte,Vaor Group,5058257558862,ZEN-0626-00,4588541,,Tools,White,
+G000809,Nomo Pro Sander,Terso,,5021475126939,TER-0767-00,,TER195,Tools,Matt Grey,
+G000810,Nomo Pro Sander,Terso,Lumo Group,5004927058569,TER-0767-01,,TER195,Tools,Black,
+G000811,Xaso Plus Hair Dryer,Ororso,Ororso Group,5068609658546,,,ORO713,Personal care,Matt Grey,1800W
+G000812,XASO PLUS HAIR DRYER,Ororso,,5068609658546,,7366072,ORO713,Personal care,Matt Grey,1800W
+G000813,Xaso Plus Hair Dryer,Ororso,,5038363098032,ORO-2544-10,,ORO713,Personal care,Matt Grey,2200W
+G000814,Moor Fan,Iaelte,Soso Group,,IAE-2253-00,,IAE779,Home,Black,
+G000815,Cafi Classic Drill,Soxa Home,Soxa Group,5076431554592,SOX-0345-00,5242090,,Tools,Silver,
+G000816,CAFI CLASSIC DRILL,Soxa Home,,5076431554592,,0137497,,Tools,Silver,
+G000817,Moxa Coffee Maker,Iaelte,Soso Group,5003797363193,,0789094,,Kitchen,Matt Grey,
+G000818,Elva Headphones,Arrixa Home,Kite Group,5071673751495,ARR-5655-00,,ARR981,Audio,Silver,
+G000819,Elva Headphones,Arrixa Home,,5098909163624,ARR-5655-01,,ARR981,Audio,Black,
+G000820,Terri Soundbar,Soso Home,,,,,,Audio,Silver,
+G000821,Terri Soundbar,Soso Home,,5025534218689,,5465625,,Audio,Black,
+G000822,Luve Coffee Maker,Kizenor,,5055357136969,KIZ-7735-00,4767423,,Kitchen,Matt Grey,
+G000823,Riia Pro Drill,Arfimen,Lumo Group,5016187076900,ARF-0812-00,,ARF870,Tools,Blue,12V
+G000824,Riia Pro Drill,Arfimen,,5053475277472,ARF-0812-10,3684232,ARF870,Tools,Blue,18V
+G000825,Menca Classic Toaster,Vadorri Home,,5005693334161,VAD-8276-00,1801905,,Kitchen,White,2 Slice
+G000826,Menca Classic Toaster,Vadorri Home,Vadorri Group,5090540341447,VAD-8276-10,7530567,,Kitchen,White,4 Slice
+G000827,Elte Coffee Maker,Texa,Soxa Group,5012241481635,TEX-5080-00,,TEX933,Kitchen,Matt Grey,1.2L
+G000828,ELTE COFFEE MAKER,Texa,,5012241481635,,5636801,TEX933,Kitchen,Matt Grey,1.2L
+G000829,Elte Coffee Maker,Texa,,5067579051388,,,TEX933,Kitchen,Matt Grey,1.8L
+G000830,ELTE COFFEE MAKER,Texa,,5067579051388,,7619923,TEX933,Kitchen,Matt Grey,1.8L
+G000831,Menxa Plus Coffee Maker,Dorca,,5061779744606,DOR-7444-00,6326015,,Kitchen,Blue,
+G000832,Menxa Plus Coffee Maker,Dorca,,,,,,Kitchen,Silver,
+G000833,Menxa PlusC offee Maker,Dorca,,,,9459415,,Kitchen,Silver,
+G000834,Momen Mini Speaker,Luorca,,5082354017854,LUO-6416-00,9763062,LUO409,Audio,Red,
+G000835,Momen Mini Speaker,Luorca,Ororso Group,5082677125946,LUO-6416-01,7922942,LUO409,Audio,Matt Grey,
+G000836,MOMEN MINI SPEAKER,Luorca,,5082677125946,,7671354,LUO409,Audio,Matt Grey,
+G000837,Arri Mini Kettle,Sono,,,,7340886,,Kitchen,Blue,
+G000838,Arri Mini Kettle,Sono,,5004554364774,,7749876,,Kitchen,Silver,
+G000839,Kino Classic Drill,Lumo Home,,5092264953685,LUM-1100-00,,,Tools,Matt Grey,
+G000840,Kino Classic Drill,Lumo Home,,5080565643176,LUM-1100-01,4837017,,Tools,White,
+G000841,Kino Classic Drill,Lumo Home,Lumo Group,,,7090845,,Tools,Silver,
+G000842,Vater Heater,Caar,,5002094881218,,0874158,,Home,Blue,
+G000843,Nono Plus Soundbar,Arnoel,,5088191750428,,7961364,,Audio,Silver,
+G000844,Nono Plus Soundbar,Arnoel,Cador Group,5032515202469,ARN-4952-01,,,Audio,Black,
+G000845,Nono Plus Soundbar,Arnoel,,5084100166304,ARN-4952-02,9659841,,Audio,White,
+G000846,Plus Soundbar Nono,Arnoel,,,,0938040,,Audio,White,
+G000847,Vael Shaver,Nocaar,,5081631087665,NOC-6108-00,,,Personal care,Black,
+G000848,Vael Shaver,Nocaar,Nocaar Group,5041361414858,,4919579,,Personal care,Matt Grey,
+G000849,VAEL SHAVER,Nocaar,,5041361414858,,4007047,,Personal care,Matt Grey,
+G000850,Iamo Mini Kettle,Monodor,Kizenor Group,5039722714310,MON-7687-00,,,Kitchen,White,1.5L
+G000851,Iamo Mini Kettle,Monodor,Kizenor Group,5035211454613,MON-7687-10,4912420,,Kitchen,White,1.7L
+G000852,Cazen Shaver,Zenelte,,5084087016357,,2338847,ZEN060,Personal care,Black,
+G000853,Vave Coffee Maker,Vacafi Home,,5025873400622,VAC-2774-00,9641277,,Kitchen,Silver,1.2L
+G000854,Vave Coffee Maker,Vacafi Home,,,VAC-2774-10,5514091,,Kitchen,Silver,1.8L
+G000855,Menve Soundbar,Terso,,5010390435875,TER-1346-00,7120075,,Audio,Black,2.1
+G000856,Menve Soundbar,Terso,,5026630386944,TER-1346-10,2699877,,Audio,Black,5.1
+G000857,Five Mini Hair Dryer,Caso,,5096317147076,,2604247,,Personal care,Matt Grey,1800W
+G000858,Five Mini Hair Dryer,Caso,,5082801834225,CAS-3351-10,6004583,,Personal care,Matt Grey,2200W
+G000859,Menia Speaker,Fizen,,,FIZ-0940-00,,,Audio,Matt Grey,
+G000860,Menia Speaker,Fizen,,5013844385085,FIZ-0940-01,8136901,,Audio,White,
+G000861,Menia Speaker,Fizen,,,FIZ-0940-02,0706058,,Audio,Red,
+G000862,Lumen Plus Hair Dryer,Iaar Home,,,IAA-8507-00,,,Personal care,White,
+G000863,Rilu Mini Desk Lamp,Xador,,5032822417440,XAD-8704-00,,,Home,White,
+G000864,Luri Plus Headphones,Zenelte,,5030278959798,,,,Audio,Blue,
+G000865,LURI PLUS HEADPHONES,Zenelte,,5030278959798,,7252788,,Audio,Blue,
+G000866,Luri Plus Headphones,Zenelte,Vaor Group,5092874890707,,,,Audio,Black,
+G000867,Xafi Drill,Arfimen,Lumo Group,,ARF-9868-00,,ARF554,Tools,Red,
+G000868,Xafi Drill,Arfimen,Lumo Group,5044236512543,ARF-9868-01,2673048,ARF554,Tools,Silver,
+G000869,XAFI DRILL,Arfimen,,5044236512543,,6929419,ARF554,Tools,Silver,
+G000870,Xafi Drill,Arfimen,,5081895482190,ARF-9868-02,1610238,ARF554,Tools,Matt Grey,
+G000871,Dorri Pro Sander,Vaor,Vaor Group,5089536531283,VAO-1961-00,,,Tools,Matt Grey,
+G000872,Teri Soundbar,Lumenia,,5093303780095,LUM-1803-00,3054107,,Audio,Red,
+G000873,Teri Soundbar,Lumenia,Rite Group,5013217412844,LUM-1803-01,,,Audio,Silver,
+G000874,Xater Speaker,Luorca,,,LUO-3662-00,,,Audio,Matt Grey,Mini
+G000875,Xater Speaker,Luorca,Ororso Group,,LUO-3662-10,2503395,,Audio,Matt Grey,Max
+G000876,Xater Speaekr,Luorca,,,,1377504,,Audio,Matt Grey,Max
+G000877,Nori Coffee Maker,Dorca,Cador Group,5094755603338,DOR-5026-00,3281574,,Kitchen,White,
+G000878,Nori Coffee Maker,Dorca,Cador Group,5067803794678,,0956151,,Kitchen,Red,
+G000879,Nori Coffee Maker,Dorca,Cador Group,,DOR-5026-02,8534741,,Kitchen,Black,
+G000880,Arca Headphones,Terso,,5083160578867,TER-1362-00,9590266,,Audio,Silver,
+G000881,Arca Headphones,Terso,Lumo Group,5002436858823,TER-1362-01,2950891,,Audio,Matt Grey,
+G000882,Vete Pro Speaker,Somo,Arxari Group,5023447058996,SOM-4350-00,6501387,SOM535,Audio,White,
+G000883,Xave Drill,Ororso,,5095962927798,ORO-6758-00,,ORO666,Tools,Silver,
+G000884,Xave Drill,Ororso,Ororso Group,,,,ORO666,Tools,White,
+G000885,Elfi Classic Headphones,Arfimen,,5095577041360,,,,Audio,Silver,
+G000886,Vazen Pro Hair Dryer,Arfimen,Lumo Group,5034836380512,,,ARF280,Personal care,Red,1800W
+G000887,Vazen Pro Hair Dryer,Arfimen,,5094401547481,,4493685,ARF280,Personal care,Red,2200W
+G000888,Kidor Pro Coffee Maker,Zenelte,Vaor Group,,,4888241,,Kitchen,Matt Grey,1.2L
+G000889,Kidor Pro Coffee Maker,Zenelte,Vaor Group,,ZEN-9277-10,6026167,,Kitchen,Matt Grey,1.8L
+G000890,Somen Mini Desk Lamp,Kite,Kite Group,5081329362722,,1500986,,Home,Red,
+G000891,Vael Blender,Mori,,5014995145801,MOR-8286-00,2452036,MOR880,Kitchen,Red,
+G000892,Vael Blender,Mori,Vadorri Group,5011559547163,MOR-8286-01,,MOR880,Kitchen,Blue,
+G000893,Vael Blender,Mori,,5052293371126,MOR-8286-02,1843343,MOR880,Kitchen,Matt Grey,
+G000894,VAEL BLENDER,Mori,,5052293371126,,6066026,MOR880,Kitchen,Matt Grey,
+G000895,Zenso Plus Toaster,Ellu Home,,,,,,Kitchen,Red,2 Slice
+G000896,Zenso Plus Toaster,Ellu Home,,5006069754811,,7407952,,Kitchen,Red,4 Slice
+G000897,Rino Classic Fan,Moordor Home,Vaorva Group,5052612408618,MOO-8995-00,7823511,,Home,Blue,12in
+G000898,Rino Classic Fan,Moordor Home,,5003946504798,MOO-8995-10,1549422,,Home,Blue,16in
+G000899,Riia Classic Heater,Armenar,,5074945879958,ARM-7612-00,2400748,,Home,Red,
+G000900,Riia Classic Heater,ARMENAR Ltd,,,ARM-7612-00,5488491,,Home,Red,
+G000901,Vano Mini Soundbar,Dorxa,Dorxa Group,5081025459634,,2612530,,Audio,Blue,2.1
+G000902,Vano Mini Soundbar,Dorxa,Dorxa Group,5041087268209,DOR-6285-10,8998205,,Audio,Blue,5.1
+G000903,Vazen Classic Blender,Monodor,,5029941798307,MON-3796-00,9753062,,Kitchen,White,600W
+G000904,Vazen Classic Blender,Monodor,Kizenor Group,5094882195423,MON-3796-10,4098042,,Kitchen,White,1000W
+G000905,Menri Plus Fan,Vaor,Vaor Group,5092506788495,,5491212,,Home,Blue,12in
+G000906,Menri Plus Fan,Vaor,Vaor Group,5059724752080,VAO-7266-10,7279709,,Home,Blue,16in
+G000907,Xave Mini Speaker,Zenelte,,5016735606702,ZEN-0238-00,3855627,,Audio,Black,
+G000908,Xave Mini Speaker,Zenelte,,5002422651940,,,,Audio,Red,
+G000909,Xave Mini Speaker,Zenelte,,5035948273471,ZEN-0238-02,6742310,,Audio,Blue,
+G000910,XAVE MINI SPEAKER,Zenelte,,5035948273471,,3177337,,Audio,Blue,
+G000911,Zenia Classic Heater,Rifiia,Soxa Group,5013601045320,RIF-5371-00,4614110,,Home,Black,
+G000912,Oria Classic Soundbar,Nova,,,,0931590,,Audio,White,
+G000913,Oria Classic Soundbar,Nova,,5005493282679,,6762307,,Audio,Black,
+G000914,Oria Classic Soundbar,Nova,,5024584239934,,3170084,,Audio,Red,
+G000915,ORIA CLASSIC SOUNDBAR,Nova,,5024584239934,,5581722,,Audio,Red,
+G000916,Menzen Kettle,Soso,,5051064000234,SOS-5673-00,,,Kitchen,White,
+G000917,Soter Soundbar,Sono,,5018945578374,,2401744,,Audio,Silver,2.1
+G000918,Soter Soundbar,Sono,Ororso Group,5042681480189,SON-6344-10,,,Audio,Silver,5.1
+G000919,Elor Coffee Maker,Nova,,,NOV-0071-00,4996119,NOV031,Kitchen,Matt Grey,1.2L
+G000920,Elor Coffee Maker,Nova,Nocaar Group,5097956594382,NOV-0071-10,0027053,NOV031,Kitchen,Matt Grey,1.8L
+G000921,Ellu Classic Hair Dryer,Xador,,,XAD-4957-00,5525488,,Personal care,Blue,
+G000922,Ellu Classic Hair Dryer,Xador,,,,7281893,,Personal care,,
+G000923,Ellu Classic Hair Dryer,Xador,,5041960689763,,,,Personal care,Matt Grey,
+G000924,ELLU CLASSIC HAIR DRYER,Xador,,5041960689763,,0213455,,Personal care,Matt Grey,
+G000925,Xador Heater,Moordor Home,Vaorva Group,5037429751027,MOO-0159-00,2502234,,Home,White,1kW
+G000926,Xador Heater,Moordor Home,,5091063835697,MOO-0159-10,0937870,,Home,White,2kW
+G000927,Xador Heater,Moordor Home,,,moo015910,1197841,,Home,White,2kW
+G000928,Zenfi Drill,Kizenor,,5045516885517,KIZ-5103-00,7084252,KIZ084,Tools,Red,
+G000929,Terve Plus Hair Dryer,Arnoel,,5025980618422,ARN-2949-00,4652051,,Personal care,Silver,1800W
+G000930,TERVE PLUS HAIR DRYER,Arnoel,,5025980618422,,4649671,,Personal care,Silver,1800W
+G000931,Terve Plus Hair Dryer,Arnoel,Cador Group,5053317857497,ARN-2949-10,8756025,,Personal care,Silver,2200W
+G000932,Luca Plus Sander,Texa,,5041922167056,TEX-2913-00,0356832,,Tools,White,
+G000933,Luca Plus Sander,Texa,,5032939751376,TEX-2913-01,,,Tools,Matt Grey,
+G000934,Luca Plus Sander,Texa,,5035385941964,,,,Tools,Silver,
+G000935,Teva Classic Drill,Vezenki,Arxari Group,5078523065948,VEZ-2405-00,9629806,VEZ328,Tools,White,12V
+G000936,Teva Classic Drill,Vezenki,Arxari Group,,VEZ-2405-10,,VEZ328,Tools,White,18V
+G000937,Fixa Toaster,Mori,Vadorri Group,5000411802830,,3137467,,Kitchen,Black,2 Slice
+G000938,FIXA TOASTER,Mori,,5000411802830,,9738477,,Kitchen,Black,2 Slice
+G000939,Fixa Toaster,Mori,Vadorri Group,5008586934769,MOR-2863-10,1412958,,Kitchen,Black,4 Slice
+G000940,Zente Speaker,Iaar Home,,,IAA-7460-00,3883092,,Audio,Red,Mini
+G000941,Zente Speaker,Iaar Home,,5058739160286,IAA-7460-10,,,Audio,Red,Max
+G000942,Menzen Classic Drill,Kizenor,Kizenor Group,5045666051121,KIZ-6787-00,8304507,,Tools,White,12V
+G000943,Menzen Classic Drill,Kizenor,,5094341544977,,0451819,,Tools,White,18V
+G000944,Velu Soundbar,Lumo Home,Lumo Group,5097368086932,LUM-4526-00,,LUM173,Audio,Red,
+G000945,Velu Soundbar,Lumo Home,,5031834321059,LUM-4526-01,6885274,LUM173,Audio,Matt Grey,
+G000946,Velu Soundbar,Lumo Home,Lumo Group,,LUM-4526-02,3857317,LUM173,Audio,White,
+G000947,Arki Classic Toaster,Lumo Home,,5056652983463,LUM-0010-00,0215624,,Kitchen,Blue,2 Slice
+G000948,Arki Classic Toaster,Lumo Home,,,LUM-0010-10,,,Kitchen,Blue,4 Slice
+G000949,Riar Sander,Valu,Soso Group,5082114425820,VAL-6508-00,9483880,VAL243,Tools,Silver,
+G000950,Riar Sander,Valu,,5091314440922,VAL-6508-01,4661373,VAL243,Tools,Blue,
+G000951,Zenno Pro Kettle,Dorxa,Dorxa Group,5008686451944,DOR-5383-00,4238173,,Kitchen,Black,1.5L
+G000952,Zenno Pro Kettle,Dorxa,Dorxa Group,5060808367120,DOR-5383-10,,,Kitchen,Black,1.7L
+G000953,Vefi Fan,Ellu Home,,5045109071136,,7751087,,Home,Matt Grey,
+G000954,Vefi Fan,Ellu Home,,,,,,Home,Red,
+G000955,Dorve Classic Sander,Fizen,Vaor Group,5055619487099,FIZ-7930-00,,,Tools,Black,
+G000956,Dorve Classic Sander,Fizen,Vaor Group,5010369324070,FIZ-7930-01,,,Tools,Silver,
+G000957,Dorve Classic Sander,Fizen,,,FIZ-7930-02,1994772,,Tools,White,
+G000958,Dormo Drill,Dormoar,,,DOR-0045-00,4160476,,Tools,Black,
+G000959,Rifi Mini Fan,Cador,Cador Group,5056956955890,CAD-2445-00,2083371,CAD660,Home,Blue,
+G000960,Menve Sander,Vacafi Home,,5089659939096,,8176363,VAC900,Tools,Blue,
+G000961,Menve Sander,Vacafi Home,Vacafi Group,,VAC-9944-01,,VAC900,Tools,Silver,
+G000962,Elar Classic Shaver,Terkive Home,,,TER-3349-00,,,Personal care,Silver,
+G000963,Elar Classic Shaver,Terkive Home,,5064139233970,,,,Personal care,Blue,
+G000964,Dorxa Desk Lamp,Moordor Home,,,,,,Home,Red,Small
+G000965,Dorxa Desk Lamp,Moordor Home,Vaorva Group,5093938520646,MOO-3822-10,5282511,,Home,Red,Large
+G000966,Kiia Mini Desk Lamp,Arfimen,Lumo Group,5042960870595,ARF-8917-00,,,Home,White,Small
+G000967,Kiia Mini Desk Lamp,Arfimen,,5030162226456,ARF-8917-10,,,Home,White,Large
+G000968,Tefi Mini Toaster,Dorca,,5005749367518,DOR-0787-00,6610131,DOR742,Kitchen,White,2 Slice
+G000969,Tefi Mini Toaster,Dorca,,5098277805256,,6260664,DOR742,Kitchen,White,4 Slice
+G000970,Ormo Hair Dryer,Arfimen,,,,9329452,ARF486,Personal care,Blue,
+G000971,Ormo Hair Dryer,Arfimen,,5097110171718,ARF-0620-01,,ARF486,Personal care,Silver,
+G000972,Veel Fan,Terso,,,TER-7561-00,6915199,,Home,Blue,12in
+G000973,Veel Fan,Terso,,5060581991079,,,,Home,Blue,16in
+G000974,Terri Soundbar,Cador,Cador Group,5058509637130,CAD-0750-00,2493119,CAD013,Audio,Silver,2.1
+G000975,Terri Soundbar,Cador,Cador Group,5098518176923,CAD-0750-10,9304203,CAD013,Audio,Silver,5.1
+G000976,Riter Classic Coffee Maker,Lumo Home,Lumo Group,,LUM-5020-00,6625833,,Kitchen,Black,
+G000977,Riter Classic Coffee Maker,Lumo Home,Lumo Group,5036195840478,,7197877,,Kitchen,Blue,
+G000978,Teca Mini Sander,Cador,,5064228170209,CAD-8506-00,1490680,,Tools,Red,
+G000979,Teca Mini Sander,Cador,,5095632726515,CAD-8506-01,2092451,,Tools,Blue,
+G000980,Teca Mini Sander,Cador,Cador Group,5025928438761,CAD-8506-02,6786874,,Tools,Black,
+G000981,Dorri Shaver,Orelno,Vacafi Group,5065795739752,ORE-8678-00,,,Personal care,Silver,
+G000982,DORRI SHAVER,Orelno,,5065795739752,,6586310,,Personal care,Silver,
+G000983,Dorri Shaver,Orelno,Vacafi Group,5032306473122,ORE-8678-01,2018464,,Personal care,Blue,
+G000984,Dorri Shaver,Orelno,,5099211019678,ORE-8678-02,2498290,,Personal care,Matt Grey,
+G000985,Zenar Coffee Maker,Lumo Home,,5074447845178,,,LUM308,Kitchen,Red,
+G000986,Zenar Coffee Maker,Lumo Home,,5077690798482,LUM-5172-01,0525363,LUM308,Kitchen,Black,
+G000987,Xater Shaver,Vacafi Home,Vacafi Group,,VAC-3567-00,2235423,,Personal care,Matt Grey,
+G000988,Xater Shaver,Vacafi Home,,5093004900839,VAC-3567-01,8648321,,Personal care,Blue,
+G000989,Arzen Sander,Terrifi,,5017192436307,,,TER373,Tools,White,
+G000990,Arzen Sander,Terrifi,,,TER-1193-01,7367706,TER373,Tools,Matt Grey,
+G000991,Arzen Sander,Terrifi,Xateno Group,5071483895259,,,TER373,Tools,Red,
+G000992,Xaso Coffee Maker,Monodor,Kizenor Group,,MON-8977-00,,MON365,Kitchen,White,
+G000993,Ormen Pro Soundbar,Terso,,5099852315672,TER-6173-00,9783032,,Audio,Blue,2.1
+G000994,Ormen Pro Soundbar,Terso,Lumo Group,5094783587242,TER-6173-10,2197929,,Audio,Blue,5.1
+G000995,Veca Plus Toaster,Orelno,,5052168665152,ORE-6217-00,,ORE981,Kitchen,Silver,
+G000996,Terki Plus Hair Dryer,Armenar,Armenar Group,5050102913642,ARM-3020-00,1239202,ARM895,Personal care,White,1800W
+G000997,TERKI PLUS HAIR DRYER,Armenar,,5050102913642,,9274797,ARM895,Personal care,White,1800W
+G000998,Terki Plus Hair Dryer,Armenar,,5092958867359,,,ARM895,Personal care,White,2200W
+G000999,Veel Plus Heater,Caso,,5014634871412,CAS-1890-00,1612752,,Home,Matt Grey,1kW
+G001000,Veel Plus Heater,Caso,Vaorva Group,5015451566109,CAS-1890-10,9674091,,Home,Matt Grey,2kW
+G001001,Caki Pro Fan,Arfimen,Lumo Group,5031730147166,ARF-0755-00,,ARF399,Home,Matt Grey,12in
+G001002,CAKI PRO FAN,Arfimen,,5031730147166,,5443816,ARF399,Home,Matt Grey,12in
+G001003,Caki Pro Fan,Arfimen,,,,,ARF399,Home,Matt Grey,16in
+G001004,Veki Classic Speaker,Vadorri Home,Vadorri Group,5095799252544,VAD-5079-00,,,Audio,Black,Mini
+G001005,Veki Classic Speaker,Vadorri Home,Vadorri Group,5032071261009,VAD-5079-10,6181737,,Audio,Black,Max
+G001006,Kidor Mini Toaster,Zenelte,,5060520889702,ZEN-1346-00,2635110,ZEN913,Kitchen,Black,2 Slice
+G001007,Kidor Mini Toaster,Zenelte,,5052776752367,ZEN-1346-10,4662722,ZEN913,Kitchen,Black,4 Slice
+G001008,Riso Plus Heater,Iasofi,Teria Group,5067761729569,,,,Home,White,1kW
+G001009,Riso Plus Heater,Iasofi,,5005267027543,IAS-3809-10,5446033,,Home,White,2kW
+G001010,Termen Hair Dryer,Arfimen,,5006165168994,,6257797,,Personal care,White,
+G001011,Iaca Fan,Iasofi,Teria Group,5026446306228,IAS-8160-00,1960607,,Home,Black,
+G001012,Iaca Fan,Iasofi,,5028176766433,IAS-8160-01,,,Home,Red,
+G001013,Dorar Toaster,Terso,Lumo Group,,TER-1390-00,,TER647,Kitchen,Matt Grey,2 Slice
+G001014,Dorar Toaster,Terso,,5043280895985,,,TER647,Kitchen,Matt Grey,4 Slice
+G001015,Ardor Heater,Vezenor,,5013869862301,,,,Home,White,
+G001016,Ardor Heater,Vezenor,Armenar Group,,VEZ-4602-01,,,Home,Matt Grey,
+G001017,Noor Mini Hair Dryer,Lumo Home,Lumo Group,5092570659028,LUM-9611-00,,LUM827,Personal care,White,
+G001018,Noor Mini Hair Dryer,Lumo Home,Lumo Group,5023558085119,LUM-9611-01,,LUM827,Personal care,Red,
+G001019,Noor Mini Hair Dryer,Lumo Home,,,,0957329,LUM827,Personal care,,
+G001020,Zendor Hair Dryer,Valu,,5061278357093,VAL-5445-00,,VAL841,Personal care,Black,
+G001021,Zendor Hair Dryer,Valu,Soso Group,5079269045089,VAL-5445-01,4429059,VAL841,Personal care,Red,
+G001022,Modor Pro Soundbar,Fiterve,,5091885054290,FIT-3647-00,6757612,,Audio,Silver,
+G001023,Modor Pro Soundbar,Fiterve,Dorxa Group,5009586675546,FIT-3647-01,,,Audio,White,
+G001024,Fiter Headphones,Valu,Soso Group,5004689731793,VAL-4020-00,4043474,,Audio,Black,
+G001025,Fiter Headphones,Valu,Soso Group,5020527607235,VAL-4020-01,0899068,,Audio,Matt Grey,
+G001026,FITER HEADPHONES,Valu,,5020527607235,,9376334,,Audio,Matt Grey,
+G001027,Orso Pro Toaster,Texaki,Texaki Group,5081732450986,,7581644,,Kitchen,Silver,2 Slice
+G001028,Orso Pro Toaster,Texaki,,5011591203577,,0073544,,Kitchen,Silver,4 Slice
+G001029,Teri Classic Hair Dryer,Soso,,5062490549556,SOS-0195-00,,,Personal care,Red,1800W
+G001030,Teri Classic Hair Dryer,Soso,Soso Group,5034623798155,SOS-0195-10,,,Personal care,Red,2200W
+G001031,Elor Plus Drill,Lumenia,Rite Group,5018784813049,LUM-8613-00,,,Tools,Silver,
+G001032,Terel Speaker,Kizenor,Kizenor Group,5009775307029,KIZ-8740-00,,,Audio,Black,
+G001033,Terxa Sander,Terso,Lumo Group,5097631543063,TER-3136-00,4851905,TER216,Tools,Matt Grey,
+G001034,Terxa Sander,Terso,,5082273784356,TER-3136-01,4096073,TER216,Tools,White,
+G001035,Terxa Sander,Terso,Lumo Group,5045983965835,TER-3136-02,8750824,TER216,Tools,Silver,
+G001036,Rizen Mini Drill,Soxa Home,Soxa Group,,,9916721,,Tools,Red,
+G001037,Rizen Mini Drill,Soxa Home,,5047373992216,SOX-0797-01,,,Tools,Blue,
+G001038,Luso Plus Speaker,Sono,,5049379486362,,,SON539,Audio,Black,Mini
+G001039,Luso Plus Speaker,Sono,,5095093751842,,2423019,SON539,Audio,Black,Max
+G001040,Cael Classic Sander,Lumo Home,,5002639225866,,,LUM216,Tools,Matt Grey,
+G001041,Iaar Kettle,Caar,Soso Group,5068878098760,CAA-3180-00,6630469,,Kitchen,White,1.5L
+G001042,Iaar Kettle,Caar,Soso Group,,CAA-3180-10,4684446,,Kitchen,White,1.7L
+G001043,Iamen Plus Coffee Maker,Vaor,,5044468595291,,,VAO631,Kitchen,Matt Grey,
+G001044,Zenlu Mini Blender,Moordor Home,,5058348018244,MOO-6704-00,2383373,MOO304,Kitchen,Red,600W
+G001045,Zenlu Mini Blender,Moordor Home,,5003761955454,MOO-6704-10,,MOO304,Kitchen,Red,1000W
+G001046,Xamo Mini Hair Dryer,Dormoar,Texaki Group,5003386717710,DOR-4950-00,,,Personal care,White,
+G001047,Xamo Mini Hair Dryer,Dormoar,,5027972949965,DOR-4950-01,7853317,,Personal care,Matt Grey,
+G001048,Elter Classic Kettle,Terso,Lumo Group,5059734080166,TER-4110-00,1692511,,Kitchen,Red,1.5L
+G001049,Elter Classic Kettle,Terso,,5005643545197,TER-4110-10,9300141,,Kitchen,Red,1.7L
+G001050,Eletr Classic Kettle,Terso,,,,7163223,,Kitchen,Red,1.7L
+G001051,Menki Drill,Lumo Home,,5021558307286,LUM-8485-00,,LUM916,Tools,Black,12V
+G001052,MENKI DRILL,Lumo Home,,5021558307286,,1646839,LUM916,Tools,Black,12V
+G001053,Menki Drill,Lumo Home,Lumo Group,5079986819192,LUM-8485-10,8777529,LUM916,Tools,Black,18V
+G001054,Menva Desk Lamp,Monodor,,5076890388745,MON-2405-00,,,Home,Blue,
+G001055,MENVA DESK LAMP,Monodor,,5076890388745,,0054502,,Home,Blue,
+G001056,Menva Desk Lamp,Monodor,,5090199707922,MON-2405-01,9563347,,Home,White,
+G001057,MENVA DESK LAMP,Monodor,,5090199707922,,0810842,,Home,White,
+G001058,Menva Desk Lamp,Monodor,,5017203346816,MON-2405-02,,,Home,Silver,
+G001059,Terdor Fan,Zenelte,,5013564301266,ZEN-7019-00,,,Home,White,
+G001060,Terdor Fan,Zenelte,Vaor Group,5012356229924,ZEN-7019-01,,,Home,Blue,
+G001061,Nodor Mini Coffee Maker,Caso,Vaorva Group,5008006497102,CAS-5401-00,,CAS457,Kitchen,Matt Grey,1.2L
+G001062,Nodor Mini Coffee Maker,Caso,Vaorva Group,5066551743389,CAS-5401-10,4187828,CAS457,Kitchen,Matt Grey,1.8L
+G001063,Nove Pro Toaster,Nova,Nocaar Group,5049129062150,NOV-9578-00,,,Kitchen,Silver,2 Slice
+G001064,Nove Pro Toaster,Nova,,5079320741240,NOV-9578-10,3806078,,Kitchen,Silver,4 Slice
+G001065,Orki Pro Sander,Nocaar,,5094213414599,,7488993,NOC509,Tools,White,
+G001066,Dorel Desk Lamp,Fizen,Vaor Group,5061802601944,,4879199,FIZ156,Home,Silver,Small
+G001067,Dorel Desk Lamp,Fizen,,5001579765500,,,FIZ156,Home,Silver,Large
+G001068,Nove Pro Headphones,Lumo Home,Lumo Group,5057440228964,LUM-7793-00,,LUM498,Audio,Blue,
+G001069,Nove Pro Headphones,Lumo Home,Lumo Group,5000146552444,LUM-7793-01,2214602,LUM498,Audio,Silver,
+G001070,Nove Pro Headphones,Lumo Home,Lumo Group,5084109071173,LUM-7793-02,9767560,LUM498,Audio,White,
+G001071,Orki Pro Heater,Arfimen,,5060658152426,ARF-2814-00,0220235,,Home,Red,
+G001072,Aror Heater,Lumo Home,Lumo Group,,LUM-0478-00,,LUM857,Home,Matt Grey,1kW
+G001073,Aror Heater,LUMO Ltd,,,LUM-0478-00,0384412,LUM857,Home,Matt Grey,1kW
+G001074,Aror Heater,Lumo Home,,5055032957926,,4840052,LUM857,Home,Matt Grey,2kW
+G001075,Cave Coffee Maker,Nocaar,Nocaar Group,5080850787387,NOC-1641-00,9069868,,Kitchen,Matt Grey,
+G001076,Iaar Toaster,Vacafi Home,,5053866299144,VAC-2484-00,9392515,,Kitchen,Matt Grey,2 Slice
+G001077,Iaar Toaster,Vacafi Home,,5016883047594,VAC-2484-10,5152683,,Kitchen,Matt Grey,4 Slice
+G001078,IAAR TOASTER,Vacafi Home,,5016883047594,,0392714,,Kitchen,Matt Grey,4 Slice
+G001079,Zenzen Pro Drill,Dormoar,Texaki Group,5029653312921,DOR-5850-00,1668172,,Tools,White,12V
+G001080,Zenzen Pro Drill,Dormoar,,5083902045077,DOR-5850-10,4393708,,Tools,White,18V
+G001081,Orar Mini Desk Lamp,Terkive Home,Nocaar Group,5087927324568,TER-1389-00,7155530,,Home,Silver,
+G001082,Orar Mini Desk Lamp,Terkive Home,,,,1206473,,Home,Matt Grey,
+G001083,Rior Pro Kettle,Terrifi,Xateno Group,5034604025508,,,TER922,Kitchen,Silver,
+G001084,Rior Pro Kettle,Terrifi,,5079816081775,,8711554,TER922,Kitchen,Black,
+G001085,Rior Pro Kettle,Terrifi,Xateno Group,5084735183417,TER-3538-02,,TER922,Kitchen,Blue,
+G001086,Menki Classic Toaster,Iaar Home,,5070381096690,IAA-5123-00,,,Kitchen,Silver,2 Slice
+G001087,Menki Classic Toaster,Iaar Home,,5027764658266,IAA-5123-10,1826280,,Kitchen,Silver,4 Slice
+G001088,Fifi Hair Dryer,Nocaar,Nocaar Group,5028134033812,,3322604,,Personal care,White,1800W
+G001089,Fifi Hair Dryer,Nocaar,,5019394939457,,4600092,,Personal care,White,2200W
+G001090,Terca Soundbar,Cador,,5009376977027,,3668034,CAD426,Audio,White,
+G001091,Iari Fan,Zenelte,,5061262784829,ZEN-5937-00,,,Home,Red,
+G001092,Iari Fan,Zenelte,Vaor Group,5040271624784,ZEN-5937-01,8120473,,Home,Matt Grey,
+G001093,Ialu Coffee Maker,Terso,Lumo Group,5051371066817,TER-4948-00,1045568,TER410,Kitchen,Matt Grey,1.2L
+G001094,Ialu Coffee Maker,Terso,Lumo Group,5086585160983,TER-4948-10,0457607,TER410,Kitchen,Matt Grey,1.8L
+G001095,Arva Speaker,Arfimen,Lumo Group,5005370181873,ARF-3913-00,,ARF265,Audio,Silver,Mini
+G001096,Arva Speaker,Arfimen,,,ARF-3913-10,4350693,ARF265,Audio,Silver,Max
+G001097,Lulu Classic Soundbar,Dorxa,,,DOR-4240-00,1025353,DOR078,Audio,Black,2.1
+G001098,Lulu Classic Soundbar,Dorxa,Dorxa Group,5094231300973,DOR-4240-10,0717574,DOR078,Audio,Black,5.1
+G001099,Iave Shaver,Lumo Home,,5085934180016,LUM-4368-00,7295426,,Personal care,Black,
+G001100,Iave Shaver,Lumo Home,,5046571995272,LUM-4368-01,8884830,,Personal care,Silver,
+G001101,Iave Shaver,Lumo Home,,5043513762718,LUM-4368-02,5713578,,Personal care,Matt Grey,
+G001102,Xaor Speaker,Vaorva,,5032645196485,,,,Audio,Black,
+G001103,XAOR SPEAKER,Vaorva,,5032645196485,,7996139,,Audio,Black,
+G001104,Xaor Speaker,Vaorva,Vaorva Group,5033228256572,VAO-0022-01,,,Audio,Blue,
+G001105,Teria Classic Hair Dryer,Arfimen,Lumo Group,5073724121455,ARF-6056-00,9597086,ARF710,Personal care,White,1800W
+G001106,Teria Classic Hair Dryer,Arfimen,,5083951252082,ARF-6056-10,,ARF710,Personal care,White,2200W
+G001107,Xater Coffee Maker,Valu,,5071643775278,VAL-4317-00,,VAL416,Kitchen,Red,1.2L
+G001108,Xater Coffee Maker,Valu,,5027160162039,,0965328,VAL416,Kitchen,Red,1.8L
+G001109,XATER COFFEE MAKER,Valu,,5027160162039,,6543181,VAL416,Kitchen,Red,1.8L
+G001110,Xaar Drill,Iaar Home,Kizenor Group,5083154269696,,9521369,,Tools,Matt Grey,12V
+G001111,Xaar Drill,Iaar Home,Kizenor Group,5042725256671,IAA-9234-10,2366113,,Tools,Matt Grey,18V
+G001112,Mente Soundbar,Ororso,Ororso Group,,ORO-5348-00,,,Audio,Blue,
+G001113,Mente Soundbar,Ororso,Ororso Group,5089118256535,ORO-5348-01,,,Audio,Matt Grey,
+G001114,Xater Speaker,Kizenor,Kizenor Group,5085910500388,KIZ-5159-00,,,Audio,Black,Mini
+G001115,XATER SPEAKER,Kizenor,,5085910500388,,4517980,,Audio,Black,Mini
+G001116,Xater Speaker,Kizenor,,,KIZ-5159-10,2736060,,Audio,Black,Max
+G001117,Mofi Desk Lamp,Texa,,5028637310984,TEX-2131-00,6772192,TEX880,Home,Blue,
+G001118,Mofi Desk Lamp,Texa,Soxa Group,5079468755604,TEX-2131-01,,TEX880,Home,Red,
+G001119,Camo Pro Drill,Texa,Soxa Group,5016817225951,TEX-2101-00,,,Tools,Matt Grey,12V
+G001120,Camo Pro Drill,Texa,Soxa Group,5052801489671,TEX-2101-10,9875380,,Tools,Matt Grey,18V
+G001121,Orca Blender,Rite,,5087926698738,RIT-9732-00,,,Kitchen,Matt Grey,600W
+G001122,Orca Blender,Rite,Rite Group,5029776980786,RIT-9732-10,,,Kitchen,Matt Grey,1000W
+G001123,Dorzen Shaver,Fizen,Vaor Group,5063614332368,FIZ-7710-00,,,Personal care,Red,
+G001124,Dorzen Shaver,Fizen,Vaor Group,5094914009889,,,,Personal care,Blue,
+G001125,Menmen Desk Lamp,Vezenki,,5074376052432,VEZ-1541-00,5430272,VEZ124,Home,Red,
+G001126,Dorri Mini Blender,Soso,,5042138734216,SOS-5679-00,,,Kitchen,Red,600W
+G001127,Dorri Mini Blender,Soso,Soso Group,,SOS-5679-10,3379403,,Kitchen,Red,1000W
+G001128,Cano Mini Toaster,Soxa Home,,5096751509218,,3010790,SOX003,Kitchen,White,2 Slice
+G001129,Cano Mini Toaster,Soxa Home,,5063644417455,SOX-6087-10,6723395,SOX003,Kitchen,White,4 Slice
+G001130,Soxa Headphones,Iaelte,,5066574806399,,6257092,,Audio,White,
+G001131,Soxa Headphones,Iaelte,Soso Group,5063701417589,IAE-3421-01,3666967,,Audio,Matt Grey,
+G001132,Elar Pro Desk Lamp,Ororso,Ororso Group,,ORO-5105-00,1071274,,Home,Black,Small
+G001133,Elar Pro Desk Lamp,Ororso,,5071810405205,ORO-5105-10,9970223,,Home,Black,Large
+G001134,Orzen Headphones,Terkive Home,,5096967463243,,,,Audio,Matt Grey,
+G001135,Orzen Headphones,Terkive Home,Nocaar Group,5066887783462,TER-8749-01,,,Audio,Silver,
+G001136,Orzen Headphones,Terkive Home,Nocaar Group,5010613501516,,4519751,,Audio,White,
+G001137,Nori Heater,Kizenor,Kizenor Group,5047823074219,KIZ-8726-00,,,Home,Silver,1kW
+G001138,Nori Heater,Kizenor,Kizenor Group,5055857303601,,6685306,,Home,Silver,2kW
+G001139,Kive Mini Fan,Terso,Lumo Group,5087652511769,TER-5769-00,2306593,,Home,White,12in
+G001140,Kive Mini Fan,Terso,Lumo Group,5087399157275,TER-5769-10,6629081,,Home,White,16in
+G001141,Menmen Mini Drill,Dormoar,Texaki Group,5033449076911,DOR-9291-00,7785940,DOR064,Tools,White,12V
+G001142,Menmen Mini Drill,Dormoar,,5070717140509,DOR-9291-10,,DOR064,Tools,White,18V
+G001143,Menri Pro Coffee Maker,Nocaar,Nocaar Group,5083094048740,,4504322,,Kitchen,Blue,1.2L
+G001144,Menri Pro Coffee Maker,Nocaar,,5028241454036,NOC-4419-10,5621497,,Kitchen,Blue,1.8L
+G001145,Rica Kettle,Ororso,Ororso Group,5088673425387,,,ORO863,Kitchen,Red,1.5L
+G001146,Rica Kettle,Ororso,Ororso Group,5009208214085,ORO-0161-10,,ORO863,Kitchen,Red,1.7L
+G001147,Caxa Mini Soundbar,Vezenki,,5024541942358,VEZ-1184-00,4900330,,Audio,Matt Grey,2.1
+G001148,Caxa Mini Soundbar,Vezenki,Arxari Group,5003729160173,VEZ-1184-10,1455748,,Audio,Matt Grey,5.1
+G001149,Fifi Mini Headphones,Arnoel,Cador Group,5084491815607,ARN-6795-00,,,Audio,Silver,
+G001150,Soca Headphones,Nova,Nocaar Group,5017012979632,,6139933,NOV775,Audio,Matt Grey,
+G001151,Soca Headphones,Nova,Nocaar Group,5053594630929,NOV-5452-01,0946488,NOV775,Audio,Black,
+G001152,Soca Headphones,Nova,Nocaar Group,5061485101250,NOV-5452-02,8839005,NOV775,Audio,White,
+G001153,Dorter Mini Speaker,Armenar,,5093959370077,ARM-2597-00,6419666,,Audio,Silver,Mini
+G001154,Dorter Mini Speaker,Armenar,,5033784851488,ARM-2597-10,,,Audio,Silver,Max
+G001155,Elve Speaker,Nova,,5075884235690,NOV-1178-00,,,Audio,Silver,Mini
+G001156,Elve Speaker,Nova,Nocaar Group,5001219056265,NOV-1178-10,,,Audio,Silver,Max
+G001157,Sori Classic Toaster,Vadorri Home,,5008945998234,VAD-9429-00,7832084,,Kitchen,Black,
+G001158,Soter Coffee Maker,Moordor Home,,,MOO-8131-00,,,Kitchen,Matt Grey,1.2L
+G001159,Soter Coffee Maker,Moordor Home,,,MOO-8131-10,,,Kitchen,Matt Grey,1.8L
+G001160,Veter Classic Kettle,Armenar,,5054910870913,ARM-9559-00,1512431,ARM160,Kitchen,Black,
+G001161,Elter Hair Dryer,Dormoar,Texaki Group,5019299838923,DOR-6465-00,8905897,,Personal care,Black,1800W
+G001162,Elter Hair Dryer,Dormoar,,5038029466380,DOR-6465-10,,,Personal care,Black,2200W
+G001163,Termen Mini Fan,Soxa Home,,,SOX-5450-00,0276713,,Home,Blue,
+G001164,Kiki Mini Fan,Lumo Home,,5083309807834,LUM-3593-00,7800389,,Home,Blue,12in
+G001165,Kiki Mini Fan,Lumo Home,,5089707141150,LUM-3593-10,,,Home,Blue,16in
+G001166,Fixa Mini Coffee Maker,Ellu Home,Teria Group,5062392460201,ELL-8878-00,,,Kitchen,Silver,1.2L
+G001167,Fixa Mini Coffee Maker,Ellu Home,,5089842363318,,1621403,,Kitchen,Silver,1.8L
+G001168,Dorlu Classic Desk Lamp,Soso,Soso Group,,SOS-4987-00,6705404,,Home,Red,Small
+G001169,Dorlu Classic Desk Lamp,Soso,Soso Group,5015134341146,SOS-4987-10,0620673,,Home,Red,Large
+G001170,Luter Heater,Vadorri Home,,5062187515338,VAD-1964-00,,VAD763,Home,Black,
+G001171,Luter Heater,Vadorri Home,,5081907167220,,,VAD763,Home,Matt Grey,
+G001172,Arki Plus Speaker,Lumo Home,Lumo Group,5055618204079,LUM-4454-00,,LUM675,Audio,White,Mini
+G001173,Arki Plus Speaker,Lumo Home,,,,,LUM675,Audio,White,Max
+G001174,Zenzen Classic Soundbar,Nova,Nocaar Group,5090272593473,,2178073,,Audio,Silver,2.1
+G001175,Zenzen Classic Soundbar,Nova,,5089007413629,NOV-9460-10,1672172,,Audio,Silver,5.1
+G001176,Kiva Pro Toaster,Monodor,,5012622924003,MON-0392-00,2817898,MON939,Kitchen,Blue,2 Slice
+G001177,Kiva Pro Toaster,Monodor,Kizenor Group,5058443386453,MON-0392-10,6457835,MON939,Kitchen,Blue,4 Slice
+G001178,Vazen Pro Desk Lamp,Fizen,,5067521604082,FIZ-0509-00,1878978,,Home,Red,Small
+G001179,Vazen Pro Desk Lamp,Fizen,,5012812424092,FIZ-0509-10,6031359,,Home,Red,Large
+G001180,Filu Drill,Mori,,5094727282530,,,,Tools,Matt Grey,
+G001181,Filu Drill,Mori,,,MOR-8901-01,,,Tools,Blue,
+G001182,Filu Drill,Mori,,,,0704200,,Tools,,
+G001183,Menca Plus Headphones,Teria,Teria Group,5042613292842,TER-5310-00,7819852,TER422,Audio,Black,
+G001184,Teve Mini Soundbar,Lumo Home,,5065265945621,LUM-9959-00,,,Audio,White,
+G001185,Teve Mini Soundbar,Lumo Home,,5044531975746,LUM-9959-01,5218251,,Audio,Matt Grey,
+G001186,Terar Plus Toaster,Arxari,,,,9440098,,Kitchen,White,
+G001187,Terar Plus Toaster,Arxari,,,ARX-2051-01,4896341,,Kitchen,Blue,
+G001188,Kimen Pro Sander,Lumo Home,,5032334237918,LUM-8909-00,8733456,LUM185,Tools,White,
+G001189,Luia Mini Heater,Fizen,,5057792667275,FIZ-9540-00,1846909,,Home,Matt Grey,
+G001190,Luia Mini Heater,Fizen,,5003275559278,FIZ-9540-01,,,Home,Silver,
+G001191,Luia Mini Heater,Fizen,Vaor Group,5020744970709,,,,Home,Blue,
+G001192,Moso Mini Shaver,Vezenki,Arxari Group,5070474510645,VEZ-5930-00,,,Personal care,Silver,
+G001193,Moso Mini Shaver,Vezenki,Arxari Group,5036881216938,VEZ-5930-01,,,Personal care,Red,
+G001194,Xate Classic Blender,Lumo Home,Lumo Group,5078050337662,,7733176,,Kitchen,Black,600W
+G001195,Xate Classic Blender,Lumo Home,Lumo Group,,LUM-7005-10,,,Kitchen,Black,1000W
+G001196,Fite Speaker,Lumo Home,,5056808099420,LUM-6986-00,2546977,,Audio,Matt Grey,Mini
+G001197,Fite Speaker,Lumo Home,Lumo Group,,LUM-6986-10,,,Audio,Matt Grey,Max
+G001198,Dorca Hair Dryer,Vezenki,,5067559093780,,0235735,,Personal care,White,1800W
+G001199,Dorca Hair Dryer,Vezenki,,5049887348053,VEZ-6063-10,1018639,,Personal care,White,2200W
+G001200,Orno Classic Heater,Lumo Home,Lumo Group,5067641661897,LUM-4404-00,5724046,,Home,Silver,1kW
+G001201,Orno Classic Heater,Lumo Home,,5058743100995,LUM-4404-10,7411154,,Home,Silver,2kW
+G001202,Kizen Pro Kettle,Soxa Home,Soxa Group,5077534587951,SOX-9884-00,3805297,,Kitchen,Blue,1.5L
+G001203,KIZEN PRO KETTLE,Soxa Home,,5077534587951,,5022229,,Kitchen,Blue,1.5L
+G001204,Kizen Pro Kettle,Soxa Home,Soxa Group,5082868336168,,,,Kitchen,Blue,1.7L
+G001205,Iaxa Pro Desk Lamp,Vadorri Home,Vadorri Group,5048816963961,VAD-6534-00,9765180,VAD762,Home,Black,
+G001206,Iaxa Pro Desk Lamp,Vadorri Home,,5003953008081,VAD-6534-01,7495060,VAD762,Home,Matt Grey,
+G001207,Iaxa Pro Desk Lamp,Vadorri Home,,,VAD-6534-02,,VAD762,Home,Red,
+G001208,Iafi Speaker,Dorca,Cador Group,5069573673085,,2065489,,Audio,Black,Mini
+G001209,Iafi Speaker,Dorca,Cador Group,,,,,Audio,Black,Max
+G001210,Menter Classic Headphones,Ellu Home,,5069615220901,ELL-4765-00,,ELL358,Audio,Matt Grey,
+G001211,Menter Classic Headphones,Ellu Home,Teria Group,5056174047414,,,ELL358,Audio,White,
+G001212,MENTER CLASSIC HEADPHONES,Ellu Home,,5056174047414,,6513913,ELL358,Audio,White,
+G001213,Riri Shaver,Nocaar,,5014888628312,NOC-3912-00,,,Personal care,Black,
+G001214,RIRI SHAVER,Nocaar,,5014888628312,,2859409,,Personal care,Black,
+G001215,Riri Shaver,Nocaar,,5099822678769,NOC-3912-01,,,Personal care,White,
+G001216,Iaar Mini Headphones,Arxari,,5011930685668,ARX-0344-00,1018484,ARX791,Audio,Black,
+G001217,Termen Speaker,Soso Home,Texaki Group,5077096298999,,,,Audio,White,
+G001218,Termen Speaker,Soso Home,,5001428870188,SOS-6966-01,4379821,,Audio,Blue,
+G001219,Kixa Blender,Valu,Soso Group,5098599913547,VAL-2494-00,0660555,,Kitchen,Black,
+G001220,Vano Mini Sander,Kite,,,,3659887,,Tools,Red,
+G001221,Vano Mini Sander,Kite,,5022287495749,KIT-8274-01,,,Tools,Silver,
+G001222,Vano Mini Sander,Kite,Kite Group,,,6198600,,Tools,White,
+G001223,Xalu Plus Hair Dryer,Lumenia,Rite Group,5041108576108,LUM-0311-00,9436572,,Personal care,Blue,1800W
+G001224,Xalu Plus Hair Dryer,Lumenia,,5075016840563,,1461384,,Personal care,Blue,2200W
+G001225,Fiki Coffee Maker,Soso,,5010545907967,,3809610,SOS765,Kitchen,Red,
+G001226,Elri Mini Headphones,Teria,,5027102344042,,6617357,TER697,Audio,White,
+G001227,Luzen Coffee Maker,Orelno,,5028091217560,ORE-4788-00,,,Kitchen,Blue,
+G001228,LUZEN COFFEE MAKER,Orelno,,5028091217560,,5084421,,Kitchen,Blue,
+G001229,Elte Classic Blender,Ellu Home,Teria Group,,,,ELL119,Kitchen,Black,
+G001230,Tete Plus Toaster,Vadorri Home,Vadorri Group,5034639411581,,7415951,VAD155,Kitchen,Matt Grey,
+G001231,Tete Plus Toaster,Vadorri Home,Vadorri Group,5008484808353,VAD-8939-01,5477022,VAD155,Kitchen,Silver,
+G001232,Xater Heater,Zenelte,Vaor Group,,ZEN-0453-00,,ZEN013,Home,Black,1kW
+G001233,Xater Heater,Zenelte,Vaor Group,5071061030003,ZEN-0453-10,5192535,ZEN013,Home,Black,2kW
+G001234,Eldor Classic Blender,Soso,,5016473139975,SOS-7190-00,,,Kitchen,Red,600W
+G001235,Eldor Classic Blender,Soso,Soso Group,5093468748299,SOS-7190-10,,,Kitchen,Red,1000W
+G001236,Riel Plus Soundbar,Fizen,,5048695342444,FIZ-4227-00,8165958,,Audio,Matt Grey,
+G001237,Riel Plus Soundbar,Fizen,,5006839630673,FIZ-4227-01,9103322,,Audio,White,
+G001238,Luor Pro Soundbar,Iaelte,,5069847764372,,3267122,,Audio,Red,2.1
+G001239,Luor Pro Soundbar,Iaelte,Soso Group,5030746672921,IAE-4655-10,,,Audio,Red,5.1
+G001240,Fixa Pro Kettle,Xador,Dorxa Group,5085359459629,,5739390,,Kitchen,Black,1.5L
+G001241,Fixa Pro Kettle,Xador,Dorxa Group,5077915806589,,,,Kitchen,Black,1.7L
+G001242,Orar Kettle,Terso,Lumo Group,5092872324686,TER-6729-00,8450428,,Kitchen,Black,1.5L
+G001243,Orar Kettle,Terso,Lumo Group,5076465193507,TER-6729-10,8388370,,Kitchen,Black,1.7L
+G001244,Menki Pro Coffee Maker,Lumo Home,,5019670707374,LUM-9854-00,6847341,LUM177,Kitchen,Matt Grey,1.2L
+G001245,Menki Pro Coffee Maker,Lumo Home,Lumo Group,5026282574034,LUM-9854-10,4032702,LUM177,Kitchen,Matt Grey,1.8L
+G001246,Teor Pro Fan,Terso,Lumo Group,5042044016284,TER-2074-00,2596419,,Home,Black,12in
+G001247,Teor Pro Fan,Terso,Lumo Group,5048624788329,,,,Home,Black,16in
+G001248,Arter Plus Desk Lamp,Terso,Lumo Group,5032148937868,TER-3928-00,,,Home,Blue,Small
+G001249,Arter Plus Desk Lamp,Terso,Lumo Group,5028636009728,,,,Home,Blue,Large
+G001250,Ordor Shaver,Iaelte,Soso Group,5037013779215,IAE-4849-00,6942317,,Personal care,Black,
+G001251,Ordor Shaver,Iaelte,Soso Group,5091538008922,IAE-4849-01,,,Personal care,Red,
+G001252,Menso Headphones,Fiterve,,5021207936621,FIT-1317-00,2542467,,Audio,Matt Grey,
+G001253,Menso Headphones,Fiterve,,,FIT-1317-01,4444387,,Audio,Black,
+G001254,Xaxa Plus Soundbar,Arxari,,5005334189730,ARX-9512-00,5170270,,Audio,Black,2.1
+G001255,Xaxa Plus Soundbar,Arxari,Arxari Group,5065852329322,ARX-9512-10,8342781,,Audio,Black,5.1
+G001256,Vano Plus Drill,Luiamen,,5070105388537,LUI-3330-00,8447228,LUI422,Tools,White,
+G001257,Vano Plus Drill,Luiamen,,,LUI-3330-01,9854101,LUI422,Tools,Silver,
+G001258,Vano Plus Drill,Luiamen,,,lui333001,5852474,LUI422,Tools,Silver,
+G001259,Vano Plus Drill,Luiamen,Vadorri Group,5089214935990,LUI-3330-02,1834973,LUI422,Tools,Black,
+G001260,Elfi Plus Fan,Lumenia,Rite Group,,LUM-4069-00,,,Home,Matt Grey,
+G001261,Orri Classic Kettle,Vadorri Home,Vadorri Group,5067632011205,VAD-7083-00,,VAD007,Kitchen,White,1.5L
+G001262,Orri Classic Kettle,Vadorri Home,Vadorri Group,5074839073110,VAD-7083-10,4391848,VAD007,Kitchen,White,1.7L
+G001263,Ormen Soundbar,Kizenor,Kizenor Group,5032975824720,KIZ-6853-00,8088263,,Audio,White,
+G001264,Ormen Soundbar,Kizenor,,5042773955045,,1930401,,Audio,Blue,
+G001265,Ormen Soundbar,Kizenor,,5031484151099,KIZ-6853-02,2243407,,Audio,Black,
+G001266,ORMEN SOUNDBAR,Kizenor,,5031484151099,,6349433,,Audio,Black,
+G001267,Fimo Classic Drill,Vaor,Vaor Group,5030981807553,VAO-2099-00,6731593,,Tools,Blue,
+G001268,Fimo Classic Drill,Vaor,,,VAO-2099-01,2754578,,Tools,White,
+G001269,Terar Mini Sander,Iaelte,,5063548981571,,,,Tools,Blue,
+G001270,Elter Desk Lamp,Lumo Home,,5067738438944,LUM-7832-00,5231170,LUM637,Home,Black,Small
+G001271,Elter Desk Lamp,Lumo Home,,,,,LUM637,Home,Black,Large
+G001272,Dorve Mini Soundbar,Vaor,Vaor Group,5093219987038,VAO-6716-00,,,Audio,Blue,2.1
+G001273,Dorve Mini Soundbar,Vaor,Vaor Group,,,0970317,,Audio,Blue,5.1
+G001274,Vador Plus Headphones,Xador,,5076158004929,XAD-5537-00,9059350,,Audio,White,
+G001275,Soxa Desk Lamp,Iaelte,Soso Group,,IAE-9417-00,,,Home,Matt Grey,Small
+G001276,Soxa Desk Lamp,Iaelte,Soso Group,5050608326373,IAE-9417-10,,,Home,Matt Grey,Large
+G001277,Orso Drill,Kizenor,,5097655285765,KIZ-1620-00,,,Tools,Red,
+G001278,Orso Drill,Kizenor,Kizenor Group,5048590307548,KIZ-1620-01,2346006,,Tools,Silver,
+G001279,Veri Shaver,Arfimen,,5070156533597,ARF-7626-00,1637894,,Personal care,Silver,
+G001280,Veri Shaver,Arfimen,Lumo Group,5049194779151,ARF-7626-01,,,Personal care,Red,
+G001281,Vave Plus Soundbar,Orelno,Vacafi Group,5005849151031,ORE-0856-00,,,Audio,Matt Grey,
+G001282,VAVE PLUS SOUNDBAR,Orelno,,5005849151031,,7022301,,Audio,Matt Grey,
+G001283,Vave Plus Soundbar,Orelno,,5024751256382,,2219949,,Audio,Black,
+G001284,Vave Plus Soundbar,Orelno,,,,2644700,,Audio,,
+G001285,Elxa Classic Shaver,Lumo Home,Lumo Group,,LUM-6171-00,,LUM850,Personal care,Matt Grey,
+G001286,Elxa Classic Shaver,Lumo Home,,5017457318195,,6133695,LUM850,Personal care,Black,
+G001287,Soki Mini Sander,Fiterve,,5016421423385,,2120515,,Tools,Matt Grey,
+G001288,Soki Mini Sander,Fiterve,,5012636039076,FIT-4230-01,6875539,,Tools,Blue,
+G001289,Riva Classic Shaver,Lumo Home,Lumo Group,5071370225190,LUM-2019-00,,LUM249,Personal care,Blue,
+G001290,Riva Classic Shaver,Lumo Home,Lumo Group,5005962186293,LUM-2019-01,,LUM249,Personal care,Matt Grey,
+G001291,Riva Classic Shaver,Lumo Home,Lumo Group,5089288278849,LUM-2019-02,,LUM249,Personal care,Black,
+G001292,Luxa Mini Sander,Fizen,Vaor Group,5067333790584,,7297707,,Tools,Matt Grey,
+G001293,Luxa Mini Sander,Fizen,Vaor Group,5058897079215,FIZ-8208-01,,,Tools,Silver,
+G001294,Terxa Pro Heater,Cador,,,CAD-1013-00,1108222,CAD445,Home,White,1kW
+G001295,Terxa Pro Heater,Cador,Cador Group,,,7390263,CAD445,Home,White,2kW
+G001296,Fimen Classic Fan,Nocaar,,5025934489177,NOC-2905-00,3840514,,Home,Red,
+G001297,Fimen Classic Fan,Nocaar,Nocaar Group,,NOC-2905-01,7129673,,Home,White,
+G001298,Fimen Classic Fan,Nocaar,,,noc290501,8553362,,Home,White,
+G001299,Orel Drill,Lumo Home,Lumo Group,,,,,Tools,Matt Grey,
+G001300,Orel Drill,Lumo Home,Lumo Group,5062604205149,LUM-2205-01,,,Tools,Black,
+G001301,Dorel Mini Blender,Iaelte,Soso Group,5022408118113,,7652402,,Kitchen,Black,
+G001302,Dorel Mini Blender,Iaelte,Soso Group,5042365191677,IAE-3020-01,8785283,,Kitchen,Red,
+G001303,Dorel Mini Blender,Iaelte,Soso Group,,IAE-3020-02,,,Kitchen,Matt Grey,
+G001304,Iamen Kettle,Elteso Home,Soso Group,5087619989419,ELT-7026-00,,ELT249,Kitchen,Silver,1.5L
+G001305,IAMEN KETTLE,Elteso Home,,5087619989419,,8587154,ELT249,Kitchen,Silver,1.5L
+G001306,Iamen Kettle,Elteso Home,Soso Group,5007361520067,ELT-7026-10,,ELT249,Kitchen,Silver,1.7L
+G001307,Xalu Plus Desk Lamp,Kite,,5003571768787,KIT-3997-00,,,Home,White,Small
+G001308,Xalu Plus Desk Lamp,Kite,,5098481684791,KIT-3997-10,,,Home,White,Large
+G001309,Elter Kettle,Terso,,5041154432106,TER-7549-00,3054846,,Kitchen,Red,1.5L
+G001310,Elter Kettle,Terso,Lumo Group,5075598564659,TER-7549-10,1833393,,Kitchen,Red,1.7L
+G001311,ELTER KETTLE,Terso,,5075598564659,,8576323,,Kitchen,Red,1.7L
+G001312,Orter Classic Coffee Maker,Rite,Rite Group,5099937095741,RIT-0335-00,,,Kitchen,Black,1.2L
+G001313,Orter Classic Coffee Maker,Rite,,5012489419780,,5319995,,Kitchen,Black,1.8L
+G001314,Arar Pro Desk Lamp,Terso,,,TER-8520-00,,TER409,Home,Blue,
+G001315,Xano Mini Kettle,Arxari,Arxari Group,5096339723739,ARX-5462-00,1624163,ARX940,Kitchen,Matt Grey,1.5L
+G001316,Xano Mini Kettle,Arxari,Arxari Group,5026382566205,ARX-5462-10,9590014,ARX940,Kitchen,Matt Grey,1.7L
+G001317,Dorso Plus Hair Dryer,Fiki,,5003685744868,FIK-9486-00,5163157,,Personal care,White,1800W
+G001318,Dorso Plus Hair Dryer,Fiki,Xateno Group,5002913305895,FIK-9486-10,,,Personal care,White,2200W
+G001319,Oria Blender,Soso,,5059007643845,,,,Kitchen,Silver,
+G001320,Oria Blender,Soso,Soso Group,5036660012751,,,,Kitchen,White,
+G001321,Oria Blender,Soso,,5093357366863,SOS-0416-02,5264408,,Kitchen,Matt Grey,
+G001322,Sove Desk Lamp,Caar,,5081855006992,,7129860,CAA559,Home,Red,Small
+G001323,Sove Desk Lamp,Caar,Soso Group,5004194435254,CAA-8047-10,7992404,CAA559,Home,Red,Large
+G001324,Valu Mini Toaster,Lumo Home,Lumo Group,,,3803581,,Kitchen,Matt Grey,2 Slice
+G001325,Valu Mini Toaster,Lumo Home,,,LUM-7460-10,,,Kitchen,Matt Grey,4 Slice
+G001326,Valu Mini Toaster,Lumo Home,,,,6929525,,Kitchen,,
+G001327,Xaxa Coffee Maker,Ellu Home,,5058613708863,ELL-3153-00,7514193,,Kitchen,Silver,
+G001328,Xaxa Coffee Maker,Ellu Home,,5049546603523,ELL-3153-01,0010130,,Kitchen,Black,
+G001329,Caca Fan,Texa,,5088723572665,TEX-4062-00,,,Home,Blue,
+G001330,Caca Fan,Texa,Soxa Group,5097856197447,TEX-4062-01,6461605,,Home,White,
+G001331,Riri Pro Sander,Noor Home,,5087042058461,NOO-2449-00,2602763,,Tools,White,
+G001332,RIRI PRO SANDER,Noor Home,,5087042058461,,0044747,,Tools,White,
+G001333,Riri Pro Sander,Noor Home,Rite Group,,NOO-2449-01,,,Tools,Silver,
+G001334,Riri Pro Sander,Noor Home,,5069429885440,NOO-2449-02,5564164,,Tools,Red,
+G001335,Zenfi Plus Soundbar,Kizenor,,5084584122391,KIZ-2406-00,,KIZ241,Audio,Matt Grey,2.1
+G001336,Zenfi Plus Soundbar,Kizenor,Kizenor Group,5098774622141,KIZ-2406-10,9566912,KIZ241,Audio,Matt Grey,5.1
+G001337,Zenfi Plus Soundbar,KIZENOR Ltd,,,KIZ-2406-10,3104480,KIZ241,Audio,Matt Grey,5.1
+G001338,Iate Hair Dryer,Iasofi,Teria Group,5018277357746,,6493964,,Personal care,Black,
+G001339,Iate Hair Dryer,Iasofi,,5052243161500,IAS-6662-01,6595466,,Personal care,Silver,
+G001340,Arva Heater,Ellu Home,Teria Group,,ELL-6250-00,,,Home,Black,1kW
+G001341,Arva Heater,Ellu Home,,,ELL-6250-10,,,Home,Black,2kW
+G001342,Xaca Plus Kettle,Vezenki,,5094197601398,VEZ-4338-00,,,Kitchen,White,1.5L
+G001343,Xaca Plus Kettle,VEZENKI Ltd,,,VEZ-4338-00,6906176,,Kitchen,White,1.5L
+G001344,Xaca Plus Kettle,Vezenki,,5074789274988,VEZ-4338-10,8712098,,Kitchen,White,1.7L
+G001345,Fimen Soundbar,Nova,,5091411979431,,6176686,NOV383,Audio,Matt Grey,
+G001346,Fimen Soundbar,Nova,Nocaar Group,,NOV-9887-01,5054847,NOV383,Audio,Blue,
+G001347,Tete Toaster,Terso,,5054328148888,TER-1086-00,,,Kitchen,Black,2 Slice
+G001348,Tete Toaster,Terso,,,TER-1086-10,,,Kitchen,Black,4 Slice
+G001349,Caor Plus Drill,Vaor,Vaor Group,5068069625065,VAO-3117-00,,,Tools,Silver,12V
+G001350,Caor Plus Drill,Vaor,,5074983148405,VAO-3117-10,,,Tools,Silver,18V
+G001351,Kifi Plus Soundbar,Lumo Home,Lumo Group,5082707921050,LUM-2746-00,7970098,,Audio,Blue,2.1
+G001352,Kifi Plus Soundbar,Lumo Home,Lumo Group,,,7817828,,Audio,Blue,5.1
+G001353,Terso Shaver,Vaor,Vaor Group,5026078939092,,4818603,VAO210,Personal care,Red,
+G001354,Terso Shaver,Vaor,Vaor Group,5081727303334,,2356125,VAO210,Personal care,Matt Grey,
+G001355,Valu Pro Fan,Teria,Teria Group,5010219213646,TER-4872-00,,,Home,Blue,12in
+G001356,Valu Pro Fan,Teria,,5065026304513,,,,Home,Blue,16in
+G001357,Valu Por Fan,Teria,,,,9805730,,Home,Blue,16in
+G001358,Iaor Plus Fan,Soxa Home,,5010700864944,,,,Home,Blue,12in
+G001359,Iaor Plus Fan,Soxa Home,Soxa Group,5037783940792,SOX-9585-10,1813879,,Home,Blue,16in
+G001360,Five Mini Heater,Terkive Home,Nocaar Group,5058710081487,,,,Home,Blue,1kW
+G001361,Five Mini Heater,Terkive Home,,,TER-5637-10,7952999,,Home,Blue,2kW
+G001362,Dorno Mini Drill,Lumo Home,Lumo Group,5019676380779,LUM-4119-00,7061260,LUM822,Tools,White,12V
+G001363,Dorno Mini Drill,Lumo Home,Lumo Group,5058640044897,,7263996,LUM822,Tools,White,18V
+G001364,Teno Plus Blender,Lumo Home,,5037406896901,,6133594,,Kitchen,Matt Grey,
+G001365,Teno Plus Blender,Lumo Home,Lumo Group,5042987616312,LUM-2762-01,4240716,,Kitchen,Silver,
+G001366,Orter Plus Fan,Terso,Lumo Group,5022032437574,,,TER105,Home,White,12in
+G001367,Orter Plus Fan,Terso,,5075257072303,,2918865,TER105,Home,White,16in
+G001368,Nolu Drill,Lumo Home,,,LUM-4874-00,2933691,,Tools,Black,
+G001369,Nolu Drill,Lumo Home,Lumo Group,5089645877616,LUM-4874-01,,,Tools,Matt Grey,
+G001370,Fimo Classic Blender,Vaor,Vaor Group,5005787615282,VAO-9151-00,1252395,VAO036,Kitchen,White,600W
+G001371,Fimo Classic Blender,Vaor,,5024646729755,VAO-9151-10,7870274,VAO036,Kitchen,White,1000W
+G001372,Dormen Toaster,Luorca,,,,5597320,,Kitchen,Blue,2 Slice
+G001373,Dormen Toaster,Luorca,,5017824387250,,,,Kitchen,Blue,4 Slice
+G001374,Terlu Drill,Armenar,Armenar Group,,ARM-9275-00,,,Tools,Red,12V
+G001375,Terlu Drill,Armenar,,5025924871098,,,,Tools,Red,18V
+G001376,Orfi Drill,Terrifi,Xateno Group,5091490344830,,9518771,TER953,Tools,White,
+G001377,Menva Kettle,Valu,Soso Group,5099322292700,VAL-2296-00,,VAL459,Kitchen,Silver,1.5L
+G001378,Menva Kettle,Valu,,5074362472541,VAL-2296-10,,VAL459,Kitchen,Silver,1.7L
+G001379,Fite Mini Sander,Lumo Home,,5060869591342,LUM-6156-00,,LUM781,Tools,Matt Grey,
+G001380,Fite Mini Sander,Lumo Home,Lumo Group,5035359744034,LUM-6156-01,,LUM781,Tools,Black,
+G001381,Fite Mini Sander,Lumo Home,,5051184639727,LUM-6156-02,9435761,LUM781,Tools,Silver,
+G001382,Kiia Pro Sander,Lumenia,,5013808405149,,9930231,,Tools,Red,
+G001383,Lumo Toaster,Vadorri Home,Vadorri Group,5037347389029,VAD-2485-00,1602622,VAD972,Kitchen,Blue,2 Slice
+G001384,Lumo Toaster,Vadorri Home,Vadorri Group,5057305437883,,7313122,VAD972,Kitchen,Blue,4 Slice
+G001385,LUMO TOASTER,Vadorri Home,,5057305437883,,7880882,VAD972,Kitchen,Blue,4 Slice
+G001386,Xate Speaker,Soso,,5020078826604,,,,Audio,Blue,Mini
+G001387,Xate Speaker,Soso,,5042762933603,SOS-1959-10,8149427,,Audio,Blue,Max
+G001388,Terte Plus Soundbar,Monodor,Kizenor Group,,MON-8478-00,2314397,,Audio,Red,2.1
+G001389,Terte Plus Soundbar,Monodor,,,mon847800,7142500,,Audio,Red,2.1
+G001390,Terte Plus Soundbar,Monodor,,5065929232814,MON-8478-10,,,Audio,Red,5.1
+G001391,Xaki Plus Soundbar,Arfimen,Lumo Group,5017921054161,ARF-1471-00,5129679,,Audio,Red,2.1
+G001392,Xaki Plus Soundbar,Arfimen,,,ARF-1471-10,7955651,,Audio,Red,5.1
+G001393,Caia Blender,Cador,,5027576756600,CAD-5277-00,,CAD782,Kitchen,Matt Grey,600W
+G001394,Caia Blender,Cador,Cador Group,5035098647344,,9846660,CAD782,Kitchen,Matt Grey,1000W
+G001395,Fica Mini Hair Dryer,Rifiia,,5016209479528,RIF-9605-00,1744932,,Personal care,White,1800W
+G001396,Fica Mini Hair Dryer,Rifiia,Soxa Group,5055230021856,RIF-9605-10,,,Personal care,White,2200W
+G001397,Orlu Kettle,Fizen,Vaor Group,5076132421858,,3430657,FIZ689,Kitchen,White,
+G001398,Orlu Kettle,Fizen,,5072605258938,,8093975,FIZ689,Kitchen,Silver,
+G001399,Caki Coffee Maker,Vezenor,,5093384064206,VEZ-5313-00,,,Kitchen,Blue,
+G001400,Caki Coffee Maker,Vezenor,,,,3365248,,Kitchen,,
+G001401,Caki Coffee Maker,Vezenor,,5011476938259,VEZ-5313-01,,,Kitchen,Black,
+G001402,Caki Coffee Maker,Vezenor,,5070165757168,VEZ-5313-02,,,Kitchen,Red,
+G001403,Fixa Shaver,Lumo Home,Lumo Group,5065616174724,LUM-7216-00,1382258,LUM927,Personal care,Blue,
+G001404,Fixa Shaver,Lumo Home,,5085671711597,LUM-7216-01,6376406,LUM927,Personal care,Silver,
+G001405,Rite Shaver,Arfimen,,5048923295948,ARF-7397-00,2120591,,Personal care,Black,
+G001406,Luve Classic Drill,Teria,,5084619711651,TER-0194-00,4732688,,Tools,Blue,12V
+G001407,Luve Classic Drill,Teria,Teria Group,5081507188342,,4838881,,Tools,Blue,18V
+G001408,Xael Classic Kettle,Fizen,Vaor Group,5090672216019,FIZ-1126-00,,FIZ768,Kitchen,Red,1.5L
+G001409,Xael Classic Kettle,Fizen,,5049176043799,FIZ-1126-10,7221425,FIZ768,Kitchen,Red,1.7L
+G001410,Orri Desk Lamp,Dormoar,,5049334537375,DOR-2342-00,8841635,DOR033,Home,Red,Small
+G001411,Orri Desk Lamp,Dormoar,Texaki Group,5083818181654,,9079581,DOR033,Home,Red,Large
+G001412,Kimo Sander,Soso Home,Texaki Group,5015506674605,SOS-4894-00,0039314,,Tools,Blue,
+G001413,Menar Mini Sander,Soso,,5017079677403,SOS-8968-00,1835887,,Tools,Matt Grey,
+G001414,Terte Pro Fan,Arnoel,,5085857483041,,7900530,ARN423,Home,White,12in
+G001415,Terte Pro Fan,Arnoel,Cador Group,5048246342732,ARN-7048-10,6669267,ARN423,Home,White,16in
+G001416,Vaki Sander,Dormoar,Texaki Group,5054285976838,DOR-6850-00,8446955,,Tools,Blue,
+G001417,Vaki Sander,Dormoar,Texaki Group,5010431667067,DOR-6850-01,3971407,,Tools,Matt Grey,
+G001418,VAKI SANDER,Dormoar,,5010431667067,,6659515,,Tools,Matt Grey,
+G001419,Dormen Coffee Maker,Fiterve,Dorxa Group,5081285648342,FIT-2480-00,,,Kitchen,Matt Grey,1.2L
+G001420,Dormen Coffee Maker,Fiterve,,5062224684621,FIT-2480-10,9693505,,Kitchen,Matt Grey,1.8L
+G001421,Fiia Fan,Valu,,,VAL-8205-00,8067313,VAL791,Home,Matt Grey,
+G001422,Elri Pro Toaster,Iasofi,Teria Group,5022721009952,,9959798,,Kitchen,Silver,2 Slice
+G001423,Elri Pro Toaster,Iasofi,,5009748829213,IAS-7532-10,,,Kitchen,Silver,4 Slice
+G001424,Zenno Shaver,Xador,,5081042275439,,,,Personal care,Black,
+G001425,Fiar Mini Coffee Maker,Terkive Home,,5075538885783,TER-5471-00,7279728,TER610,Kitchen,Matt Grey,
+G001426,Fiar Mini Coffee Maker,Terkive Home,Nocaar Group,5033556653425,TER-5471-01,3389878,TER610,Kitchen,Silver,
+G001427,Fiar Mini Coffee Maker,Terkive Home,Nocaar Group,5033830615088,,2748636,TER610,Kitchen,Black,
+G001428,Kica Kettle,Vaor,Vaor Group,5014519974726,VAO-2575-00,8136753,VAO764,Kitchen,Matt Grey,1.5L
+G001429,Kica Kettle,Vaor,,5015556360664,VAO-2575-10,3581282,VAO764,Kitchen,Matt Grey,1.7L
+G001430,Veia Speaker,Arnoel,,5075462343984,ARN-1449-00,,,Audio,White,
+G001431,Veia Speaker,Arnoel,,5077740821887,,2093006,,Audio,Matt Grey,
+G001432,VEIA SPEAKER,Arnoel,,5077740821887,,4171956,,Audio,Matt Grey,
+G001433,Veia Speaker,Arnoel,Cador Group,5044750487303,,3080041,,Audio,Black,
+G001434,Elia Coffee Maker,Zenor,,5051071367849,ZEN-4516-00,5125804,ZEN727,Kitchen,Red,
+G001435,Elia Coffee Maker,Zenor,,5065598032586,,8966588,ZEN727,Kitchen,Black,
+G001436,Iaxa Classic Desk Lamp,Rifiia,Soxa Group,5034330412979,RIF-5216-00,,,Home,Blue,
+G001437,Iaxa Classic Desk Lamp,Rifiia,,5083587170859,RIF-5216-01,,,Home,Black,
+G001438,Iaxa Classic Desk Lamp,Rifiia,Soxa Group,5020109102660,RIF-5216-02,1295332,,Home,Matt Grey,
+G001439,Armen Classic Desk Lamp,Teria,Teria Group,5050255556796,TER-0258-00,6131040,TER605,Home,Matt Grey,Small
+G001440,Armen Classic Desk Lamp,Teria,Teria Group,5001892724383,,8145801,TER605,Home,Matt Grey,Large
+G001441,Sove Classic Soundbar,Moordor Home,,5082096627205,MOO-6020-00,1651792,,Audio,Silver,2.1
+G001442,Sove Classic Soundbar,Moordor Home,,5090447113130,MOO-6020-10,3455603,,Audio,Silver,5.1
+G001443,SOVE CLASSIC SOUNDBAR,Moordor Home,,5090447113130,,9274170,,Audio,Silver,5.1
+G001444,Zenmo Coffee Maker,Moordor Home,,,,6468979,,Kitchen,White,1.2L
+G001445,Zenmo Coffee Maker,Moordor Home,,5012215592503,MOO-9045-10,,,Kitchen,White,1.8L
+G001446,Kidor Headphones,Vezenor,,5016164041105,VEZ-8171-00,,,Audio,Blue,
+G001447,Kidor Headphones,Vezenor,,5062854533238,VEZ-8171-01,9126575,,Audio,Black,
+G001448,Zenor Plus Heater,Terkive Home,Nocaar Group,5022487906533,TER-7136-00,9608837,,Home,Silver,1kW
+G001449,Zenor Plus Heater,Terkive Home,,,TER-7136-10,,,Home,Silver,2kW
+G001450,Orno Soundbar,Soso Home,,5036048841768,SOS-3266-00,,,Audio,Silver,
+G001451,Veia Plus Fan,Cador,Cador Group,5092087822045,CAD-1162-00,,CAD405,Home,Silver,
+G001452,VEIA PLUS FAN,Cador,,5092087822045,,1495947,CAD405,Home,Silver,
+G001453,Veia Plus Fan,Cador,,5015994478488,CAD-1162-01,9722640,CAD405,Home,Matt Grey,
+G001454,Xater Desk Lamp,Valu,Soso Group,5001482873224,VAL-2699-00,5386948,,Home,White,Small
+G001455,Xater Desk Lamp,Valu,Soso Group,5037063067263,VAL-2699-10,,,Home,White,Large
+G001456,Menca Fan,Arfimen,,5094418642278,,9566252,ARF101,Home,Matt Grey,
+G001457,Menca Fan,Arfimen,,5086584139577,ARF-6523-01,,ARF101,Home,Silver,
+G001458,Fiter Plus Hair Dryer,Arfimen,,5061756972619,ARF-4232-00,4821594,,Personal care,White,1800W
+G001459,Fiter Plus Hair Dryer,Arfimen,,5081531383041,ARF-4232-10,8243787,,Personal care,White,2200W
+G001460,Moki Plus Coffee Maker,Vadorri Home,Vadorri Group,5072928162950,VAD-2451-00,2715443,,Kitchen,Black,
+G001461,Vete Classic Sander,Terso,,5057945417887,TER-5280-00,,,Tools,White,
+G001462,Vael Heater,Vezenor,Armenar Group,,,4087722,,Home,Silver,1kW
+G001463,Vael Heater,Vezenor,,5095895990678,VEZ-7819-10,9142724,,Home,Silver,2kW
+G001464,Terva Plus Coffee Maker,Rifiia,Soxa Group,5006609397461,RIF-8817-00,0256996,RIF718,Kitchen,Matt Grey,1.2L
+G001465,Terva Plus Coffee Maker,Rifiia,,5017036445489,RIF-8817-10,,RIF718,Kitchen,Matt Grey,1.8L
+G001466,Zenmo Plus Toaster,Vezenor,,5032922401684,,,VEZ036,Kitchen,Red,2 Slice
+G001467,Zenmo Plus Toaster,Vezenor,,,,7205583,VEZ036,Kitchen,Red,2 Slice
+G001468,Zenmo Plus Toaster,Vezenor,Armenar Group,5072371464335,VEZ-6359-10,4398799,VEZ036,Kitchen,Red,4 Slice
+G001469,ZENMO PLUS TOASTER,Vezenor,,5072371464335,,2748489,VEZ036,Kitchen,Red,4 Slice
+G001470,Arter Pro Kettle,Ellu Home,Teria Group,5046927105768,,8220689,ELL644,Kitchen,Black,
+G001471,Arter Pro Kettle,Ellu Home,Teria Group,5083495009944,ELL-7966-01,,ELL644,Kitchen,Silver,
+G001472,Sofi Pro Soundbar,Vaorva,Vaorva Group,5028607275794,VAO-6705-00,,VAO539,Audio,Matt Grey,2.1
+G001473,Sofi Pro Soundbar,Vaorva,Vaorva Group,5068597755166,VAO-6705-10,4758247,VAO539,Audio,Matt Grey,5.1
+G001474,SOFI PRO SOUNDBAR,Vaorva,,5068597755166,,4899351,VAO539,Audio,Matt Grey,5.1
+G001475,Dorva Plus Sander,Lumo Home,Lumo Group,5069092791215,LUM-1642-00,0470907,LUM802,Tools,Black,
+G001476,Terve Pro Desk Lamp,Zenor,,,ZEN-2295-00,0102768,,Home,White,Small
+G001477,Terve Pro Desk Lamp,Zenor,,5097716210774,ZEN-2295-10,9474140,,Home,White,Large
+G001478,Riel Pro Desk Lamp,Zenelte,Vaor Group,5050735991062,,3558101,,Home,Blue,Small
+G001479,Riel Pro Desk Lamp,Zenelte,,5099300394266,ZEN-1764-10,,,Home,Blue,Large
+G001480,Riel Pro Desk Lamp,Zenelte,,,zen176410,7784212,,Home,Blue,Large
+G001481,Vael Pro Kettle,Lumo Home,Lumo Group,5070918046334,LUM-2826-00,,,Kitchen,Red,
+G001482,Elzen Plus Heater,Lumenia,Rite Group,5058251499758,LUM-6722-00,5407381,,Home,Blue,1kW
+G001483,Elzen Plus Heater,Lumenia,,,,9978701,,Home,,
+G001484,Elzen Plus Heater,Lumenia,Rite Group,5039830118642,LUM-6722-10,0651642,,Home,Blue,2kW
+G001485,ELZEN PLUS HEATER,Lumenia,,5039830118642,,9030605,,Home,Blue,2kW
+G001486,Zenzen Hair Dryer,Arxari,,5003015390772,ARX-0253-00,8841664,,Personal care,Silver,1800W
+G001487,Zenzen Hair Dryer,Arxari,,5022918047231,,,,Personal care,Silver,2200W
+G001488,Nomen Plus Drill,Teria,Teria Group,5085157629644,TER-7562-00,2084822,,Tools,Black,12V
+G001489,Nomen Plus Drill,Teria,Teria Group,5089540877391,TER-7562-10,5164280,,Tools,Black,18V
+G001490,Orki Hair Dryer,Nocaar,Nocaar Group,,NOC-6240-00,,,Personal care,Blue,1800W
+G001491,Orki Hair Dryer,Nocaar,Nocaar Group,5020950078817,NOC-6240-10,,,Personal care,Blue,2200W
+G001492,Rica Pro Drill,Fiterve,,5027033313391,FIT-8718-00,,,Tools,Black,12V
+G001493,Rica Pro Drill,Fiterve,,5086580412926,,9198242,,Tools,Black,18V
+G001494,Xaar Classic Kettle,Kizenor,Kizenor Group,5001701875787,,1219916,KIZ976,Kitchen,Silver,
+G001495,Xaar Classic Kettle,Kizenor,,5021041977781,KIZ-5737-01,3264945,KIZ976,Kitchen,White,
+G001496,Fica Pro Soundbar,Lumo Home,Lumo Group,5024484841688,,9720831,LUM536,Audio,Black,2.1
+G001497,Fica Pro Soundbar,Lumo Home,Lumo Group,,,6213865,LUM536,Audio,Black,5.1
+G001498,Vefi Pro Fan,Arnoel,Cador Group,,ARN-2966-00,4835670,,Home,Blue,12in
+G001499,Vefi Pro Fan,Arnoel,,,,9998175,,Home,,
+G001500,Vefi Pro Fan,Arnoel,Cador Group,5046603786182,ARN-2966-10,6361030,,Home,Blue,16in
+G001501,Elfi Plus Kettle,Lumo Home,Lumo Group,5030640888411,LUM-0830-00,,LUM486,Kitchen,Silver,1.5L
+G001502,Elfi Plus Kettle,Lumo Home,,5083668053606,,,LUM486,Kitchen,Silver,1.7L
+G001503,Dorzen Mini Fan,Nocaar,,5037882122174,,2537697,,Home,Red,
+G001504,Noxa Plus Soundbar,Arfimen,,5067142276040,ARF-3695-00,,ARF801,Audio,Silver,2.1
+G001505,Noxa Plus Soundbar,Arfimen,,5020796552564,ARF-3695-10,,ARF801,Audio,Silver,5.1
+G001506,Arso Mini Blender,Arfimen,,,ARF-2688-00,,,Kitchen,Silver,
+G001507,Arso iMni Blender,Arfimen,,,,6165635,,Kitchen,Silver,
+G001508,Arso Mini Blender,Arfimen,Lumo Group,5002714634026,,8277071,,Kitchen,Blue,
+G001509,Arso Mini Blender,Arfimen,Lumo Group,,,,,Kitchen,White,
+G001510,Arso Mini Blender,ARFIMEN Ltd,,,,0743448,,Kitchen,White,
+G001511,Orar Sander,Lumo Home,,,LUM-2019-00,,,Tools,Blue,
+G001512,Arve Sander,Zenelte,,,ZEN-3014-00,,,Tools,Black,
+G001513,Mote Heater,Arfimen,,5025405789348,ARF-9178-00,8922211,,Home,Black,
+G001514,Kiar Sander,Dorca,Cador Group,5030214911781,,,,Tools,Silver,
+G001515,Vate Pro Headphones,Rifiia,,5009409738960,RIF-4616-00,,,Audio,Silver,
+G001516,Luca Pro Heater,Lumo Home,,,LUM-3623-00,,,Home,White,1kW
+G001517,Luca Pro Heater,Lumo Home,Lumo Group,5044023669566,,,,Home,White,2kW
+G001518,Elia Mini Toaster,Monodor,,,MON-8435-00,3741111,,Kitchen,Silver,2 Slice
+G001519,Elia Mini Toaster,Monodor,Kizenor Group,5050683314296,MON-8435-10,,,Kitchen,Silver,4 Slice
+G001520,Fior Mini Drill,Valu,Soso Group,5019394094262,VAL-2102-00,4084004,VAL904,Tools,Blue,12V
+G001521,Fior Mini Drill,Valu,,,,,VAL904,Tools,Blue,18V
+G001522,Move Blender,Texaki,,5089634980570,TEX-7722-00,,,Kitchen,Blue,600W
+G001523,Move Blender,Texaki,,5023560646322,TEX-7722-10,3998094,,Kitchen,Blue,1000W
+G001524,Caso Pro Heater,Iaar Home,,,IAA-8062-00,,IAA892,Home,Black,1kW
+G001525,Caso Pro Heater,Iaar Home,,5042501419726,IAA-8062-10,1146371,IAA892,Home,Black,2kW
+G001526,Menca Pro Speaker,Zenca,,5032673937838,ZEN-2674-00,8562609,,Audio,White,Mini
+G001527,Menca Pro Speaker,Zenca,,5034650327939,ZEN-2674-10,1640773,,Audio,White,Max
+G001528,Luzen Plus Drill,Vadorri Home,,5071776576148,VAD-1751-00,6976667,VAD510,Tools,Matt Grey,
+G001529,Luzen Plus Drill,Vadorri Home,,5094580439188,VAD-1751-01,4766687,VAD510,Tools,White,
+G001530,Luzen Plus Drill,Vadorri Home,Vadorri Group,,,5103790,VAD510,Tools,Blue,
+G001531,Elfi Plus Blender,Fizen,Vaor Group,5049646065665,FIZ-6744-00,,,Kitchen,Silver,
+G001532,Plus Blender Elfi,Fizen,,,,2312497,,Kitchen,Silver,
+G001533,Elfi Plus Blender,Fizen,,5071753805391,FIZ-6744-01,2374297,,Kitchen,Red,
+G001534,Rilu Coffee Maker,Caar,Soso Group,5022734261644,CAA-6330-00,,,Kitchen,White,1.2L
+G001535,Rilu Coffee Maker,Caar,,5019632762212,CAA-6330-10,1894182,,Kitchen,White,1.8L
+G001536,Riki Sander,Vezenor,Armenar Group,5091432789569,VEZ-3474-00,0281415,VEZ799,Tools,White,
+G001537,Veca Desk Lamp,Terso,,5001095440097,TER-3121-00,7071536,TER820,Home,Red,Small
+G001538,Veca Desk Lamp,Terso,,,TER-3121-10,5811023,TER820,Home,Red,Large
+G001539,Zendor Kettle,Vadorri Home,,5078004416641,VAD-1076-00,3534923,,Kitchen,Black,
+G001540,Zendor Kettle,Vadorri Home,,,VAD-1076-01,9296474,,Kitchen,Silver,
+G001541,Zendor Kettle,Vadorri Home,,5055252481249,,,,Kitchen,Matt Grey,
+G001542,Zenmo Mini Drill,Arnoel,,5058953062786,ARN-8618-00,1033632,ARN650,Tools,Black,12V
+G001543,Zenmo Mini Drill,Arnoel,,5087815733090,ARN-8618-10,,ARN650,Tools,Black,18V
+G001544,Terve Classic Shaver,Kizenor,,5031018508740,KIZ-9597-00,6212306,,Personal care,Matt Grey,
+G001545,Terve Classic Shaver,Kizenor,Kizenor Group,,KIZ-9597-01,,,Personal care,Silver,
+G001546,Dormen Classic Drill,Nova,Nocaar Group,5017321625459,NOV-8687-00,8466260,NOV247,Tools,Black,12V
+G001547,Dormen Classic Drill,Nova,,5029671699776,NOV-8687-10,,NOV247,Tools,Black,18V
+G001548,Molu Speaker,Somo,Arxari Group,5038103890995,SOM-0167-00,7574501,SOM244,Audio,Red,Mini
+G001549,Molu Speaker,Somo,Arxari Group,5069425860281,SOM-0167-10,5620136,SOM244,Audio,Red,Max
+G001550,Moki Pro Coffee Maker,Iasofi,,,IAS-1132-00,5648774,,Kitchen,Black,
+G001551,Soki Kettle,Nocaar,Nocaar Group,5023494032482,NOC-5131-00,,,Kitchen,Silver,1.5L
+G001552,Kettle Soki,Nocaar,,,,9956270,,Kitchen,Silver,1.5L
+G001553,Soki Kettle,Nocaar,,5025385983125,,1665129,,Kitchen,Silver,1.7L
+G001554,Soki Kettle,Nocaar,,,,6181147,,Kitchen,Silver,1.7L
+G001555,Eldor Fan,Kizenor,Kizenor Group,5043652214338,,4448347,KIZ259,Home,Black,12in
+G001556,Eldor Fan,Kizenor,,5023046509738,KIZ-1943-10,4481953,KIZ259,Home,Black,16in
+G001557,Dorva Plus Speaker,Lumo Home,,5007240396226,,4106072,,Audio,Black,Mini
+G001558,Dorva Plus Speaker,Lumo Home,,5051460414055,LUM-9956-10,,,Audio,Black,Max
+G001559,Menno Mini Headphones,Nova,,5095481045560,NOV-1252-00,2444534,,Audio,Red,
+G001560,Noel Pro Heater,Zenelte,Vaor Group,5069375054587,,6095206,ZEN064,Home,Silver,
+G001561,Noel Pro Heater,Zenelte,,5085810514850,,2976124,ZEN064,Home,Black,
+G001562,Noel Pro Heater,Zenelte,,5072295799001,ZEN-0394-02,,ZEN064,Home,Matt Grey,
+G001563,Temen Desk Lamp,Arfimen,Lumo Group,5055455600683,ARF-2448-00,,,Home,Matt Grey,
+G001564,Temen Desk Lamp,Arfimen,Lumo Group,5050869381227,ARF-2448-01,,,Home,Silver,
+G001565,Temen Desk Lamp,Arfimen,Lumo Group,,ARF-2448-02,6121669,,Home,Black,
+G001566,Dorfi Plus Speaker,Ellu Home,,5093347035113,,,,Audio,Red,Mini
+G001567,Dorfi Plus Speaker,Ellu Home,,,ELL-2106-10,,,Audio,Red,Max
+G001568,Vaor Plus Speaker,Rifiia,Soxa Group,5038782395873,RIF-2877-00,,RIF462,Audio,Blue,Mini
+G001569,Vaor Plus Speaker,Rifiia,,5052128035735,RIF-2877-10,9215602,RIF462,Audio,Blue,Max
+G001570,Velu Plus Headphones,Fizen,Vaor Group,5094891412870,FIZ-5320-00,2696036,FIZ187,Audio,Silver,
+G001571,Kimo Plus Soundbar,Lumo Home,Lumo Group,5076211765583,LUM-3921-00,,,Audio,Matt Grey,2.1
+G001572,Kimo Plus Soundbar,Lumo Home,,5027362305999,LUM-3921-10,2761301,,Audio,Matt Grey,5.1
+G001573,Armo Classic Desk Lamp,Lumo Home,Lumo Group,5027543155214,,,,Home,White,
+G001574,Armo Classic Desk Lamp,Lumo Home,,5053925859647,,4527313,,Home,Blue,
+G001575,Classic Desk Lamp Armo,Lumo Home,,,,2121232,,Home,Blue,
+G001576,Armo Classic Desk Lamp,Lumo Home,,5025349430429,LUM-4229-02,8419140,,Home,Silver,
+G001577,Camo Classic Drill,Vadorri Home,Vadorri Group,5008481769596,VAD-5015-00,8069584,,Tools,Red,12V
+G001578,Camo Classic Drill,Vadorri Home,,5038374690256,VAD-5015-10,,,Tools,Red,18V
+G001579,Orva Mini Headphones,Xador,Dorxa Group,,XAD-2582-00,,XAD096,Audio,Silver,
+G001580,Xaxa Kettle,Vadorri Home,,,VAD-4117-00,4224801,VAD788,Kitchen,Black,
+G001581,Xaxa Kettle,Vadorri Home,Vadorri Group,5036447555266,,7777283,VAD788,Kitchen,Blue,
+G001582,Xaxa Kettle,Vadorri Home,,5014347552615,,7640900,VAD788,Kitchen,Matt Grey,
+G001583,Arxa Plus Kettle,Vezenor,,5044525122286,VEZ-3277-00,7347358,,Kitchen,Red,
+G001584,Xalu Coffee Maker,Iasofi,,,IAS-2262-00,3462580,,Kitchen,Blue,1.2L
+G001585,Xalu Coffee Maker,Iasofi,Teria Group,5026210564908,IAS-2262-10,,,Kitchen,Blue,1.8L
+G001586,Terso Kettle,Lumo Home,,,,,,Kitchen,White,1.5L
+G001587,Terso Kettle,Lumo Home,,5095338995246,LUM-0113-10,2689361,,Kitchen,White,1.7L
+G001588,Terve Classic Desk Lamp,Iasofi,,,IAS-4058-00,,,Home,Black,
+G001589,Terve Classic Desk Lamp,Iasofi,,,IAS-4058-01,,,Home,Silver,
+G001590,Orter Heater,Nova,,,,,NOV721,Home,Silver,1kW
+G001591,Orter Heater,Nova,Nocaar Group,5060006729737,,6679148,NOV721,Home,Silver,2kW
+G001592,Ardor Mini Shaver,Iasofi,Teria Group,,IAS-7679-00,8315385,IAS976,Personal care,Blue,
+G001593,Ardor Mini Shaver,Iasofi,Teria Group,5068827488482,IAS-7679-01,,IAS976,Personal care,Red,
+G001594,Luzen Mini Speaker,Lumo Home,,5025522945443,LUM-1070-00,,LUM074,Audio,Black,
+G001595,Luzen Mini Speaker,Lumo Home,,5041122324242,LUM-1070-01,7978656,LUM074,Audio,White,
+G001596,Mori Pro Hair Dryer,Terkive Home,Nocaar Group,5052760537703,TER-8192-00,9130544,TER305,Personal care,Matt Grey,
+G001597,Mori Pro Hair Dryer,Terkive Home,,5038718797399,,7579952,TER305,Personal care,Black,
+G001598,Teor Pro Headphones,Valu,Soso Group,5018819849036,VAL-0338-00,6975803,,Audio,Blue,
+G001599,Arva Toaster,Valu,,5062919827449,VAL-8257-00,,VAL743,Kitchen,Matt Grey,
+G001600,Nofi Desk Lamp,Zenelte,,5045846111515,ZEN-7742-00,,,Home,Matt Grey,Small
+G001601,Nofi Desk Lamp,Zenelte,Vaor Group,5087963409793,,3719141,,Home,Matt Grey,Large
+G001602,Veve Classic Fan,Terrifi,,5036745601269,TER-6055-00,,,Home,White,
+G001603,Veve Classic Fan,Terrifi,,,ter605500,1710849,,Home,White,
+G001604,Elva Mini Kettle,Kite,Kite Group,,KIT-7099-00,0685594,,Kitchen,Red,
+G001605,Elva Mini Kettle,Kite,Kite Group,5093159293138,KIT-7099-01,,,Kitchen,Blue,
+G001606,Xazen Pro Toaster,Ororso,,5057538402092,,5782061,ORO447,Kitchen,Red,
+G001607,Xazen Pro Toaster,Ororso,Ororso Group,5041195752447,,,ORO447,Kitchen,Matt Grey,
+G001608,Xazen Pro Toaster,Ororso,,5031871201932,ORO-8456-02,7736810,ORO447,Kitchen,White,
+G001609,Tezen Coffee Maker,Zenelte,Vaor Group,5012628918792,ZEN-4989-00,,,Kitchen,Red,1.2L
+G001610,Tezen Coffee Maker,Zenelte,,5011487172703,ZEN-4989-10,,,Kitchen,Red,1.8L
+G001611,Zenor Mini Desk Lamp,Lumo Home,Lumo Group,,LUM-0400-00,2327710,,Home,Blue,
+G001612,Zenor Mini Desk Lamp,Lumo Home,Lumo Group,5061516625571,LUM-0400-01,,,Home,White,
+G001613,Zenor Mini Desk Lamp,Lumo Home,,5019189649509,LUM-0400-02,4495543,,Home,Red,
+G001614,Molu Classic Desk Lamp,Caso,,,CAS-5249-00,2961197,CAS873,Home,Red,Small
+G001615,Molu Classic Desk Lamp,Caso,Vaorva Group,5016012636262,CAS-5249-10,,CAS873,Home,Red,Large
+G001616,Noki Kettle,Lumo Home,Lumo Group,,LUM-0844-00,,LUM893,Kitchen,White,1.5L
+G001617,Noki Kettle,Lumo Home,Lumo Group,5086904695103,LUM-0844-10,,LUM893,Kitchen,White,1.7L
+G001618,Iaxa Mini Drill,Arfimen,,5042170084362,ARF-2380-00,7638779,ARF124,Tools,Matt Grey,
+G001619,Iaxa Mini Drill,Arfimen,Lumo Group,5017622931259,ARF-2380-01,9312133,ARF124,Tools,Red,
+G001620,Iaxa Mini Drill,Arfimen,,5060928206743,ARF-2380-02,3854530,ARF124,Tools,Black,
+G001621,Telu Classic Desk Lamp,Vaorva,,5054948121605,VAO-1181-00,8416804,VAO283,Home,Silver,Small
+G001622,Telu Classic Desk Lamp,Vaorva,,,VAO-1181-10,1068742,VAO283,Home,Silver,Large
+G001623,Caca Mini Soundbar,Mori,,5003252644713,MOR-2598-00,,MOR703,Audio,Blue,2.1
+G001624,CACA MINI SOUNDBAR,Mori,,5003252644713,,9383875,MOR703,Audio,Blue,2.1
+G001625,Caca Mini Soundbar,Mori,,,MOR-2598-10,,MOR703,Audio,Blue,5.1
+G001626,Caca Mini Soundbar,MORI Ltd,,,MOR-2598-10,3607660,MOR703,Audio,Blue,5.1
+G001627,Caxa Headphones,Kite,Kite Group,5006087458999,,6687100,,Audio,Blue,
+G001628,Caxa Headphones,Kite,,5036399939060,KIT-3345-01,,,Audio,Red,
+G001629,Vaia Mini Desk Lamp,Texa,,5013918907403,TEX-6252-00,8640963,,Home,Red,Small
+G001630,VAIA MINI DESK LAMP,Texa,,5013918907403,,9883493,,Home,Red,Small
+G001631,Vaia Mini Desk Lamp,Texa,,5033963636196,TEX-6252-10,8962236,,Home,Red,Large
+G001632,Rica Classic Drill,Lumo Home,Lumo Group,5052100788611,,2910736,,Tools,White,
+G001633,Firi Classic Desk Lamp,Terrifi,Xateno Group,5000426669213,TER-7780-00,6703732,TER379,Home,Blue,Small
+G001634,Firi Classic Desk Lamp,Terrifi,Xateno Group,5058905332226,,7672916,TER379,Home,Blue,Large
+G001635,Teso Pro Desk Lamp,Vadorri Home,Vadorri Group,5099046430198,VAD-2389-00,0931335,VAD475,Home,Silver,Small
+G001636,Teso Pro Desk Lamp,Vadorri Home,Vadorri Group,5086507921159,VAD-2389-10,3753607,VAD475,Home,Silver,Large
+G001637,Moso Pro Sander,Dorca,,5056758007742,DOR-3885-00,,,Tools,White,
+G001638,Moso Pro Sander,Dorca,,,dor388500,3891678,,Tools,White,
+G001639,Moso Pro Sander,Dorca,,,DOR-3885-01,0378592,,Tools,Red,
+G001640,Moso Pro Sander,Dorca,,,,1374567,,Tools,,
+G001641,Caca Plus Soundbar,Ellu Home,Teria Group,5022443124322,ELL-1203-00,2144191,,Audio,Black,2.1
+G001642,Caca Plus Soundbar,Ellu Home,,5007372029115,ELL-1203-10,8102543,,Audio,Black,5.1
+G001643,Teter Pro Shaver,Teria,,5048488080911,,9457167,,Personal care,Red,
+G001644,TETER PRO SHAVER,Teria,,5048488080911,,4452628,,Personal care,Red,
+G001645,Noxa Pro Soundbar,Arfimen,,5076228557911,,,ARF197,Audio,White,
+G001646,Noxa Pro Soundbar,Arfimen,,5006191645650,,3885241,ARF197,Audio,Blue,
+G001647,Noxa Pro Soundbar,Arfimen,Lumo Group,5039951107686,ARF-0513-02,1613290,ARF197,Audio,Matt Grey,
+G001648,Tete Heater,Arfimen,,5016904071607,,2053847,ARF611,Home,Red,1kW
+G001649,Tete Heater,Arfimen,Lumo Group,5003861608328,ARF-5038-10,5508363,ARF611,Home,Red,2kW
+G001650,Vate Coffee Maker,Vaorva,Vaorva Group,,VAO-9490-00,2541864,VAO469,Kitchen,Silver,1.2L
+G001651,Vate Coffee Maker,Vaorva,Vaorva Group,5013402020274,VAO-9490-10,,VAO469,Kitchen,Silver,1.8L
+G001652,Rixa Headphones,Caar,,5071231733864,CAA-6192-00,0496276,CAA607,Audio,White,
+G001653,Rixa Headphones,Caar,,,,5234050,CAA607,Audio,Silver,
+G001654,Rixa Headphones,Caar,Soso Group,,CAA-6192-02,7847055,CAA607,Audio,Black,
+G001655,Mono Plus Heater,Terso,Lumo Group,5046485304665,TER-1013-00,,,Home,White,1kW
+G001656,Mono Plus Heater,Terso,,5095230771467,TER-1013-10,,,Home,White,2kW
+G001657,Orri Classic Shaver,Caso,Vaorva Group,,CAS-0074-00,6694298,,Personal care,Red,
+G001658,Orri Classic Shaver,Caso,,,CAS-0074-01,1397055,,Personal care,Silver,
+G001659,Menfi Speaker,Nocaar,Nocaar Group,5030645971477,,6236285,NOC278,Audio,White,Mini
+G001660,Speaker Menfi,Nocaar,,,,0712376,NOC278,Audio,White,Mini
+G001661,Menfi Speaker,Nocaar,Nocaar Group,,NOC-5564-10,9192922,NOC278,Audio,White,Max
+G001662,Moia Blender,Arfimen,Lumo Group,5026182335186,ARF-7631-00,8687261,,Kitchen,Red,
+G001663,Moia Blender,ARFIMEN Ltd,,,ARF-7631-00,7561625,,Kitchen,Red,
+G001664,Soor Speaker,Arrixa Home,,5027850507348,,,,Audio,Red,
+G001665,Soor Speaker,Arrixa Home,,,,9954569,,Audio,Red,
+G001666,Soor Speaker,Arrixa Home,Kite Group,5034809889790,ARR-6862-01,0997130,,Audio,White,
+G001667,Kixa Plus Headphones,Arxari,,5054370501525,ARX-2014-00,1691660,,Audio,Silver,
+G001668,Orzen Classic Toaster,Rite,Rite Group,5045453696351,,,,Kitchen,White,2 Slice
+G001669,Orzen Classic Toaster,Rite,,5077622782145,RIT-6967-10,1894028,,Kitchen,White,4 Slice
+G001670,Arter Mini Shaver,Luorca,Ororso Group,5034350905284,LUO-4888-00,6320285,,Personal care,Blue,
+G001671,Arter Mini Shaver,Luorca,Ororso Group,,,3817078,,Personal care,Black,
+G001672,Arter Mini Shaver,Luorca,Ororso Group,,LUO-4888-02,8109653,,Personal care,Silver,
+G001673,Kimo Pro Speaker,Vadorri Home,,5067764510355,VAD-9227-00,2395401,,Audio,Silver,Mini
+G001674,Kimo Pro Speaker,Vadorri Home,Vadorri Group,5050327743000,VAD-9227-10,4221425,,Audio,Silver,Max
+G001675,Arxa Sander,Ororso,,5076578253747,ORO-3302-00,2178296,ORO663,Tools,Black,
+G001676,Caar Pro Speaker,Xateno,,5069394655598,XAT-3237-00,2153400,,Audio,Blue,
+G001677,CAAR PRO SPEAKER,Xateno,,5069394655598,,3230640,,Audio,Blue,
+G001678,Caar Pro Speaker,Xateno,,5024150037667,XAT-3237-01,,,Audio,Red,
+G001679,Caar Pro Speaker,Xateno,,5001514561778,XAT-3237-02,,,Audio,White,
+G001680,Caia Plus Speaker,Fizen,Vaor Group,5006022826432,,,FIZ451,Audio,White,Mini
+G001681,Caia Plus Speaker,Fizen,,,FIZ-8458-10,,FIZ451,Audio,White,Max
+G001682,Doror Plus Blender,Soxa Home,Soxa Group,5051299665734,SOX-8071-00,7104190,,Kitchen,Silver,600W
+G001683,Doror Plus Blender,Soxa Home,,5020011865509,SOX-8071-10,,,Kitchen,Silver,1000W
+G001684,Menter Pro Headphones,Kite,,5030002639279,KIT-3351-00,2746518,,Audio,Silver,
+G001685,Menter Pro Headphones,Kite,Kite Group,5072547585581,KIT-3351-01,,,Audio,White,
+G001686,Vari Mini Sander,Nova,Nocaar Group,5054946332997,NOV-0696-00,9703421,,Tools,Blue,
+G001687,Vari Mini Sander,Nova,,5057203994952,NOV-0696-01,4595295,,Tools,Matt Grey,
+G001688,Soso Shaver,Teria,Teria Group,5042685056120,,,,Personal care,Red,
+G001689,Soso Shaver,Teria,Teria Group,5047173466139,TER-5336-01,5919980,,Personal care,Black,
+G001690,Menfi Plus Speaker,Arfimen,Lumo Group,5003384417964,ARF-6647-00,,ARF478,Audio,Blue,Mini
+G001691,Menfi Plus Speaker,Arfimen,Lumo Group,,,5394467,ARF478,Audio,Blue,Max
+G001692,Riki Classic Kettle,Terso,,,TER-1751-00,,TER965,Kitchen,Silver,1.5L
+G001693,Riki Classic Kettle,Terso,Lumo Group,,TER-1751-10,3105032,TER965,Kitchen,Silver,1.7L
+G001694,Orca Classic Shaver,Luorca,Ororso Group,5005342572333,,,LUO638,Personal care,White,
+G001695,Orca Classic Shaver,Luorca,Ororso Group,5016302739529,LUO-9390-01,,LUO638,Personal care,Silver,
+G001696,Termo Classic Headphones,Rifiia,,5031831418981,RIF-7492-00,9258597,RIF451,Audio,White,
+G001697,Termo Classic Headphones,Rifiia,,5058601262292,RIF-7492-01,,RIF451,Audio,Black,
+G001698,Termo Classic Headphones,Rifiia,Soxa Group,5093886583090,RIF-7492-02,3100929,RIF451,Audio,Red,
+G001699,Termo Classic Headphones,Rifiia,,,rif749202,8749841,RIF451,Audio,Red,
+G001700,Caxa Speaker,Fizen,,5091927771550,,,FIZ898,Audio,Red,Mini
+G001701,Caxa Speaker,Fizen,Vaor Group,5019298137874,FIZ-1272-10,8400042,FIZ898,Audio,Red,Max
+G001702,Zenva Plus Hair Dryer,Lumenia,Rite Group,5022706048433,LUM-8592-00,,,Personal care,Black,1800W
+G001703,Zenva Plus Hair Dryer,Lumenia,,5016337933954,LUM-8592-10,0548814,,Personal care,Black,2200W
+G001704,Moca Plus Sander,Arfimen,,5001992640453,ARF-4597-00,7160780,,Tools,Matt Grey,
+G001705,Moca Plus Sander,Arfimen,,5004162756442,ARF-4597-01,4597476,,Tools,Red,
+G001706,Riel Pro Heater,Cador,,5086762264350,,1695538,CAD494,Home,Silver,1kW
+G001707,Riel Pro Heater,Cador,Cador Group,5069241606971,CAD-9559-10,,CAD494,Home,Silver,2kW
+G001708,Vaxa Desk Lamp,Ellu Home,Teria Group,5095280169375,ELL-1538-00,8487666,,Home,Silver,
+G001709,VAXA DESK LAMP,Ellu Home,,5095280169375,,4145368,,Home,Silver,
+G001710,Vaxa Desk Lamp,Ellu Home,,5070177559712,,,,Home,White,
+G001711,Vaxa Desk Lamp,Ellu Home,Teria Group,5092538718880,,5984125,,Home,Matt Grey,
+G001712,Veva Mini Speaker,Ororso,,5060843032717,ORO-1245-00,3701383,ORO663,Audio,Blue,Mini
+G001713,Veva Mini Speaker,Ororso,,5055564714455,ORO-1245-10,,ORO663,Audio,Blue,Max
+G001714,Menki Plus Soundbar,Vezenor,,,VEZ-4341-00,,,Audio,Matt Grey,2.1
+G001715,Menki Plus Soundbar,Vezenor,,5088097642445,,3186721,,Audio,Matt Grey,5.1
+G001716,Iaxa Pro Speaker,Xateno,,5042861648873,XAT-3035-00,,,Audio,Matt Grey,Mini
+G001717,Iaxa Pro Speaker,Xateno,Xateno Group,5024729540468,XAT-3035-10,,,Audio,Matt Grey,Max
+G001718,Lumo Plus Speaker,Lumo Home,,,LUM-6713-00,,,Audio,Red,
+G001719,Lumo Plus Speaker,Lumo Home,Lumo Group,5061531607545,LUM-6713-01,,,Audio,Matt Grey,
+G001720,Iaki Fan,Terkive Home,Nocaar Group,5029400335234,TER-2290-00,,,Home,Black,12in
+G001721,Iaki Fan,Terkive Home,Nocaar Group,,TER-2290-10,6292228,,Home,Black,16in
+G001722,Ormo Headphones,Caso,Vaorva Group,5016038696561,,9809275,CAS599,Audio,Red,
+G001723,Luri Mini Speaker,Kizenor,Kizenor Group,,KIZ-1956-00,4606386,KIZ241,Audio,Black,
+G001724,Luri Mini Speaker,Kizenor,,5012818671346,,4398578,KIZ241,Audio,Matt Grey,
+G001725,Somo Speaker,Somo,,5036950264631,,2846248,,Audio,Blue,
+G001726,Somo Speaker,Somo,Arxari Group,,SOM-7945-01,8205104,,Audio,Silver,
+G001727,Kifi Pro Sander,Arnoel,Cador Group,5035982913265,,3383126,,Tools,Matt Grey,
+G001728,Kifi Pro Sander,Arnoel,,,,4594955,,Tools,,
+G001729,Kifi Pro Sander,Arnoel,,5003995812363,ARN-3966-01,3260042,,Tools,Silver,
+G001730,Kifi Pro Sander,Arnoel,,,,7509524,,Tools,White,
+G001731,Somo Drill,Xador,,,XAD-7523-00,7989969,,Tools,Matt Grey,12V
+G001732,Somo Drill,Xador,,5066129300709,XAD-7523-10,,,Tools,Matt Grey,18V
+G001733,Ridor Sander,Rifiia,Soxa Group,5041323538264,RIF-4221-00,2295849,RIF033,Tools,Blue,
+G001734,Ridor aSnder,Rifiia,,,,7878150,RIF033,Tools,Blue,
+G001735,Ridor Sander,Rifiia,Soxa Group,,,,RIF033,Tools,Matt Grey,
+G001736,Dorri Pro Soundbar,Ororso,,,ORO-8871-00,,,Audio,Silver,2.1
+G001737,Dorri Pro Soundbar,Ororso,Ororso Group,5073542262170,ORO-8871-10,,,Audio,Silver,5.1
+G001738,Ellu Mini Heater,Arnoel,Cador Group,,,5740098,,Home,Blue,
+G001739,Ellu Mini Heater,Arnoel,,5028238627696,ARN-7969-01,9912110,,Home,Red,
+G001740,Ellu Mini Heater,Arnoel,,,ARN-7969-02,,,Home,White,
+G001741,Orso Headphones,Lumo Home,Lumo Group,5087492703164,LUM-3855-00,,,Audio,Black,
+G001742,Kite Desk Lamp,Lumo Home,Lumo Group,,,,,Home,White,Small
+G001743,Kite Desk Lamp,Lumo Home,Lumo Group,5087233695789,LUM-3043-10,,,Home,White,Large
+G001744,Xaki Pro Drill,Dormoar,Texaki Group,5061922210132,DOR-9661-00,,,Tools,Matt Grey,
+G001745,Xaki Pro Drill,Dormoar,Texaki Group,5083025687178,DOR-9661-01,,,Tools,Red,
+G001746,Xaki Pro Drill,Dormoar,Texaki Group,5056411284169,DOR-9661-02,,,Tools,Silver,
+G001747,Zenfi Sander,Elteso Home,,5019007198189,ELT-3144-00,,ELT566,Tools,Black,
+G001748,Dorter Plus Blender,Ellu Home,Teria Group,5004165270372,ELL-9135-00,5608607,,Kitchen,White,600W
+G001749,Dorter Plus Blender,Ellu Home,Teria Group,5052897820747,ELL-9135-10,,,Kitchen,White,1000W
+G001750,Zenxa Classic Headphones,Luorca,Ororso Group,5083687314610,LUO-3448-00,,LUO823,Audio,White,
+G001751,Zenxa Classic Headphones,Luorca,Ororso Group,5058690683350,LUO-3448-01,0372901,LUO823,Audio,Black,
+G001752,Dordor Pro Soundbar,Fiterve,,5066332756706,FIT-8133-00,1637146,FIT695,Audio,Blue,2.1
+G001753,DORDOR PRO SOUNDBAR,Fiterve,,5066332756706,,5396795,FIT695,Audio,Blue,2.1
+G001754,Dordor Pro Soundbar,Fiterve,,5012850980741,,,FIT695,Audio,Blue,5.1
+G001755,DORDOR PRO SOUNDBAR,Fiterve,,5012850980741,,0206049,FIT695,Audio,Blue,5.1
+G001756,Soter Toaster,Orelno,,5006416031510,,,,Kitchen,White,2 Slice
+G001757,Soter Toaster,Orelno,Vacafi Group,5078388114713,ORE-9770-10,,,Kitchen,White,4 Slice
+G001758,Teso Mini Sander,Vadorri Home,Vadorri Group,5086098409470,VAD-2797-00,6446930,VAD640,Tools,Matt Grey,
+G001759,Teso Mini Sander,Vadorri Home,Vadorri Group,5086482987966,VAD-2797-01,4235217,VAD640,Tools,Silver,
+G001760,Teso Mini Sander,Vadorri Home,,,vad279701,7096058,VAD640,Tools,Silver,
+G001761,Teso Mini Sander,Vadorri Home,,5032384115839,VAD-2797-02,,VAD640,Tools,White,
+G001762,Riar Coffee Maker,Zenca,,5056772258106,ZEN-2035-00,,,Kitchen,Red,1.2L
+G001763,Riar Coffee Maker,Zenca,Kite Group,5065303844640,ZEN-2035-10,4675895,,Kitchen,Red,1.8L
+G001764,Menve Plus Heater,Luiamen,Vadorri Group,5053294098401,LUI-5710-00,0627813,,Home,White,1kW
+G001765,Menve Plus Heater,Luiamen,Vadorri Group,5011208752207,LUI-5710-10,9856657,,Home,White,2kW
+G001766,Oria Desk Lamp,Arfimen,Lumo Group,5003408197100,ARF-9333-00,3390463,ARF055,Home,Blue,Small
+G001767,Oria Desk Lamp,Arfimen,Lumo Group,,ARF-9333-10,9456582,ARF055,Home,Blue,Large
+G001768,Note Soundbar,Vadorri Home,Vadorri Group,5098867476323,VAD-9971-00,6862857,,Audio,Red,2.1
+G001769,Note Soundbar,Vadorri Home,Vadorri Group,5004194255548,VAD-9971-10,6083288,,Audio,Red,5.1
+G001770,Iate Plus Blender,Soso Home,Texaki Group,5062492874281,SOS-6827-00,,,Kitchen,Blue,600W
+G001771,Iate Plus Blender,Soso Home,,5000189303942,SOS-6827-10,,,Kitchen,Blue,1000W
+G001772,Kive Heater,Nocaar,,5078660676021,,4592204,,Home,Black,1kW
+G001773,Kive Heater,Nocaar,,,,3861623,,Home,Black,1kW
+G001774,Kive Heater,Nocaar,,5009419264220,NOC-5514-10,6873028,,Home,Black,2kW
+G001775,Zenmo Plus Coffee Maker,Luorca,Ororso Group,5056943817774,,7696719,,Kitchen,Matt Grey,1.2L
+G001776,Zenmo Plus Coffee Maker,Luorca,,5061321809920,LUO-4259-10,9256229,,Kitchen,Matt Grey,1.8L
+G001777,Orno Classic Drill,Kizenor,,,KIZ-6134-00,8023642,KIZ229,Tools,Red,12V
+G001778,Orno Classic Drill,Kizenor,,5069323098403,KIZ-6134-10,7922912,KIZ229,Tools,Red,18V
+G001779,Menso Soundbar,Nocaar,,5035408513543,NOC-9753-00,3617417,,Audio,Blue,2.1
+G001780,Menso Soundbar,Nocaar,Nocaar Group,5033858376237,NOC-9753-10,,,Audio,Blue,5.1
+G001781,Tear Mini Toaster,Mori,,5019819694022,MOR-0708-00,5770616,,Kitchen,Matt Grey,2 Slice
+G001782,Tear Mini Toaster,Mori,,,MOR-0708-10,,,Kitchen,Matt Grey,4 Slice
+G001783,Menxa Mini Soundbar,Orelno,Vacafi Group,5011642639416,ORE-5913-00,,,Audio,White,
+G001784,Menxa Mini Soundbar,Orelno,,,ORE-5913-01,5064233,,Audio,Silver,
+G001785,Iazen Pro Coffee Maker,Rite,,5099736483237,RIT-7421-00,,RIT438,Kitchen,White,1.2L
+G001786,Iazen Pro Coffee Maker,Rite,,5088742335845,RIT-7421-10,9108656,RIT438,Kitchen,White,1.8L
+G001787,Orve Heater,Vadorri Home,Vadorri Group,5081070453557,VAD-4191-00,,VAD228,Home,Silver,1kW
+G001788,ORVE HEATER,Vadorri Home,,5081070453557,,6267369,VAD228,Home,Silver,1kW
+G001789,Orve Heater,Vadorri Home,,5066789592353,VAD-4191-10,3257122,VAD228,Home,Silver,2kW
+G001790,Zenso Toaster,Zenri,Vacafi Group,5065730799063,ZEN-7210-00,,ZEN609,Kitchen,Blue,2 Slice
+G001791,Zenso Toaster,Zenri,,5092408792910,ZEN-7210-10,5488964,ZEN609,Kitchen,Blue,4 Slice
+G001792,Kiso Shaver,Vacafi Home,,5035698308362,VAC-2305-00,9180869,VAC445,Personal care,Silver,
+G001793,Kiso Shaver,Vacafi Home,Vacafi Group,5098925808417,VAC-2305-01,4537943,VAC445,Personal care,Red,
+G001794,Zenmo Fan,Vaor,Vaor Group,5042116083930,VAO-9608-00,2582025,VAO902,Home,Blue,
+G001795,Zenmo Fan,Vaor,,,VAO-9608-01,0696280,VAO902,Home,Black,
+G001796,Zenmo Fan,Vaor,Vaor Group,5091591236287,,5302016,VAO902,Home,Silver,
+G001797,Riel Toaster,Lumo Home,,5035891238343,LUM-3517-00,9850986,,Kitchen,Blue,2 Slice
+G001798,Riel Toaster,Lumo Home,,,,,,Kitchen,Blue,4 Slice
+G001799,Vano Plus Fan,Soso,Soso Group,5087661767768,SOS-0124-00,4629067,SOS395,Home,Matt Grey,
+G001800,Nozen Classic Speaker,Fizen,,,FIZ-5081-00,8587264,,Audio,Silver,Mini
+G001801,Nozen Classic Speaker,Fizen,Vaor Group,5012580002058,FIZ-5081-10,3706617,,Audio,Silver,Max
+G001802,Terter Heater,Fizen,Vaor Group,5088798676626,FIZ-7919-00,,,Home,Red,
+G001803,Noca Speaker,Xateno,Xateno Group,5016130100461,,2593597,XAT117,Audio,Red,Mini
+G001804,NOCA SPEAKER,Xateno,,5016130100461,,7344061,XAT117,Audio,Red,Mini
+G001805,Noca Speaker,Xateno,Xateno Group,,XAT-8969-10,3002598,XAT117,Audio,Red,Max
+G001806,Luar Headphones,Nocaar,Nocaar Group,5051496320177,NOC-2106-00,6689688,NOC922,Audio,Matt Grey,
+G001807,Luar Headphones,Nocaar,Nocaar Group,5094381086277,NOC-2106-01,,NOC922,Audio,Black,
+G001808,Zenca Classic Headphones,Kizenor,,5045886110608,,,KIZ454,Audio,Black,
+G001809,Zenca Classic Headphones,Kizenor,,5014548997529,KIZ-7373-01,,KIZ454,Audio,Red,
+G001810,Orca Plus Desk Lamp,Zenri,,,ZEN-1545-00,0609211,,Home,White,Small
+G001811,Orca Plus Desk Lamp,Zenri,Vacafi Group,5087102968297,,1844882,,Home,White,Large
+G001812,Menmo Fan,Terso,Lumo Group,,,,,Home,White,12in
+G001813,Menmo Fan,Terso,,,,0816752,,Home,White,12in
+G001814,Menmo Fan,Terso,Lumo Group,5052684317566,TER-6595-10,7040135,,Home,White,16in
+G001815,Terte Classic Heater,Luiamen,,5096157306503,LUI-4887-00,6832277,,Home,White,1kW
+G001816,Terte Classic Heater,Luiamen,,5055611932238,LUI-4887-10,2278294,,Home,White,2kW
+G001817,Riki Mini Drill,Arfimen,Lumo Group,5090263604447,ARF-0039-00,,,Tools,Silver,
+G001818,Teror Mini Hair Dryer,Vaor,,5073621950943,VAO-0937-00,,VAO258,Personal care,Red,
+G001819,Teror Mini Hair Dryer,Vaor,Vaor Group,5062911194204,VAO-0937-01,9907918,VAO258,Personal care,White,
+G001820,Teror Mini Hair Dryer,Vaor,Vaor Group,5067536507354,VAO-0937-02,5340618,VAO258,Personal care,Black,
+G001821,Xafi Classic Fan,Terso,Lumo Group,5064139794556,,,TER285,Home,Black,12in
+G001822,Xafi Classic Fan,Terso,Lumo Group,5040349539958,TER-3338-10,,TER285,Home,Black,16in
+G001823,Nono Coffee Maker,Terso,Lumo Group,5034340520145,TER-1983-00,1231632,,Kitchen,White,
+G001824,Dorlu Classic Blender,Soso,Soso Group,5018038667671,SOS-1405-00,,SOS875,Kitchen,Blue,600W
+G001825,Dorlu Classic Blender,Soso,,5003623316386,SOS-1405-10,,SOS875,Kitchen,Blue,1000W
+G001826,Noia Pro Soundbar,Terso,,5068463540407,,,,Audio,White,2.1
+G001827,Noia Pro Soundbar,Terso,Lumo Group,5005367396075,,,,Audio,White,5.1
+G001828,Luor Pro Shaver,Ellu Home,Teria Group,5038547326784,ELL-6463-00,,ELL455,Personal care,Black,
+G001829,Ardor Toaster,Zenri,Vacafi Group,5006657848632,,0384673,,Kitchen,Blue,
+G001830,Caki Pro Desk Lamp,Caso,Vaorva Group,5026081669337,CAS-2188-00,,,Home,Black,Small
+G001831,Caki Pro Desk Lamp,Caso,,5072416046502,CAS-2188-10,,,Home,Black,Large
+G001832,Telu Mini Soundbar,Teria,,5056554172057,TER-3811-00,1409657,,Audio,Silver,2.1
+G001833,Telu Mini Soundbar,Teria,,5096556174505,TER-3811-10,4009328,,Audio,Silver,5.1
+G001834,Noso Plus Heater,Moordor Home,,,MOO-0996-00,8885595,,Home,Black,
+G001835,Fior Mini Fan,Vacafi Home,,5084017498628,VAC-4574-00,,VAC325,Home,Matt Grey,12in
+G001836,Fior Mini Fan,Vacafi Home,,5078261395086,VAC-4574-10,7065396,VAC325,Home,Matt Grey,16in
+G001837,Oror Hair Dryer,Arfimen,,5051973372743,ARF-2465-00,4162101,ARF946,Personal care,Matt Grey,
+G001838,Rixa Fan,Armenar,,5094508524804,ARM-4316-00,,ARM396,Home,Blue,
+G001839,Rixa Fan,Armenar,Armenar Group,5061656948318,ARM-4316-01,8407111,ARM396,Home,Red,
+G001840,Arri Coffee Maker,Soso,Soso Group,5082653425879,,2188487,SOS306,Kitchen,Black,
+G001841,Arri Coffee Maker,Soso,Soso Group,5060044349935,SOS-5199-01,2615357,SOS306,Kitchen,White,
+G001842,Fior Classic Shaver,Orelno,,5041333563584,ORE-9403-00,,,Personal care,Red,
+G001843,Fior Blender,Lumo Home,Lumo Group,5030475493392,LUM-6183-00,,,Kitchen,Black,600W
+G001844,Fior Blender,Lumo Home,,5059263282390,LUM-6183-10,6985991,,Kitchen,Black,1000W
+G001845,Teter Classic Hair Dryer,Dorca,Cador Group,5082834774635,,2540010,DOR899,Personal care,Black,
+G001846,Teter Classic Hair Dryer,Dorca,Cador Group,5006802341612,,,DOR899,Personal care,Red,
+G001847,Teter Classic Hair Dryer,Dorca,,5062631142226,,5001495,DOR899,Personal care,Silver,
+G001848,Moor Mini Drill,Vezenki,Arxari Group,5037135300144,VEZ-1014-00,4278778,,Tools,Blue,
+G001849,Ormo Toaster,Vaorva,Vaorva Group,5013014312590,,3718051,,Kitchen,Black,
+G001850,Ormo Toaster,Vaorva,Vaorva Group,5047727954136,VAO-3370-01,2976623,,Kitchen,Matt Grey,
+G001851,Rilu Pro Speaker,Lumo Home,,5093722213372,LUM-5077-00,3280569,LUM892,Audio,White,Mini
+G001852,Rilu Pro Speaker,Lumo Home,,5092294962879,LUM-5077-10,6776869,LUM892,Audio,White,Max
+G001853,Ardor Mini Blender,Soxa Home,,5095609405986,SOX-5866-00,7298499,,Kitchen,Red,
+G001854,Doria Toaster,Nocaar,Nocaar Group,5052328857199,NOC-3518-00,6590590,NOC790,Kitchen,Black,2 Slice
+G001855,Doria Toaster,Nocaar,Nocaar Group,,,,NOC790,Kitchen,Black,4 Slice
+G001856,Cano Pro Headphones,Lumo Home,Lumo Group,5083281648890,,,LUM934,Audio,Red,
+G001857,Sove Classic Toaster,Orelno,,5042368432128,ORE-9815-00,,,Kitchen,Red,2 Slice
+G001858,Sove Classic Toaster,Orelno,,5085970222190,,9879827,,Kitchen,Red,4 Slice
+G001859,Zenor Classic Soundbar,Soso Home,Texaki Group,5059679536131,SOS-0633-00,4492346,,Audio,White,2.1
+G001860,Classic Soundbar Zenor,Soso Home,,,,4267004,,Audio,White,2.1
+G001861,Zenor Classic Soundbar,Soso Home,,5051632826655,SOS-0633-10,9686709,,Audio,White,5.1
+G001862,Rica Pro Hair Dryer,Terso,,5012757161182,,,,Personal care,Red,1800W
+G001863,Rica Pro Hair Dryer,Terso,,5013353120924,TER-5112-10,8025994,,Personal care,Red,2200W
+G001864,Veki Plus Hair Dryer,Elteso Home,Soso Group,5097772681785,ELT-8671-00,5574880,,Personal care,Red,1800W
+G001865,Veki Plus Hair Dryer,Elteso Home,Soso Group,,ELT-8671-10,0748073,,Personal care,Red,2200W
+G001866,Luno Pro Fan,Rifiia,,,RIF-3295-00,5593533,RIF559,Home,White,
+G001867,Luno Pro Fan,Rifiia,Soxa Group,5030788963018,RIF-3295-01,,RIF559,Home,Silver,
+G001868,Dorno Soundbar,Lumo Home,Lumo Group,5012926173060,LUM-6951-00,,LUM657,Audio,Blue,
+G001869,Iaar Blender,Vezenor,Armenar Group,5035283758213,VEZ-8587-00,8912034,VEZ362,Kitchen,Red,600W
+G001870,IAAR BLENDER,Vezenor,,5035283758213,,9698937,VEZ362,Kitchen,Red,600W
+G001871,Iaar Blender,Vezenor,,5072718845865,VEZ-8587-10,9167618,VEZ362,Kitchen,Red,1000W
+G001872,Fifi Heater,Terso,,5034507018416,TER-2208-00,2948740,,Home,Red,1kW
+G001873,Fifi Heater,Terso,Lumo Group,5051697001981,TER-2208-10,,,Home,Red,2kW
+G001874,Firi Fan,Mori,,,MOR-8706-00,,MOR727,Home,White,12in
+G001875,Firi Fan,Mori,Vadorri Group,5047085572638,MOR-8706-10,6590534,MOR727,Home,White,16in
+G001876,Doror Classic Desk Lamp,Fizen,,,FIZ-5182-00,3763430,,Home,Silver,Small
+G001877,Doror Classic Desk Lamp,Fizen,Vaor Group,5077367160536,FIZ-5182-10,,,Home,Silver,Large
+G001878,Dorca Fan,Caar,,5084094585341,CAA-5485-00,,CAA672,Home,Blue,
+G001879,Dorca Fan,Caar,,5049059890984,CAA-5485-01,0360263,CAA672,Home,White,
+G001880,Luca Fan,Lumo Home,,,LUM-5187-00,6274059,,Home,Blue,12in
+G001881,Luca Fan,Lumo Home,,5070793871977,LUM-5187-10,1970427,,Home,Blue,16in
+G001882,Kiso Coffee Maker,Somo,,5077220487534,SOM-2715-00,3883738,SOM162,Kitchen,Red,
+G001883,Kiso Coffee Maker,Somo,,5049033544322,SOM-2715-01,9681892,SOM162,Kitchen,White,
+G001884,Kite Toaster,Lumo Home,,5048498103020,LUM-8805-00,8355529,LUM982,Kitchen,Black,2 Slice
+G001885,Kite Toaster,Lumo Home,,5055460044410,LUM-8805-10,,LUM982,Kitchen,Black,4 Slice
+G001886,Menor Mini Blender,Texaki,,5007735518690,TEX-5151-00,6004507,TEX160,Kitchen,Matt Grey,
+G001887,Camen Shaver,Zenelte,,5002301702091,ZEN-6640-00,2384962,ZEN091,Personal care,Matt Grey,
+G001888,Camen Shaver,Zenelte,Vaor Group,,ZEN-6640-01,5008606,ZEN091,Personal care,Silver,
+G001889,Luor Fan,Arfimen,Lumo Group,5089252820333,ARF-4535-00,,,Home,Black,
+G001890,Luor Fan,Arfimen,,5068502380124,,4189512,,Home,Red,
+G001891,Lufi Blender,Vaorva,,5088985521791,VAO-9915-00,,,Kitchen,Blue,600W
+G001892,Lufi Blender,Vaorva,,5001250695713,VAO-9915-10,4881659,,Kitchen,Blue,1000W
+G001893,Vael Pro Drill,Ellu Home,,5018515990476,ELL-5569-00,7371798,ELL692,Tools,White,12V
+G001894,Vael Pro Drill,Ellu Home,Teria Group,5098453984379,,4420603,ELL692,Tools,White,18V
+G001895,VAEL PRO DRILL,Ellu Home,,5098453984379,,1212254,ELL692,Tools,White,18V
+G001896,Moca Kettle,Sono,,5092152602572,SON-9375-00,9194421,SON289,Kitchen,Blue,
+G001897,Terfi Toaster,Iaelte,,,IAE-3839-00,3395410,IAE167,Kitchen,Matt Grey,2 Slice
+G001898,Terfi Toaster,Iaelte,,5083591637263,IAE-3839-10,4256852,IAE167,Kitchen,Matt Grey,4 Slice
+G001899,Camo Pro Speaker,Arfimen,Lumo Group,5025317921614,ARF-8347-00,,ARF929,Audio,Silver,Mini
+G001900,Camo Pro Speaker,Arfimen,,,,0361198,ARF929,Audio,Silver,Max
+G001901,Teve Mini Headphones,Kite,Kite Group,5047452757798,KIT-4855-00,3148094,,Audio,Blue,
+G001902,Teve Mini Headphones,Kite,Kite Group,5092438162905,KIT-4855-01,3336500,,Audio,Silver,
+G001903,Riki Kettle,Terkive Home,Nocaar Group,5057924909433,TER-4143-00,9486858,,Kitchen,White,
+G001904,Riki Kettle,Terkive Home,,5016470298477,TER-4143-01,,,Kitchen,Black,
+G001905,Dorfi Plus Drill,Ororso,Ororso Group,5084688237083,ORO-6498-00,9801832,ORO800,Tools,Blue,12V
+G001906,Dorfi Plus Drill,Ororso,Ororso Group,5055617062052,ORO-6498-10,,ORO800,Tools,Blue,18V
+G001907,Teter Sander,Zenri,Vacafi Group,5007846964294,ZEN-4358-00,3649861,ZEN352,Tools,Matt Grey,
+G001908,Teter Sander,Zenri,Vacafi Group,5097129421538,ZEN-4358-01,2036721,ZEN352,Tools,Red,
+G001909,Teno Plus Toaster,Iaar Home,Kizenor Group,5007961507970,IAA-8107-00,7320330,IAA281,Kitchen,Silver,2 Slice
+G001910,TENO PLUS TOASTER,Iaar Home,,5007961507970,,5198709,IAA281,Kitchen,Silver,2 Slice
+G001911,Teno Plus Toaster,Iaar Home,Kizenor Group,5019108819013,,,IAA281,Kitchen,Silver,4 Slice
+G001912,TENO PLUS TOASTER,Iaar Home,,5019108819013,,1239644,IAA281,Kitchen,Silver,4 Slice
+G001913,Veve Pro Drill,Vaorva,Vaorva Group,5057669340652,,7930698,,Tools,White,12V
+G001914,Veve Pro Drill,Vaorva,,5016037112321,VAO-3425-10,5866487,,Tools,White,18V
+G001915,Noor Shaver,Teria,Teria Group,5039459333150,TER-0045-00,2729780,TER630,Personal care,Red,
+G001916,Noor Shaver,TERIA Ltd,,,TER-0045-00,4469877,TER630,Personal care,Red,
+G001917,Noor Shaver,Teria,,5052685165227,TER-0045-01,8307567,TER630,Personal care,White,
+G001918,Iari Sander,Terrifi,,5038233379308,TER-2921-00,,,Tools,Silver,
+G001919,Iari Sander,Terrifi,Xateno Group,5082343412448,TER-2921-01,7889846,,Tools,Red,
+G001920,Iari Sander,Terrifi,,5012195142194,TER-2921-02,6921587,,Tools,Black,
+G001921,Caso Pro Drill,Dorxa,Dorxa Group,5015042690022,DOR-3559-00,6503405,DOR637,Tools,White,12V
+G001922,Caso Pro Drill,Dorxa,,5093665721507,DOR-3559-10,2631886,DOR637,Tools,White,18V
+G001923,Menor Toaster,Rite,Rite Group,5084151774916,RIT-5736-00,5131234,RIT712,Kitchen,Black,
+G001924,Teva Plus Toaster,Lumo Home,,5018306433564,,,LUM119,Kitchen,Blue,2 Slice
+G001925,TEVA PLUS TOASTER,Lumo Home,,5018306433564,,1518448,LUM119,Kitchen,Blue,2 Slice
+G001926,Teva Plus Toaster,Lumo Home,Lumo Group,,LUM-5711-10,,LUM119,Kitchen,Blue,4 Slice
+G001927,Riar Classic Hair Dryer,Nocaar,,5052755187876,,3324625,,Personal care,Matt Grey,
+G001928,Riar Classic Hair Dryer,Nocaar,,5008893817304,NOC-8662-01,3778704,,Personal care,Silver,
+G001929,Nodor Classic Speaker,Caso,,5070678012051,CAS-6013-00,1545300,,Audio,Blue,Mini
+G001930,Nodor Classic Speaker,Caso,Vaorva Group,5063369003643,CAS-6013-10,8662387,,Audio,Blue,Max
+G001931,Kimen Plus Sander,Fiterve,Dorxa Group,5096249414178,FIT-3011-00,2374106,FIT129,Tools,White,
+G001932,KIMEN PLUS SANDER,Fiterve,,5096249414178,,4167876,FIT129,Tools,White,
+G001933,Menno Hair Dryer,Lumo Home,Lumo Group,5065045872369,LUM-1975-00,,,Personal care,Silver,1800W
+G001934,Menno Hair Dryer,Lumo Home,Lumo Group,5062295575514,LUM-1975-10,3233473,,Personal care,Silver,2200W
+G001935,Kiki Kettle,Orelno,,5006634748719,ORE-9017-00,,ORE200,Kitchen,Black,1.5L
+G001936,Kiki Kettle,Orelno,,5000599369293,ORE-9017-10,,ORE200,Kitchen,Black,1.7L
+G001937,Kiki Kettle,Orelno,,,ore901710,9581885,ORE200,Kitchen,Black,1.7L
+G001938,Elter Classic Soundbar,Teria,Teria Group,5041161840123,TER-9745-00,7863565,,Audio,Silver,2.1
+G001939,Elter Classic Soundbar,Teria,,5065695977841,TER-9745-10,9308799,,Audio,Silver,5.1
+G001940,Menlu Plus Desk Lamp,Texa,Soxa Group,5033298936756,TEX-3010-00,,TEX098,Home,Matt Grey,Small
+G001941,MENLU PLUS DESK LAMP,Texa,,5033298936756,,5353856,TEX098,Home,Matt Grey,Small
+G001942,Menlu Plus Desk Lamp,Texa,Soxa Group,5013279402999,TEX-3010-10,,TEX098,Home,Matt Grey,Large
+G001943,Caia Mini Speaker,Dorca,,5078976514642,DOR-8217-00,9412332,,Audio,Red,Mini
+G001944,Caia Mini Speaker,Dorca,,5097891197686,DOR-8217-10,,,Audio,Red,Max
+G001945,Terzen Mini Sander,Fizen,,5098981508689,FIZ-1515-00,,,Tools,Black,
+G001946,Terzen Mini Sander,Fizen,,5056069636419,FIZ-1515-01,9109272,,Tools,Silver,
+G001947,Moar Plus Kettle,Arxari,,5069512930651,,,ARX503,Kitchen,Blue,
+G001948,Kiso Classic Desk Lamp,Sono,,5040447421131,SON-3813-00,9154315,SON785,Home,Blue,Small
+G001949,Kiso Classic Desk Lamp,Sono,,5019952231467,SON-3813-10,,SON785,Home,Blue,Large
+G001950,Caia Classic Sander,Iaar Home,Kizenor Group,5052008728269,IAA-6955-00,0613803,IAA706,Tools,Silver,
+G001951,Caia Classic Sander,Iaar Home,,5034362167410,IAA-6955-01,,IAA706,Tools,Blue,
+G001952,Caia Classic Sander,Iaar Home,Kizenor Group,5052278399404,IAA-6955-02,5657144,IAA706,Tools,Red,
+G001953,Arki Desk Lamp,Terso,,5092761307486,TER-2474-00,5369663,TER855,Home,White,Small
+G001954,Arki Desk Lamp,Terso,,5036795243471,TER-2474-10,1782298,TER855,Home,White,Large
+G001955,Cari Classic Drill,Luorca,,5087809358292,LUO-8233-00,7791680,LUO144,Tools,Silver,12V
+G001956,Cari Classic Drill,Luorca,Ororso Group,5044454302650,LUO-8233-10,,LUO144,Tools,Silver,18V
+G001957,Menca Sander,Texa,,5025556369772,TEX-6771-00,8772715,TEX028,Tools,White,
+G001958,Menca Sander,Texa,Soxa Group,5057639065592,TEX-6771-01,7450633,TEX028,Tools,Black,
+G001959,Vave Pro Fan,Texa,Soxa Group,5060944576035,TEX-1973-00,1701434,,Home,Blue,12in
+G001960,Vave Pro Fan,Texa,,5054422300991,,,,Home,Blue,16in
+G001961,Ellu Hair Dryer,Luiamen,Vadorri Group,,LUI-9624-00,,,Personal care,Black,
+G001962,Ellu Hair Dryer,Luiamen,Vadorri Group,5012922476059,,7820221,,Personal care,Matt Grey,
+G001963,Terdor Sander,Vaor,,5002618033796,VAO-2054-00,8001893,,Tools,Black,
+G001964,TERDOR SANDER,Vaor,,5002618033796,,6742971,,Tools,Black,
+G001965,Terdor Sander,Vaor,Vaor Group,5035084410518,VAO-2054-01,4361005,,Tools,Blue,
+G001966,Calu Plus Soundbar,Arfimen,Lumo Group,5035571200554,ARF-1840-00,,,Audio,Red,2.1
+G001967,Calu Plus Soundbar,Arfimen,Lumo Group,5074172407252,ARF-1840-10,,,Audio,Red,5.1
+G001968,Elter Mini Heater,Fizen,,,FIZ-7783-00,,,Home,Matt Grey,1kW
+G001969,Elter Mini Heater,Fizen,Vaor Group,5023243727348,FIZ-7783-10,,,Home,Matt Grey,2kW
+G001970,Mini Heater Elter,Fizen,,,,7640042,,Home,Matt Grey,2kW
+G001971,Caar Pro Desk Lamp,Soso,,,,8092854,,Home,Red,
+G001972,Caar Pro Desk Lamp,Soso,,5086375133081,SOS-9736-01,,,Home,Matt Grey,
+G001973,Nozen Speaker,Ororso,,5056221973802,ORO-0906-00,1744054,,Audio,Blue,Mini
+G001974,Nozen Speaker,Ororso,,5062154042553,,7202255,,Audio,Blue,Max
+G001975,Menia Heater,Ororso,,,ORO-6675-00,,,Home,Red,1kW
+G001976,Menia Heater,Ororso,Ororso Group,5003353597000,ORO-6675-10,8354647,,Home,Red,2kW
+G001977,Terzen Blender,Lumo Home,,5053100660259,LUM-9475-00,,LUM612,Kitchen,Blue,
+G001978,Terzen Blender,Lumo Home,Lumo Group,5093439026722,LUM-9475-01,6219526,LUM612,Kitchen,White,
+G001979,Nofi Pro Blender,Kizenor,,5057985148536,,,,Kitchen,Black,
+G001980,Nofi Pro Blender,Kizenor,Kizenor Group,5044635327700,KIZ-5188-01,1080510,,Kitchen,Matt Grey,
+G001981,Xaar Mini Hair Dryer,Lumo Home,Lumo Group,,LUM-1643-00,,LUM936,Personal care,Black,1800W
+G001982,Xaar Mini Hair Dryer,Lumo Home,Lumo Group,5034536032995,LUM-1643-10,,LUM936,Personal care,Black,2200W
+G001983,Arfi Soundbar,Vaorva,,5071122772873,VAO-9926-00,0166732,,Audio,Red,2.1
+G001984,Arfi Soundbar,Vaorva,,5084289773454,VAO-9926-10,9774539,,Audio,Red,5.1
+G001985,Menso Classic Blender,Nocaar,,5097275280911,NOC-1016-00,7871650,NOC473,Kitchen,Matt Grey,
+G001986,Caxa Plus Fan,Luiamen,Vadorri Group,5020985507849,,1124409,LUI079,Home,Red,12in
+G001987,Caxa Plus Fan,Luiamen,Vadorri Group,5048280382855,LUI-5429-10,3298645,LUI079,Home,Red,16in
+G001988,Kite Plus Speaker,Zenelte,,5010753337433,ZEN-7686-00,,,Audio,Blue,Mini
+G001989,Kite Plus Speaker,Zenelte,Vaor Group,5084256220011,ZEN-7686-10,7679271,,Audio,Blue,Max
+G001990,Menri Coffee Maker,Fiterve,Dorxa Group,5084677682948,FIT-2138-00,6651836,FIT344,Kitchen,White,1.2L
+G001991,Menri Coffee Maker,Fiterve,,5061408350659,FIT-2138-10,,FIT344,Kitchen,White,1.8L
+G001992,Zenel Speaker,Iaar Home,Kizenor Group,5032193342624,,9661084,,Audio,Silver,
+G001993,ZENEL SPEAKER,Iaar Home,,5032193342624,,1286201,,Audio,Silver,
+G001994,Dorter Plus Soundbar,Iasofi,,5028816128836,IAS-3360-00,1346360,,Audio,Blue,
+G001995,Noor Mini Desk Lamp,Vaorva,,5013024903900,VAO-3605-00,3641817,,Home,Black,
+G001996,Noor Mini Desk Lamp,Vaorva,Vaorva Group,5002892752444,VAO-3605-01,1435447,,Home,Blue,
+G001997,Noor Mini Desk Lamp,Vaorva,,,VAO-3605-02,,,Home,Matt Grey,
+G001998,Caxa Pro Coffee Maker,Ororso,,5062573753917,,,,Kitchen,Blue,
+G001999,Caxa Pro Coffee Maker,Ororso,Ororso Group,5080983546042,,4767552,,Kitchen,Black,
+G002000,Somo Pro Coffee Maker,Terkive Home,,5081401472790,,0581108,,Kitchen,Black,

@@ -40,9 +40,9 @@ The original file matters because matched results alone cannot reveal duplicates
 
 PairSight creates one shared collection of record pairs to review. Jev assesses each pair using the available record details and the user’s definition of identity. PairSight then compares each vendor’s decisions against those assessments.
 
-In v1, users define blocking rules that create overlapping candidate buckets, such as shared email, shared phone, or name and location. PairSight compares records within these buckets to reduce unnecessary comparisons. A record can belong to several buckets. These buckets identify pairs worth checking; they do not declare the records to be duplicates.
+PairSight suggests the pairs worth checking. It learns from the user’s own records what a duplicate looks like for that type of record, and suggests the pairs whose records share enough, such as the same date of birth, the same company number or the same barcode. It needs at least 200 records to learn from. A suggested pair is only worth checking; PairSight never declares the records to be duplicates.
 
-Every vendor-predicted match is included in the review, even if it falls outside the suggested buckets. Blocked candidates and all vendor-matched pairs are combined into one comparison set. Duplicate and reversed pairs are collapsed, and self-pairs are excluded. The same pair is assessed once per evaluation configuration and reused across vendors. Vendor names and match scores should not influence Jev’s identity judgment.
+Every vendor-predicted match is included in the review, even if PairSight did not suggest it. The suggested pairs and all vendor-matched pairs are combined into one comparison set. Duplicate and reversed pairs are collapsed, and self-pairs are excluded. The same pair is assessed once per evaluation configuration and reused across vendors. Vendor names and match scores should not influence Jev’s identity judgment.
 
 ## The user journey
 
@@ -66,9 +66,9 @@ The user uploads a vendor’s export and gives it a recognizable name. They iden
 
 The user specifies the identity objective. For the initial customer-record release, this means the same individual, rather than the same household or employer. They can add context, such as how local phone numbers should be interpreted or which fields are especially important.
 
-### 6. Define blocking rules and review the comparison plan
+### 6. Review the pairs Jev will check
 
-The user defines candidate rules using the mapped identity fields. PairSight builds overlapping buckets and shows the record count, vendors, unique candidate-pair count, and reduction compared with every possible pair. It also shows vendor-matched pairs added outside the blocking rules. Large buckets and group exports that expand into many pairs are flagged before evaluation starts. Pairs excluded by blocking remain unassessed unless a vendor matched them.
+PairSight shows how many pairs it suggests, what they share, and how many of each vendor’s pairs they already include. The plan then shows the record count, vendors, the unique pair count, and the vendor-matched pairs PairSight did not suggest, which are added too. A plan over the pair limit is flagged before evaluation starts, with where its pairs come from. Pairs PairSight did not suggest and no vendor matched remain unassessed.
 
 ### 7. Run the evaluation
 
@@ -109,7 +109,7 @@ The user downloads a comparison summary and a CSV or Excel file of findings for 
 
 When Jev supplies the reference judgments, these are **AI-estimated measures**, not verified real-world accuracy. Reviewing every pair improves coverage but does not make AI judgments infallible.
 
-When blocking excludes pairs, genuine duplicates outside the reviewed set can remain unseen. Recall and F1 must therefore be labeled as applying to the evaluated candidate set unless a suitable sampling method accounts for excluded pairs. Dataset-wide claims should not be made from candidate-only review.
+Because only suggested and vendor-matched pairs are checked, genuine duplicates outside the reviewed set can remain unseen. Recall and F1 must therefore be labeled as applying to the evaluated candidate set unless a suitable sampling method accounts for excluded pairs. Dataset-wide claims should not be made from candidate-only review.
 
 Independent, verified identity labels can provide a ground-truth reference. Correcting only the flagged pairs improves the assessment but does not establish complete ground truth for the dataset.
 
@@ -118,22 +118,22 @@ Independent, verified identity labels can provide a ground-truth reference. Corr
 V1 shipped in October 2026 as a complete loop:
 
 1. Upload source records and vendor results (pair or group format), then map references and identity fields.
-2. Define identity and overlapping blocking rules, and choose the match threshold (Lenient, Balanced, Strict or a custom value) before any results are seen.
-3. Combine blocked candidates with every vendor-matched pair and remove duplicates; the plan shows every count before anything is sent to Jev.
+2. Define identity, and choose the match threshold (Lenient, Balanced, Strict or a custom value) before any results are seen.
+3. Combine the pairs PairSight suggests with every vendor-matched pair and remove duplicates; the plan shows every count before anything is sent to Jev.
 4. Evaluate unique pairs with Jev and apply that threshold. Runs are followed in a Runs centre; failed assessments stay visibly incomplete and can be retried.
 5. Compare up to three vendors with the four result categories and AI-estimated precision, recall and F1 (on evaluated pairs only), then inspect the underlying records.
 
 Saved evaluations, the fictional demo data (a public, read-only sandbox) and the landing page shipped with it.
 
-V1 evaluates people, organisations or products (read from the uploaded file's columns and confirmed by the user) in CSV or Excel files: up to 10,000 records (10 MB) and 40 columns, three vendors, and 100,000 pairs per run. Each type brings its own fields, blocking rules and definition of "the same", and the sandbox has a prepared evaluation of each.
+V1 evaluates people, organisations or products (read from the uploaded file's columns and confirmed by the user) in CSV or Excel files: 200 to 10,000 records (10 MB) and 40 columns, three vendors, and 100,000 pairs per run. Each type brings its own fields, its own way of suggesting pairs and its own definition of "the same", and the sandbox has a prepared evaluation of each.
 
-Fuzzy blocking shipped with it: rules can match on how a name sounds, its words in any order, an email username or a postcode district, so duplicates with a typo, a move or a new email reach Jev too, and Results calls out the hard cases each vendor caught or missed.
+V1 first picked pairs with comparison rules the user could adjust. After launch these were replaced by pairs PairSight suggests from the records themselves, which catch duplicates with a typo, a move or a new email without anyone writing a rule (Scale Roadmap items 6, 10 and 11).
 
 Exports shipped too: every pair's findings as CSV or Excel, and a PDF summary report that names the vendor that matched most like Jev, shows each vendor's tradeoffs and example pairs, and records the method and scope behind the numbers.
 
 **Next:** human corrections (step 9). Its controls are hidden until it's built.
 
-**Later:** larger-scale processing and a background worker, more vendor-specific formats, rule suggestions learned from past runs, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
+**Later:** larger-scale processing and a background worker, more vendor-specific formats, sampling of excluded pairs, verified-reference uploads for ground-truth scoring, and a live deployment run on-premises with Jev on the customer's own infrastructure.
 
 ## What success looks like
 

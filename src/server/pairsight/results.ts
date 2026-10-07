@@ -12,7 +12,7 @@ import {
 	pairRowsByIds,
 	type PairContext
 } from './results-query'
-import { fuzzyRuleIdsOf, readRunSummary, runVendors } from './run-summary'
+import { readRunSummary, runVendors } from './run-summary'
 import { getVisibleRun } from './runs'
 import type { EvaluationScope } from './scope'
 
@@ -36,7 +36,7 @@ async function resultsContext({ scope, runId }: { scope: EvaluationScope; runId:
 		// Builds it, and the pairs every page reads, if it isn't current.
 		readRunSummary(run)
 	])
-	return { run, vendors, summary, fuzzyRuleIds: fuzzyRuleIdsOf(run.blockingRules) }
+	return { run, vendors, summary }
 }
 
 export async function getRunResults({
@@ -48,9 +48,9 @@ export async function getRunResults({
 	runId: string
 	filters: ResultFilters
 }) {
-	const { run, vendors, summary, fuzzyRuleIds } = await resultsContext({ scope, runId })
+	const { run, vendors, summary } = await resultsContext({ scope, runId })
 	const vendorId = pickVendorId(vendors, filters.vendor)
-	const context: PairContext = { runId, threshold: run.threshold, vendorId, fuzzyRuleIds }
+	const context: PairContext = { runId, threshold: run.threshold, vendorId }
 	const vendorIndex = vendorId == null ? -1 : summary.vendorIds.indexOf(vendorId)
 	const isDetailed = filters.tab === 'detailed'
 	const top = vendorId == null ? undefined : summary.top[vendorId]
@@ -79,7 +79,7 @@ export async function getRunResults({
 		evaluated: overview.coverage.total - counts.incomplete,
 		coverage: {
 			total: overview.coverage.total,
-			fromRules: overview.coverage.fromRules,
+			suggested: overview.coverage.suggested,
 			addedByVendor: overview.coverage.addedByVendor
 		},
 		models: summary.models,
@@ -128,7 +128,7 @@ export async function getPairDetail({
 				id: true,
 				recordAId: true,
 				recordBId: true,
-				ruleIds: true,
+				isSuggested: true,
 				matchedByExportIds: true,
 				assessment: {
 					select: {
@@ -165,14 +165,12 @@ export async function getPairDetail({
 	if (first == null || second == null) return null
 
 	const vendorId = pickVendorId(vendors, filters.vendor)
-	const fuzzyRuleIds = fuzzyRuleIdsOf(run.blockingRules)
-	const context: PairContext = { runId, threshold: run.threshold, vendorId, fuzzyRuleIds }
+	const context: PairContext = { runId, threshold: run.threshold, vendorId }
 	const [row] = buildRows({
 		pairs: [pair],
 		records: recordsById,
 		threshold: run.threshold,
-		vendorId,
-		fuzzyRuleIds: new Set(fuzzyRuleIds)
+		vendorId
 	})
 	if (row == null) return null
 	// Its place in the filtered list it was opened from; if the filters no
@@ -184,7 +182,7 @@ export async function getPairDetail({
 		run,
 		columnRoles: parseColumnRoles(dataset.columnRoles),
 		assessment: pair.assessment,
-		ruleIds: pair.ruleIds,
+		isSuggested: pair.isSuggested,
 		row,
 		recordA,
 		recordB,

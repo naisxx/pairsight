@@ -5,7 +5,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { ShieldIcon } from '@/components/ui/icons'
 import { OptionSelect, type SelectOption } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
-import { MIN_JEV_FIELDS } from '@/lib/pairsight/custom-rules'
+import { MIN_JEV_FIELDS } from '@/lib/pairsight/entity-types'
 import type { IdentityRole } from '@/server/pairsight/fields'
 
 const NOTE_ICON_SIZE = 15

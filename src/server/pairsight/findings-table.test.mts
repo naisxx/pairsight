@@ -28,7 +28,7 @@ const labels: FindingsLabels = {
 	notMatched: 'not matched',
 	addedByVendor: 'by vendor',
 	category: (category) => category,
-	rule: (ruleId) => `rule:${ruleId}`
+	suggestedByPairSight: 'suggested'
 }
 
 const records = new Map([
@@ -54,14 +54,14 @@ test('one row per pair, in reference order, with only the mapped fields', () => 
 		{
 			recordAId: 'r2',
 			recordBId: 'r10',
-			ruleIds: ['email'],
+			isSuggested: true,
 			matchedByExportIds: [],
 			assessment: judged(0.2)
 		},
 		{
 			recordAId: 'r1',
 			recordBId: 'r2',
-			ruleIds: ['email', 'name'],
+			isSuggested: true,
 			matchedByExportIds: ['va'],
 			assessment: judged(0.92)
 		}
@@ -108,7 +108,7 @@ test('one row per pair, in reference order, with only the mapped fields', () => 
 		'',
 		'match',
 		'no',
-		'rule:email; rule:name',
+		'suggested',
 		'matched',
 		'both_matched',
 		'not matched',
@@ -128,7 +128,7 @@ test('a failed pair is incomplete for everyone, with why; a vendor-only pair say
 		{
 			recordAId: 'r1',
 			recordBId: 'r10',
-			ruleIds: [],
+			isSuggested: false,
 			matchedByExportIds: ['vb'],
 			assessment: {
 				status: 'failed',
@@ -161,7 +161,7 @@ test('a score near the threshold is flagged low confidence', () => {
 		{
 			recordAId: 'r1',
 			recordBId: 'r2',
-			ruleIds: ['email'],
+			isSuggested: true,
 			matchedByExportIds: [],
 			assessment: judged(0.55)
 		}

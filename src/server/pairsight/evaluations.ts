@@ -1,11 +1,8 @@
 import 'server-only'
-import { z } from 'zod'
 import { AppError } from '@/lib/errors/app-error'
 import { db } from '@/server/db/client'
-import { startingRules } from '@/lib/pairsight/entity-types'
 import { DEFAULT_IDENTITY } from './judgment'
 import { evaluationWhere, ownerScope, type EvaluationScope } from './scope'
-import { blockingRulesSchema, type blockingRuleSchema } from './schemas'
 
 // Owner-scoped data access for PairSight (docs/rules/auth.md: authorization
 // lives in the action layer, because Prisma bypasses RLS). Every function
@@ -13,11 +10,6 @@ import { blockingRulesSchema, type blockingRuleSchema } from './schemas'
 // exist and one that belongs to someone else are the same 404, so ids can't
 // be probed. Datasets, vendor exports and the workspace build on
 // getOwnedEvaluation.
-
-// A new evaluation starts as people; saving its records sets the real type
-// and that type's defaults (saveSourceDataset).
-export const DEFAULT_BLOCKING_RULES: Array<z.infer<typeof blockingRuleSchema>> =
-	startingRules('person')
 
 export function evaluationNotFound() {
 	return new AppError('That evaluation doesn’t exist, or you don’t have access to it.', {
@@ -63,8 +55,7 @@ export async function createEvaluation({ ownerId, name }: { ownerId: string; nam
 			name,
 			identitySame: DEFAULT_IDENTITY.same,
 			identityDifferent: DEFAULT_IDENTITY.different,
-			jevFields: [],
-			blockingRules: DEFAULT_BLOCKING_RULES
+			jevFields: []
 		},
 		select: { id: true }
 	})
@@ -116,9 +107,7 @@ export async function updateEvaluationConfig({
 	identityDifferent,
 	countryCode,
 	jevFields,
-	blockingRules,
-	threshold,
-	splinkPicks
+	threshold
 }: {
 	ownerId: string
 	evaluationId: string
@@ -126,11 +115,8 @@ export async function updateEvaluationConfig({
 	identityDifferent: string
 	countryCode: string
 	jevFields: string[]
-	blockingRules: Array<z.infer<typeof blockingRuleSchema>>
 	// The next run's threshold; runs already started keep their own.
 	threshold: number
-	// Whether the Plan adds the pairs Splink picked (splink/picks.ts).
-	splinkPicks: boolean
 }) {
 	await getOwnedEvaluation({ ownerId, id: evaluationId })
 	await db.evaluation.update({
@@ -140,28 +126,7 @@ export async function updateEvaluationConfig({
 			identityDifferent,
 			countryCode,
 			jevFields,
-			blockingRules,
-			threshold,
-			splinkPicks
+			threshold
 		}
-	})
-}
-
-// One rule switched off from the Plan's over-limit list; everything else in
-// the configuration stays as saved.
-export async function removeBlockingRule({
-	ownerId,
-	evaluationId,
-	ruleId
-}: {
-	ownerId: string
-	evaluationId: string
-	ruleId: string
-}) {
-	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
-	const rules = blockingRulesSchema.parse(evaluation.blockingRules)
-	await db.evaluation.update({
-		where: { id: evaluationId },
-		data: { blockingRules: rules.filter((rule) => rule.id !== ruleId) }
 	})
 }

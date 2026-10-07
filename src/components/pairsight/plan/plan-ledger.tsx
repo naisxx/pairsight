@@ -3,94 +3,67 @@ import { cn } from '@/lib/cn'
 import type { PlanCounts } from '@/server/pairsight/plan'
 import type { RunDuration } from '@/server/pairsight/run-estimate'
 import type { EntityType } from '@/lib/pairsight/entity-types'
-import type { SplinkState } from '@/server/pairsight/splink/picks'
+import type { SkipReason, SplinkState } from '@/server/pairsight/splink/picks'
 import { InfoTip } from '@/components/ui/info-tip'
 import { Count } from '@/components/ui/count'
 
 const PERCENT = 100
 
 // "From records to pairs": every step from the source records to the unique
-// pairs a run assesses, then how many are reused and how many are new.
+// pairs a run assesses, then how many are reused and how many are new. The
+// pairs are PairSight's suggestions plus every vendor pair.
 export async function PlanLedger({
 	counts,
 	fileName,
-	ruleMatches,
-	ruleCount,
 	cost,
 	duration,
 	splink,
 	entityType,
-	isUsingDefaultRules,
 	isOverLimit
 }: {
 	counts: PlanCounts
 	fileName: string
-	// Rule matches before overlap: each rule's pairs, added up.
-	ruleMatches: number
-	ruleCount: number
 	cost: string
 	// How long its new checks should take, padded (run-estimate.ts).
 	duration: RunDuration
-	// Splink's picks (splink/picks.ts): whether they're in, coming, or not.
-	splink: { state: SplinkState; reason: string | null }
+	// PairSight's suggestions (splink/picks.ts): whether they're in, coming, or not.
+	splink: { state: SplinkState; reason: SkipReason | null }
 	// Says what PairSight compares for this type.
 	entityType: EntityType
-	// Nothing else picks pairs, so the type's simple rules do (plan.ts).
-	isUsingDefaultRules: boolean
 	isOverLimit: boolean
 }) {
 	const t = await getTranslations('Plan')
-	// Pairs picked by a rule or Splink more than once: their picks added up,
-	// less the pairs they picked between them.
-	const overlaps = Math.max(0, ruleMatches + counts.splinkPairs - counts.blockedPairs)
+	// Vendor pairs PairSight suggested too: counted once.
 	const vendorInside = counts.vendorPairs - counts.addedByVendorOnly
 	const possible = counts.allPossiblePairs
 	const percent = possible === 0 ? 0 : (counts.uniquePairs / possible) * PERCENT
 	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
+	// Read down, these add up: suggested + vendor pairs − overlap = the unique
+	// pairs below.
 	const rows = [
 		{ label: t('rowRecords'), value: <Count value={counts.records} />, note: fileName },
 		{ label: t('rowPossible'), value: <Count value={possible} />, note: t('rowPossibleNote') },
-		// Read down, these add up: rule matches + vendor pairs − duplicates
-		// = the unique pairs below.
 		{
-			label: t('rowRules'),
-			value: <Count value={ruleMatches} />,
-			note: isUsingDefaultRules ? t('rowRulesDefault') : t('rowRulesNote', { count: ruleCount })
+			label: t('rowSuggested'),
+			value: splink.state === 'done' ? <Count value={counts.suggestedPairs} /> : '–',
+			note: (
+				<span className="inline-flex max-w-full items-center gap-1">
+					<span className="truncate">
+						{splink.state === 'done'
+							? t('rowSuggestedNote')
+							: splink.state === 'waiting'
+								? t('rowSuggestedWaiting')
+								: splink.reason === 'too_few_records'
+									? t('rowSuggestedTooFew')
+									: t('rowSuggestedFailed')}
+					</span>
+					<InfoTip
+						label={t('suggestionsInfoLabel')}
+						content={t('suggestionsInfo', { type: entityType })}
+					/>
+				</span>
+			)
 		},
-		...(splink.state === 'off'
-			? []
-			: [
-					{
-						label: t('rowSuggested'),
-						value:
-							splink.state === 'done' ? (
-								<>
-									+<Count value={counts.splinkPairs} />
-								</>
-							) : (
-								'–'
-							),
-						note: (
-							<span className="inline-flex max-w-full items-center gap-1">
-								<span className="truncate">
-									{splink.state === 'done'
-										? t('rowSuggestedNote')
-										: splink.state === 'waiting'
-											? t('rowSuggestedWaiting')
-											: splink.state === 'failed'
-												? t('rowSuggestedFailed')
-												: splink.reason === 'too_few_records'
-													? t('rowSuggestedTooFew')
-													: t('rowSuggestedNotSetUp')}
-								</span>
-								<InfoTip
-									label={t('suggestionsInfoLabel')}
-									content={t('suggestionsInfo', { type: entityType })}
-								/>
-							</span>
-						)
-					}
-				]),
 		{
 			label: t('rowVendor'),
 			value: (
@@ -104,13 +77,10 @@ export async function PlanLedger({
 			label: t('rowDuplicates'),
 			value: (
 				<>
-					−<Count value={overlaps + vendorInside} />
+					−<Count value={vendorInside} />
 				</>
 			),
-			note:
-				counts.splinkPairs > 0
-					? t('rowDuplicatesNoteSuggested', { overlaps, inside: vendorInside })
-					: t('rowDuplicatesNote', { overlaps, inside: vendorInside })
+			note: t('rowDuplicatesNote', { inside: vendorInside })
 		}
 	]
 	return (
@@ -141,7 +111,6 @@ export async function PlanLedger({
 						)}
 					>
 						<Count value={counts.uniquePairs} />
-						{!counts.isExact && '+'}
 					</dd>
 				</div>
 				<div className="border-border grid grid-cols-[minmax(0,1fr)_auto] items-baseline gap-x-4 border-t px-5 py-3">
@@ -157,12 +126,11 @@ export async function PlanLedger({
 					<dt className="type-ui font-medium">{t('rowNew')}</dt>
 					<dd className="font-mono text-[15px] font-semibold">
 						<Count value={counts.toEvaluate} />
-						{!counts.isExact && '+'}
 					</dd>
 					<dd className="text-text-muted flex min-w-0 items-center gap-1 text-xs">
 						<span className="truncate">
 							{t('rowNewNote', { cost })}
-							{counts.isExact && duration.unit !== 'none' && (
+							{duration.unit !== 'none' && (
 								<>
 									{' · '}
 									{duration.unit === 'underMinute'

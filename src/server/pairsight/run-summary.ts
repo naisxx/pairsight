@@ -1,12 +1,11 @@
 import 'server-only'
 import { db, Prisma } from '@/server/db/client'
-import { isFuzzyRule } from '@/lib/pairsight/derived-keys'
 import type { Category } from '@/lib/pairsight/decisions'
 import type { EntityType } from '@/lib/pairsight/entity-types'
 import { log } from '@/server/lib/logger'
 import { recountRun } from './runs'
 import { compareFields } from './compare'
-import { parseBlockingRules, parseColumnRoles, parseRecordValues } from './json'
+import { parseColumnRoles, parseRecordValues } from './json'
 import { ensureRecordKeys } from './record-keys'
 import {
 	finishFieldPatterns,
@@ -40,7 +39,6 @@ type SummaryRun = {
 	entityType: EntityType
 	threshold: number
 	exportIds: string[]
-	blockingRules: Prisma.JsonValue
 	countryCode: string
 }
 
@@ -50,7 +48,6 @@ export const SUMMARY_RUN_SELECT = {
 	entityType: true,
 	threshold: true,
 	exportIds: true,
-	blockingRules: true,
 	countryCode: true
 } as const
 
@@ -61,12 +58,6 @@ export async function runVendors(exportIds: string[]) {
 		orderBy: { createdAt: 'asc' },
 		select: { id: true, name: true }
 	})
-}
-
-export function fuzzyRuleIdsOf(blockingRules: Prisma.JsonValue): string[] {
-	return parseBlockingRules(blockingRules)
-		.filter(isFuzzyRule)
-		.map((rule) => rule.id)
 }
 
 // Field patterns for every vendor, walking the run's judged pairs a page at
@@ -134,17 +125,16 @@ export async function buildRunSummary(run: SummaryRun): Promise<RunSummary> {
 	// pairs as their judgments stand now.
 	const models = await snapshotRunPairs({ runId: run.id, datasetId: run.datasetId })
 	const vendorIds = (await runVendors(run.exportIds)).map((vendor) => vendor.id)
-	const fuzzyRuleIds = fuzzyRuleIdsOf(run.blockingRules)
 	const query = { runId: run.id, threshold: run.threshold, vendorIds }
 	const [rows, sources, recordCount, patterns, tops] = await Promise.all([
-		statsRows({ ...query, fuzzyRuleIds }),
+		statsRows(query),
 		sourceStats(query),
 		db.sourceRecord.count({ where: { datasetId: run.datasetId } }),
 		patternsFor({ run, vendorIds }),
 		Promise.all(
 			vendorIds.map((vendorId) =>
 				topDisagreementIds({
-					context: { runId: run.id, threshold: run.threshold, vendorId, fuzzyRuleIds },
+					context: { runId: run.id, threshold: run.threshold, vendorId },
 					limit: TOP_DISAGREEMENTS
 				})
 			)

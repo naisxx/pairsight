@@ -46,7 +46,7 @@ export function CoveragePanel({
 						<p className="font-semibold">{t('coverageHowTitle')}</p>
 						<p className="text-text-muted mt-2">
 							{t.rich('coverageHowRules', {
-								fromRules: coverage.fromRules,
+								suggested: coverage.suggested,
 								added: coverage.addedByVendor,
 								n: mono
 							})}
@@ -97,7 +97,7 @@ export function CoveragePanel({
 			<dl className="border-border type-ui mt-4 flex flex-col gap-1.5 border-t pt-3">
 				{(
 					[
-						['fromRules', coverage.fromRules],
+						['suggested', coverage.suggested],
 						['addedByVendor', coverage.addedByVendor],
 						['notCompared', coverage.notCompared]
 					] as const

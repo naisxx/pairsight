@@ -56,7 +56,7 @@ pairsight/
 │   ├── components/           pairsight/ (screens, shell, Runs centre, ...), ui/ (Button, Input, Card, toasts, ...), providers and error pages
 │   ├── i18n/                 next-intl routing + request config
 │   ├── lib/                  pairsight/ (shared domain logic: decisions, metrics, stages), cn.ts, env.ts, toast.ts, errors/, observability/, posthog/, supabase/
-│   ├── server/                pairsight/ (blocking, pairs, runs, results, tabular/ file connector: CSV and Excel), ai/ (Jev client), api/ (route factory, downloads), actions/, db/client.ts (the only file that touches Prisma)
+│   ├── server/                pairsight/ (match keys, suggested pairs, pairs, runs, results, tabular/ file connector: CSV and Excel), ai/ (Jev client), api/ (route factory, downloads), actions/, db/client.ts (the only file that touches Prisma)
 │   └── proxy.ts               Supabase session refresh + next-intl locale routing
 ├── instrumentation.ts        Sentry init + env validation, run once at server boot
 ├── AGENTS.md                  index into docs/rules/* — read by every coding agent
@@ -74,7 +74,7 @@ Docker Desktop running.
 pnpm install              # also installs the git hooks + generates the Prisma client
 pnpm supabase start       # local Supabase in Docker (first run pulls images)
 pnpm supabase status      # prints the local URLs and keys used below
-pnpm splink:setup         # optional: the Splink service (Python 3.13) that picks extra pairs
+pnpm splink:setup         # the Splink service (Python 3.13) that suggests the pairs; no plan can start without it
 ```
 
 Create two gitignored env files:

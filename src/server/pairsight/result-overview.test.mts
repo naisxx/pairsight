@@ -13,8 +13,7 @@ function row(id: string, overrides: Partial<ResultRow>): ResultRow {
 		status: 'succeeded',
 		score: 0.9,
 		errorCode: null,
-		ruleIds: ['email'],
-		isFuzzyOnly: false,
+		isSuggested: true,
 		isLowConfidence: false,
 		...overrides
 	}
@@ -24,7 +23,7 @@ const judged = (score: number) => ({ status: 'succeeded' as const, score })
 
 function pair(
 	id: string,
-	ruleIds: string[],
+	isSuggested: boolean,
 	matchedBy: string[],
 	assessment: SummaryPair['assessment']
 ): SummaryPair {
@@ -32,19 +31,18 @@ function pair(
 		id,
 		recordAId: `${id}-a`,
 		recordBId: `${id}-b`,
-		ruleIds,
+		isSuggested,
 		matchedByExportIds: matchedBy,
 		assessment
 	}
 }
 
-function summary(pairs: SummaryPair[], fuzzy: string[] = []) {
+function summary(pairs: SummaryPair[]) {
 	return summarizePairs({
 		pairs,
 		records: new Map(),
 		vendorIds: ['v1', 'v2'],
 		threshold: 0.5,
-		fuzzyRuleIds: new Set(fuzzy),
 		columnRoles: {},
 		country: 'US'
 	})
@@ -56,35 +54,45 @@ const vendors = [
 ]
 const noTop = { missed: [], merges: [] }
 
-test('sources count a pair under each rule, with vendor-only additions last', () => {
+test('sources: suggested pairs first, then the ones only a vendor added', () => {
 	const overview = buildOverview({
 		summary: summary([
-			pair('p1', ['email', 'phone'], ['v1'], judged(0.9)),
-			pair('p2', ['email'], [], judged(0.9)),
-			pair('p3', [], ['v1'], judged(0.1))
+			pair('p1', true, ['v1'], judged(0.9)),
+			pair('p2', true, [], judged(0.9)),
+			pair('p3', false, ['v1'], judged(0.1))
 		]),
 		vendors,
 		vendorId: 'v1',
 		top: noTop
 	})
 	assert.deepEqual(
-		overview.sources.map((source) => [source.ruleId, source.total]),
+		overview.sources.map((source) => [source.suggested, source.total]),
 		[
-			['email', 2],
-			['phone', 1],
-			[null, 1]
+			[true, 2],
+			[false, 1]
 		]
 	)
 	assert.equal(overview.sources[0]?.counts.pairsight_only, 1)
-	assert.equal(overview.sources[2]?.counts.vendor_only, 1)
+	assert.equal(overview.sources[1]?.counts.vendor_only, 1)
+	// A source with no pairs isn't listed.
+	const suggestedOnly = buildOverview({
+		summary: summary([pair('p1', true, [], judged(0.9))]),
+		vendors,
+		vendorId: 'v1',
+		top: noTop
+	})
+	assert.deepEqual(
+		suggestedOnly.sources.map((source) => source.suggested),
+		[true]
+	)
 })
 
 test('top disagreements: surest missed duplicates, least sure merges', () => {
 	const { top } = summary([
-		pair('a', ['email'], [], judged(0.7)),
-		pair('b', ['email'], [], judged(0.95)),
-		pair('c', ['email'], ['v1'], judged(0.4)),
-		pair('d', ['email'], ['v1'], judged(0.1))
+		pair('a', true, [], judged(0.7)),
+		pair('b', true, [], judged(0.95)),
+		pair('c', true, ['v1'], judged(0.4)),
+		pair('d', true, ['v1'], judged(0.1))
 	])
 	assert.deepEqual(top.v1, { missed: ['b', 'a'], merges: ['d', 'c'] })
 	// v2 matched none of them: every Jev "same" is a miss.
@@ -113,45 +121,13 @@ test('field patterns compare normalized values and skip missing ones', () => {
 	assert.deepEqual(patterns.summary.pairsight_only, { shared: ['email'], different: ['full_name'] })
 })
 
-test('hard cases: duplicates only fuzzy rules found, and who caught them', () => {
-	const fuzzy = 'surname_sound_birth_year'
-	const overview = buildOverview({
-		summary: summary(
-			[
-				// Only the fuzzy rule found it; Jev says duplicate; v1 caught it.
-				pair('p1', [fuzzy], ['v1'], judged(0.9)),
-				// Fuzzy and exact both found it: not a hard case.
-				pair('p2', ['email', fuzzy], [], judged(0.9)),
-				// Fuzzy-only, but Jev says different people.
-				pair('p3', [fuzzy], ['v2'], judged(0.1)),
-				// Fuzzy-only and confirmed; nobody caught it.
-				pair('p4', [fuzzy], [], judged(0.7)),
-				// Added by a vendor alone: no rule, not a hard case.
-				pair('p5', [], ['v2'], judged(0.9))
-			],
-			[fuzzy]
-		),
-		vendors,
-		vendorId: 'v1',
-		top: noTop
-	})
-	assert.deepEqual(overview.hardCases, {
-		found: 3,
-		confirmed: 2,
-		byVendor: [
-			{ id: 'v1', caught: 1 },
-			{ id: 'v2', caught: 0 }
-		]
-	})
-})
-
 test('the overview counts every pair: groups, coverage and the other vendor', () => {
 	const overview = buildOverview({
 		summary: summary([
-			pair('p1', ['email'], ['v1', 'v2'], judged(0.9)),
-			pair('p2', ['email'], ['v2'], judged(0.2)),
-			pair('p3', [], ['v1'], { status: 'failed', score: null }),
-			pair('p4', ['email'], [], { status: 'pending', score: null })
+			pair('p1', true, ['v1', 'v2'], judged(0.9)),
+			pair('p2', true, ['v2'], judged(0.2)),
+			pair('p3', false, ['v1'], { status: 'failed', score: null }),
+			pair('p4', true, [], { status: 'pending', score: null })
 		]),
 		vendors,
 		vendorId: 'v1',
@@ -170,7 +146,7 @@ test('the overview counts every pair: groups, coverage and the other vendor', ()
 		assessed: 2,
 		pending: 1,
 		failed: 1,
-		fromRules: 3,
+		suggested: 3,
 		addedByVendor: 1,
 		notCompared: 0
 	})

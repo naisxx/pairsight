@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import { padded } from './padding'
 import { readPdfText } from './pdf'
 import {
 	exportFindings,
@@ -38,12 +39,14 @@ test.describe('PairSight vertical slice', () => {
 	}
 
 	// The records as a file to upload, with each email moved to its own domain
-	// (see uploadRecords).
+	// (see uploadRecords), padded past the 200 records PairSight learns from.
 	function markedRecords(file: string) {
 		const marker = `e2e${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
-		const csv = readFileSync(`${FIXTURES}/${file}`, 'utf8').replace(
-			/@example\.com/gi,
-			`@${marker}.example.com`
+		const csv = padded(
+			readFileSync(`${FIXTURES}/${file}`, 'utf8').replace(
+				/@example\.com/gi,
+				`@${marker}.example.com`
+			)
 		)
 		return { marker, csv }
 	}
@@ -103,17 +106,15 @@ test.describe('PairSight vertical slice', () => {
 	}
 
 	// Rules save themselves; the plan opens once they have.
+	// Opens the plan once PairSight has worked out the pairs to check (it
+	// does that in the background, after the records are saved).
 	async function reviewPlan(page: Page) {
 		await expect(page.getByText('Saved', { exact: true })).toBeVisible()
 		await page.getByRole('link', { name: 'Check and start', exact: true }).click()
 		await page.waitForURL('**/plan')
-	}
-
-	// Your own comparison rules sit under Advanced, closed unless they matter.
-	async function openAdvancedRules(page: Page) {
-		const advanced = page.getByRole('button', { name: /Advanced: your own comparison rules/ })
-		if ((await advanced.getAttribute('aria-expanded')) === 'false') await advanced.click()
-		await expect(advanced).toHaveAttribute('aria-expanded', 'true')
+		await expect(page.getByText('Still looking at your records…')).toHaveCount(0, {
+			timeout: 60_000
+		})
 	}
 
 	// Start opens the Runs centre on the new run. When it's done, the centre
@@ -136,7 +137,7 @@ test.describe('PairSight vertical slice', () => {
 	}
 
 	async function runEvaluation(page: Page) {
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		await startRun(page)
@@ -165,7 +166,7 @@ test.describe('PairSight vertical slice', () => {
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
 		await expectVendorPairs(page, 4)
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await reviewPlan(page)
 		await startRun(page)
 
@@ -227,12 +228,12 @@ test.describe('PairSight vertical slice', () => {
 		await page.locator('input[type=file]').setInputFiles({
 			name: file,
 			mimeType: 'text/csv',
-			buffer: readFileSync(`${FIXTURES}/${file}`)
+			buffer: Buffer.from(padded(readFileSync(`${FIXTURES}/${file}`, 'utf8')))
 		})
 		await expect(page.getByText(/^We matched \d+ fields? to your/)).toBeVisible()
 	}
 
-	test('organisations: detected from the columns, blocked by website and registration, judged as organisations', async ({
+	test('organisations: detected from the columns, their pairs picked and judged as organisations', async ({
 		page
 	}) => {
 		await signUp(page)
@@ -245,15 +246,12 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'company-vendor.csv')
 		await expectVendorPairs(page, 4)
 
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
-		// An organisation's own presets, on by default; no person rules.
-		await expect(page.getByRole('switch', { name: 'Same website rule' })).toBeChecked()
-		await expect(page.getByRole('switch', { name: 'Same registration number rule' })).toBeChecked()
-		await expect(page.getByRole('switch', { name: 'Same email rule' })).not.toBeChecked()
-		await expect(
-			page.getByRole('switch', { name: 'Same last name and postcode rule' })
-		).toHaveCount(0)
+		// PairSight picks the pairs the way it does for organisations.
+		await expect(page.getByRole('region', { name: 'The pairs Jev will check' })).toContainText(
+			'most likely to be the same organisation'
+		)
 		await expect(page.getByLabel('When are two records the same?', { exact: true })).toHaveValue(
 			/same organisation/
 		)
@@ -272,7 +270,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('table').getByText('Orbis Logistics Ltd')).toBeVisible()
 	})
 
-	test('products: detected from the columns, blocked by barcode and part number, variants kept apart', async ({
+	test('products: detected from the columns, their pairs picked, variants kept apart', async ({
 		page
 	}) => {
 		await signUp(page)
@@ -288,22 +286,21 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'product-vendor.csv')
 		await expectVendorPairs(page, 3)
 
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
-		await expect(page.getByRole('switch', { name: 'Same barcode (GTIN) rule' })).toBeChecked()
-		await expect(
-			page.getByRole('switch', { name: 'Same part number and brand rule' })
-		).toBeChecked()
+		await expect(page.getByRole('region', { name: 'The pairs Jev will check' })).toContainText(
+			'most likely to be the same product'
+		)
 		await reviewPlan(page)
 		await startRun(page)
 
 		// One duplicate both found; two the vendor missed (one item under a UPC
-		// and an EAN); a size and a brand it wrongly merged; a colour variant
-		// both kept apart.
+		// and an EAN); a size and a brand it wrongly merged. A colour variant
+		// nobody merged isn't even suggested: another colour is another product.
 		await expect(tile(page, 'Both say same')).toContainText('1')
 		await expect(tile(page, 'Only Jev says same')).toContainText('2')
 		await expect(tile(page, 'Only vendor says same')).toContainText('2')
-		await expect(tile(page, 'Both say different')).toContainText('1')
+		await expect(tile(page, 'Both say different')).toContainText('0')
 		await tile(page, 'Both say same').click()
 		await page.waitForURL(/tab=detailed/)
 		// Products are named by brand and name.
@@ -353,6 +350,24 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/vendors', { timeout: 60_000 })
 		expect(uploads).toHaveLength(1)
 		await expect(page.getByRole('navigation').getByText('10K records')).toBeVisible()
+	})
+
+	test('a file too small to learn from is refused, and says how many it needs', async ({
+		page
+	}) => {
+		await signUp(page)
+		await createEvaluation(page, 'Too small')
+		// The fixture as it is: 24 records, without the padding other tests add.
+		await page.locator('input[type=file]').setInputFiles({
+			name: 'demo-source.csv',
+			mimeType: 'text/csv',
+			buffer: readFileSync(`${FIXTURES}/demo-source.csv`)
+		})
+		await expect(
+			page.getByText(
+				'The file has 24 records. PairSight needs at least 200 to learn what a duplicate looks like in your data, so it can pick the pairs worth checking.'
+			)
+		).toBeVisible()
 	})
 
 	test('Excel in and out: a workbook’s sheet is picked, and findings export as a workbook', async ({
@@ -432,7 +447,7 @@ test.describe('PairSight vertical slice', () => {
 		expect(typeof findings.cell(2, findings.header.indexOf('Jev score') + 1)).toBe('number')
 	})
 
-	test('upload to comparison: all four categories, vendor pairs outside blocking, inspection', async ({
+	test('upload to comparison: all four categories, vendor pairs PairSight didn’t suggest, inspection', async ({
 		page
 	}) => {
 		await signUp(page)
@@ -441,18 +456,19 @@ test.describe('PairSight vertical slice', () => {
 		await expect(
 			page
 				.getByRole('list', { name: 'Steps' })
-				.getByRole('link', { name: /^Records, completed\. 24 records/ })
+				.getByRole('link', { name: /^Records, completed\. 220 records/ })
 		).toBeVisible()
 		await addVendor(page, 'demo-vendor-a.csv')
 		await expectVendorPairs(page, 4)
 
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await reviewPlan(page)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
 		await expect(plan).toContainText(/Pairs Jev will check\s*8/)
-		// All 4 vendor pairs are assessed; 2 of them the rules already found.
+		// All 4 vendor pairs are checked; PairSight suggested 3 of them too.
+		await expect(plan).toContainText(/Pairs PairSight suggested\s*7/)
 		await expect(plan).toContainText(/Pairs your vendors matched\s*\+4/)
-		await expect(plan).toContainText('2 vendor pairs your rules already picked')
+		await expect(plan).toContainText('3 vendor pairs PairSight suggested too, counted once')
 		await startRun(page)
 
 		for (const name of [
@@ -464,10 +480,10 @@ test.describe('PairSight vertical slice', () => {
 			await expect(tile(page, name)).toContainText('2')
 		}
 		await expect(tile(page, 'Not checked yet')).toContainText('0')
-		// Coverage: 6 pairs from the rules, 2 added only because the vendor matched them.
+		// Coverage: 7 pairs PairSight suggested, 1 added only because the vendor matched it.
 		const coverage = page.getByRole('region', { name: 'What did Jev check?' })
-		await expect(coverage).toContainText(/Picked by your rules\s*6/)
-		await expect(coverage).toContainText(/Added because a vendor matched it\s*2/)
+		await expect(coverage).toContainText(/Suggested by PairSight\s*7/)
+		await expect(coverage).toContainText(/Added because a vendor matched it\s*1/)
 
 		// Export: every pair in one CSV, with the vendor's decision and category
 		// beside Jev's, matching the tiles above.
@@ -506,7 +522,7 @@ test.describe('PairSight vertical slice', () => {
 		).toBeVisible()
 		const report = await readPdfText(await summary.path())
 		expect(report).toContain('Demo scenario · Run 1')
-		expect(report).toContain('On these 24 records, Vendor A agreed with Jev')
+		expect(report).toContain('On these 220 records, Vendor A agreed with Jev')
 		expect(report).toContain('2 wrong merges')
 		expect(report).toContain('Agreement with Jev, an AI · checked pairs only')
 		expect(report).toContain('Human review None. Every answer here is Jev’s.')
@@ -563,7 +579,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(matching(page)).toHaveText('8 pairs')
 	})
 
-	test('the threshold is set in Rules; a new run at it reuses every saved score', async ({
+	test('the match cut-off is set in What Jev checks; a new run at it reuses every saved score', async ({
 		page
 	}) => {
 		await signUp(page)
@@ -584,7 +600,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(popover.getByRole('button', { name: 'Apply' })).toHaveCount(0)
 		await popover.getByRole('button', { name: 'Reset to 0.50' }).click()
 		await expect(thresholdValue).toHaveValue('0.50')
-		await popover.getByRole('link', { name: 'Change in Rules' }).click()
+		await popover.getByRole('link', { name: 'Change in What Jev checks' }).click()
 		await page.waitForURL('**/rules')
 
 		// Rules: a custom value, then a preset; either saves itself.
@@ -713,7 +729,7 @@ test.describe('PairSight vertical slice', () => {
 		// Run 2, at another cut-off, shares run 1's checks and tries its failed
 		// pairs again: Retrycase is judged this time, Failcase fails again.
 		await page.getByRole('button', { name: /^Match cut-off 0\.50/ }).click()
-		await page.getByRole('dialog').getByRole('link', { name: 'Change in Rules' }).click()
+		await page.getByRole('dialog').getByRole('link', { name: 'Change in What Jev checks' }).click()
 		await page.waitForURL('**/rules')
 		const threshold = page.getByRole('radiogroup', { name: 'How sure must Jev be?' })
 		await threshold.getByRole('radio', { name: /^Lenient/ }).click()
@@ -745,7 +761,7 @@ test.describe('PairSight vertical slice', () => {
 		await expectVendorPairs(page, 4)
 		await page.request.post(`${JEV_STUB}/reject?marker=${marker}`)
 
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		await page.getByRole('button', { name: 'Start run' }).click()
@@ -778,7 +794,7 @@ test.describe('PairSight vertical slice', () => {
 		const marker = await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
 		await expectVendorPairs(page, 4)
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		return marker
@@ -896,7 +912,7 @@ test.describe('PairSight vertical slice', () => {
 		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/unknown-vendor.csv`)
 		await expect(page.getByText(/1 ID isn’t in your records: Row 2: “R99”/)).toBeVisible()
 		await expect(page.getByRole('checkbox', { name: /^Yes, this file has all of/ })).toBeDisabled()
-		await expect(page.getByRole('link', { name: 'Next: rules' })).toHaveCount(0)
+		await expect(page.getByRole('link', { name: 'Next: what Jev checks' })).toHaveCount(0)
 
 		// A vendor can be renamed at any point.
 		const name = page.getByLabel('What’s this vendor called?')
@@ -905,75 +921,33 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText('Acme Match')
 	})
 
-	test('a plan over the limit is blocked with its cause, and a custom rule brings it under', async ({
-		page
-	}) => {
+	test('a plan over the limit is blocked, and says where its pairs come from', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Over the cap')
-		// 460 people sharing a name and postcode: one group making 105,570
-		// pairs, more than one run can check. It's counted, never built.
+		// 460 people sharing a name and postcode, and two vendors that each
+		// merged 447 of them into one group: 99,681 pairs each, within a
+		// vendor's limit, but 105,401 between them, more than one run can check.
 		await uploadRecords(page, 'over-cap-source.csv')
 		await expect(
 			page
 				.getByRole('list', { name: 'Steps' })
 				.getByRole('link', { name: /^Records, completed\. 460 records/ })
 		).toBeVisible()
-		await addVendor(page, 'over-cap-vendor.csv')
-		await expectVendorPairs(page, 1)
+		await addVendor(page, 'over-cap-vendor-a-groups.csv')
+		await addVendor(page, 'over-cap-vendor-b-groups.csv')
 
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
-		// Suggestions off, and your own rule that puts everyone in one group.
-		await page.getByRole('switch', { name: 'Suggest pairs for me' }).click()
-		await openAdvancedRules(page)
-		await page.getByRole('switch', { name: 'Same name and postcode rule' }).click()
-		await expect(page.getByText(/This rule alone picks 10\dK pairs/).first()).toBeVisible()
-		// The live summary and the action bar say it before the plan does.
-		await expect(
-			page.getByText(
-				'Well over the limit. Turn off a rule, or add a value to one, so it picks fewer.'
-			)
-		).toBeVisible()
-		await expect(
-			page.getByText('Bring the pairs down to 100K or fewer (now well over)')
-		).toBeVisible()
-		await expect(page.getByRole('link', { name: 'Check and start', exact: true })).toHaveCount(0)
-		await page.goto(page.url().replace(/\/rules$/, '/plan'))
-		const overLimit = page.getByRole('heading', {
-			name: 'These rules pick far more pairs than one run can check (100K)'
-		})
-		await expect(overLimit).toBeVisible()
-		await expect(
-			page.getByRole('listitem').filter({ hasText: 'Same name and postcode' })
-		).toContainText(/10\dK pairs · biggest group 460/)
-		await expect(page.getByRole('button', { name: 'Start run' })).toBeDisabled()
-
-		// Turning the rule off from the plan brings it under the limit.
-		await page.getByRole('button', { name: 'Turn off Same name and postcode' }).click()
-		await expect(overLimit).toHaveCount(0)
-		await page.getByRole('link', { name: 'Rules', exact: true }).click()
-		await page.waitForURL('**/rules')
-		await expect(
-			page.getByRole('switch', { name: 'Same name and postcode rule' })
-		).not.toBeChecked()
-		await page.getByRole('button', { name: 'Add your own rule' }).click()
-		const fields = page.getByRole('group', { name: 'Values in this rule' })
-		await fields.getByRole('button', { name: 'Email' }).click()
-		await expect(page.getByText('You already have a rule with these values.')).toBeVisible()
-		await fields.getByRole('button', { name: 'Postcode' }).click()
-		await expect(page.getByRole('button', { name: 'Save rule' })).toBeEnabled()
-		await page.getByRole('button', { name: 'Save rule' }).click()
-		await expect(page.getByRole('button', { name: 'Edit Email AND Postcode' })).toBeVisible()
-
 		await reviewPlan(page)
-		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
-			/Pairs Jev will check\s*1/
-		)
-		await expect(page.getByRole('button', { name: 'Start run' })).toBeEnabled()
-
-		// The composite rule was saved with the rest of the configuration.
-		await page.goto(page.url().replace(/\/plan$/, '/rules'))
-		await expect(page.getByRole('button', { name: 'Edit Email AND Postcode' })).toBeVisible()
+		await expect(
+			page.getByRole('heading', { name: /pairs is more than one run can check \(100K\)$/ })
+		).toBeVisible()
+		// Every vendor pair is checked, so the vendor's group is what to change.
+		await expect(
+			page.getByRole('listitem').filter({ hasText: 'Pairs your vendors matched' })
+		).toBeVisible()
+		await expect(page.getByRole('link', { name: 'Change the vendor files' })).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Start run' })).toBeDisabled()
 	})
 
 	test('PairSight suggests the pairs for people, says why, and never names how', async ({
@@ -983,31 +957,27 @@ test.describe('PairSight vertical slice', () => {
 		await signUp(page)
 		await createEvaluation(page, 'Suggested pairs')
 		// 2,000 fictional people with planted duplicates, some with first and
-		// last names swapped or a typo: pairs simple rules never pick.
+		// last names swapped or a typo.
 		await uploadRecords(page, 'people-2000.csv')
 		await addVendor(page, 'people-2000-vendor.csv')
 		await expectVendorPairs(page, 1)
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
 
-		// Suggestions are on; your own rules wait under Advanced, closed, none on.
-		const suggestions = page.getByRole('region', { name: 'PairSight suggests the pairs' })
-		const suggestSwitch = suggestions.getByRole('switch', { name: 'Suggest pairs for me' })
-		await expect(suggestSwitch).toBeChecked()
-		const advanced = page.getByRole('button', { name: /Advanced: your own comparison rules/ })
-		await expect(advanced).toHaveAttribute('aria-expanded', 'false')
-		await expect(advanced).toContainText('None on')
+		// No rules and no switch: PairSight picks the pairs.
+		const suggestions = page.getByRole('region', { name: 'The pairs Jev will check' })
+		await expect(page.getByRole('switch')).toHaveCount(0)
 		// The card fills in by itself once PairSight has looked at the records.
 		await expect(suggestions).toContainText(/pairs suggested/, { timeout: 60_000 })
 		await expect(suggestions).toContainText('Most suggested pairs share')
 		await expect(suggestions).toContainText(
-			/These would also find 1 of the 1 pairs Vendor A matched/
+			/These already include 1 of the 1 pairs Vendor A matched/
 		)
 		await expect(page.locator('body')).not.toContainText(/splink/i)
 
 		await reviewPlan(page)
 		const ledger = page.getByRole('region', { name: 'From records to pairs' })
-		await expect(ledger).toContainText(/Pairs PairSight suggested\s*\+\d+/)
+		await expect(ledger).toContainText(/Pairs PairSight suggested\s*\d+/)
 		await expect(page.locator('body')).not.toContainText(/splink/i)
 
 		await startRun(page)
@@ -1018,15 +988,6 @@ test.describe('PairSight vertical slice', () => {
 			page.getByText(/PairSight suggested pairs that share something it compares/)
 		).toBeVisible()
 		await expect(page.locator('body')).not.toContainText(/splink/i)
-
-		// Switched off, the plan is the vendor's pairs and your rules (none).
-		await page.goto(page.url().replace(/\/runs\/[0-9a-f-]+\/results.*$/, '/rules'))
-		await suggestSwitch.click()
-		await expect(suggestSwitch).not.toBeChecked()
-		await reviewPlan(page)
-		await expect(page.getByRole('region', { name: 'From records to pairs' })).not.toContainText(
-			'Pairs PairSight suggested'
-		)
 	})
 
 	// 2,000 fictional organisations and products with planted duplicates
@@ -1057,20 +1018,20 @@ test.describe('PairSight vertical slice', () => {
 			await page.waitForURL('**/vendors')
 			await addVendor(page, `${file}-vendor.csv`)
 			await expectVendorPairs(page, 1)
-			await page.getByRole('link', { name: 'Next: rules' }).click()
+			await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 			await page.waitForURL('**/rules')
 
-			const suggestions = page.getByRole('region', { name: 'PairSight suggests the pairs' })
+			const suggestions = page.getByRole('region', { name: 'The pairs Jev will check' })
 			await expect(suggestions).toContainText(`most likely to be the same ${thing}`)
 			await expect(suggestions).toContainText(/pairs suggested/, { timeout: 60_000 })
 			await expect(suggestions).toContainText('Most suggested pairs share')
 			await expect(suggestions).toContainText(
-				/These would also find 1 of the 1 pairs Vendor A matched/
+				/These already include 1 of the 1 pairs Vendor A matched/
 			)
 
 			await reviewPlan(page)
 			await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
-				/Pairs PairSight suggested\s*\+\d+/
+				/Pairs PairSight suggested\s*\d+/
 			)
 			await startRun(page)
 			await expect(
@@ -1084,22 +1045,18 @@ test.describe('PairSight vertical slice', () => {
 		test.slow()
 		await signUp(page)
 		await createEvaluation(page, 'Big run')
-		// 110 people sharing a name and postcode: 5,995 pairs.
+		// 110 people sharing a name and postcode, 109 merged into one group by
+		// the vendor: 5,886 pairs. PairSight suggests none of them (a name and
+		// postcode alone aren't the same person), but every vendor pair is checked.
 		await uploadRecords(page, 'big-run-source.csv')
-		await addVendor(page, 'big-run-vendor.csv')
-		await expectVendorPairs(page, 1)
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await addVendor(page, 'big-run-vendor-groups.csv')
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
-			/Pairs Jev will check\s*6K/
+			/Pairs Jev will check\s*5\.89K/
 		)
 		await expect(page.getByText(/takes (under a minute|about)/)).toBeVisible()
-		// 110 records are too few to suggest pairs from; simple rules pick instead.
-		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
-			'Too few records to suggest pairs (it needs 200)',
-			{ timeout: 30_000 }
-		)
 		await expect(page.getByText(/more than one run can check/)).toHaveCount(0)
 		await expect(page.getByRole('button', { name: 'Start run' })).toBeEnabled()
 		await page.getByRole('button', { name: 'Start run' }).click()
@@ -1107,117 +1064,72 @@ test.describe('PairSight vertical slice', () => {
 			.getByRole('dialog', { name: 'Runs' })
 			.getByRole('article', { name: 'Run 1 · Big run' })
 		await expect(card).toContainText(/^Run 1 · Big runComplete · Started/, { timeout: 120_000 })
-		await expect(card).toContainText('6K pairs')
+		await expect(card).toContainText('5.89K pairs')
 	})
 
-	test('a fuzzy rule finds the duplicate exact rules miss, and Results calls it a hard case', async ({
+	test('PairSight suggests a duplicate that only looks alike, and the pair says why', async ({
 		page
 	}) => {
 		await signUp(page)
 		await createEvaluation(page, 'Hard cases')
 		await uploadRecords(page, 'hard-source.csv')
 		await addVendor(page, 'hard-vendor.csv')
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
-		// The fuzzy presets are offered, off by default.
-		await expect(
-			page.getByRole('switch', { name: 'Similar-sounding surname and birth year rule' })
-		).not.toBeChecked()
-
-		// A custom rule on derived keys: a birth year alone is too broad.
-		await page.getByRole('button', { name: 'Add your own rule' }).click()
-		const fields = page.getByRole('group', { name: 'Values in this rule' })
-		const matchOn = async (field: string, transform: string) => {
-			await page.getByRole('combobox', { name: `Match ${field} on` }).click()
-			await page.getByRole('option', { name: transform, exact: true }).click()
-		}
-		await fields.getByRole('button', { name: 'Date of birth' }).click()
-		await matchOn('Date of birth', 'year')
-		await expect(page.getByText('Date of birth (year) is too broad on its own.')).toBeVisible()
-		await expect(page.getByRole('button', { name: 'Save rule' })).toBeDisabled()
-		await fields.getByRole('button', { name: 'First name' }).click()
-		await matchOn('First name', 'sounds like')
-		await expect(page.getByText(/groups · /)).toContainText('1 groups · 1 pairs')
-		await page.getByRole('button', { name: 'Save rule' }).click()
-		const rule = 'First name (sounds like) AND Date of birth (year)'
-		await expect(page.getByRole('button', { name: `Edit ${rule}` })).toBeVisible()
-		// The surname preset, built by hand, is a rule that already exists.
-		await page.getByRole('button', { name: 'Add your own rule' }).click()
-		await fields.getByRole('button', { name: 'Last name' }).click()
-		await matchOn('Last name', 'sounds like')
-		await fields.getByRole('button', { name: 'Date of birth' }).click()
-		await matchOn('Date of birth', 'year')
-		await expect(page.getByText('You already have a rule with these values.')).toBeVisible()
-		await page.getByRole('button', { name: 'Cancel' }).click()
-
 		await reviewPlan(page)
 		await startRun(page)
-		// Smith and Smyth, born the same day: only the fuzzy rule found them,
-		// Jev agrees, and the vendor missed it.
+		// Smith and Smyth, born the same day, living apart, with other emails:
+		// PairSight suggested them, Jev agrees, and the vendor missed it.
 		await expect(tile(page, 'Only Jev says same')).toContainText('1')
 		const sources = page.getByRole('region', { name: 'Why was each pair checked?' })
-		await expect(sources).toContainText(rule)
-		// The hard cases sit behind the card's (i), seen without scrolling.
-		await sources
-			.getByRole('button', { name: 'About these numbers and hard-to-spot duplicates' })
-			.hover()
-		const tip = page.getByRole('tooltip')
-		await expect(tip).toContainText('1 duplicate was picked only by close-match rules')
-		await expect(tip).toContainText('Vendor A caught 0')
-
-		const summary = await exportFindings(page, 1, /^Summary report/)
-		const report = await readPdfText(await summary.path())
-		expect(report).toContain('Hard cases')
-		expect(report).toContain('Vendor A caught 0 of the 1 hard-to-spot duplicate.')
-
-		await sources
-			.getByRole('link', { name: 'See the 1 pair only close-match rules picked' })
-			.click()
-		await page.waitForURL(/source=fuzzy/)
-		await expect(matching(page)).toHaveText('1 pair')
+		await expect(sources).toContainText('Suggested by PairSight')
+		await tile(page, 'Only Jev says same').click()
+		await page.waitForURL(/tab=detailed/)
 		await expect(page.getByRole('table').getByText('Catherine Smyth')).toBeVisible()
+		await page.locator('tbody tr a').first().click()
+		await page.waitForURL('**/pairs/**')
+		await expect(
+			page.getByText(
+				'Suggested by PairSight: the two records share a name spelled a little differently, the same date of birth.'
+			)
+		).toBeVisible()
 	})
 
-	test('changing the country saves itself and recounts the phone rule', async ({ page }) => {
+	test('changing the country saves itself', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Country change')
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
-		const phoneRule = page.locator('li').filter({ hasText: 'Same phone' })
-		const before = await phoneRule.innerText()
 
 		await page.getByRole('combobox', { name: 'Where are these records from?' }).click()
 		await page.getByRole('option', { name: 'United Kingdom' }).click()
 		await expect(page.getByText('Saved', { exact: true })).toBeVisible()
-		// US numbers don't parse as British ones, so the phone rule's counts change.
-		await expect(phoneRule).not.toHaveText(before)
 		await page.reload()
 		await expect(page.getByRole('combobox', { name: 'Where are these records from?' })).toHaveText(
 			'United Kingdom'
 		)
 	})
 
-	test('rule changes save themselves; invalid ones are held back and say why', async ({ page }) => {
+	test('changes save themselves; invalid ones are held back and say why', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Autosave')
 		await uploadRecords(page, 'demo-source.csv')
 		await addVendor(page, 'demo-vendor-a.csv')
-		await page.getByRole('link', { name: 'Next: rules' }).click()
+		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
 		const stepLink = (name: string) =>
 			page.getByRole('list', { name: 'Steps' }).getByRole('link', { name: new RegExp(`^${name},`) })
 
-		// A switch saves itself and is still on after leaving and coming back.
-		const nameRule = page.getByRole('switch', { name: 'Same name rule' })
-		await nameRule.click()
+		// A cut-off saves itself and is still set after leaving and coming back.
+		await page.getByRole('radio', { name: /^Strict/ }).click()
 		await expect(page.getByText('Saved', { exact: true })).toBeVisible()
 		await stepLink('Vendors').click()
 		await page.waitForURL('**/vendors')
-		await stepLink('Rules').click()
+		await stepLink('What Jev checks').click()
 		await page.waitForURL('**/rules')
-		await expect(nameRule).toBeChecked()
+		await expect(page.getByRole('radio', { name: /^Strict/ })).toBeChecked()
 
 		// An empty definition is never saved: the reason shows, the plan waits.
 		const same = page.getByLabel('When are two records the same?', { exact: true })
@@ -1378,7 +1290,7 @@ test.describe('PairSight vertical slice', () => {
 
 		await uploadRecords(page, 'demo-source.csv')
 		await expect(
-			pipeline.getByRole('link', { name: /^Records, completed\. 24 records/ })
+			pipeline.getByRole('link', { name: /^Records, completed\. 220 records/ })
 		).toBeVisible()
 		await expect(
 			pipeline.getByRole('link', { name: /^Vendors, next step\. None added/ })
@@ -1530,7 +1442,7 @@ test.describe('PairSight vertical slice', () => {
 			// more than one round of calls.
 			const marker = await uploadRecords(page, 'crowd-source.csv')
 			await addVendor(page, 'crowd-vendor.csv')
-			await page.getByRole('link', { name: 'Next: rules' }).click()
+			await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 			await page.waitForURL('**/rules')
 			await reviewPlan(page)
 			// The first call never answers (it times out after 10 s here).

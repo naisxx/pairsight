@@ -14,8 +14,6 @@
 
 import { randomUUID } from 'node:crypto'
 import { parseArgs } from 'node:util'
-import { defaultRules, presetsFor } from '../../src/lib/pairsight/entity-types.ts'
-import { isFuzzyRule } from '../../src/lib/pairsight/derived-keys.ts'
 import { db } from '../../src/server/db/client.ts'
 import { defaultIdentity, JEV_MODEL, judgmentKey } from '../../src/server/pairsight/judgment.ts'
 import { recordKeys } from '../../src/server/pairsight/record-keys.ts'
@@ -76,11 +74,6 @@ const people = generatePeople(Math.max(MIN_PEOPLE, Math.ceil(pairTarget / PAIRS_
 const columnRoles = Object.fromEntries(
 	HEADERS.map((header) => [header, header === 'record_id' ? 'other' : header])
 )
-const exact = defaultRules('person')
-const fuzzy = presetsFor('person')
-	.filter(isFuzzyRule)
-	.map((preset) => ({ id: preset.id, fields: [...preset.fields] }))
-const rules = [...exact, ...fuzzy]
 const identity = defaultIdentity('person')
 const jevFields = HEADERS.filter((header) => header !== 'record_id')
 const key = judgmentKey({
@@ -117,7 +110,6 @@ while (pairs.length < pairTarget) {
 	add(pick(), pick(), null)
 }
 
-const pick = <T,>(items: readonly T[]): T => items[Math.floor(next() * items.length)] as T
 const scoreFor = (pair: SeedPair) =>
 	pair.duplicate == null
 		? next() < 0.05
@@ -152,16 +144,9 @@ const rows = pairs.map((pair) => {
 		decide(pair, judgedScore) ? [vendorIds[index] ?? ''] : []
 	)
 	const vendorOnly = matchedBy.length > 0 && next() < VENDOR_ONLY_SHARE
-	const ruleIds = vendorOnly
-		? []
-		: pair.duplicate === 'hard'
-			? [pick(fuzzy).id]
-			: pair.duplicate === 'easy'
-				? [pick(exact).id]
-				: next() < 0.5
-					? [pick(exact).id]
-					: [pick(fuzzy).id, ...(next() < 0.3 ? [pick(exact).id] : [])]
-	return { ...pair, status, score, matchedBy, ruleIds, assessmentId: randomUUID() }
+	// Suggested by PairSight, or added only because a vendor matched it.
+	const isSuggested = !vendorOnly
+	return { ...pair, status, score, matchedBy, isSuggested, assessmentId: randomUUID() }
 })
 
 const evaluation = await db.evaluation.create({
@@ -173,7 +158,6 @@ const evaluation = await db.evaluation.create({
 		identityDifferent: identity.different,
 		countryCode: COUNTRY,
 		jevFields: [...jevFields],
-		blockingRules: rules,
 		threshold: THRESHOLD
 	},
 	select: { id: true }
@@ -250,7 +234,6 @@ const run = await db.run.create({
 		identityDifferent: identity.different,
 		countryCode: COUNTRY,
 		jevFields: [...jevFields],
-		blockingRules: rules,
 		exportIds: vendorIds,
 		judgmentKey: key,
 		jevModel: JEV_MODEL,
@@ -284,7 +267,7 @@ await timed(`${rows.length.toLocaleString('en-GB')} pairs and their judgments`, 
 				runId: run.id,
 				recordAId: row.a,
 				recordBId: row.b,
-				ruleIds: row.ruleIds,
+				isSuggested: row.isSuggested,
 				matchedByExportIds: row.matchedBy,
 				assessmentId: row.assessmentId
 			}))

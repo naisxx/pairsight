@@ -1,7 +1,6 @@
 import 'server-only'
 import { Font, renderToBuffer } from '@react-pdf/renderer'
 import { getFormatter, getLocale, getTranslations } from 'next-intl/server'
-import { ruleLabel } from '@/components/pairsight/rule-label'
 import { log } from '@/server/lib/logger'
 import { exportFileName } from '../export-file-name'
 import { reportData } from '../report'
@@ -17,11 +16,10 @@ Font.registerHyphenationCallback((word) => [word])
 // A run's summary report as a PDF to download. Record values only ever go to
 // the viewer in the file: the log line carries ids and counts.
 export async function summaryExport({ scope, runId }: { scope: EvaluationScope; runId: string }) {
-	const [data, t, tRoles, tRules, tFailures, format, locale] = await Promise.all([
+	const [data, t, tRoles, tFailures, format, locale] = await Promise.all([
 		reportData({ scope, runId }),
 		getTranslations('Report'),
 		getTranslations('Roles'),
-		getTranslations('Rules'),
 		getTranslations('Failures'),
 		getFormatter(),
 		getLocale()
@@ -33,7 +31,6 @@ export async function summaryExport({ scope, runId }: { scope: EvaluationScope; 
 			text={{
 				t,
 				role: (role) => tRoles(role),
-				rule: (ruleId) => ruleLabel({ ruleId, rules: data.rules, tRules, tRoles }),
 				failure: (reason) => tFailures(reason),
 				date: (date) => format.dateTime(date, { dateStyle: 'medium' }),
 				dateTime: (date) => format.dateTime(date, { dateStyle: 'medium', timeStyle: 'short' }),

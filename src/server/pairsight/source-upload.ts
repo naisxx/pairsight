@@ -1,5 +1,5 @@
 import 'server-only'
-import { rolesFor, type EntityType } from '@/lib/pairsight/entity-types'
+import { MIN_RECORDS, rolesFor, type EntityType } from '@/lib/pairsight/entity-types'
 import {
 	detectEntityType,
 	suggestFields,
@@ -80,6 +80,14 @@ function previewTable({
 	}
 }
 
+// Fewer records than PairSight can learn which pairs to check from
+// (MIN_RECORDS): refused, as a file over the limit is.
+function tooFewRecords(rowCount: number): TableError | null {
+	return rowCount < MIN_RECORDS
+		? { code: 'too_few_rows', minimum: MIN_RECORDS, found: rowCount }
+		: null
+}
+
 export type SourcePreview =
 	| (Extract<FilePreview, { ok: true }> & { columnChecks: Record<string, ColumnCheck> })
 	| Extract<FilePreview, { ok: false }>
@@ -113,6 +121,8 @@ export async function previewSourceUpload({
 		}
 	})
 	if (!scan.ok) return scan
+	const tooFew = tooFewRecords(scan.rowCount)
+	if (tooFew != null) return { ok: false, error: tooFew }
 	return {
 		...previewTable({
 			headers: scan.headers,
@@ -181,6 +191,8 @@ export async function saveSourceUpload({
 		}
 	})
 	if (!scan.ok) return { ok: false, parseError: scan.error }
+	const tooFew = tooFewRecords(scan.rowCount)
+	if (tooFew != null) return { ok: false, parseError: tooFew }
 	const referenceIndex = scan.headers.indexOf(referenceColumn)
 	const referenceCheck =
 		referenceIndex === -1 ? NO_PROBLEMS : (checker.result()[referenceColumn] ?? NO_PROBLEMS)
