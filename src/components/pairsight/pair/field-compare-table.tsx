@@ -49,7 +49,7 @@ function BreakableText({ value }: { value: string }) {
 	))
 }
 
-function DiffText({ value, other }: { value: string; other: string }) {
+export function DiffText({ value, other }: { value: string; other: string }) {
 	const otherWords = new Set(
 		other
 			.toLowerCase()

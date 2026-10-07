@@ -4,9 +4,8 @@ import { CategoryBadge, CategoryDot, CATEGORY_STYLES, ScoreBar } from './result-
 import { LogoGlyph } from './wordmark'
 
 // A still picture of the Results screen on fictional data, for the empty
-// dashboard (and the landing page). Purely illustrative: the screen reader
-// hears one sentence, not the miniature UI. Its parts arrive in reading
-// order (motion.css, .rise), after the landing's --rise-base.
+// dashboard. Purely illustrative: the screen reader hears one sentence, not
+// the miniature UI. Its parts arrive in reading order (motion.css, .rise).
 
 const STAGES = ['records', 'vendors', 'rules', 'plan', 'results'] as const
 const PREVIEW_THRESHOLD = 0.6
