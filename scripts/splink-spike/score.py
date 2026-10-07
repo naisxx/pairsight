@@ -1,4 +1,4 @@
-"""Item 5 spike: Splink against today's rules, by the same yardstick.
+"""Items 5 and 10: Splink against today's rules, by the same yardstick.
 
 Reads out/<name>/{predictions.parquet, truth.csv, rules.json, splink.json}
 and prints a markdown report (also written to out/<name>/results.md):
@@ -6,9 +6,11 @@ and prints a markdown report (also written to out/<name>/results.md):
 - the wide net's ceiling: planted duplicates among every pair Splink scored;
 - a sweep of match-weight floors: duplicates found and pairs to check;
 - head to head with each rule set: Splink at the same number of pairs, and
-  the pairs Splink needs to find as many duplicates.
+  the pairs Splink needs to find as many duplicates;
+- for products, the variant traps (same line, another size or colour) each
+  side brings up: pairs Jev would check and find different.
 
-Usage: services/splink/.venv/Scripts/python scripts/splink-spike/score.py <hard|10k|100k>
+Usage: services/splink/.venv/Scripts/python scripts/splink-spike/score.py <type>-<size>
 """
 
 import json
@@ -44,6 +46,13 @@ def main(name: str) -> None:
         for left, right in zip(predictions["a"], predictions["b"], strict=True)
     ]
     predictions["is_duplicate"] = predictions["key"].map(lambda key: key in known)
+    traps_path = folder / "traps.csv"
+    traps = (
+        {canonical(a, b) for a, b in pd.read_csv(traps_path, dtype=str)[["a", "b"]].itertuples(index=False)}
+        if traps_path.exists()
+        else set()
+    )
+    predictions["is_trap"] = predictions["key"].map(lambda key: key in traps)
     ranked = predictions.sort_values("match_weight", ascending=False).reset_index(drop=True)
     found_by_rank = ranked["is_duplicate"].cumsum()
 
@@ -65,22 +74,27 @@ def main(name: str) -> None:
         f"Wide net: {len(ranked):,} pairs scored, holding {share(int(ranked['is_duplicate'].sum()))} "
         "of the planted duplicates (the most Splink could find).",
         "",
-        "| Match-weight floor | Pairs to check | Duplicates found |",
-        "| --- | --- | --- |",
+        "| Match-weight floor | Pairs to check | Duplicates found | Variant traps |",
+        "| --- | --- | --- | --- |",
     ]
     for floor in FLOORS:
         kept = ranked[ranked["match_weight"] >= floor]
-        lines.append(f"| {floor} | {len(kept):,} | {share(int(kept['is_duplicate'].sum()))} |")
+        lines.append(
+            f"| {floor} | {len(kept):,} | {share(int(kept['is_duplicate'].sum()))} | "
+            f"{int(kept['is_trap'].sum()):,} of {len(traps):,} |"
+        )
 
     lines += [
         "",
-        "| Today's rules | Pairs | Found | Splink, same pairs | Splink pairs for as many found |",
-        "| --- | --- | --- | --- | --- |",
+        "| Today's rules | Pairs | Found | Traps | Splink, same pairs | "
+        "Splink pairs for as many found |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
     for rule_set in rules:
         needed = pairs_to_find(rule_set["found"])
         lines.append(
             f"| {rule_set['label']} | {rule_set['pairs']:,} | {share(rule_set['found'])} | "
+            f"{rule_set.get('trapsPicked', 0):,} | "
             f"{share(found_in_top(rule_set['pairs']))} | "
             f"{'not reached' if needed is None else f'{needed:,}'} |"
         )
@@ -109,6 +123,6 @@ def main(name: str) -> None:
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2 or sys.argv[1] not in ("hard", "10k", "100k"):
-        sys.exit("Usage: score.py <hard|10k|100k>")
+    if len(sys.argv) != 2 or not (OUT / sys.argv[1] / "splink.json").exists():
+        sys.exit("Usage: score.py <type>-<size>, after run.py")
     main(sys.argv[1])

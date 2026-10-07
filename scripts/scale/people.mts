@@ -231,7 +231,7 @@ const NICKNAMES: Record<string, string> = {
 }
 
 // Mulberry32: small, fast and seeded, so a size always gives the same people.
-function random(seed: number): () => number {
+export function random(seed: number): () => number {
 	let state = seed
 	return () => {
 		state |= 0
