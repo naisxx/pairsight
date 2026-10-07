@@ -8,7 +8,7 @@ import { Slider } from '@/components/ui/slider'
 import { cn } from '@/lib/cn'
 import { CATEGORIES, MAX_THRESHOLD, MIN_THRESHOLD, categorize } from '@/lib/pairsight/decisions'
 import { vendorMetrics } from '@/lib/pairsight/metrics'
-import type { LandingDemo, LandingPair } from '@/server/pairsight/landing-demo'
+import type { LandingDemo, LandingPair, LandingScore } from '@/server/pairsight/landing-demo'
 import { DiffText } from '../pair/field-compare-table'
 import { CategoryBadge, CategoryDot, ScoreBar } from '../result-parts'
 import { STORY_PAIR } from './sections'
@@ -27,9 +27,10 @@ export function HeroResults({ demo }: { demo: LandingDemo }) {
 	const [threshold, setThreshold] = useState(demo.threshold)
 	const [openKey, setOpenKey] = useState<string>(STORY_PAIR)
 
-	const isMatchedBy = (pair: LandingPair) => pair.matchedBy.includes(vendorIndex)
+	const isMatchedBy = (pair: LandingScore) => pair.matchedBy.includes(vendorIndex)
+	// Every checked pair counts; the list shows a few of each kind.
 	const metrics = vendorMetrics(
-		demo.pairs.map((pair) => ({
+		demo.scores.map((pair) => ({
 			status: 'succeeded',
 			score: pair.score,
 			isVendorMatch: isMatchedBy(pair)
@@ -43,7 +44,7 @@ export function HeroResults({ demo }: { demo: LandingDemo }) {
 			isVendorMatch: isMatchedBy(pair),
 			threshold
 		})
-	const openPair = demo.pairs.find((pair) => pair.key === openKey) ?? demo.pairs[0]
+	const openPair = demo.examples.find((pair) => pair.key === openKey) ?? demo.examples[0]
 	const vendorName = demo.vendors[vendorIndex]?.name ?? ''
 
 	return (
@@ -55,7 +56,7 @@ export function HeroResults({ demo }: { demo: LandingDemo }) {
 				<div className="min-w-0">
 					<p className="type-ui truncate font-semibold">{demo.name}</p>
 					<p className="text-text-muted text-xs">
-						{t('panelMeta', { records: demo.recordCount, pairs: demo.pairs.length })}
+						{t('panelMeta', { records: demo.recordCount, pairs: demo.scores.length })}
 					</p>
 				</div>
 				<Segmented
@@ -134,7 +135,7 @@ export function HeroResults({ demo }: { demo: LandingDemo }) {
 					aria-label={t('panelPairs')}
 					className="border-border max-h-[300px] overflow-y-auto p-2 md:max-h-[340px] md:border-r"
 				>
-					{demo.pairs.map((pair) => {
+					{demo.examples.map((pair) => {
 						const category = categoryOf(pair)
 						const isOpen = pair.key === openPair?.key
 						return (

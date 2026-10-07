@@ -8,6 +8,7 @@ export const LANDING_SECTIONS = [
 	{ id: 'faq', label: 'navFaq' }
 ] as const
 
-// The demo pair the hero opens on and the story follows: a duplicate Jev
-// calls the same and both vendors missed.
-export const STORY_PAIR = 'R01-R03'
+// The demo pair the hero opens on and the story follows: first and last
+// names swapped, the same date of birth, another email and address.
+// PairSight suggested it, Jev calls it the same, and both vendors missed it.
+export const STORY_PAIR = 'P001497-P001496'

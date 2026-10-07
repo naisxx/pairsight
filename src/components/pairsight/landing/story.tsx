@@ -23,11 +23,6 @@ const STAGE_S = 0.5
 const STAGE_SHIFT_PX = 18
 const ICON_SIZE = 18
 const CHIP_ICON_SIZE = 12
-const RULE_LABELS: Record<string, 'ruleEmail' | 'rulePhone' | 'ruleNamePostcode'> = {
-	email: 'ruleEmail',
-	phone: 'rulePhone',
-	name_postcode: 'ruleNamePostcode'
-}
 
 // "How it works" as a story about one real pair from the demo. On a wide
 // screen it pins while you scroll: the steps on the left take turns, and the
@@ -36,7 +31,7 @@ const RULE_LABELS: Record<string, 'ruleEmail' | 'rulePhone' | 'ruleNamePostcode'
 // with the same three pictures.
 export function Story({ demo }: { demo: LandingDemo }) {
 	const t = useTranslations('HomePage')
-	const pair = demo.pairs.find((candidate) => candidate.key === STORY_PAIR)
+	const pair = demo.examples.find((candidate) => candidate.key === STORY_PAIR)
 	if (pair == null) return null
 	const intro = (
 		<>
@@ -173,7 +168,7 @@ function StageLayer({
 		step === 0 ? (
 			<FilesPicture demo={demo} />
 		) : step === 1 ? (
-			<RulesPicture demo={demo} pair={pair} />
+			<SuggestedPicture demo={demo} pair={pair} />
 		) : (
 			<VerdictPicture demo={demo} pair={pair} />
 		)
@@ -228,7 +223,7 @@ function FilesPicture({ demo }: { demo: LandingDemo }) {
 function RecordCard({ pair, side }: { pair: LandingPair; side: 0 | 1 }) {
 	const t = useTranslations('HomePage')
 	const email = pair.fields.find((field) => field.role === 'email')
-	const phone = pair.fields.find((field) => field.role === 'phone')
+	const born = pair.fields.find((field) => field.role === 'date_of_birth')
 	const valueOf = (field: typeof email) => (field == null ? '' : side === 0 ? field.a : field.b)
 	return (
 		<div className={cn(card, 'min-w-0 px-4 py-3')}>
@@ -236,14 +231,16 @@ function RecordCard({ pair, side }: { pair: LandingPair; side: 0 | 1 }) {
 			<span className="block text-sm font-semibold">{pair.names[side]}</span>
 			<span className="text-text-muted block truncate font-mono text-[11px]">{valueOf(email)}</span>
 			<span className="text-text-muted block font-mono text-[11px]">
-				{valueOf(phone) || t('panelEmpty')}
+				{valueOf(born) || t('panelEmpty')}
 			</span>
 		</div>
 	)
 }
 
-function RulesPicture({ demo, pair }: { demo: LandingDemo; pair: LandingPair }) {
+// PairSight picks the pair: the two records, and what they share.
+function SuggestedPicture({ demo, pair }: { demo: LandingDemo; pair: LandingPair }) {
 	const t = useTranslations('HomePage')
+	const tRules = useTranslations('Rules')
 	return (
 		<div className="w-full max-w-lg space-y-4">
 			<div className="grid grid-cols-2 gap-3">
@@ -251,25 +248,18 @@ function RulesPicture({ demo, pair }: { demo: LandingDemo; pair: LandingPair }) 
 				<RecordCard pair={pair} side={1} />
 			</div>
 			<ul className="flex flex-wrap gap-1.5">
-				{demo.ruleIds.map((ruleId) => {
-					const label = RULE_LABELS[ruleId]
-					if (label == null) return null
-					const isMet = pair.ruleIds.includes(ruleId)
-					return (
-						<li
-							key={ruleId}
-							className={cn(
-								'flex items-center gap-1 rounded-full px-2.5 py-1 text-xs whitespace-nowrap',
-								isMet
-									? 'bg-accent text-accent-ink font-medium'
-									: 'border-border bg-surface text-text-muted border'
-							)}
-						>
-							{isMet ? <CheckIcon size={CHIP_ICON_SIZE} /> : <MinusIcon size={CHIP_ICON_SIZE} />}
-							{t(label)}
-						</li>
-					)
-				})}
+				<li className="bg-accent text-accent-ink flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium whitespace-nowrap">
+					<CheckIcon size={CHIP_ICON_SIZE} />
+					{t('visualSuggested')}
+				</li>
+				{pair.reasons.map((reason) => (
+					<li
+						key={reason}
+						className="border-border bg-surface rounded-full border px-2.5 py-1 text-xs whitespace-nowrap"
+					>
+						{tRules(`reason_${reason}`)}
+					</li>
+				))}
 				<li className="border-border bg-surface flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs whitespace-nowrap">
 					{t('visualThreshold')}{' '}
 					<span className="font-mono font-medium">{demo.threshold.toFixed(2)}</span>

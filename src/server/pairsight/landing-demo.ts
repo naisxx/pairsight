@@ -1,13 +1,20 @@
 import 'server-only'
 import snapshotJson from '../../../prisma/demo/sandbox-snapshot.json'
+import { CATEGORIES, categorize } from '@/lib/pairsight/decisions'
 import { sandboxSnapshotSchema } from '@/lib/pairsight/sandbox-snapshot'
 import { compareFields, type FieldComparison } from './compare'
 import { FIELD_ROLES, type FieldRole } from './fields'
+import { STORY_PAIR } from '@/components/pairsight/landing/sections'
+import { parseReasons, type SuggestionReason } from './splink/reasons'
 
 // The landing page's worked example: the people sandbox's real recorded run
 // (prisma/demo/sandbox-snapshot.json), shaped for the hero's results panel and
 // the "How it works" story. Real Jev scores and real vendor decisions, so the
 // landing shows exactly what the product would.
+
+// Example pairs the panel lists, per vendor and category: enough to open a
+// few of each kind, without sending every pair's fields to the browser.
+const EXAMPLES_PER_GROUP = 3
 
 export type LandingVendor = {
 	name: string
@@ -16,15 +23,21 @@ export type LandingVendor = {
 	rows: number
 }
 
-export type LandingPair = {
-	key: string
-	refs: [string, string]
-	names: [string, string]
+// Every checked pair, as little as the panel's numbers need.
+export type LandingScore = {
 	score: number
 	// Indexes into `vendors`.
 	matchedBy: number[]
-	// The comparison rules that picked it.
-	ruleIds: string[]
+}
+
+// A pair the panel lists and can open.
+export type LandingPair = LandingScore & {
+	key: string
+	refs: [string, string]
+	names: [string, string]
+	// PairSight suggested it (rather than only a vendor matching it), and why.
+	isSuggested: boolean
+	reasons: SuggestionReason[]
 	fields: FieldComparison[]
 }
 
@@ -33,9 +46,9 @@ export type LandingDemo = {
 	recordsFile: string
 	recordCount: number
 	threshold: number
-	ruleIds: string[]
 	vendors: LandingVendor[]
-	pairs: LandingPair[]
+	scores: LandingScore[]
+	examples: LandingPair[]
 }
 
 const snapshot = sandboxSnapshotSchema.parse(snapshotJson)
@@ -49,15 +62,6 @@ function rowsOf(stats: unknown): number {
 		: 0
 }
 
-function ruleIdsOf(rules: unknown): string[] {
-	if (!Array.isArray(rules)) return []
-	return rules.flatMap((rule: unknown) =>
-		typeof rule === 'object' && rule != null && 'id' in rule && typeof rule.id === 'string'
-			? [rule.id]
-			: []
-	)
-}
-
 function buildDemo(): LandingDemo {
 	const { dataset, vendors, run, evaluation } = snapshot
 	// The sandbox's columns are named for their roles.
@@ -67,12 +71,46 @@ function buildDemo(): LandingDemo {
 	const byRef = new Map(dataset.records.map((record) => [record.reference, record.values]))
 	const nameOf = (values: Record<string, string>) =>
 		`${values.first_name ?? ''} ${values.last_name ?? ''}`.trim()
-	const pairs = run.pairs.flatMap((pair): LandingPair[] => {
+	const reasonsByKey = new Map<string, SuggestionReason[]>(
+		dataset.suggestions.pairs.flatMap((pair) => {
+			const [a, b] = pair.records
+			const reasons = parseReasons(pair.reasons.join(';'))
+			return [
+				[`${a}-${b}`, reasons],
+				[`${b}-${a}`, reasons]
+			] satisfies Array<[string, SuggestionReason[]]>
+		})
+	)
+	const judged = run.pairs.flatMap((pair) =>
+		pair.assessment.score == null ? [] : [{ ...pair, score: pair.assessment.score }]
+	)
+
+	// A few of each kind, for each vendor, and the story's pair.
+	const picked = new Set<string>([STORY_PAIR])
+	for (const [index] of vendors.entries()) {
+		for (const category of CATEGORIES) {
+			judged
+				.filter(
+					(pair) =>
+						categorize({
+							status: 'succeeded',
+							score: pair.score,
+							isVendorMatch: pair.matchedBy.includes(index),
+							threshold: run.threshold
+						}) === category
+				)
+				.sort((first, second) => second.score - first.score)
+				.slice(0, EXAMPLES_PER_GROUP)
+				.forEach((pair) => picked.add(pair.records.join('-')))
+		}
+	}
+
+	const examples = judged.flatMap((pair): LandingPair[] => {
+		const key = pair.records.join('-')
 		const [refA, refB] = pair.records
 		const valuesA = byRef.get(refA)
 		const valuesB = byRef.get(refB)
-		const score = pair.assessment.score
-		if (valuesA == null || valuesB == null || score == null) return []
+		if (!picked.has(key) || valuesA == null || valuesB == null) return []
 		const { fields } = compareFields({
 			valuesA,
 			valuesB,
@@ -81,12 +119,13 @@ function buildDemo(): LandingDemo {
 		})
 		return [
 			{
-				key: `${refA}-${refB}`,
+				key,
 				refs: [refA, refB],
 				names: [nameOf(valuesA), nameOf(valuesB)],
-				score,
+				score: pair.score,
 				matchedBy: pair.matchedBy,
-				ruleIds: pair.ruleIds,
+				isSuggested: pair.isSuggested,
+				reasons: reasonsByKey.get(key) ?? [],
 				fields
 			}
 		]
@@ -96,14 +135,19 @@ function buildDemo(): LandingDemo {
 		recordsFile: dataset.fileName,
 		recordCount: dataset.records.length,
 		threshold: run.threshold,
-		ruleIds: ruleIdsOf(evaluation.blockingRules),
 		vendors: vendors.map((vendor) => ({
 			name: vendor.name,
 			fileName: vendor.fileName,
 			format: vendor.format,
 			rows: rowsOf(vendor.stats)
 		})),
-		pairs
+		scores: judged.map(({ score, matchedBy }) => ({ score, matchedBy })),
+		// The story's pair first, then Jev's surest.
+		examples: examples.sort(
+			(first, second) =>
+				Number(second.key === STORY_PAIR) - Number(first.key === STORY_PAIR) ||
+				second.score - first.score
+		)
 	}
 }
 

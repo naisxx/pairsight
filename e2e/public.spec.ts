@@ -36,28 +36,29 @@ test('the landing’s demo results respond: vendor, match cut-off and a pair', a
 		}
 	}
 
-	// Northwind Match at 0.50: 2 merges Jev agrees with out of 4, 2 of 5 duplicates.
-	await expectCounts([2, 3, 2, 1])
-	await expect(panel.getByText('50.0%')).toBeVisible()
-	await expect(panel.getByText('40.0%')).toBeVisible()
+	// The demo's recorded run: Northwind Match at 0.50 merged 157 pairs, 134 of
+	// which Jev agrees with, and found 134 of Jev's 178 duplicates.
+	await expectCounts([134, 44, 23, 64])
+	await expect(panel.getByText('85.4%')).toBeVisible()
+	await expect(panel.getByText('75.3%')).toBeVisible()
 
 	// At the lowest cut-off Jev calls every pair the same.
 	await panel.getByRole('slider', { name: 'Match cut-off' }).focus()
 	await page.keyboard.press('Home')
 	await expect(panel.locator('output')).toHaveText('0.01')
-	await expectCounts([4, 4, 0, 0])
+	await expectCounts([157, 108, 0, 0])
 
 	await page.keyboard.press('End')
 	await panel.getByRole('radio', { name: 'Clearline Resolve' }).click()
 	await panel.getByRole('slider', { name: 'Match cut-off' }).focus()
 	for (let step = 0; step < 49; step++) await page.keyboard.press('ArrowLeft')
 	await expect(panel.locator('output')).toHaveText('0.50')
-	await expectCounts([2, 3, 1, 2])
+	await expectCounts([158, 20, 53, 34])
 
 	// Opening a pair shows its two records and what the vendor said.
-	await panel.getByRole('button', { name: /Tim Brennan/ }).click()
+	await panel.getByRole('button', { name: /Freya Selbelvar/ }).click()
 	const detail = panel.locator('#hero-pair')
-	await expect(detail).toContainText('R05 · R04')
+	await expect(detail).toContainText('P001497 · P001496')
 	await expect(detail).toContainText('Clearline Resolve kept these apart')
 })
 
