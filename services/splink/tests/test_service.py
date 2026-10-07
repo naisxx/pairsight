@@ -12,6 +12,8 @@ from .people import people
 from .products import products
 
 MEMORY = "500MB"
+# "Most of them", for files missing a column the planted duplicates share.
+MOSTLY = 0.8
 
 
 def planted(entity_type: str, size: int) -> tuple[pd.DataFrame, set[tuple[str, str]]]:
@@ -190,3 +192,40 @@ def test_planted_duplicates_are_explained(tmp_path, capsys, entity_type):
     _, _, pairs = score_with_cli(tmp_path, capsys, entity_type, records)
     for codes in found(pairs, duplicates)["reasons"]:
         assert PLANTED_REASONS[entity_type] <= set(codes.split(";"))
+
+
+@pytest.mark.parametrize(
+    ("entity_type", "emptied"),
+    [
+        # No two records share a training group's keys: that pass is skipped.
+        ("product", ("size", "color")),
+        ("product", ("gtin", "mpn")),
+        # Nothing to estimate the starting share of duplicates from.
+        ("person", ("email", "email_local", "phone")),
+        ("company", ("registration_number", "website")),
+    ],
+)
+def test_a_file_missing_whole_columns_still_scores(entity_type, emptied):
+    records, duplicates = planted(entity_type, 400)
+    for column in emptied:
+        records[column] = ""
+    pairs = score(records, entity_type=entity_type, memory_limit=MEMORY).pairs
+    assert (pairs["a"] < pairs["b"]).all()
+    # What's left still ranks the planted duplicates above almost every
+    # other pair.
+    hits = found(pairs, duplicates)
+    assert len(hits) >= MOSTLY * len(duplicates)
+    assert hits["match_weight"].median() > pairs["match_weight"].quantile(0.9)
+
+
+def test_a_training_pass_with_nothing_to_learn_keeps_every_field():
+    # No two products share a name, brand, size and colour: that pass is
+    # skipped, and size and colour still count against a variant.
+    records, duplicates, variants = products(400)
+    records.loc[records.index % 2 == 0, "color"] = "silver"
+    records.loc[records.index % 2 == 1, "color"] = "gold"
+    scored = score(records, entity_type="product", memory_limit=MEMORY)
+    assert {"gamma_product_name", "gamma_brand", "gamma_size_key", "gamma_color_key"} <= set(
+        scored.pairs.columns
+    )
+    assert not scored.summary["fallback_prior"]

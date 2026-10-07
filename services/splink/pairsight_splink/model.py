@@ -39,6 +39,10 @@ U_SAMPLE_PAIRS = 2_000_000
 # How often two random records are the same thing, estimated from pairs that
 # share the spec's most precise keys, assuming those catch about this share.
 DETERMINISTIC_RECALL = 0.7
+# When nothing in the file anchors that estimate (no shared emails or
+# phones, say), assume about this share of records has a duplicate: low
+# enough that only pairs with real evidence clear the plan's floor.
+FALLBACK_DUPLICATE_SHARE = 0.05
 # The least share of real duplicates any level may be trained to hold. A file
 # of a couple of thousand records gives EM a handful of examples per level,
 # and it can learn that duplicates "never" have, say, a swapped name or
@@ -104,6 +108,12 @@ def floored(model: dict) -> dict:
     return model
 
 
+def _shares_keys(prepared: pd.DataFrame, columns: tuple[str, ...]) -> bool:
+    """Whether any two records have the same values in all these columns."""
+    keyed = prepared.dropna(subset=list(columns))
+    return bool(keyed.duplicated(subset=list(columns), keep=False).any())
+
+
 def score(records: pd.DataFrame, entity_type: str, memory_limit: str) -> Scored:
     """Trains on the records themselves (no labels) and scores the wide net."""
     spec = spec_for(entity_type)
@@ -115,6 +125,7 @@ def score(records: pd.DataFrame, entity_type: str, memory_limit: str) -> Scored:
         )
 
     timings: dict[str, float] = {}
+    skipped: list[str] = []
 
     def timed(label: str, work):
         started = time.perf_counter()
@@ -137,15 +148,35 @@ def score(records: pd.DataFrame, entity_type: str, memory_limit: str) -> Scored:
         lambda: training.estimate_u_using_random_sampling(max_pairs=U_SAMPLE_PAIRS, seed=SEED),
     )
     for columns in spec.training_blocks:
+        label = f"em_{'_'.join(columns)}"
+        # No two records share these keys (the file has no barcodes, say):
+        # nothing to learn from this pass, and Splink raises on an empty one
+        # only after taking those fields out of the model, so it's never
+        # started. The other passes, the starting guesses and M_FLOOR cover
+        # what it would have trained.
+        if not _shares_keys(prepared, columns):
+            skipped.append(label)
+            continue
         timed(
-            f"em_{'_'.join(columns)}",
+            label,
             lambda columns=columns: training.estimate_parameters_using_expectation_maximisation(
                 block_on(*columns)
             ),
         )
-    trained = Linker(
-        prepared, floored(linker.misc.save_model_to_json()), DuckDBAPI(connection=connection)
+    model = floored(linker.misc.save_model_to_json())
+    prior = model.get("probability_two_random_records_match")
+    possible_pairs = len(prepared) * (len(prepared) - 1) / 2
+    # Unusable, or more duplicate pairs than there are records: nothing in
+    # the file anchored it.
+    is_fallback_prior = (
+        not isinstance(prior, float) or not 0 < prior < 1 or prior * possible_pairs > len(prepared)
     )
+    if is_fallback_prior:
+        # n records hold about share × n duplicate pairs among n(n-1)/2.
+        model["probability_two_random_records_match"] = (
+            2 * FALLBACK_DUPLICATE_SHARE / (len(prepared) - 1)
+        )
+    trained = Linker(prepared, model, DuckDBAPI(connection=connection))
     predictions = timed("predict", lambda: trained.inference.predict().as_pandas_dataframe())
 
     pairs = pd.DataFrame(
@@ -173,5 +204,7 @@ def score(records: pd.DataFrame, entity_type: str, memory_limit: str) -> Scored:
             "pairs_scored": len(pairs),
             "seconds": timings,
             "seconds_total": round(sum(timings.values()), 2),
+            "training_skipped": skipped,
+            "fallback_prior": is_fallback_prior,
         },
     )
