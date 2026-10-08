@@ -78,14 +78,13 @@ export function ToastDescription({
 export function ToastClose({
 	className,
 	...props
-}: React.ComponentProps<typeof ToastPrimitives.Close>) {
+}: React.ComponentProps<typeof ToastPrimitives.Close> & { 'aria-label': string }) {
 	return (
 		<ToastPrimitives.Close
-			aria-label="Dismiss"
-			className={cn('text-text-muted hover:text-text shrink-0 rounded-sm', className)}
+			className={cn('text-text-muted hover:text-text hit-area shrink-0 rounded-sm', className)}
 			{...props}
 		>
-			{/* Decorative: the button already carries aria-label="Dismiss". */}
+			{/* Decorative: the caller labels the button (aria-label). */}
 			<CloseIcon />
 		</ToastPrimitives.Close>
 	)

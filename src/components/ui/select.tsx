@@ -35,7 +35,7 @@ function SelectTrigger({
 			data-size={size}
 			className={cn(
 				fieldClassName,
-				'data-[state=open]:border-text-muted data-[placeholder]:text-text-muted data-[size=sm]:type-ui flex cursor-pointer items-center justify-between gap-2 pr-2.5 text-left whitespace-nowrap data-[size=default]:h-9 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 [&_svg]:pointer-events-none [&_svg]:shrink-0',
+				'data-[state=open]:border-action data-[placeholder]:text-text-muted data-[size=sm]:type-ui flex cursor-pointer items-center justify-between gap-2 pr-2.5 text-left whitespace-nowrap data-[size=default]:h-10 data-[size=sm]:h-8 *:data-[slot=select-value]:line-clamp-1 *:data-[slot=select-value]:flex *:data-[slot=select-value]:items-center *:data-[slot=select-value]:gap-2 pointer-coarse:data-[size=default]:h-11 pointer-coarse:data-[size=sm]:h-11 [&_svg]:pointer-events-none [&_svg]:shrink-0',
 				className
 			)}
 			{...props}

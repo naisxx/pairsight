@@ -52,11 +52,12 @@ const CATEGORIES = ['cat-both', 'cat-pairsight', 'cat-vendor', 'cat-neither']
 const pairs = [
 	...['text', 'text-muted'].flatMap((fg) => SURFACES.map((bg) => [fg, bg, TEXT])),
 	['action-ink', 'action', TEXT],
-	['action-ink', 'action-hover', TEXT],
+	['action-ink', 'action-active', TEXT],
+	// The coral fills the input focus edge and the current step's edge.
+	...['bg', 'surface', 'surface-elevated'].map((bg) => ['action', bg, NON_TEXT]),
 	['accent-ink', 'accent', TEXT],
 	['text', 'accent', TEXT],
 	['accent-ink', 'surface', TEXT],
-	['action', 'bg', NON_TEXT],
 	['text', 'diff', TEXT],
 	['diff-ink', 'diff', NON_TEXT],
 	['diff-ink', 'surface', NON_TEXT],
@@ -91,9 +92,9 @@ for (const [theme, values] of Object.entries(themes)) {
 	})
 }
 
-// The dark theme once read as "night mode" because every neutral was warm
-// brown. Neutrals and the selection/diff tints stay cool (blue ≥ red), so a
-// future tweak can't slide the palette back to sepia unnoticed.
+// Dark mode once read as "night mode" (warm brown), then as navy (blue
+// tinted). Neutrals are pure greys now: every channel within a couple of
+// points, so a future tweak can't tint the palette either way unnoticed.
 const NEUTRALS = [
 	'bg',
 	'surface',
@@ -103,15 +104,29 @@ const NEUTRALS = [
 	'selected',
 	'ghost',
 	'diff',
-	'border'
+	'border',
+	'border-input',
+	'text',
+	'text-muted'
 ]
+const MAX_CHANNEL_SPREAD = 2
 
 for (const [theme, values] of Object.entries(themes)) {
-	test(`${theme} theme keeps neutral surfaces cool, never warm`, () => {
-		const warm = NEUTRALS.filter((name) => {
-			const hex = values[name]
-			return parseInt(hex.slice(5, 7), 16) < parseInt(hex.slice(1, 3), 16)
+	test(`${theme} theme keeps neutral surfaces and text untinted`, () => {
+		const tinted = NEUTRALS.filter((name) => {
+			const channels = [1, 3, 5].map((i) => parseInt(values[name].slice(i, i + 2), 16))
+			return Math.max(...channels) - Math.min(...channels) > MAX_CHANNEL_SPREAD
 		})
-		assert.deepEqual(warm, [])
+		assert.deepEqual(tinted, [])
+	})
+}
+
+// The brand's third variant is a dimmed coral for a control that can't be
+// used: quiet next to the live coral, but still visibly a button on the page.
+for (const [theme, values] of Object.entries(themes)) {
+	test(`${theme} theme keeps the disabled coral dim but visible`, () => {
+		assert.ok(ratio(values['action-disabled'], values.action) >= NON_TEXT)
+		assert.ok(ratio(values['action-disabled'], values.bg) >= 1.1)
+		assert.ok(ratio(values['text-muted'], values['action-disabled']) >= NON_TEXT)
 	})
 }

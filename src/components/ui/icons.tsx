@@ -20,6 +20,7 @@
 import {
 	ArrowClockwise,
 	ArrowLeft,
+	ArrowCounterClockwise,
 	ArrowRight,
 	ArrowsClockwise,
 	ArrowsLeftRight,
@@ -164,6 +165,9 @@ function Glyph({
 // Add an icon when a component actually needs it; don't mirror the
 // provider's whole catalog here. Keep the list alphabetical.
 export const AlertIcon = (props: IconProps) => <Glyph source={Warning} {...props} />
+export const ArrowCounterClockwiseIcon = (props: IconProps) => (
+	<Glyph source={ArrowCounterClockwise} {...props} />
+)
 export const ArrowRightIcon = (props: IconProps) => <Glyph source={ArrowRight} {...props} />
 export const CalendarIcon = (props: IconProps) => <Glyph source={Calendar} {...props} />
 export const CheckIcon = (props: IconProps) => <Glyph source={Check} {...props} />

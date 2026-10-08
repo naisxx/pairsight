@@ -20,12 +20,12 @@ function Slider({
 			)}
 			{...props}
 		>
-			<SliderPrimitive.Track className="bg-surface-muted border-border relative h-1.5 w-full grow overflow-hidden rounded-full border">
+			<SliderPrimitive.Track className="bg-border relative h-1 w-full grow overflow-hidden rounded-full">
 				<SliderPrimitive.Range className="bg-action absolute h-full" />
 			</SliderPrimitive.Track>
 			<SliderPrimitive.Thumb
 				aria-label={thumbLabel}
-				className="border-action bg-surface focus-visible:outline-focus block size-4 rounded-full border-2 shadow-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
+				className="bg-action border-surface hover:bg-action-active focus-visible:outline-focus block size-[18px] cursor-grab rounded-full border-[3px] shadow-[0_0_0_1px_var(--action)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
 			/>
 		</SliderPrimitive.Root>
 	)

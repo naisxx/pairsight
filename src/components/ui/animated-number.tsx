@@ -9,43 +9,52 @@ import { EASE_OUT_SOFT } from './reveal'
 const DURATION_S = 0.28
 const COUNT_UP_S = 1.2
 
-// Counts up from zero when it first appears, then tweens from the previous
-// value to the new one, so a threshold change reads as a change rather than
-// a jump. `format` renders every frame (and null).
+// Counts up from zero when it first appears, then tweens from what's on
+// screen to the new value, so a threshold change reads as a change rather
+// than a jump. A new value mid-tween carries on from where the number is,
+// so dragging a slider moves it smoothly instead of restarting it.
+// `format` renders every frame (and null).
 export function AnimatedNumber({
 	value,
 	format,
 	className,
-	title
+	title,
+	countUpS = COUNT_UP_S
 }: {
 	value: number | null
 	format: (value: number | null) => string
 	className?: string
 	// What a hover shows, e.g. the exact figure behind a shortened count.
 	title?: string
+	// How long the first count up takes, in seconds.
+	countUpS?: number
 }) {
 	const isReduced = useReducedMotion() === true
 	const start = value == null ? null : 0
 	const [shown, setShown] = useState(start)
-	const previous = useRef(start)
+	// What's on screen right now, mid-tween or not.
+	const current = useRef(start)
 	const isFirst = useRef(true)
 
 	useEffect(() => {
-		const from = previous.current
-		const duration = isFirst.current ? COUNT_UP_S : DURATION_S
-		previous.current = value
+		const from = current.current
+		const duration = isFirst.current ? countUpS : DURATION_S
 		isFirst.current = false
 		if (isReduced || value == null || from == null || from === value) {
+			current.current = value
 			setShown(value)
 			return
 		}
 		const controls = animate(from, value, {
 			duration,
 			ease: EASE_OUT_SOFT,
-			onUpdate: setShown
+			onUpdate: (latest) => {
+				current.current = latest
+				setShown(latest)
+			}
 		})
 		return () => controls.stop()
-	}, [value, isReduced])
+	}, [value, isReduced, countUpS])
 
 	return (
 		<span className={className} title={title}>
@@ -88,6 +97,22 @@ export function AnimatedPercent({
 			value={value == null ? null : value * PERCENT}
 			format={(shown) => (shown == null ? emptyLabel : `${shown.toFixed(PERCENT_DECIMALS)}%`)}
 			className={className}
+		/>
+	)
+}
+
+const SCORE_DECIMALS = 2
+// A pair's score comes in quicker than a headline: it's read pair after pair.
+const SCORE_COUNT_UP_S = 0.5
+
+// A 0–1 score as "0.83", counting up as a new pair comes in.
+export function AnimatedScore({ value, className }: { value: number; className?: string }) {
+	return (
+		<AnimatedNumber
+			value={value}
+			format={(shown) => (shown ?? 0).toFixed(SCORE_DECIMALS)}
+			className={className}
+			countUpS={SCORE_COUNT_UP_S}
 		/>
 	)
 }

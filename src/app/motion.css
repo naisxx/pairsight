@@ -12,9 +12,13 @@
 	--stagger-i: --value(integer);
 }
 
+/* Arrivals start just above zero, not at it: Chrome paints an element once
+   and then fades it on the compositor, and a first paint at opacity 0 never
+   counts as content. A page made only of arrivals (sign-in) then records no
+   first or largest contentful paint at all. 0.01 looks the same. */
 @keyframes rise {
 	from {
-		opacity: 0;
+		opacity: 0.01;
 		transform: translateY(var(--rise-lift, 14px));
 		filter: blur(var(--rise-blur, 6px));
 	}
@@ -22,8 +26,27 @@
 
 @keyframes drop {
 	from {
-		opacity: 0;
+		opacity: 0.01;
 		transform: translateY(-10px);
+	}
+}
+
+/* The empty states' idle float (empty/scenes.tsx). It moves `translate`, so
+   it never fights `rise` (transform) or a card's tilt (rotate). */
+@keyframes drift {
+	to {
+		translate: 0 -5px;
+	}
+}
+
+/* The cut-off drawer's tab, inviting a first look (cutoff-bar.tsx). */
+@keyframes tab-invite {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--action) 0%, transparent);
+	}
+	40% {
+		box-shadow: 0 0 0 6px color-mix(in srgb, var(--action) 30%, transparent);
 	}
 }
 
@@ -134,6 +157,25 @@
 	}
 	.drop {
 		animation: drop 600ms var(--ease-out-soft) both;
+	}
+
+	/* Two slow pulses, then still: noticed, not nagging. */
+	.tab-invite {
+		animation: tab-invite 1.6s var(--ease-out-soft) 600ms 2;
+	}
+
+	/* Arrive like `rise`, then float gently; -reverse floats the other way,
+	   so two things drift apart. */
+	.empty-drift,
+	.empty-drift-reverse {
+		animation:
+			rise 760ms var(--ease-out-soft) both,
+			drift 3.2s ease-in-out 900ms infinite alternate;
+		animation-delay:
+			calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms)), 900ms;
+	}
+	.empty-drift-reverse {
+		animation-direction: normal, alternate-reverse;
 	}
 
 	/* Bars on the Results overview wipe in from the left, once their card has

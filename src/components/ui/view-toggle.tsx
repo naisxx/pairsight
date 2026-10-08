@@ -24,7 +24,7 @@ export function ViewToggle({
 				onClick={() => onChange(view === 'chart' ? 'table' : 'chart')}
 				aria-label={label}
 				aria-pressed={view === 'table'}
-				className="text-text-muted hover:bg-surface-hover hover:text-text inline-flex size-7 items-center justify-center rounded-sm transition-colors duration-150"
+				className="hit-area text-text-muted hover:bg-surface-hover hover:text-text inline-flex size-7 items-center justify-center rounded-sm transition-colors duration-150"
 			>
 				{view === 'chart' ? <TableIcon /> : <ChartIcon />}
 			</button>
