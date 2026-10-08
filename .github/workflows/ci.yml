@@ -68,10 +68,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
+      # No pnpm cache: this job never installs node_modules, so the store
+      # doesn't exist and saving it fails the job on a new lockfile hash.
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: pnpm
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
