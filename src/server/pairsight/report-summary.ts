@@ -5,6 +5,7 @@ import {
 	statsMetrics,
 	statsSensitivity
 } from '@/lib/pairsight/stats'
+import { rankVendors as rankByOverallScore } from '@/lib/pairsight/ranking'
 import { compareFields, type FieldComparison } from './compare'
 import type { FieldRole, IdentityRole } from './fields'
 import type { RunSummary } from './result-overview'
@@ -57,17 +58,12 @@ export type LeadRange = {
 	above: { threshold: number; leader: string } | null
 }
 
-const byF1ThenPrecision = (a: VendorMetrics, b: VendorMetrics) =>
-	(b.f1 ?? -1) - (a.f1 ?? -1) || (b.precision ?? -1) - (a.precision ?? -1)
-
-// Best F1 first, precision breaking ties (fewer wrong merges wins). A vendor
-// with no F1 (nothing to compare) is listed last and not ranked.
+// Best overall score first, correct merges breaking ties (ranking.ts: the
+// same rule the Results screen uses).
 export function rankVendors<T extends ReportVendor>(
 	vendors: T[]
 ): Array<T & { rank: number | null }> {
-	const sorted = [...vendors].sort((a, b) => byF1ThenPrecision(a.metrics, b.metrics))
-	let rank = 0
-	return sorted.map((vendor) => ({ ...vendor, rank: vendor.metrics.f1 == null ? null : ++rank }))
+	return rankByOverallScore(vendors)
 }
 
 function best(vendors: ReportVendor[], value: (metrics: VendorMetrics) => number | null) {
@@ -215,7 +211,8 @@ export function buildReport({ summary, vendors, examples }: ReportInput) {
 		leaders: leaders(ranked),
 		leadRange: leadRange(ranked, summary.threshold),
 		// Where the leader's own precision and recall hold still.
-		stableRange: first == null ? null : stableRange(first.sensitivity, first.metrics),
+		stableRange:
+			first == null ? null : stableRange(first.sensitivity, first.metrics, summary.threshold),
 		headToHead: headToHead(summary, vendors),
 		// The run as a whole: the same for every vendor.
 		pairs: first?.metrics ?? statsMetrics([], -1),

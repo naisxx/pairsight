@@ -6,7 +6,6 @@ import {
 	sensitivity,
 	stableRange,
 	vendorMetrics,
-	vendorOverlap,
 	workload,
 	type MetricPair
 } from './metrics'
@@ -61,7 +60,38 @@ test('the sweep covers 0.05–0.95, and the stable range brackets the current th
 	assert.equal(points.at(-1)?.threshold, 0.95)
 	const current = vendorMetrics(pairs, 0.5)
 	// Nothing scores between 0.45 and 0.7, so 0.5–0.7 all read the same.
-	assert.deepEqual(stableRange(points, current), { from: 0.5, to: 0.7 })
+	assert.deepEqual(stableRange(points, current, 0.5), { from: 0.5, to: 0.7 })
+})
+
+const point = (threshold: number, precision: number, recall: number) => ({
+	threshold,
+	precision,
+	recall,
+	f1: null,
+	matches: 0
+})
+
+test('the stable range is only the unbroken stretch around the cut-off', () => {
+	const points = [
+		point(0.4, 0.9, 0.8),
+		point(0.45, 0.7, 0.8),
+		point(0.5, 0.9, 0.8),
+		point(0.55, 0.9, 0.8),
+		point(0.6, 0.6, 0.6),
+		point(0.65, 0.9, 0.8)
+	]
+	// 0.4 and 0.65 read the same as 0.5, but a different point sits between.
+	assert.deepEqual(stableRange(points, { precision: 0.9, recall: 0.8 }, 0.5), {
+		from: 0.5,
+		to: 0.55
+	})
+})
+
+test('one matching point is not a range: any change moves the numbers', () => {
+	const points = [point(0.45, 0.7, 0.8), point(0.5, 0.9, 0.8), point(0.55, 0.6, 0.8)]
+	assert.equal(stableRange(points, { precision: 0.9, recall: 0.8 }, 0.5), null)
+	// The cut-off's own point differs (the run's cut-off sits between points).
+	assert.equal(stableRange(points, { precision: 0.1, recall: 0.1 }, 0.52), null)
 })
 
 test('the histogram splits judged scores by the vendor decision', () => {
@@ -72,25 +102,6 @@ test('the histogram splits judged scores by the vendor decision', () => {
 		bins.reduce((sum, bin) => sum + bin.matched + bin.notMatched, 0),
 		6
 	)
-})
-
-test('vendor overlap groups judged pairs by which vendors matched them', () => {
-	const groups = vendorOverlap(
-		[
-			{ status: 'succeeded', score: 0.9, matchedBy: ['a', 'b'] },
-			{ status: 'succeeded', score: 0.2, matchedBy: ['b'] },
-			{ status: 'succeeded', score: 0.8, matchedBy: [] },
-			{ status: 'pending', score: null, matchedBy: ['a'] }
-		],
-		['a', 'b'],
-		0.5
-	)
-	assert.deepEqual(groups, [
-		{ key: 'both', total: 1, sameIndividual: 1 },
-		{ key: 'firstOnly', total: 0, sameIndividual: 0 },
-		{ key: 'secondOnly', total: 1, sameIndividual: 0 },
-		{ key: 'neither', total: 1, sameIndividual: 1 }
-	])
 })
 
 test('the workload counts disagreements, borderline scores and incomplete pairs', () => {

@@ -1,18 +1,10 @@
 import { z } from 'zod'
-import {
-	emptyCounts,
-	possiblePairs,
-	stableRange,
-	type CategoryCounts,
-	type ResultCategory
-} from '@/lib/pairsight/metrics'
+import { possiblePairs, stableRange, type ResultCategory } from '@/lib/pairsight/metrics'
 import { CATEGORIES, type Category } from '@/lib/pairsight/decisions'
 import {
 	binPairs,
 	statsCoverage,
-	statsHistogram,
 	statsMetrics,
-	statsOverlap,
 	statsSensitivity,
 	statsWorkload,
 	type StatsRow
@@ -149,8 +141,6 @@ export type SourceStat = {
 	count: number
 }
 
-export type SourceRow = { suggested: boolean; counts: CategoryCounts; total: number }
-
 const matchedBy = (mask: number, vendorIndex: number) =>
 	vendorIndex >= 0 && (mask & (1 << vendorIndex)) !== 0
 
@@ -158,23 +148,6 @@ function categoryOf(judged: boolean, match: boolean, isVendorMatch: boolean): Re
 	if (!judged) return 'incomplete'
 	if (isVendorMatch) return match ? 'both_matched' : 'vendor_only'
 	return match ? 'pairsight_only' : 'neither_matched'
-}
-
-// Where each kind of pair came from, for one vendor: suggested by PairSight
-// first, then added by a vendor. A source with no pairs isn't listed.
-export function sourceRows(stats: SourceStat[], vendorIndex: number): SourceRow[] {
-	const rows = [true, false].map((suggested) => ({
-		suggested,
-		counts: emptyCounts(),
-		total: 0
-	}))
-	for (const stat of stats) {
-		const row = rows[stat.suggested ? 0 : 1]
-		if (row == null) continue
-		row.counts[categoryOf(stat.judged, stat.match, matchedBy(stat.mask, vendorIndex))] += stat.count
-		row.total += stat.count
-	}
-	return rows.filter((row) => row.total > 0)
 }
 
 const statsRowSchema = z.object({
@@ -256,7 +229,6 @@ export function buildOverview({
 	const selectedRows = selectedIndex === -1 ? [] : rows
 	const metrics = statsMetrics(selectedRows, selectedIndex)
 	const points = statsSensitivity(selectedRows, selectedIndex)
-	const other = vendors.find((vendor) => vendor.id !== vendorId)
 	const coverage = statsCoverage(rows)
 
 	return {
@@ -267,18 +239,7 @@ export function buildOverview({
 			metrics: vendor.id === vendorId ? metrics : statsMetrics(rows, indexOf(vendor.id))
 		})),
 		sensitivity: points,
-		stableRange: stableRange(points, metrics),
-		histogram: statsHistogram(selectedRows, selectedIndex),
-		// The selected vendor against the first other one (decision #7 in the
-		// revamp plan: more than two vendors compare pairwise like this).
-		overlap:
-			vendorId == null || other == null
-				? null
-				: {
-						vendors: [vendors.find((vendor) => vendor.id === vendorId), other],
-						groups: statsOverlap(rows, selectedIndex, indexOf(other.id))
-					},
-		sources: sourceRows(summary.sources, selectedIndex),
+		stableRange: stableRange(points, metrics, summary.threshold),
 		top,
 		workload: statsWorkload(selectedRows, selectedIndex),
 		coverage: {

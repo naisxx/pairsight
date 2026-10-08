@@ -6,10 +6,10 @@ import { StyleSheet } from '@react-pdf/renderer'
 // so nothing has to be embedded.
 
 export const COLORS = {
-	text: '#0f1720',
-	muted: '#4e5a6a',
-	border: '#dde2e9',
-	surfaceMuted: '#eef1f4',
+	text: '#0a0a0a',
+	muted: '#5a5a5a',
+	border: '#e3e3e3',
+	surfaceMuted: '#f0f0f0',
 	action: '#c93a22',
 	brandDeep: '#972828',
 	success: '#14773a',
@@ -21,9 +21,9 @@ export const COLORS = {
 
 // One colour and dash per vendor, so the chart never relies on colour alone.
 export const VENDOR_SERIES = [
-	{ color: '#364152', dash: undefined },
+	{ color: '#3a3a3a', dash: undefined },
 	{ color: '#c25a12', dash: '4 2' },
-	{ color: '#4e5a6a', dash: '1 2' }
+	{ color: '#5a5a5a', dash: '1 2' }
 ] as const
 
 export const PAGE_PADDING = 40

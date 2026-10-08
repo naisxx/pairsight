@@ -32,7 +32,10 @@ export function Pagination({
 	const pageLink = (target: number, isDisabled: boolean, label: string, icon: React.ReactNode) => (
 		<Button asChild variant="secondary" size="icon">
 			<Link
-				href={{ pathname: `${base}/results`, query: toQuery(filters, { page: target }) }}
+				href={{
+					pathname: `${base}/results`,
+					query: toQuery(filters, { page: target, sel: undefined })
+				}}
 				aria-label={label}
 				aria-disabled={isDisabled}
 				className={cn(isDisabled && 'pointer-events-none opacity-50')}

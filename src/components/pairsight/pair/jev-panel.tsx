@@ -5,8 +5,7 @@ import { cn } from '@/lib/cn'
 import type { AssessmentStatus } from '@/server/pairsight/decisions'
 import { ReadOnlyGate } from '../read-only'
 import { RetryPairButton } from './retry-pair-button'
-
-const PERCENT = 100
+import { ScoreBar } from '../result-parts'
 
 // Jev's judgment of this pair: the score against the threshold, the model and
 // when — or, when there isn't one yet or it failed, that state explicitly,
@@ -47,7 +46,7 @@ export function JevPanel({
 		return (
 			<section
 				aria-labelledby="jev-title"
-				className="border-border-input bg-surface rounded-md border border-dashed p-4"
+				className="border-border-input bg-surface rounded-lg border border-dashed p-4"
 			>
 				{title}
 				<p className="type-ui mt-3 flex items-center gap-2 font-medium">
@@ -73,7 +72,7 @@ export function JevPanel({
 
 	const isMatch = score >= threshold
 	return (
-		<section aria-labelledby="jev-title" className="border-border bg-surface rounded-md border p-4">
+		<section aria-labelledby="jev-title" className="border-border bg-surface rounded-lg border p-4">
 			<div className="flex items-start justify-between gap-3">
 				{title}
 				<span className={cn('type-ui font-medium', isMatch ? 'text-text' : 'text-text-muted')}>
@@ -89,26 +88,16 @@ export function JevPanel({
 					})}
 				</span>
 			</div>
-			<div
+			<span
 				role="img"
 				aria-label={t('scoreBarLabel', {
 					score: score.toFixed(2),
 					threshold: threshold.toFixed(2)
 				})}
-				className="bg-surface-muted relative mt-3 h-2 rounded-full"
+				className="mt-3 flex"
 			>
-				<div
-					className={cn(
-						'absolute inset-y-0 left-0 rounded-full',
-						isMatch ? 'bg-text' : 'bg-border-input'
-					)}
-					style={{ width: `${score * PERCENT}%` }}
-				/>
-				<div
-					className="bg-ring absolute -top-1 -bottom-1 w-[2px] -translate-x-1/2 rounded-full"
-					style={{ left: `${threshold * PERCENT}%` }}
-				/>
-			</div>
+				<ScoreBar score={score} threshold={threshold} size="lg" showValue={false} />
+			</span>
 			<div className="text-text-muted mt-1 flex justify-between font-mono text-[0.6875rem]">
 				<span>0</span>
 				<span>1</span>

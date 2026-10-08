@@ -1,20 +1,11 @@
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Chip } from '@/components/ui/chip'
-import {
-	CheckIcon,
-	ChevronDownIcon,
-	ChevronUpIcon,
-	ChevronsUpDownIcon,
-	MinusIcon
-} from '@/components/ui/icons'
-import { failureReason } from '@/lib/pairsight/failure-reasons'
-import { cn } from '@/lib/cn'
-import { isPairsightMatch } from '@/server/pairsight/decisions'
+import { ChevronDownIcon, ChevronUpIcon, ChevronsUpDownIcon } from '@/components/ui/icons'
 import type { ResultFilters, ResultRow } from '@/server/pairsight/results'
-import { RetryPairButton } from '../pair/retry-pair-button'
-import { ReadOnlyGate } from '../read-only'
-import { CategoryBadge, ScoreBar } from '../result-parts'
+import { DiffText } from '../pair/field-compare-table'
+import { CategoryBadge, CategoryDot, ScoreBar } from '../result-parts'
+import { RowLink } from './pair-selection'
 import { toQuery } from './query'
 
 const SORT_ICON_SIZE = 12
@@ -24,57 +15,55 @@ const NEXT_SORT: Record<'none' | 'score-desc' | 'score-asc', ResultFilters['sort
 	'score-asc': undefined
 }
 
-// The current page of pairs (docs/PairSight-UX-Plan.md §4.1). Each row is
-// one link to its pair; incomplete rows show their status where a score
-// would be and "not assessed" as the decision — never "no match". The table
-// scrolls inside its frame so the header stays in view.
+// The current page of pairs (docs/PairSight-UX-Plan.md §4.1), kept to what
+// picks a pair out: who says what, the two records (the words that differ
+// marked), and Jev's score. Each row selects its pair into the panel beside
+// the list (pair-panel.tsx) without leaving the page; incomplete rows show
+// their status where a score would be, never "different".
 export function PairsTable({
-	runId,
 	base,
 	filters,
 	rows,
-	threshold,
-	vendorName
+	threshold
 }: {
-	runId: string
 	base: string
 	filters: ResultFilters
 	rows: ResultRow[]
 	threshold: number
-	vendorName: string
 }) {
 	const t = useTranslations('Results')
-	const tFailures = useTranslations('Failures')
+	const tCat = useTranslations('Categories')
 	const sort = filters.sort ?? 'none'
-	const listQuery = { ...filters, tab: 'detailed' as const, sel: undefined }
 	const sortHref = {
 		pathname: `${base}/results`,
-		query: toQuery(filters, { sort: NEXT_SORT[sort], page: undefined })
+		query: toQuery(filters, { sort: NEXT_SORT[sort], page: undefined, sel: undefined })
 	}
+	const listQuery = { ...filters, tab: 'detailed' as const }
+	const selectHref = (id: string) =>
+		`${base}/results?${new URLSearchParams(toQuery(listQuery, { sel: id }))}`
 	const th =
-		'border-border text-text-muted h-9 border-b px-3 text-left text-xs font-medium whitespace-nowrap'
-	const td = 'border-border h-12 border-b px-3 align-middle'
+		'border-border bg-surface-muted text-text-muted h-9 overflow-hidden border-b px-3 text-left text-xs font-medium text-ellipsis whitespace-nowrap first:pl-4 last:pr-4'
+	const td = 'border-border border-b px-3 py-2.5 align-middle first:pl-4 last:pr-4'
 
 	return (
 		<div
 			data-pairs-table
-			className="border-border bg-surface scroll-fade-x max-h-[calc(100dvh-300px)] min-h-[320px] overflow-auto rounded-t-md border border-b-0"
+			className="border-border bg-surface overflow-hidden rounded-t-lg border border-b-0"
 		>
-			<table className="type-ui w-full border-separate border-spacing-0 @5xl:min-w-[1180px]">
+			<table className="type-ui w-full table-fixed border-separate border-spacing-0">
 				<caption className="sr-only">{t('tableCaption')}</caption>
-				<thead className="bg-surface-muted sticky top-0 z-10">
+				<colgroup>
+					<col className="w-[44px] @2xl:w-[176px]" />
+					<col />
+					<col className="w-[64px] @2xl:w-[148px]" />
+				</colgroup>
+				<thead>
 					<tr>
 						<th scope="col" className={th}>
-							{t('columnCategory')}
+							<span className="sr-only @2xl:not-sr-only">{t('columnCategory')}</span>
 						</th>
 						<th scope="col" className={th}>
-							{t('columnRecordA')}
-						</th>
-						<th scope="col" className={th}>
-							{t('columnRecordB')}
-						</th>
-						<th scope="col" className={cn(th, 'hidden @5xl:table-cell')}>
-							{t('columnVendorDecision', { vendor: vendorName })}
+							{t('columnRecords')}
 						</th>
 						<th
 							scope="col"
@@ -85,7 +74,7 @@ export function PairsTable({
 						>
 							<Link
 								href={sortHref}
-								className="hover:text-text inline-flex items-center gap-1 rounded-[4px]"
+								className="hover:text-text hit-area inline-flex items-center gap-1 rounded-[4px]"
 							>
 								{t('columnScore')}
 								{sort === 'score-desc' ? (
@@ -97,135 +86,78 @@ export function PairsTable({
 								)}
 							</Link>
 						</th>
-						<th scope="col" className={cn(th, 'hidden @3xl:table-cell')}>
-							{t('columnDecision')}
-						</th>
-						<th scope="col" className={cn(th, 'hidden @6xl:table-cell')}>
-							{t('columnReason')}
-						</th>
-						<th scope="col" className={cn(th, 'hidden @5xl:table-cell')}>
-							{t('columnAssessment')}
-						</th>
-						<th scope="col" className={cn(th, 'hidden @3xl:table-cell')}>
-							{t('columnFlags')}
-						</th>
 					</tr>
 				</thead>
 				<tbody>
 					{rows.map((row) => {
-						const isSelected = row.id === filters.sel
-						const reason = row.isSuggested
-							? t('reasonSuggested')
-							: t('reasonVendor', { vendor: vendorName })
 						return (
+							// Highlighted from its link (RowLink's data-selected), so the
+							// highlight moves the moment a row is picked.
 							<tr
 								key={row.id}
-								className={cn(
-									'relative transition-colors duration-100',
-									isSelected
-										? 'bg-selected shadow-[inset_3px_0_0_var(--action)]'
-										: 'hover:bg-surface-hover has-[a:focus-visible]:bg-surface-hover'
-								)}
+								className="hover:bg-surface-hover has-[a:focus-visible]:bg-surface-hover has-[a[data-selected=true]]:bg-selected relative transition-colors duration-100 has-[a[data-selected=true]]:shadow-[inset_3px_0_0_var(--action)]"
 							>
 								<td className={td}>
-									<Link
-										href={{ pathname: `${base}/pairs/${row.id}`, query: toQuery(listQuery) }}
-										aria-label={t('openPair', {
+									<RowLink
+										pairId={row.id}
+										href={selectHref(row.id)}
+										label={t('selectPair', {
 											a: row.recordA.reference,
-											b: row.recordB.reference
+											b: row.recordB.reference,
+											category: tCat(row.category)
 										})}
-										className="after:absolute after:inset-0"
+										fullHref={`${base}/pairs/${row.id}?${new URLSearchParams(
+											toQuery(listQuery, { sel: undefined })
+										)}`}
 									>
-										<CategoryBadge category={row.category} />
-									</Link>
+										{/* Narrow, just the group's mark; its name is in the row's label. */}
+										<span className="hidden @2xl:inline-flex">
+											<CategoryBadge category={row.category} />
+										</span>
+										<span className="@2xl:hidden" title={tCat(row.category)}>
+											<CategoryDot category={row.category} />
+										</span>
+									</RowLink>
 								</td>
-								{[row.recordA, row.recordB].map((record) => (
-									<td key={record.id} className={td}>
-										<span className="text-text-muted block font-mono text-xs">
-											{record.reference}
-										</span>
-										<span className="text-text block max-w-[180px] truncate">{record.label}</span>
-									</td>
-								))}
-								<td className={cn(td, 'hidden @5xl:table-cell')}>
-									{row.isVendorMatch ? (
-										<span className="text-text inline-flex items-center gap-1.5">
-											<CheckIcon size={14} variant="bold" /> {t('matched')}
-										</span>
-									) : (
-										<span className="text-text-muted inline-flex items-center gap-1.5">
-											<MinusIcon size={14} /> {t('notMatched')}
-										</span>
+								<td className={td}>
+									{[
+										[row.recordA, row.recordB],
+										[row.recordB, row.recordA]
+									].map(([record, other]) =>
+										record == null || other == null ? null : (
+											<span key={record.id} className="flex min-w-0 items-baseline gap-2.5">
+												<span className="text-text-muted w-16 shrink-0 truncate font-mono text-[0.6875rem]">
+													{record.reference}
+												</span>
+												<span className="text-text min-w-0 truncate">
+													<DiffText value={record.label} other={other.label} />
+												</span>
+											</span>
+										)
 									)}
 								</td>
 								<td className={td}>
 									{row.status === 'succeeded' && row.score != null ? (
-										<ScoreBar score={row.score} threshold={threshold} />
+										<ScoreBar
+											score={row.score}
+											threshold={threshold}
+											className="[&>span:first-child]:hidden @2xl:[&>span:first-child]:inline-block"
+										/>
 									) : (
-										<Chip tone="outline" className="border-border-input border-dashed">
-											{t(row.status === 'failed' ? 'failed' : 'pending')}
+										<Chip
+											tone={row.status === 'failed' ? 'danger' : 'outline'}
+											className={
+												row.status === 'failed' ? undefined : 'border-border-input border-dashed'
+											}
+										>
+											{t(
+												row.status === 'failed'
+													? 'failed'
+													: row.status === 'running'
+														? 'running'
+														: 'pending'
+											)}
 										</Chip>
-									)}
-								</td>
-								<td className={cn(td, 'hidden @3xl:table-cell')}>
-									{row.status === 'succeeded' && row.score != null ? (
-										isPairsightMatch({ score: row.score, threshold }) ? (
-											<span className="text-text font-medium">{t('match')}</span>
-										) : (
-											<span className="text-text-muted">{t('noMatch')}</span>
-										)
-									) : (
-										<span className="text-text-muted">{t('notAssessed')}</span>
-									)}
-								</td>
-								<td className={cn(td, 'hidden max-w-[220px] @6xl:table-cell')}>
-									<span className="text-text-muted block truncate" title={reason}>
-										{reason}
-									</span>
-								</td>
-								<td className={cn(td, 'hidden @5xl:table-cell')}>
-									{row.status === 'succeeded' ? (
-										<span className="text-text-muted">{t('assessed')}</span>
-									) : row.status === 'failed' ? (
-										<span className="flex items-center gap-1.5">
-											<Chip
-												tone="danger"
-												className="max-w-[160px]"
-												title={row.errorCode ?? undefined}
-											>
-												<span className="truncate">
-													{t('failedBecause', { reason: tFailures(failureReason(row.errorCode)) })}
-												</span>
-											</Chip>
-											{/* Above the row's full-size link, so it takes its own clicks. */}
-											<span className="relative z-10">
-												<ReadOnlyGate action="retry">
-													<RetryPairButton
-														runId={runId}
-														pairId={row.id}
-														compact={{
-															label: t('retryPair', {
-																a: row.recordA.reference,
-																b: row.recordB.reference
-															})
-														}}
-													/>
-												</ReadOnlyGate>
-											</span>
-										</span>
-									) : (
-										<Chip tone="neutral">
-											{t(row.status === 'running' ? 'running' : 'pending')}
-										</Chip>
-									)}
-								</td>
-								<td className={cn(td, 'hidden @3xl:table-cell')}>
-									{row.isLowConfidence ? (
-										<span className="text-warning text-xs whitespace-nowrap">
-											{t('lowConfidence')}
-										</span>
-									) : (
-										<span className="text-text-muted">—</span>
 									)}
 								</td>
 							</tr>

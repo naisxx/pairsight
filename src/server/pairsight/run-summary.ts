@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { db, Prisma } from '@/server/db/client'
 import type { Category } from '@/lib/pairsight/decisions'
 import type { EntityType } from '@/lib/pairsight/entity-types'
@@ -51,14 +52,19 @@ export const SUMMARY_RUN_SELECT = {
 	countryCode: true
 } as const
 
-// The run's vendors in the order every Results view lists them: oldest first.
+// The run's vendors in the order every Results view lists them: oldest
+// first. Read once per request (keyed by the ids, joined).
 export async function runVendors(exportIds: string[]) {
-	return db.vendorExport.findMany({
-		where: { id: { in: exportIds } },
+	return loadRunVendors(exportIds.join(','))
+}
+
+const loadRunVendors = cache(async (key: string) =>
+	db.vendorExport.findMany({
+		where: { id: { in: key === '' ? [] : key.split(',') } },
 		orderBy: { createdAt: 'asc' },
 		select: { id: true, name: true }
 	})
-}
+)
 
 // Field patterns for every vendor, walking the run's judged pairs a page at
 // a time (memory stays flat whatever the run's size): each pair's fields are

@@ -19,7 +19,7 @@ export function PairOrigin({
 	return (
 		<section
 			aria-labelledby="origin-title"
-			className="border-border bg-surface rounded-md border p-4"
+			className="border-border bg-surface rounded-lg border p-4"
 		>
 			<h2 id="origin-title" className="type-subheading flex items-center gap-2">
 				<FlowIcon className="text-text-muted" />
@@ -49,7 +49,7 @@ export function VendorDecisions({
 	return (
 		<section
 			aria-labelledby="vendors-title"
-			className="border-border bg-surface rounded-md border p-4"
+			className="border-border bg-surface rounded-lg border p-4"
 		>
 			<h2 id="vendors-title" className="type-subheading">
 				{t('vendorsTitle')}

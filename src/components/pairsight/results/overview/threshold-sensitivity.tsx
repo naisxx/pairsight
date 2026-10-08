@@ -99,6 +99,17 @@ export function ThresholdSensitivity({
 				/>
 			}
 		>
+			{/* The headline: how far the cut-off can move before anything changes. */}
+			<p className="text-text type-heading mb-4">
+				<span className="text-text-muted type-eyebrow mb-1 block">{t('stableRange')}</span>
+				{stableRange == null
+					? t('sensitiveAround')
+					: t.rich('stableFromTo', {
+							from: stableRange.from.toFixed(2),
+							to: stableRange.to.toFixed(2),
+							n: (chunks) => <span className="text-accent-ink font-mono">{chunks}</span>
+						})}
+			</p>
 			<ul aria-hidden className="text-text-muted mb-2 flex flex-wrap gap-4 text-xs">
 				{LINES.map((line) => (
 					<li key={line.key} className="flex items-center gap-1.5">
@@ -259,7 +270,7 @@ export function ThresholdSensitivity({
 					</table>
 				</div>
 			)}
-			<dl className="border-border mt-3 grid gap-x-4 gap-y-2 border-t pt-3 text-xs @2xl:grid-cols-3">
+			<dl className="border-border mt-3 grid gap-x-4 gap-y-2 border-t pt-3 text-xs @2xl:grid-cols-2">
 				{lower != null && (
 					<div>
 						<dt className="text-text-muted">
@@ -282,18 +293,6 @@ export function ThresholdSensitivity({
 						</dd>
 					</div>
 				)}
-				<div>
-					<dt className="text-text-muted">{t('stableRange')}</dt>
-					<dd className="mt-0.5">
-						{stableRange == null
-							? t('sensitiveAround')
-							: t.rich('stableFromTo', {
-									from: stableRange.from.toFixed(2),
-									to: stableRange.to.toFixed(2),
-									n: (chunks) => <span className="font-mono">{chunks}</span>
-								})}
-					</dd>
-				</div>
 			</dl>
 		</Panel>
 	)
