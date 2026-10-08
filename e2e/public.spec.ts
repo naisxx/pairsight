@@ -115,6 +115,9 @@ for (const colorScheme of ['light', 'dark'] as const) {
 		for (const path of ['/', '/sign-in', '/sign-up', '/no-such-page']) {
 			test(`${path} has no WCAG A/AA violations`, async ({ page }) => {
 				await page.goto(path)
+				// A not-found page streams in as a bare shell first (Next sends the
+				// 404 status before the layout); check the page a reader gets.
+				await expect(page.locator('html')).toHaveAttribute('lang', /.+/)
 				await expectNoAxeViolations(page)
 			})
 		}

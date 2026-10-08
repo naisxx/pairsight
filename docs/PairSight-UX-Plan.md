@@ -19,10 +19,10 @@ motion follow the design. Human review is **not built**: anything of it in
 the design is hidden until it is. The demo
 became the Sandbox (below).
 
-**Shell.** A 248 px sidebar (60 px collapsed, a 280 px drawer on phones,
+**Shell.** A 256 px sidebar on the page canvas (60 px collapsed, a 280 px drawer on phones,
 toggled with `[` and remembered in a cookie) holds the Evaluations link, the
 current evaluation's name and a numbered pipeline (done, active, next,
-locked — a locked step says why). A 48 px top bar shows the breadcrumb and
+locked — a locked step says why). A 52 px top bar shows the breadcrumb and
 the evaluation's status chip. Pages are a centred column (1280 px; 1440 px
 for Results and Pair) that scrolls inside `<main>`, with an action bar docked
 to its bottom: Back on the left, the primary action on the right and the
@@ -45,14 +45,13 @@ it redirects to where the evaluation is up to.
     with reduced motion.
   - A closer look (three cards), Who it's for, Honest about what it
     measures (with "Your data"), and a short FAQ.
-  - A closing panel in the dark theme with a soft glow, and a four-column
-    footer.
+  - A band of the demos' real numbers in coral (pairs Jev judged, records
+    per demo, record types), under the hero.
+  - A closing full-coral band with the demo's head-to-head beside it, and a
+    four-column footer.
 
   Signed in, `/`, `/sign-in` and `/sign-up` go to `/evaluations`.
 
-- **UI style** — Classic (default) or Glass, from the Theme menu's Style
-  section; Glass makes surfaces frosted and translucent over a soft colour
-  wash (`DESIGN.md` §8).
 - **Sign in / Sign up / Welcome** — one column, the form in a card; fields
   are checked once submitted (then as you type), never on blur; a show/hide
   password toggle. Welcome asks for a full name (required, ≤ 100) before the
@@ -88,10 +87,20 @@ it redirects to where the evaluation is up to.
   0.35 / Balanced 0.50 / Strict 0.70, or a value of your own from 0.01 to
   0.99. It's decided before any results are seen, and the next run keeps
   it. Changes save themselves; invalid ones are held back with the reason.
-  Beside them, **The pairs Jev will check**: how many pairs PairSight
+  Each save shows "Saved" with **Undo** for 10 seconds; edits made close
+  together undo as one, back to before the first. Each definition offers
+  **Use the suggested wording** (the record type's own) once it differs
+  from it, undoable the same way. Replacing the records with another type
+  swaps in that type's wording only if yours was still the old default:
+  your own wording is never thrown away unasked. If the last change can't
+  be saved as you leave, a toast says so on the next page.
+  Laid out as four cards in two aligned rows (what counts as the same and
+  the country | the cut-off, as a big number with its presets and scale;
+  the pairs Jev will check | what Jev sees), each row one height. **The
+  pairs Jev will check**: how many pairs PairSight
   suggests, what they share ("the same date of birth", "the same company
   number", "the same barcode"), and how many of each vendor's pairs they
-  already include. There are no rules to set: the hand-written comparison
+  already include, drawn as bars. There are no rules to set: the hand-written comparison
   rules, their presets, close-match keys and the Advanced section shipped
   in v1 and were replaced by suggestions (Scale Roadmap items 6, 10 and
   11), along with the suggestions switch and the hard-cases readout on
@@ -106,10 +115,15 @@ it redirects to where the evaluation is up to.
   Both say different, Not checked yet), never who is right. The sandbox
   is called the demo on screen. Step pages have their own tab titles.
   `src/i18n/copy.test.mts` fails on the retired jargon.
-- **Plan** — the "From records to pairs" ledger (with the cost estimate), the
-  match threshold the run will keep (with Change, back to What Jev checks),
-  What Jev sees, the vendor-pair promise (vendor pairs PairSight didn't
-  suggest are always checked), and a notice for unfinished vendors. Start
+- **Plan** — headed "Jev will check N pairs." with the number in coral. "From
+  records to pairs" is drawn, not listed: four numbers in a row (your
+  records → possible pairs → pairs Jev will check → new checks, with the
+  cost and time), then two bars: where the pairs come from (PairSight's
+  suggestions plus every vendor pair, overlap counted once) and what's
+  reused from earlier runs. Under it, the cut-off the run will keep (big
+  number on Jev's scale, with Change) and what Jev sees (the values as
+  chips, and that it never sees the vendors' decisions). Detail sits in
+  hover tips. A notice covers unfinished vendors. Start
   run runs it. What can hold it back:
   - **Still suggesting:** Start waits while PairSight works out the pairs.
   - **Suggestions failed** (scoring failed, or the service isn't set up):
@@ -144,19 +158,82 @@ it redirects to where the evaluation is up to.
     card stops it after the pairs in flight; Resume carries on.
   - **Old Run page links** redirect to the run's results with the centre
     open on it (`?runs=<id>`).
-- **Results** — Overview (metrics, coverage, categories, decision matrix,
-  threshold sensitivity, vendor comparison and overlap, field patterns, top
-  disagreements, score distribution, sources, workload) and Detailed
-  analysis (live filters, sortable table, retry per row). The run's threshold
-  is fixed: its popover previews precision and recall at another value (a
-  "what if"), with no Apply. A different threshold means changing it in
+- **Results** — a header that answers first: the run's status and meta,
+  then the verdict in its own card on a coral wash ("Atlas Resolve scores
+  higher overall: 78.6% vs 70.9%"; under 2 points apart, as shown, "Clearline
+  Resolve and Northwind Match are close overall: 81.2% vs 80.0%", and the
+  PDF says the lead is "only just"; a tie or a single vendor's score said as
+  such; under it how often each agreed with Jev, each out of its
+  own checked pairs, with a tip on what "agreed" counts; a caveat;
+  **Look at the disagreements**; a drawn pair of records).
+  - **One ranking everywhere:** vendors rank by Overall score (F1), with
+    Correct merges breaking a tie (`src/lib/pairsight/ranking.ts`). The
+    headline, the "Best overall" pill, the dashboard's latest result, the
+    landing and the PDF all use it, so they never name different leaders.
+    The cards on the Overview and the dashboard's table list vendors in
+    that order too (the cards by the run's own cut-off, so a preview never
+    reorders them); each vendor keeps its colour. "Agreed with Jev" is a
+    supporting line, not the ranking: "both say
+    different" is often the biggest group, so agreement flatters a vendor
+    that matches little.
+  - **The match cut-off** is a drawer whose tab hangs from the top bar
+    ("Match cut-off 0.50"), reachable at any scroll. The first visit's tab
+    reads "Try another cut-off" and pulses once. Opening it focuses the
+    slider; Esc or closing returns focus to the tab. Moving it previews
+    every number on the page live, read-only: nothing is saved, the cards
+    say their lists still open at the run's cut-off, and Reset puts it
+    back. **Change in What Jev checks** leads to a real new cut-off.
+    Detailed analysis's list stays at the run's cut-off and says so in one
+    line, with **Preview another on the Overview**, which opens the drawer
+    there with the slider focused (`?cutoff=open`, dropped from the address
+    once used).
+  - **On a phone** the demo banner is one line ("Demo · read-only sample
+    data", Sign up), and Download (icon only) shares a row with the run
+    picker, so the answer starts sooner.
+  - **Overview**, kept to what decides: one head-to-head card per vendor
+    (agreement with Jev, correct merges, duplicates found, overall score and
+    the four categories, each count opening its pairs; "Best overall" on
+    the leader; a card picks the vendor the page describes), "Where should
+    you look first?" (close calls, disagreements, the top missed duplicates
+    and doubtful merges), "What did Jev check?", "What if the cut-off
+    changed?" (led by its steady range) and "Why do they disagree?" (the
+    field patterns in a sentence each).
+  - **Detailed analysis**, a list and the pair beside it (the prototype's
+    layout): All pairs or Disagreements, the vendor, a search, and the
+    other filters (score, why checked, checked or not) in one Filters menu;
+    each filter in force shows as a chip beside the count, with × to take
+    it off, and the menu's badge counts them all.
+    The list shows only who says what, the two records (the differing
+    words marked) and Jev's score; ↑/↓ move the selection. The selected
+    pair shows beside it: Jev's score against the cut-off, who says what,
+    the three fields that say most about it (matching identifiers first), and retry for a failed
+    pair. Enter, **Full comparison** in the panel's header, or "See all N
+    fields on its own page" opens the full comparison, with every column and
+    J/K through the list. Picking a row marks it at once and the panel
+    follows; the pairs either side are already rendered, so ↑/↓ shows them
+    instantly. `?` (or the hint under the list) lists the shortcuts, here
+    and on a pair's own page.
+  - **On a phone** the selected pair opens in a bottom sheet over the list
+    (Previous and Next pair in its header, Esc or the scrim to close)
+    instead of below the whole list.
+  - The overview keeps only what a bird's-eye view needs. The field-by-field
+    pattern table, the score histogram, the why-checked breakdown and the
+    vendor overlap were dropped from the page: the cut-off chart, "What did
+    Jev check?" and "Why do they disagree?" already say what they did, and
+    the PDF report keeps the full comparison.
+
+  The run's threshold is fixed: "Try another" previews precision and recall
+  at another value (a "what if"), with no Apply. A different threshold means changing it in
   What Jev checks and running again. Every saved score is reused, so that run is complete at
   once and costs nothing.
+
 - **Pair** — field comparison with differences highlighted, how the pair got
   here ("Suggested by PairSight: the two records share …", or that a vendor
   matched it and PairSight didn't suggest it), Jev's assessment (with retry) and each vendor's decision; J/K/Esc.
 - **Not found / errors** — a centred page; signed in, the way back is
-  Evaluations.
+  Evaluations. A demo link that's out of date gets the demo's own page,
+  with **Back to the demo**; `/sandbox/<id>` itself lands where that
+  evaluation is up to, as an owner's does.
 - **Export** menu (Results header, beside the run picker) — the run's
   findings as one file, CSV or Excel: every pair, with both records' mapped
   fields, Jev's status, score, model and failure reason, PairSight's decision
@@ -224,6 +301,9 @@ captured in both themes at 1440 / 1024 / 390 and reviewed. Fixes:
 - Mid-run, the shell shows the run.
 - Toasts sit above the action bar.
 - On phones, the pair's verdict and the records' checks come first.
+- On touch screens every tap target is at least 44 px (the `pointer-coarse`
+  variant and the `hit-area` utility in `globals.css`); small controls keep
+  their look and grow only their tap area.
 - Tables show they scroll.
 - Text that was cut short wraps instead.
 
@@ -342,7 +422,9 @@ new tokens when M1 implements them.
   status hint ("2 errors to fix before continuing"). The primary button is
   disabled with a reason, never hidden, when blocked.
 - **Preserved progress:**
-  - Uploads persist as soon as they're validated.
+  - Vendor files persist as soon as they're checked. A records file is
+    saved by Next (it can still be remapped until then); until it is, the
+    browser asks before a reload or a closed tab would lose it.
   - Draft configuration autosaves (debounced, showing "Saved").
   - Reopening an evaluation lands on the first incomplete step, or on Results
     when a run exists.
@@ -516,14 +598,16 @@ bar.
 
 ## 6. Theme tokens (contrast checked)
 
-Adopted 2026-10-01: **Coral × Slate**, chosen from three candidates
-compared side by side. It replaces the 2026-09-30 palette, whose warm brown
-neutrals made dark mode read like a device's night mode: sepia surfaces,
-brown selection tints, and cards that barely separated from the page. Brand
-coral stays; the neutrals move to cool slate. Every value below was measured
-against the surfaces it actually sits on (WCAG 2.1: text ≥ 4.5, control edges
-and chart marks ≥ 3), and `scripts/check-contrast.test.mjs` re-checks them on
-every `pnpm test`, along with a guard that the neutrals stay cool.
+Adopted 2026-10-07 with the ClickHouse-style revamp: brand coral on pure
+neutral greys. It replaces 2026-10-01's "Coral × Slate", whose cool slate
+neutrals read as blue-tinted in dark mode. Hues stay (coral, the category,
+series and status colours); the neutrals lose their tint, and the brand is
+used as exactly three variants: `--action`, `--action-active` (hover and
+press) and `--action-disabled`. Every value below was measured against the
+surfaces it actually sits on (WCAG 2.1: text ≥ 4.5, control edges and chart
+marks ≥ 3), and `scripts/check-contrast.test.mjs` re-checks them on every
+`pnpm test`, along with guards that the neutrals stay untinted and the
+disabled coral stays visible.
 
 - **Theme switching:** class-based (`.dark` on `<html>`) through
   **`next-themes`**, with a Light / Dark / System menu, preference persisted,
@@ -532,53 +616,48 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
   variable names (`--background`, `--primary`, `--accent`, `--ring`, …) are
   aliases of them, so copied shadcn components work unmodified.
 
-| Token                         | Light                                | Dark                  | Use and measured contrast                                                                                  |
-| ----------------------------- | ------------------------------------ | --------------------- | ---------------------------------------------------------------------------------------------------------- |
-| `--bg`                        | `#F6F7F9`                            | `#0B0F14`             | Page                                                                                                       |
-| `--surface`                   | `#FFFFFF`                            | `#121821`             | Cards, sidebar, tables                                                                                     |
-| `--surface-elevated`          | `#FFFFFF`                            | `#18202B`             | Menus, dialogs, popovers, toasts                                                                           |
-| `--surface-muted`             | `#EEF1F4`                            | `#0E131A`             | Table headers, sunken areas, disabled buttons                                                              |
-| `--surface-hover`             | `#F1F4F7`                            | `#19212C`             | Hover for rows, menu items and interactive surfaces                                                        |
-| `--selected`                  | `#E6EDF6`                            | `#1E2B3F`             | Selected row, current step, chosen option, drop target — always with a coral edge or outline               |
-| `--ghost`                     | `#EFF2F6`                            | `#151C26`             | Ghost button at rest, so it reads as a button before hover                                                 |
-| `--diff` / `--diff-ink`       | `#E4EDFB` / `#1D5FB8`                | `#1D2C47` / `#8FB6FF` | Changed values in pair detail (a difference, not a warning). Text 15.30 / 11.87; marker 5.27 / 6.85        |
-| `--border`                    | `#DDE2E9`                            | `#263140`             | Decorative hairlines only — too faint for a control edge                                                   |
-| `--border-input`              | `#7D8898`                            | `#6B788B`             | Form controls and essential edges: ≥ 3.05 / ≥ 3.18 on every surface                                        |
-| `--text`                      | `#0F1720`                            | `#E8EDF3`             | 16.83 / 16.33 on the page                                                                                  |
-| `--text-muted`                | `#4E5A6A`                            | `#A3AEBC`             | Secondary text and placeholders: ≥ 5.95 / ≥ 6.34 on every surface                                          |
-| `--action`                    | `#C93A22`                            | `#FF6A4D`             | Primary action. Deeper coral in light (so white text passes), brighter in dark                             |
-| `--action-ink`                | `#FFFFFF`                            | `#1A0B07`             | Text on action: 5.11 / 6.78                                                                                |
-| `--action-hover`              | `#AE2F19`                            | `#FF8469`             | 6.52 / 8.00 with action-ink                                                                                |
-| `--accent`                    | `#FDECE8`                            | `#2A1A24`             | Small brand chips only (step numbers, “Suggested”). Never a large area: coral over dark slate turns maroon |
-| `--accent-ink`                | `#B3321C`                            | `#FF8F79`             | Links and active text: 6.20 / 8.03 on surface                                                              |
-| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Threshold marks: ≥ 4.33 / ≥ 6.42                                                                           |
-| `--focus`                     | `#1D5FB8`                            | `#6AAEFF`             | Keyboard focus, blue so it never reads as an error: ≥ 3 on every surface                                   |
-| `--success` / `-subtle`       | `#14773A` / `#E8F6EE`                | `#4ADE9A` / `#10271D` | 5.63 / 10.36 on surface; 5.05 / 9.18 on subtle                                                             |
-| `--warning` / `-subtle`       | `#8A5A00` / `#FCF3DE`                | `#F7C04F` / `#2A2210` | 5.93 / 10.70 on surface; 5.37 / 9.45 on subtle                                                             |
-| `--danger` / `-subtle`        | `#BE1D4B` / `#FCEBF0`                | `#FF6F94` / `#2E1520` | 6.06 / 6.75 on surface; 5.27 / 6.39 on subtle                                                              |
-| `--info` / `-subtle`          | `#1D5FB8` / `#E8F0FB`                | `#6AAEFF` / `#12213A` | 6.21 / 7.73 on surface; 5.41 / 6.99 on subtle                                                              |
-| `--cat-both` / `-subtle`      | `#2F55A8` / `#EAF0FB`                | `#86A8FF` / `#18223A` | Both matched (quiet). 7.03 / 7.69 marks; 6.15 / 6.82 labels                                                |
-| `--cat-pairsight` / `-subtle` | `#6A3FC0` / `#F1ECFB`                | `#BE9CFF` / `#221A38` | PairSight only. 6.81 / 7.97 marks; 5.88 / 7.38 labels                                                      |
-| `--cat-vendor` / `-subtle`    | `#0B6E68` / `#E3F4F2`                | `#3DD9C5` / `#0F2A28` | Vendor only. 6.10 / 10.12 marks; 5.37 / 8.63 labels                                                        |
-| `--cat-neither` / `-subtle`   | `#56606E` / `#EEF1F4`                | `#9AA6B6` / `#1B2230` | Neither matched (quiet). 6.38 / 7.22 marks; 5.62 / 6.45 labels                                             |
-| `--cat-incomplete`            | `--text-muted` with a dashed outline | same                  | Pending or failed                                                                                          |
+| Token                         | Light                                | Dark                  | Use and measured contrast                                                       |
+| ----------------------------- | ------------------------------------ | --------------------- | ------------------------------------------------------------------------------- |
+| `--bg`                        | `#F6F6F6`                            | `#0A0A0A`             | Page, sidebar and top bar                                                       |
+| `--surface`                   | `#FFFFFF`                            | `#161616`             | Cards and tables                                                                |
+| `--surface-elevated`          | `#FFFFFF`                            | `#1F1F1F`             | Menus, dialogs, popovers, toasts                                                |
+| `--surface-muted`             | `#F0F0F0`                            | `#111111`             | Table headers, sunken areas                                                     |
+| `--surface-hover`             | `#F2F2F2`                            | `#1C1C1C`             | Hover for rows, menu items and interactive surfaces                             |
+| `--selected`                  | `#EBEBEB`                            | `#242424`             | Selected row, current step, chosen option — always with a coral edge or outline |
+| `--ghost`                     | `#EFEFEF`                            | `#1A1A1A`             | Ghost button at rest                                                            |
+| `--border`                    | `#E3E3E3`                            | `#2A2A2A`             | Hairlines: card edges and dividers                                              |
+| `--border-input`              | `#848484`                            | `#6F6F6F`             | Form controls and essential edges: ≥ 3.14 / 3.09 on every surface               |
+| `--text`                      | `#0A0A0A`                            | `#FFFFFF`             | 18.32 / 19.80 on the page                                                       |
+| `--text-muted`                | `#5A5A5A`                            | `#A3A3A3`             | Secondary text and placeholders: ≥ 5.79 / 6.15 on every surface                 |
+| `--action`                    | `#C93A22`                            | `#FF6A4D`             | The coral: primary buttons, headline numbers, the current step, focus edges     |
+| `--action-active`             | `#AE2F19`                            | `#E8573C`             | Hover and press: 6.52 / 5.35 with action-ink                                    |
+| `--action-disabled`           | `#F3D6CF`                            | `#3A201B`             | A primary action that can’t be used yet, with muted text                        |
+| `--action-ink`                | `#FFFFFF`                            | `#1A0B07`             | Text on action: 5.11 / 6.78                                                     |
+| `--diff` / `--diff-ink`       | `#ECECEC` / `#1D5FB8`                | `#262626` / `#8FB6FF` | Changed values in pair detail. Text 16.76 / 15.13; marker 5.26 / 7.42           |
+| `--success` / `-subtle`       | `#14773A` / `#E8F6EE`                | `#4ADE9A` / `#12221A` | 5.63 / 10.52 on surface; 5.05 / 9.62 on subtle                                  |
+| `--warning` / `-subtle`       | `#8A5A00` / `#FCF3DE`                | `#F7C04F` / `#262011` | 5.93 / 10.86 on surface; 5.37 / 9.72 on subtle                                  |
+| `--danger` / `-subtle`        | `#BE1D4B` / `#FCEBF0`                | `#FF6F94` / `#2A161C` | 6.06 / 6.85 on surface; 5.27 / 6.47 on subtle                                   |
+| `--info` / `-subtle`          | `#1D5FB8` / `#E8F0FB`                | `#6AAEFF` / `#141D2A` | 6.21 / 7.85 on surface; 5.41 / 7.35 on subtle                                   |
+| `--cat-both` / `-subtle`      | `#2F55A8` / `#EAF0FB`                | `#86A8FF` / `#181D2A` | Both matched. 7.03 / 7.81 marks; 6.15 / 7.26 labels                             |
+| `--cat-pairsight` / `-subtle` | `#6A3FC0` / `#F1ECFB`                | `#BE9CFF` / `#1F1A2A` | PairSight only. 6.81 / 8.09 marks; 5.88 / 7.57 labels                           |
+| `--cat-vendor` / `-subtle`    | `#0B6E68` / `#E3F4F2`                | `#3DD9C5` / `#112321` | Vendor only. 6.10 / 10.28 marks; 5.37 / 9.28 labels                             |
+| `--cat-neither` / `-subtle`   | `#5E5E5E` / `#EFEFEF`                | `#A3A3A3` / `#1F1F1F` | Neither matched. 6.48 / 7.17 marks; 5.64 / 6.53 labels                          |
+| `--accent` / `--accent-ink`   | `#FDECE8` / `#B3321C`                | `#2A1A24` / `#FF8F79` | Small brand chips, links and coral numbers in text: 6.20 / 8.15 on surface      |
+| `--ring`                      | `#C93A22`                            | `#FF8F79`             | Threshold marks                                                                 |
+| `--focus`                     | `#1D5FB8`                            | `#6AAEFF`             | Keyboard focus outside fields: ≥ 3 on every surface                             |
+| `--cat-incomplete`            | `--text-muted` with a dashed outline | same                  | Pending or failed                                                               |
 
-- **What changed from the 2026-09-30 palette:**
-  - **Neutrals:** warm brown → cool slate in both themes, with clearer steps
-    between page, card, raised and sunken surfaces.
-  - **Coral:** light mode uses a deeper coral (`#C93A22`) with white text;
-    dark mode a brighter one (`#FF6A4D`) with near-black text.
-  - **Selection:** new `--selected` (a cool slate lift) plus a coral edge,
-    instead of a coral tint, which turned maroon on dark.
-  - **Changed values:** new `--diff` / `--diff-ink` (cool blue) instead of the
-    warning tint, which turned muddy brown on dark and wrongly read as a
-    problem.
-  - **Ghost buttons:** new `--ghost` resting background.
-  - **Disabled buttons:** a neutral muted fill instead of 50% opacity, which
-    turned the coral button brown.
-  - **Menus and selects:** hover uses `--surface-hover`, not the brand tint.
-  - **Faint text:** still dropped; muted text covers secondary text and
-    placeholders.
+- **What changed from Coral × Slate (2026-10-01):**
+  - **Neutrals:** cool slate → pure greys in both themes (dark: `#0A0A0A`
+    page, `#161616` cards, `#1F1F1F` raised), so dark mode is near-black,
+    never navy.
+  - **Brand:** three variants. Hover and press go a step darker
+    (`--action-active`), and a disabled primary is a dimmed coral
+    (`--action-disabled`) rather than a grey fill.
+  - **Depth:** cards lose their shadows; depth is the surface step plus a
+    hairline. The one soft shadow is for floating layers.
+  - **Changed values:** `--diff` is a neutral lift; its ink stays blue.
+  - **Glass** is deferred: one style.
 - **Supporting brand colors:**
   - `#972828`, `#EB7F31` and `#FCAD38` are for the wordmark, the landing page,
     and non-data emphasis.
@@ -591,8 +670,9 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
   left edge, an outline or a label.
 - **Destructive actions:** confirmations use an outline danger style, never a
   filled red next to the coral primary.
-- **Radius and elevation:** keep the existing 6/10/16 px radii. Elevated
-  surfaces use `--surface-elevated` plus one soft shadow; cards use borders.
+- **Radius and elevation:** 6 px small, 8 px buttons and inputs, 12 px
+  cards and dialogs, pills for chips. Floating surfaces use
+  `--surface-elevated` plus one soft shadow; cards use hairlines only.
 - **Derived states** are set once in the tokens, not per component:
   - disabled: 50% opacity with no hover
   - active: the hover color plus a 1 px inset
@@ -601,14 +681,14 @@ every `pnpm test`, along with a guard that the neutrals stay cool.
 ## 7. Typography, spacing, motion, responsiveness, keyboard
 
 - **Type:**
-  - Poppins (400/500/600) for the interface and JetBrains Mono for data —
-    record references, raw values, scores, counts, keyboard hints.
-    Poppins has proportional digits and no tabular figures, so numbers that
-    align or change live use the mono. Adopted 2026-10-01, replacing Inter.
-  - Named roles, not raw sizes: display 36 / title 24 / heading 16 /
-    subheading 14 / body 14 / label 14 / meta 12 / overline 11, plus the two
-    mono data roles. The full table is `DESIGN.md` §4.
-- **Spacing:** Tailwind's 4 px scale. 16 px card padding, 24 px section gaps, a
+  - Space Grotesk (400–700) for the interface and JetBrains Mono for data —
+    record references, raw values, scores, counts, keyboard hints. Numbers
+    that align or change live use the mono. Adopted 2026-10-07, replacing
+    Poppins.
+  - Named roles, not raw sizes: display 72 / 56 / 40 / 32 (bold, tight),
+    title 24 / heading 18 / subheading 16 / eyebrow 12 / body 14 / label 14
+    / meta 12 / caption 11, plus the mono data role. The full table is `DESIGN.md` §4.
+- **Spacing:** Tailwind's 4 px scale. 24 px card padding, 16 px between cards, a
   1,280 px max content width (1,440 px for Results).
 - **Motion:** 120–160 ms color and opacity transitions, a 200 ms popover or sheet
   entrance, and a smooth progress-bar change. `prefers-reduced-motion`
