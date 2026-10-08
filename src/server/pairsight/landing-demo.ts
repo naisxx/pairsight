@@ -1,5 +1,7 @@
 import 'server-only'
 import snapshotJson from '../../../prisma/demo/sandbox-snapshot.json'
+import companiesJson from '../../../prisma/demo/sandbox-companies-snapshot.json'
+import productsJson from '../../../prisma/demo/sandbox-products-snapshot.json'
 import { CATEGORIES, categorize } from '@/lib/pairsight/decisions'
 import { sandboxSnapshotSchema } from '@/lib/pairsight/sandbox-snapshot'
 import { compareFields, type FieldComparison } from './compare'
@@ -155,4 +157,30 @@ const demo = buildDemo()
 
 export function landingDemo(): LandingDemo {
 	return demo
+}
+
+// The landing's headline numbers, from all three recorded demos (people,
+// organisations, products): how many pairs Jev judged, how many records each
+// demo has, and how many types of record there are.
+export type LandingStats = { pairsJudged: number; recordsPerDemo: number; recordTypes: number }
+
+function buildStats(): LandingStats {
+	const all = [
+		snapshot,
+		...[companiesJson, productsJson].map((json) => sandboxSnapshotSchema.parse(json))
+	]
+	return {
+		pairsJudged: all.reduce(
+			(sum, each) => sum + each.run.pairs.filter((pair) => pair.assessment.score != null).length,
+			0
+		),
+		recordsPerDemo: Math.min(...all.map((each) => each.dataset.records.length)),
+		recordTypes: all.length
+	}
+}
+
+const stats = buildStats()
+
+export function landingStats(): LandingStats {
+	return stats
 }

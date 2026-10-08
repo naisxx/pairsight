@@ -21,7 +21,7 @@ export async function CloserLook() {
 			aria-labelledby="look-title"
 			className="bg-surface-muted/60 border-border border-y"
 		>
-			<div className="mx-auto max-w-[1200px] px-4 py-24 md:px-8 md:py-28">
+			<div className="mx-auto max-w-[1200px] px-4 py-24 md:px-8 md:py-32">
 				<SectionEyebrow>{t('lookEyebrow')}</SectionEyebrow>
 				<ScrubHeading
 					id="look-title"
@@ -32,12 +32,12 @@ export async function CloserLook() {
 				<ul className="mt-12 grid gap-4 md:grid-cols-3">
 					{POINTS.map(({ title, body, Icon }, index) => (
 						<ScrollReveal as="li" key={title} index={index}>
-							<div className="border-border bg-surface h-full rounded-lg border p-6 transition-[transform,box-shadow] duration-200 ease-out hover:-translate-y-[3px] hover:shadow-[0_16px_40px_-20px_rgb(15_23_32/0.3)]">
-								<span className="bg-surface-muted text-action grid size-10 place-items-center rounded-md">
+							<div className="border-border bg-surface hover:border-border-input h-full rounded-lg border p-6 transition-[transform,border-color] duration-200 ease-out hover:-translate-y-[3px] md:p-8">
+								<span className="bg-accent text-accent-ink grid size-11 place-items-center rounded-md">
 									<Icon size={ICON_SIZE} />
 								</span>
-								<h3 className="mt-5 font-semibold">{t(title)}</h3>
-								<p className="text-text-muted mt-2 text-sm leading-relaxed">{t(body)}</p>
+								<h3 className="type-heading mt-6">{t(title)}</h3>
+								<p className="text-text-muted mt-2 leading-relaxed">{t(body)}</p>
 							</div>
 						</ScrollReveal>
 					))}

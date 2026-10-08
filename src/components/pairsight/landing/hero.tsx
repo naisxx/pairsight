@@ -14,7 +14,7 @@ export async function Hero({ demo }: { demo: LandingDemo }) {
 	return (
 		<section className="landing-glow relative isolate">
 			<IntroSequence className="mx-auto max-w-[1200px] px-4 pt-28 pb-20 md:px-8 lg:pt-36 lg:pb-28">
-				<div className="mx-auto flex max-w-3xl flex-col items-center text-center">
+				<div className="mx-auto flex max-w-4xl flex-col items-center text-center">
 					<IntroItem>
 						<p className="border-border bg-surface/70 text-text-muted type-ui inline-flex items-center gap-2 rounded-full border px-3 py-1">
 							<span aria-hidden className="bg-action size-1.5 rounded-full" />
@@ -22,7 +22,7 @@ export async function Hero({ demo }: { demo: LandingDemo }) {
 						</p>
 					</IntroItem>
 					<IntroItem>
-						<h1 className="mt-5 text-[34px] leading-[1.1] font-semibold tracking-[-0.025em] text-balance md:text-[52px]">
+						<h1 className="type-display-xl mt-6 text-balance">
 							{t('heroTitleLead')} <span className="text-gradient">{t('heroTitleAccent')}</span>
 						</h1>
 					</IntroItem>

@@ -27,10 +27,7 @@ export function ScrubHeading({
 	const { scrollYProgress } = useScroll({ target: ref, offset: ['start 0.9', 'start 0.45'] })
 	const words = lead.split(' ')
 	const parts = words.length + 1
-	const headingClass = cn(
-		'text-[28px] leading-[1.15] font-semibold tracking-[-0.02em] md:text-[36px]',
-		className
-	)
+	const headingClass = cn('type-display-md', className)
 	return (
 		<h2 ref={ref} id={id} className={headingClass}>
 			{words.map((word, index) => (

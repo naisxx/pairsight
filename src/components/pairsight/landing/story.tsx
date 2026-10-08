@@ -36,9 +36,7 @@ export function Story({ demo }: { demo: LandingDemo }) {
 	const intro = (
 		<>
 			<p className="type-ui text-action font-semibold">{t('howEyebrow')}</p>
-			<h2 className="mt-3 text-[28px] leading-[1.15] font-semibold tracking-[-0.02em] md:text-[36px]">
-				{t('howTitle')}
-			</h2>
+			<h2 className="type-display-md mt-3">{t('howTitle')}</h2>
 			<p className="text-text-muted mt-4 max-w-lg leading-relaxed">{t('howBody')}</p>
 		</>
 	)

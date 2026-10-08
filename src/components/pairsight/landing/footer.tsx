@@ -36,14 +36,14 @@ export async function LandingFooter() {
 	const linkClass = 'text-text-muted hover:text-text text-sm transition-colors duration-150'
 	return (
 		<footer className="border-border border-t">
-			<div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-10 px-4 py-14 sm:grid-cols-3 md:px-8 lg:grid-cols-[2fr_1fr_1fr_1fr]">
+			<div className="mx-auto grid max-w-[1200px] grid-cols-2 gap-10 px-4 py-16 sm:grid-cols-3 md:px-8 lg:grid-cols-[2fr_1fr_1fr_1fr]">
 				<div className="col-span-full lg:col-span-1">
 					<Wordmark />
 					<p className="text-text-muted mt-3 max-w-xs text-sm leading-relaxed">{t('footer')}</p>
 				</div>
 				{columns.map((column) => (
 					<nav key={column.title} aria-label={column.title}>
-						<h2 className="text-sm font-semibold">{column.title}</h2>
+						<h2 className="text-text-muted type-eyebrow">{column.title}</h2>
 						<ul className="mt-3 space-y-2">
 							{column.links.map((link) => (
 								<li key={link.href}>

@@ -9,7 +9,8 @@ import { LandingNav } from '@/components/pairsight/landing/nav'
 import { Story } from '@/components/pairsight/landing/story'
 import { Who } from '@/components/pairsight/landing/who'
 import { redirectIfSignedIn } from '@/server/auth/session'
-import { landingDemo } from '@/server/pairsight/landing-demo'
+import { landingDemo, landingStats } from '@/server/pairsight/landing-demo'
+import { StatBand } from '@/components/pairsight/landing/stats'
 
 // The signed-out landing page: what PairSight does, the demo's real results to
 // play with, how it works, who it's for and what its numbers do and don't
@@ -23,12 +24,13 @@ export default async function HomePage() {
 				<LandingNav />
 				<main id="main">
 					<Hero demo={demo} />
+					<StatBand stats={landingStats()} />
 					<Story demo={demo} />
 					<CloserLook />
 					<Who />
 					<Honest />
 					<Faq />
-					<FinalCta />
+					<FinalCta demo={demo} />
 				</main>
 				<LandingFooter />
 			</div>

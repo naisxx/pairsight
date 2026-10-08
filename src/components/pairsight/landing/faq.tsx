@@ -1,3 +1,4 @@
+import { MIN_RECORDS } from '@/lib/pairsight/entity-types'
 import { getTranslations } from 'next-intl/server'
 import { ChevronDownIcon } from '@/components/ui/icons'
 import { ScrollReveal } from './landing-motion'
@@ -38,7 +39,9 @@ export async function Faq() {
 									className="text-text-muted shrink-0 transition-transform duration-200 group-open:rotate-180"
 								/>
 							</summary>
-							<p className="text-text-muted -mt-1 pb-5 leading-relaxed">{t(`${key}Answer`)}</p>
+							<p className="text-text-muted -mt-1 pb-5 leading-relaxed">
+								{t(`${key}Answer`, { min: MIN_RECORDS })}
+							</p>
 						</details>
 					</ScrollReveal>
 				))}
