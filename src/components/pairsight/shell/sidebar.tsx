@@ -36,7 +36,7 @@ export function Sidebar({
 		<div className="flex h-full flex-col">
 			<div
 				className={cn(
-					'border-border flex h-12 shrink-0 items-center border-b',
+					'border-border flex h-[52px] shrink-0 items-center border-b',
 					isCollapsed ? 'justify-center px-0' : 'justify-between px-3'
 				)}
 			>
@@ -95,11 +95,11 @@ export function Sidebar({
 								aria-current={isHome ? 'page' : undefined}
 								aria-label={isCollapsed ? home.label : undefined}
 								className={cn(
-									'type-ui flex h-8 items-center gap-2.5 rounded-sm transition-colors duration-150',
+									'flex h-9 items-center gap-2.5 rounded-md text-sm transition-colors duration-150',
 									isCollapsed ? 'justify-center' : 'px-2',
 									isHome
 										? 'bg-selected text-text font-medium shadow-[inset_2px_0_0_var(--action)]'
-										: 'text-text-muted hover:bg-surface-hover hover:text-text'
+										: 'text-text-muted hover:bg-surface hover:text-text'
 								)}
 							>
 								<FolderIcon size={NAV_ICON_SIZE} />
@@ -115,9 +115,9 @@ export function Sidebar({
 							<div aria-hidden className="bg-border mx-auto h-px w-6" />
 						) : (
 							<div className="px-2">
-								<p className="text-text-muted type-caption font-medium">{t('currentEvaluation')}</p>
+								<p className="text-text-muted type-eyebrow">{t('currentEvaluation')}</p>
 								<p
-									className="text-text type-ui mt-0.5 truncate font-medium"
+									className="text-text mt-1 truncate text-sm font-semibold"
 									title={pipeline.evaluationName}
 								>
 									{pipeline.evaluationName}

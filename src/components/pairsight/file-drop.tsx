@@ -3,7 +3,8 @@
 import { useId, useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { buttonVariants } from '@/components/ui/button'
-import { SpinnerIcon, UploadIcon } from '@/components/ui/icons'
+import { SpinnerIcon } from '@/components/ui/icons'
+import { DropScene } from './empty/scenes'
 import { cn } from '@/lib/cn'
 import { TABULAR_ACCEPT } from '@/lib/pairsight/tabular-formats'
 
@@ -42,15 +43,19 @@ export function FileDrop({
 				if (file != null) onFile(file)
 			}}
 			className={cn(
-				'focus-within:outline-focus flex cursor-pointer flex-col items-center justify-center rounded-md border-2 border-dashed px-6 py-12 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-2',
+				'focus-within:outline-focus flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-2',
 				isOver ? 'border-action bg-surface-hover' : 'border-border-input bg-surface',
 				isBusy && 'pointer-events-none'
 			)}
 		>
-			<span className="bg-surface-muted text-text-muted flex size-11 items-center justify-center rounded-md">
-				{isBusy ? <SpinnerIcon size={ICON_SIZE} /> : <UploadIcon size={ICON_SIZE} />}
-			</span>
-			<span className="mt-3 text-sm font-semibold">{isBusy ? busyLabel : label}</span>
+			{isBusy ? (
+				<span className="bg-surface-muted text-text-muted flex size-11 items-center justify-center rounded-md">
+					<SpinnerIcon size={ICON_SIZE} />
+				</span>
+			) : (
+				<DropScene />
+			)}
+			<span className="type-heading mt-4">{isBusy ? busyLabel : label}</span>
 			<span className="type-ui text-text-muted mt-1 max-w-sm">{hint}</span>
 			{!isBusy && (
 				// Decorative: the whole zone is the file input's label.

@@ -87,7 +87,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 		<article
 			aria-labelledby={`run-${card.id}`}
 			className={cn(
-				'bg-surface rounded-md border',
+				'bg-surface rounded-lg border',
 				look === 'stopped' ? 'border-danger' : 'border-border',
 				isFocused && look !== 'stopped' && 'border-border-input'
 			)}

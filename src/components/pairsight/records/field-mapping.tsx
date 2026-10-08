@@ -46,7 +46,7 @@ export function FieldMapping({
 	return (
 		<section
 			aria-labelledby="mapping-title"
-			className={cn(!bare && 'border-border bg-surface rounded-md border')}
+			className={cn(!bare && 'border-border bg-surface rounded-lg border')}
 		>
 			<header className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
 				<div className={cn(bare && 'sr-only')}>
@@ -129,7 +129,7 @@ export function FieldMapping({
 								{edit != null && column == null && !isRequired && suggestion != null && (
 									<button
 										type="button"
-										className="text-accent-ink shrink-0 text-xs font-medium hover:underline"
+										className="text-accent-ink hit-area shrink-0 text-xs font-medium hover:underline"
 										onClick={() => edit.onChange(key, suggestion)}
 									>
 										{t('useColumn', { column: suggestion })}

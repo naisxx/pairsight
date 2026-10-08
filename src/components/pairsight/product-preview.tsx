@@ -73,7 +73,11 @@ export function ProductPreview() {
 	return (
 		<div
 			role="img"
-			aria-label={t('label')}
+			aria-label={t('label', {
+				precision: METRICS[0].value,
+				recall: METRICS[1].value,
+				f1: METRICS[2].value
+			})}
 			className="border-border bg-bg shadow-elevated overflow-hidden rounded-lg border"
 		>
 			<div className="flex" aria-hidden>
@@ -103,7 +107,10 @@ export function ProductPreview() {
 				<div className="min-w-0 flex-1 p-4">
 					<p className="type-ui font-semibold">{t('title')}</p>
 					<p className="text-text-muted text-[9px]">
-						{t.rich('meta', { n: (chunks) => <span className="font-mono">{chunks}</span> })}
+						{t.rich('meta', {
+							threshold: PREVIEW_THRESHOLD.toFixed(2),
+							n: (chunks) => <span className="font-mono">{chunks}</span>
+						})}
 					</p>
 					<div className="border-border divide-border bg-surface mt-3 grid grid-cols-3 divide-x rounded-[6px] border">
 						{METRICS.map((metric, index) => (

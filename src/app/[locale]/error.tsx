@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { captureClientError } from '@/lib/observability/capture-client-error'
 import { isChunkLoadError, reloadOnceForChunkError } from '@/lib/errors/chunk-load-error'
 import { ErrorPage, errorPageActionClassName } from '@/components/error-page'
+import { UnpluggedScene } from '@/components/pairsight/empty/scenes'
 
 // Route-level boundary — Next renders this for any error thrown while
 // rendering a page/layout under [locale]. `error` here is NOT necessarily
@@ -33,6 +34,7 @@ export default function Error({
 
 	return (
 		<ErrorPage
+			scene={<UnpluggedScene />}
 			title="Something went wrong"
 			description="We hit a snag loading this page. We've been notified — try again in a moment."
 			digest={error.digest}

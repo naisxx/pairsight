@@ -1,4 +1,6 @@
+import { MIN_RECORDS } from '@/lib/pairsight/entity-types'
 import { getFormatter, getTranslations } from 'next-intl/server'
+import { EXACT_FORMATS } from '@/i18n/formats'
 import { Link } from '@/i18n/routing'
 import { RUNS_PARAM } from '@/lib/pairsight/evaluation-view'
 import { Button } from '@/components/ui/button'
@@ -7,7 +9,7 @@ import { PlanLedger } from '@/components/pairsight/plan/plan-ledger'
 import { PlanSide } from '@/components/pairsight/plan/plan-side'
 import { RefreshWhile } from '@/components/pairsight/refresh-while'
 import { StartRunButton } from '@/components/pairsight/start-run-button'
-import { ActionBar, StepHeader } from '@/components/pairsight/step-layout'
+import { ActionBar, StepEmphasis, StepHeader } from '@/components/pairsight/step-layout'
 import { AlertIcon, ArrowRightIcon, InfoIcon } from '@/components/ui/icons'
 import { estimateCostUsd } from '@/server/pairsight/cost'
 import { estimateRunDuration } from '@/server/pairsight/run-estimate'
@@ -43,11 +45,25 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 			? null
 			: firstBlocker === 'too_many_pairs'
 				? t('blockedOver', { count: (counts?.uniquePairs ?? 0) - LIMITS.maxPairsPerRun })
-				: t(firstBlocker)
+				: t(firstBlocker, { min: MIN_RECORDS })
 
 	return (
 		<>
-			<StepHeader title={t('title')} description={t('description')} />
+			<StepHeader
+				title={
+					counts == null || counts.uniquePairs === 0
+						? t('title')
+						: t.rich(
+								'titleCount',
+								{
+									count: counts.uniquePairs,
+									em: (chunks) => <StepEmphasis>{chunks}</StepEmphasis>
+								},
+								EXACT_FORMATS
+							)
+				}
+				description={t('description')}
+			/>
 			{/* Splink is still looking: the plan fills in by itself when it's done. */}
 			<RefreshWhile isActive={splink?.state === 'waiting'} />
 
@@ -57,7 +73,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					<span>{t('draftsNotice', { names: drafts.join(', '), count: drafts.length })}</span>
 					<Link
 						href={`${view.base}/vendors`}
-						className="inline-flex items-center gap-1 font-medium hover:underline"
+						className="hit-area inline-flex items-center gap-1 font-medium hover:underline"
 					>
 						{t('draftsLink')}
 						<ArrowRightIcon size={ICON_SIZE} />
@@ -78,32 +94,27 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				</div>
 			)}
 
-			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<div className="@5xl:col-span-7">
-					{counts != null && dataset != null && splink != null && (
-						<PlanLedger
-							counts={counts}
-							fileName={dataset.fileName}
-							cost={format.number(estimateCostUsd(counts.toEvaluate), {
-								style: 'currency',
-								currency: 'USD',
-								maximumFractionDigits: COST_FRACTION_DIGITS
-							})}
-							duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
-							splink={splink}
-							entityType={entityTypeOf(workspace.evaluation.entityType)}
-							isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
-						/>
-					)}
-				</div>
-				<div className="@5xl:col-span-5">
-					<PlanSide
-						jevFields={'config' in plan && plan.config != null ? plan.config.jevFields : []}
+			<div className="flex flex-col gap-4">
+				{counts != null && dataset != null && splink != null && (
+					<PlanLedger
 						counts={counts}
-						threshold={workspace.evaluation.threshold}
-						rulesHref={`${view.base}/rules`}
+						fileName={dataset.fileName}
+						cost={format.number(estimateCostUsd(counts.toEvaluate), {
+							style: 'currency',
+							currency: 'USD',
+							maximumFractionDigits: COST_FRACTION_DIGITS
+						})}
+						duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
+						splink={splink}
+						entityType={entityTypeOf(workspace.evaluation.entityType)}
+						isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
 					/>
-				</div>
+				)}
+				<PlanSide
+					jevFields={'config' in plan && plan.config != null ? plan.config.jevFields : []}
+					threshold={workspace.evaluation.threshold}
+					rulesHref={`${view.base}/rules`}
+				/>
 			</div>
 
 			<ActionBar

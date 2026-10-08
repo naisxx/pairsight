@@ -16,10 +16,12 @@ const STEPS = [
 export function EmptyEvaluations() {
 	const t = useTranslations('Evaluations')
 	return (
-		<section className="border-border bg-surface mt-6 grid grid-cols-1 items-center gap-8 rounded-md border p-6 @3xl:p-8 @5xl:grid-cols-12">
+		<section className="border-border bg-surface mt-6 grid grid-cols-1 items-center gap-8 rounded-lg border p-6 @3xl:p-8 @5xl:grid-cols-12">
 			<div className="@5xl:col-span-5">
-				<h2 className="text-lg font-semibold tracking-[-0.01em]">{t('emptyTitle')}</h2>
-				<p className="type-ui text-text-muted mt-1.5 leading-relaxed">{t('emptyDescription')}</p>
+				<h2 className="type-display-sm">{t('emptyTitle')}</h2>
+				<p className="text-text-muted mt-2 text-[0.9375rem] leading-relaxed">
+					{t('emptyDescription')}
+				</p>
 				<ol className="mt-5 space-y-4">
 					{STEPS.map((step, index) => (
 						<Reveal as="li" key={step.title} index={index} className="flex gap-3">

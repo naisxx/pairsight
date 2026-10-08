@@ -24,7 +24,7 @@ export function WelcomeForm({ next }: { next?: string }) {
 	return (
 		<form
 			noValidate
-			className="border-border bg-surface mt-7 rounded-md border p-5"
+			className="border-border bg-surface mt-7 rounded-lg border p-5"
 			onSubmit={(event) => {
 				event.preventDefault()
 				setIsSubmitted(true)

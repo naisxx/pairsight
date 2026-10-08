@@ -14,7 +14,8 @@ export type Category = (typeof CATEGORIES)[number]
 export type AssessmentStatus = 'pending' | 'running' | 'succeeded' | 'failed'
 
 // Confirmed by the live check (docs/PairSight-V1-Scope.md, "Verified live"):
-// likely-different pairs scored ≤ 0.11 and likely-same pairs ≥ 0.76.
+// likely-different pairs scored at most 0.11 and likely-same ones well above
+// the default (SCORE_BANDS below: our tests' figures).
 export const DEFAULT_THRESHOLD = 0.5
 
 // The thresholds Rules offers by name (docs/PairSight-UX-Plan.md, "What
@@ -31,6 +32,10 @@ export const THRESHOLD_PRESET_NAMES = [
 	'balanced',
 	'strict'
 ] as const satisfies readonly ThresholdPreset[]
+// Where Jev's scores fell in our tests on people, organisations and
+// products: clearly different records at or below the first, true matches
+// at or above the second. The cut-off scale (cutoff-scale.tsx) shades them.
+export const SCORE_BANDS = { differentUpTo: 0.11, sameFrom: 0.63 } as const
 export const MIN_THRESHOLD = 0.01
 export const MAX_THRESHOLD = 0.99
 

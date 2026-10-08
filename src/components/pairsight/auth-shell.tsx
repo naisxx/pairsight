@@ -28,7 +28,7 @@ export async function AuthShell({
 			</header>
 			<main id="main" className="flex flex-1 items-start justify-center px-5 pt-8 pb-16 md:pt-16">
 				<div className="w-full max-w-[400px]">
-					<h1 className="rise text-2xl font-semibold tracking-[-0.01em]">{title}</h1>
+					<h1 className="rise type-display-sm">{title}</h1>
 					<p className="rise stagger-1 text-text-muted mt-1.5 text-sm">{description}</p>
 					<div className="rise stagger-2">{children}</div>
 				</div>

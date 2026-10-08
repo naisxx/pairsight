@@ -50,7 +50,7 @@ export function RecordsFileCard({
 	const [isPreviewOpen, setIsPreviewOpen] = useState(false)
 	const isColumnsOpen = needsReview || isColumnsChosen
 	return (
-		<section aria-label={t('fileDetails')} className="border-border bg-surface rounded-md border">
+		<section aria-label={t('fileDetails')} className="border-border bg-surface rounded-lg border">
 			<header className="flex flex-wrap items-center gap-x-6 gap-y-3 px-4 py-3">
 				<div className="flex min-w-0 items-center gap-3">
 					<TabularFileIcon
@@ -147,7 +147,7 @@ function Toggle({
 			aria-expanded={isOpen}
 			aria-controls={controls}
 			onClick={onClick}
-			className="type-ui text-accent-ink inline-flex items-center gap-1.5 py-1 font-medium hover:underline"
+			className="type-ui text-accent-ink inline-flex items-center gap-1.5 py-1 font-medium hover:underline pointer-coarse:min-h-11"
 		>
 			<ChevronDownIcon
 				size={CHIP_ICON_SIZE}

@@ -18,22 +18,30 @@ export function StepHeader({
 	description,
 	children
 }: {
-	title: string
-	description: string
+	// A string, or a sentence with its key number wrapped in <StepEmphasis>.
+	title: React.ReactNode
+	description: React.ReactNode
 	// Sits beside the title: a status chip, a count.
 	children?: React.ReactNode
 }) {
 	return (
-		<header className="mb-6 flex flex-wrap items-start justify-between gap-4">
-			<div className="max-w-2xl">
-				<div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-					<h1 className="text-text type-title">{title}</h1>
+		<header className="mb-8 flex flex-wrap items-start justify-between gap-4">
+			<div className="max-w-3xl">
+				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+					<h1 className="text-text type-display-sm text-balance">{title}</h1>
 					{children}
 				</div>
-				<p className="text-text-muted mt-1.5 text-sm leading-relaxed">{description}</p>
+				<p className="text-text-muted mt-2 max-w-2xl text-[0.9375rem] leading-relaxed">
+					{description}
+				</p>
 			</div>
 		</header>
 	)
+}
+
+// The number a step's headline turns on, in coral ("Jev will check 812 pairs").
+export function StepEmphasis({ children }: { children: React.ReactNode }) {
+	return <em className="text-accent-ink not-italic">{children}</em>
 }
 
 export function ActionBar({
@@ -56,7 +64,7 @@ export function ActionBar({
 	// the page column.
 	return (
 		<div className="pointer-events-none sticky bottom-0 z-20 mx-[calc(50%-50cqw)] mt-auto -mb-10 pt-8">
-			<div data-action-bar className="border-border bg-surface pointer-events-auto border-t">
+			<div data-action-bar className="border-border bg-bg pointer-events-auto border-t">
 				<div
 					className={cn(
 						'mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-4 py-3 md:px-8',
