@@ -33,7 +33,7 @@ export default async function EvaluationsPage() {
 					<header className="flex flex-wrap items-end justify-between gap-4">
 						<div>
 							<Greeting firstName={firstName} />
-							<h1 className="type-title mt-0.5">{t('title')}</h1>
+							<h1 className="type-display-sm mt-0.5">{t('title')}</h1>
 						</div>
 						{dashboard.rows.length > 0 && (
 							<NewEvaluationButton takenNames={dashboard.rows.map((row) => row.name)} />

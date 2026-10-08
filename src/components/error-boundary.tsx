@@ -5,10 +5,12 @@ import { unstable_rethrow } from 'next/navigation'
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { captureClientError } from '@/lib/observability/capture-client-error'
 import { ErrorPage, errorPageActionClassName } from '@/components/error-page'
+import { UnpluggedScene } from '@/components/pairsight/empty/scenes'
 
 function Fallback({ resetErrorBoundary }: FallbackProps) {
 	return (
 		<ErrorPage
+			scene={<UnpluggedScene />}
 			title="This section couldn't load"
 			description="Try again, or refresh the page if it keeps happening."
 			action={

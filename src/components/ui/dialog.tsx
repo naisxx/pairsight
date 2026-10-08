@@ -54,7 +54,7 @@ export function Dialog({
 						</div>
 						<DialogPrimitive.Close
 							aria-label={closeLabel}
-							className="text-text-muted hover:bg-surface-hover hover:text-text -mr-2 rounded-sm p-1.5 transition-colors duration-150"
+							className="text-text-muted hover:bg-surface-hover hover:text-text -mr-2 rounded-sm p-1.5 transition-colors duration-150 pointer-coarse:flex pointer-coarse:size-11 pointer-coarse:items-center pointer-coarse:justify-center"
 						>
 							<CloseIcon />
 						</DialogPrimitive.Close>

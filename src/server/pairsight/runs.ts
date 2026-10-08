@@ -1,9 +1,10 @@
 import 'server-only'
+import { cache } from 'react'
 import { AppError } from '@/lib/errors/app-error'
 import { failureReason, type FailureReason } from '@/lib/pairsight/failure-reasons'
 import { captureError } from '@/lib/observability/capture-error'
 import { db } from '@/server/db/client'
-import { evaluationWhere, ownerScope, type EvaluationScope } from './scope'
+import { evaluationWhere, ownerScope, scopeKey, type EvaluationScope } from './scope'
 
 // Run lookup, progress, and the mutations after a run starts (retry, resume,
 // threshold). Starting a run lives in start-run.ts.
@@ -27,13 +28,13 @@ export function runNotFinished() {
 	)
 }
 
-// For changes: only a run of the owner's own live evaluation.
+// For changes: only a run of the owner's own live evaluation. Never cached:
+// a change reads the run as it is now.
 export async function getOwnedRun({ ownerId, runId }: { ownerId: string; runId: string }) {
-	return getVisibleRun({ scope: ownerScope(ownerId), runId })
+	return findRun(ownerScope(ownerId), runId)
 }
 
-// For reads: a run the scope may see.
-export async function getVisibleRun({ scope, runId }: { scope: EvaluationScope; runId: string }) {
+async function findRun(scope: EvaluationScope, runId: string) {
 	const run = await db.run.findFirst({
 		where: { id: runId, evaluation: evaluationWhere(scope) },
 		include: { evaluation: { select: { id: true, name: true } } }
@@ -41,6 +42,16 @@ export async function getVisibleRun({ scope, runId }: { scope: EvaluationScope; 
 	if (run == null) throw runNotFound()
 	return run
 }
+
+// For reads: a run the scope may see. Read once per request, however many
+// parts of a page ask (the results and the pair beside them both do).
+export async function getVisibleRun({ scope, runId }: { scope: EvaluationScope; runId: string }) {
+	return loadVisibleRun(scopeKey(scope), scope, runId)
+}
+
+const loadVisibleRun = cache((_key: string, scope: EvaluationScope, runId: string) =>
+	findRun(scope, runId)
+)
 
 export type RunProgress = {
 	status: 'running' | 'completed' | 'stopped'

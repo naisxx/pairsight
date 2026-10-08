@@ -3,31 +3,25 @@
 import { useTranslations } from 'next-intl'
 import { Dialog } from '@/components/ui/dialog'
 import { Segmented } from '@/components/ui/segmented'
-import { SuccessIcon, WaitingIcon } from '@/components/ui/icons'
+import { EmptyState } from '../empty-state'
+import { IdleScene, RunsStackScene } from '../empty/scenes'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { RunCard as RunCardData } from '@/server/pairsight/run-centre'
 import { RunCard } from './run-card'
 import type { RunsTab } from './runs-centre'
 
 const SKELETON_CARDS = 2
-const EMPTY_ICON_SIZE = 22
 
 // A tab with nothing in it: what belongs there, and how it gets there.
 function EmptyTab({ tab }: { tab: RunsTab }) {
 	const t = useTranslations('Runs')
-	const Icon = tab === 'active' ? WaitingIcon : SuccessIcon
 	return (
-		<div className="rise flex flex-col items-center px-6 py-10 text-center">
-			<span className="bg-surface-muted text-text-muted flex size-12 items-center justify-center rounded-full">
-				<Icon size={EMPTY_ICON_SIZE} />
-			</span>
-			<p className="mt-3 text-sm font-semibold">
-				{tab === 'active' ? t('emptyActiveTitle') : t('emptyCompletedTitle')}
-			</p>
-			<p className="type-ui text-text-muted mt-1 max-w-sm">
-				{tab === 'active' ? t('emptyActive') : t('emptyCompleted')}
-			</p>
-		</div>
+		<EmptyState
+			scene={tab === 'active' ? <IdleScene /> : <RunsStackScene />}
+			title={tab === 'active' ? t('emptyActiveTitle') : t('emptyCompletedTitle')}
+			titleAs="p"
+			description={tab === 'active' ? t('emptyActive') : t('emptyCompleted')}
+		/>
 	)
 }
 

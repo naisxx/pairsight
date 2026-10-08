@@ -99,7 +99,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 			</div>
 
 			{shown.length === 0 ? (
-				<div className="border-border bg-surface mt-3 flex flex-col items-center rounded-md border px-6 py-12 text-center">
+				<div className="border-border bg-surface mt-3 flex flex-col items-center rounded-lg border px-6 py-12 text-center">
 					<p className="text-sm font-semibold">{t('noMatch', { query: query.trim() })}</p>
 					<Button variant="quiet" size="sm" className="mt-2" onClick={() => setQuery('')}>
 						<CloseIcon size={13} />
@@ -107,7 +107,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 					</Button>
 				</div>
 			) : (
-				<div className="border-border bg-surface scroll-fade-x relative mt-3 overflow-x-auto rounded-md border">
+				<div className="border-border bg-surface scroll-fade-x relative mt-3 overflow-x-auto rounded-lg border">
 					<table className="type-ui w-full min-w-[900px] border-separate border-spacing-0">
 						<caption className="sr-only">{t('caption')}</caption>
 						<thead className="bg-surface-muted">
@@ -156,7 +156,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 										<td className={`${td} max-w-60`}>
 											<Link
 												href={href}
-												className="text-text block truncate font-medium hover:underline"
+												className="text-text block truncate font-medium hover:underline pointer-coarse:-my-3 pointer-coarse:py-3"
 												title={row.name}
 												onClick={(event) => event.stopPropagation()}
 											>

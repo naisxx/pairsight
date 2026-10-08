@@ -1,3 +1,5 @@
+import { SWEEP_FROM, SWEEP_TO } from '@/lib/pairsight/metrics'
+import { verdictOf } from '@/lib/pairsight/ranking'
 import { Document, Page, Text, View } from '@react-pdf/renderer'
 import { thresholdPreset } from '@/lib/pairsight/decisions'
 import type { ReportData } from '../report'
@@ -65,15 +67,26 @@ function Verdict({ data, text }: Props) {
 	const complete = leaders.mostComplete == null ? undefined : byId.get(leaders.mostComplete)
 	const leader = leadRange == null ? undefined : byId.get(leadRange.leader)
 	const name = (id: string) => byId.get(id)?.name ?? ''
+	// The same reading as the Results headline: a narrow lead is said as one.
+	const shape = verdictOf(vendors)
 	return (
 		<>
 			<Text style={styles.verdictLead}>
-				{t.rich('verdict', {
-					records: data.recordCount,
-					vendor: best.name,
-					f1: decimal(best.metrics.f1),
-					b
-				})}
+				{shape.kind === 'close'
+					? t.rich('verdictClose', {
+							records: data.recordCount,
+							vendor: shape.lead.name,
+							f1: decimal(shape.lead.metrics.f1),
+							runnerUp: shape.runnerUp.name,
+							runnerUpF1: decimal(shape.runnerUp.metrics.f1),
+							b
+						})
+					: t.rich('verdict', {
+							records: data.recordCount,
+							vendor: best.name,
+							f1: decimal(best.metrics.f1),
+							b
+						})}
 			</Text>
 			{safest != null && safest.id !== best.id && (
 				<Text style={styles.paragraph}>
@@ -224,7 +237,9 @@ function TradeoffsPage({ data, text }: Props) {
 			{hasCurve && (
 				<>
 					<Text style={styles.h2}>{t('sensitivityTitle')}</Text>
-					<Text style={[styles.paragraph, styles.muted]}>{t('sensitivityIntro')}</Text>
+					<Text style={[styles.paragraph, styles.muted]}>
+						{t('sensitivityIntro', { from: SWEEP_FROM.toFixed(2), to: SWEEP_TO.toFixed(2) })}
+					</Text>
 					<SensitivityChart vendors={vendors} threshold={data.threshold} text={text} />
 				</>
 			)}

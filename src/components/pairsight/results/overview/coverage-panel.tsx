@@ -36,7 +36,7 @@ export function CoveragePanel({
 					<PopoverTrigger asChild>
 						<button
 							type="button"
-							className="text-accent-ink hover:bg-surface-hover inline-flex h-7 items-center gap-1 rounded-sm px-2 text-xs font-medium transition-colors duration-150"
+							className="text-accent-ink hover:bg-surface-hover inline-flex h-7 items-center gap-1 rounded-sm px-2 text-xs font-medium transition-colors duration-150 pointer-coarse:h-11"
 						>
 							<QuestionIcon size={14} />
 							{t('howThisWorks')}

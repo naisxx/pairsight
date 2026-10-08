@@ -47,26 +47,26 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
 							flexDirection: 'column',
 							alignItems: 'center',
 							gap: '1rem',
-							borderRadius: '16px',
-							border: '1px solid #e5e7eb',
+							borderRadius: '12px',
+							border: '1px solid #e3e3e3',
 							padding: '2rem'
 						}}
 					>
-						<h1 style={{ fontSize: '1.125rem', fontWeight: 600, margin: 0, color: '#16181d' }}>
+						<h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#0a0a0a' }}>
 							Something went wrong
 						</h1>
-						<p style={{ fontSize: '0.875rem', color: '#5b6472', margin: 0 }}>
+						<p style={{ fontSize: '0.875rem', color: '#5a5a5a', margin: 0 }}>
 							We hit a snag loading the app. We&apos;ve been notified — reloading usually fixes it.
 						</p>
 						<button
 							onClick={() => window.location.reload()}
 							style={{
 								borderRadius: '8px',
-								backgroundColor: '#2454b8',
+								backgroundColor: '#c93a22',
 								color: '#ffffff',
 								padding: '0.5rem 1rem',
 								fontSize: '0.875rem',
-								fontWeight: 500,
+								fontWeight: 600,
 								border: 'none',
 								cursor: 'pointer'
 							}}
@@ -74,7 +74,7 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
 							Reload
 						</button>
 						{error.digest && (
-							<p style={{ fontSize: '0.75rem', color: '#8891a0', margin: 0 }}>
+							<p style={{ fontSize: '0.75rem', color: '#5a5a5a', margin: 0 }}>
 								Reference: <code>{error.digest}</code>
 							</p>
 						)}

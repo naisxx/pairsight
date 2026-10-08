@@ -117,7 +117,8 @@ export function ExportMenu({
 					disabled={isPreparing}
 				>
 					{isPreparing ? <SpinnerIcon size={ICON_SIZE} /> : <DownloadIcon size={ICON_SIZE} />}
-					{isPreparing ? t('exporting') : t('export')}
+					{/* On a phone the icon alone, so it shares a row with the run picker. */}
+					<span className="hidden sm:inline">{isPreparing ? t('exporting') : t('export')}</span>
 					<ChevronDownIcon size={ICON_SIZE} />
 				</Button>
 			</DropdownMenuTrigger>

@@ -23,7 +23,7 @@ export function ResultsTabs({
 		{ key: 'detailed', label: t('tabDetailed'), href: detailedHref }
 	] as const
 	return (
-		<nav aria-label={t('views')} className="border-border mt-5 flex gap-5 border-b">
+		<nav aria-label={t('views')} className="border-border mt-6 flex gap-6 border-b">
 			{tabs.map((item) => {
 				const isCurrent = item.key === tab
 				return (
@@ -32,7 +32,7 @@ export function ResultsTabs({
 						href={item.href}
 						aria-current={isCurrent ? 'page' : undefined}
 						className={cn(
-							'-mb-px flex h-10 items-center gap-2 border-b-2 text-sm font-medium transition-colors duration-150',
+							'-mb-px flex h-11 items-center gap-2 border-b-2 text-[0.9375rem] font-medium transition-colors duration-150',
 							isCurrent
 								? 'border-action text-text'
 								: 'text-text-muted hover:text-text border-transparent'
@@ -42,7 +42,7 @@ export function ResultsTabs({
 						{item.key === 'detailed' && (
 							<span
 								className={cn(
-									'rounded-[5px] px-1.5 font-mono text-[0.6875rem]',
+									'rounded-full px-2 font-mono text-[0.6875rem]',
 									isCurrent ? 'bg-accent text-accent-ink' : 'bg-surface-muted text-text-muted'
 								)}
 							>

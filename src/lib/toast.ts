@@ -11,6 +11,8 @@ export type ToastInput = {
 	// Work in progress ("Preparing your file…"): a spinner, and it stays until
 	// dismissToast() closes it.
 	isLoading?: boolean
+	// How long it stays, when the default is too short to act on (an Undo).
+	durationMs?: number
 }
 
 type ToastItem = ToastInput & { id: string }
@@ -42,7 +44,7 @@ export function toast(input: ToastInput): string {
 	const id = String(nextId++)
 	toasts = [...toasts, { id, ...input }]
 	emit()
-	if (input.isLoading !== true) setTimeout(() => dismiss(id), TOAST_DURATION_MS)
+	if (input.isLoading !== true) setTimeout(() => dismiss(id), input.durationMs ?? TOAST_DURATION_MS)
 	return id
 }
 

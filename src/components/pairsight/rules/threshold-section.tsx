@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useTranslations } from 'next-intl'
+import { InfoTip } from '@/components/ui/info-tip'
 import { Input } from '@/components/ui/input'
 import { Segmented } from '@/components/ui/segmented'
 import {
@@ -12,6 +13,8 @@ import {
 	thresholdPreset,
 	type ThresholdPreset
 } from '@/lib/pairsight/decisions'
+import { CutoffScale } from '../cutoff-scale'
+import { RulesCard } from './rules-card'
 
 const PERCENT = 100
 type Choice = ThresholdPreset | 'custom'
@@ -29,10 +32,12 @@ function parseThreshold(text: string): number | null {
 // Jev scores every pair the same way whatever it is; it only moves the line.
 export function ThresholdSection({
 	value,
-	onChange
+	onChange,
+	className
 }: {
 	value: number
 	onChange: (value: number) => void
+	className?: string
 }) {
 	const t = useTranslations('Rules')
 	// Custom is a choice of its own: picking it keeps the current value until
@@ -62,18 +67,27 @@ export function ThresholdSection({
 	}
 
 	return (
-		<section
-			aria-labelledby="threshold-title"
-			className="border-border bg-surface rounded-md border"
-		>
-			<header className="px-5 pt-4 pb-2">
-				<p className="text-accent-ink text-xs font-medium">{t('thresholdEyebrow')}</p>
-				<h2 id="threshold-title" className="mt-0.5 text-base font-semibold">
+		<RulesCard
+			id="threshold"
+			eyebrow={t('thresholdEyebrow')}
+			title={
+				<>
 					{t('thresholdTitle')}
-				</h2>
-				<p className="type-ui text-text-muted mt-1">{t('thresholdDescription')}</p>
-			</header>
-			<div className="space-y-3 px-5 pt-2 pb-5">
+					<InfoTip label={t('thresholdInfoLabel')} content={t('thresholdDescription')} />
+				</>
+			}
+			description={t('thresholdShort')}
+			className={className}
+		>
+			<p className="flex items-baseline gap-2">
+				<span className="font-mono text-5xl leading-none font-medium tracking-[-0.04em]">
+					{value.toFixed(2)}
+				</span>
+				<span className="type-ui text-text-muted">
+					{choice === 'custom' ? t('thresholdCustom') : t(`threshold_${choice}`)}
+				</span>
+			</p>
+			<div className="mt-5 space-y-3">
 				<Segmented<Choice>
 					label={t('thresholdTitle')}
 					value={choice}
@@ -90,7 +104,7 @@ export function ThresholdSection({
 						})),
 						{ value: 'custom', label: t('thresholdCustom') }
 					]}
-					className="flex-wrap"
+					isFill
 				/>
 				{choice === 'custom' && (
 					<div className="flex flex-wrap items-center gap-3">
@@ -117,21 +131,14 @@ export function ThresholdSection({
 						</span>
 					</div>
 				)}
-				{/* Where the line sits on Jev's 0–1 score scale. */}
-				<div aria-hidden className="bg-surface-muted relative h-1.5 rounded-full">
-					<div
-						className="bg-text absolute inset-y-0 right-0 rounded-r-full"
-						style={{ left: `${value * PERCENT}%` }}
-					/>
-					<div
-						className="bg-ring absolute -top-1 -bottom-1 w-[2px] -translate-x-1/2 rounded-full"
-						style={{ left: `${value * PERCENT}%` }}
-					/>
-				</div>
-				<p className="type-ui text-text-muted">
+			</div>
+			{/* Where the line sits on Jev's 0–1 score scale, and where scores fall. */}
+			<div className="mt-auto pt-6">
+				<CutoffScale value={value} />
+				<p className="type-ui text-text-muted mt-3">
 					{t(`thresholdNote_${choice}`, { value: value.toFixed(2) })}
 				</p>
 			</div>
-		</section>
+		</RulesCard>
 	)
 }

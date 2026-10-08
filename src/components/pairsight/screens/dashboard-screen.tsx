@@ -45,15 +45,15 @@ export async function DashboardScreen({
 					<Reveal index={0}>
 						<dl
 							aria-label={t('statsLabel')}
-							className="border-border bg-surface @2xl:divide-border mt-5 grid grid-cols-2 gap-y-3 rounded-md border py-3 @2xl:grid-cols-4 @2xl:divide-x"
+							className="border-border mt-2 grid grid-cols-2 gap-x-6 gap-y-5 border-b pb-7 @2xl:grid-cols-4"
 						>
 							{statItems.map((item) => (
-								<div key={item.label} className="px-4">
-									<dt className="text-text-muted text-xs">{item.label}</dt>
-									<dd className="mt-0.5">
+								<div key={item.label}>
+									<dt className="text-text-muted type-ui">{item.label}</dt>
+									<dd className="mt-1.5">
 										<AnimatedCount
 											value={item.value}
-											className="font-mono text-[20px] leading-none font-medium"
+											className="font-mono text-3xl leading-none font-medium tracking-[-0.03em]"
 										/>
 									</dd>
 								</div>
@@ -61,7 +61,7 @@ export async function DashboardScreen({
 						</dl>
 					</Reveal>
 
-					<div className="mt-4 grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+					<div className="mt-7 grid grid-cols-1 gap-4 @5xl:grid-cols-12">
 						{latest != null && (
 							<Reveal index={1} className="@5xl:col-span-8">
 								<LatestResults latest={latest} />

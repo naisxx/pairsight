@@ -104,8 +104,6 @@ export function StatusChip({
 	)
 }
 
-// A 0–1 score bar with a tick at the threshold. The number is always shown;
-// the bar only helps reading it against the threshold at a glance.
 const DEFAULT_BAR_WIDTH_PX = 64
 const PERCENT = 100
 
@@ -133,20 +131,33 @@ export function ScoreBar({
 			<span
 				aria-hidden
 				className={cn(
-					'bg-surface-muted relative inline-block rounded-full',
+					'bg-border relative inline-block rounded-full',
 					isLarge ? 'h-2.5 flex-1' : 'h-1.5'
 				)}
 				style={isLarge ? undefined : { width }}
 			>
+				{/* Grey up to the cut-off, ink past it: where the score crosses
+				    the line shows as a change of colour, not only as the tick. */}
+				<span
+					className="score-fill bg-border-input absolute inset-y-0 left-0 rounded-full"
+					style={{ width: `${Math.min(score, threshold) * PERCENT}%` }}
+				/>
+				{score > threshold && (
+					<span
+						className="score-fill bg-text absolute inset-y-0 rounded-r-full"
+						style={{
+							left: `${threshold * PERCENT}%`,
+							width: `${(score - threshold) * PERCENT}%`
+						}}
+					/>
+				)}
+				{/* The cut-off: a thick coral tick, outlined in the surface colour so
+				    it stands clear of the fill on either side. */}
 				<span
 					className={cn(
-						'score-fill absolute inset-y-0 left-0 rounded-full',
-						score >= threshold ? 'bg-text' : 'bg-border-input'
+						'bg-action ring-surface absolute w-[3px] -translate-x-1/2 rounded-full ring-2',
+						isLarge ? '-top-1 -bottom-1' : '-top-[5px] -bottom-[5px]'
 					)}
-					style={{ width: `${score * PERCENT}%` }}
-				/>
-				<span
-					className="bg-ring absolute -top-[3px] -bottom-[3px] w-[2px] -translate-x-1/2 rounded-full"
 					style={{ left: `${threshold * PERCENT}%` }}
 				/>
 			</span>

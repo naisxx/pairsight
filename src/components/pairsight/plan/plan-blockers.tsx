@@ -1,3 +1,4 @@
+import { MIN_RECORDS } from '@/lib/pairsight/entity-types'
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { ArrowRightIcon, WarningCircleIcon } from '@/components/ui/icons'
@@ -63,12 +64,15 @@ export async function PlanBlockers({
 					<div className="type-ui mt-3 flex flex-wrap gap-x-4 gap-y-1">
 						<Link
 							href={`${base}/records`}
-							className="text-accent-ink inline-flex items-center gap-1 font-medium hover:underline"
+							className="text-accent-ink hit-area inline-flex items-center gap-1 font-medium hover:underline"
 						>
 							{t('fixRecords')}
 							<ArrowRightIcon size={LINK_ICON_SIZE} />
 						</Link>
-						<Link href={`${base}/vendors`} className="text-accent-ink font-medium hover:underline">
+						<Link
+							href={`${base}/vendors`}
+							className="text-accent-ink hit-area font-medium hover:underline"
+						>
 							{t('fixVendors')}
 						</Link>
 					</div>
@@ -84,7 +88,7 @@ export async function PlanBlockers({
 						{others.map((blocker) => (
 							<li key={blocker}>
 								<span className="flex flex-wrap items-center gap-x-3 gap-y-1">
-									{t(blocker)}
+									{t(blocker, { min: MIN_RECORDS })}
 									{blocker === 'suggestions_failed' && (
 										<ReadOnlyGate action="retry">
 											<RetrySuggestionsButton evaluationId={evaluationId} />

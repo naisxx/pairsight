@@ -7,8 +7,10 @@ import { ArrowRightIcon, SuccessIcon } from '@/components/ui/icons'
 import type { LatestResults as LatestResultsData } from '@/server/pairsight/dashboard'
 import { formatShare, MUTED_SERIES, VENDOR_SERIES } from '../results/overview/chart-theme'
 import { Count } from '@/components/ui/count'
+import { VerdictHeadline } from '../results/verdict-headline'
 import { exactTitle } from '@/components/ui/count'
 import { EXACT_FORMATS } from '@/i18n/formats'
+import { rankVendors } from '@/lib/pairsight/ranking'
 
 const PERCENT = 100
 const EYEBROW_ICON_SIZE = 14
@@ -41,32 +43,46 @@ function MetricBar({
 	)
 }
 
-// The most recently finished run: precision, recall and F1 per vendor, and
-// the way into its disagreements.
+// The most recently finished run: precision, recall and F1 per vendor, best
+// first (ranking.ts, as the headline above it ranks them), and the way into
+// the leader's disagreements. Each vendor keeps its colour from Results.
 export function LatestResults({ latest }: { latest: LatestResultsData }) {
 	const t = useTranslations('Evaluations')
 	const format = useFormatter()
 	const { run } = latest
-	const first = latest.vendors[0]?.metrics
+	// Colours follow the run's order, as on Results; rows follow the ranking.
+	const ranked = rankVendors(
+		latest.vendors.map((vendor, index) => ({
+			...vendor,
+			color: VENDOR_SERIES[index] ?? MUTED_SERIES
+		}))
+	)
+	const leader = ranked[0]
+	const first = leader?.metrics
 	const base = latest.resultsHref
 	const disagreements = first == null ? 0 : first.counts.pairsight_only + first.counts.vendor_only
 	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
-
 	return (
 		<section
 			aria-labelledby="latest-title"
-			className="border-border bg-surface flex h-full flex-col overflow-hidden rounded-md border"
+			className="border-border bg-surface flex h-full flex-col overflow-hidden rounded-lg border"
 		>
-			<div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-4">
+			<div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 md:px-6">
 				<div className="min-w-0">
-					<p className="text-text-muted flex items-center gap-1.5 text-xs font-medium">
+					<p className="text-text-muted type-eyebrow flex items-center gap-1.5">
 						<SuccessIcon size={EYEBROW_ICON_SIZE} variant="solid" className="text-success" />
 						{t('latestEyebrow')}
 					</p>
-					<h2 id="latest-title" className="mt-1 truncate text-lg font-semibold tracking-[-0.01em]">
+					<h2 id="latest-title" className="type-heading mt-1.5 truncate">
 						{latest.evaluationName}
 					</h2>
-					<p className="text-text-muted mt-0.5 text-xs">
+					<VerdictHeadline
+						vendors={latest.vendors}
+						as="p"
+						titleClassName="text-text mt-2 text-2xl leading-tight font-bold tracking-[-0.03em] text-balance md:text-[1.75rem]"
+						supportClassName="mt-1.5 text-xs"
+					/>
+					<p className="text-text-muted mt-2 text-xs">
 						{t.rich('latestMeta', {
 							number: run.number,
 							when:
@@ -83,7 +99,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 				<Chip>{t('latestChip')}</Chip>
 			</div>
 
-			<div className="scroll-fade-x relative my-4 overflow-x-auto px-5">
+			<div className="scroll-fade-x relative my-5 overflow-x-auto px-5 md:px-6">
 				<table className="type-ui w-full min-w-[480px]">
 					<caption className="sr-only">{t('latestCaption')}</caption>
 					<thead>
@@ -106,8 +122,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 						</tr>
 					</thead>
 					<tbody>
-						{latest.vendors.map(({ id, name, metrics }, index) => {
-							const color = VENDOR_SERIES[index] ?? MUTED_SERIES
+						{ranked.map(({ id, name, metrics, color }) => {
 							const missed = metrics.counts.pairsight_only
 							const merged = metrics.counts.vendor_only
 							return (
@@ -135,7 +150,7 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 											aria-label={t('disagreementsFor', { count: missed + merged, vendor: name })}
 											// The split on hover, so the row stays one line at any width.
 											title={t('disagreementsDetail', { missed, merged }, EXACT_FORMATS)}
-											className="text-accent-ink font-mono hover:underline"
+											className="text-accent-ink hit-area font-mono hover:underline"
 										>
 											<Count value={missed + merged} />
 										</Link>
@@ -148,18 +163,18 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 			</div>
 
 			{/* Pinned to the bottom when the card is stretched to its neighbour's height. */}
-			<div className="border-border bg-surface-muted mt-auto flex flex-wrap items-center gap-3 border-t px-5 py-3">
+			<div className="border-border mt-auto flex flex-wrap items-center gap-3 border-t px-5 py-3 md:px-6">
 				<p
 					className="type-ui text-text-muted"
 					title={exactTitle([disagreements], () =>
 						t.markup(
 							'latestSummary',
-							{ count: disagreements, n: (chunks) => chunks },
+							{ count: disagreements, vendor: leader?.name ?? '', n: (chunks) => chunks },
 							EXACT_FORMATS
 						)
 					)}
 				>
-					{t.rich('latestSummary', { count: disagreements, n: mono })}
+					{t.rich('latestSummary', { count: disagreements, vendor: leader?.name ?? '', n: mono })}
 					{first != null && first.counts.incomplete > 0 && (
 						<>
 							{' · '}
@@ -168,11 +183,9 @@ export function LatestResults({ latest }: { latest: LatestResultsData }) {
 					)}
 				</p>
 				<div className="ml-auto flex gap-2">
-					{disagreements > 0 && latest.vendors[0] != null && (
+					{disagreements > 0 && leader != null && (
 						<Button variant="secondary" size="sm" asChild>
-							<Link
-								href={`${base}?vendor=${latest.vendors[0].id}&tab=detailed&category=disagreements`}
-							>
+							<Link href={`${base}?vendor=${leader.id}&tab=detailed&category=disagreements`}>
 								{t('reviewDisagreements')}
 							</Link>
 						</Button>

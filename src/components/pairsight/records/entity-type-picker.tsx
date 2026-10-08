@@ -28,7 +28,7 @@ export function EntityTypePicker({
 	const t = useTranslations('EntityTypes')
 	const titleId = useId()
 	return (
-		<section aria-labelledby={titleId} className="border-border bg-surface rounded-md border p-4">
+		<section aria-labelledby={titleId} className="border-border bg-surface rounded-lg border p-4">
 			<p id={titleId} className="text-sm font-semibold">
 				{confident ? t('detected', { type: detected }) : t('ask')}
 			</p>

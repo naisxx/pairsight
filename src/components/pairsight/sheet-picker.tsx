@@ -33,7 +33,7 @@ export function SheetPicker({
 	return (
 		<section
 			aria-labelledby={titleId}
-			className="border-border bg-surface animate-float-in rounded-md border p-4"
+			className="border-border bg-surface animate-float-in rounded-lg border p-4"
 		>
 			<p id={titleId} className="flex items-center gap-2 text-sm font-semibold">
 				<TableIcon size={ICON_SIZE} className="text-text-muted shrink-0" />

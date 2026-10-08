@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useRouter } from '@/i18n/routing'
 
 const SCROLL_KEY = 'pairsight:results-scroll'
 
@@ -40,11 +41,13 @@ function readSaved(): SavedScroll | null {
 	}
 }
 
-// The results table from the keyboard (docs/PairSight-UX-Plan.md §7): ↑/↓
-// move between pairs, Enter opens one (a native link), `/` jumps to search.
+// The results list from the keyboard (docs/PairSight-UX-Plan.md §7): ↑/↓
+// move the selection (the pair beside the list follows), Enter opens the
+// selected pair on its own page, `/` jumps to search.
 // Also puts the page back where it was when someone returns from a pair:
 // the position is saved as a row is opened and used once on the way back.
 export function ResultsKeyboard() {
+	const router = useRouter()
 	useEffect(() => {
 		const saved = readSaved()
 		if (saved != null && saved.pathname === window.location.pathname) {
@@ -59,8 +62,18 @@ export function ResultsKeyboard() {
 				document.querySelector<HTMLInputElement>('[data-results-search]')?.focus()
 				return
 			}
-			if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
 			const links = rowLinks()
+			if (event.key === 'Enter') {
+				// The selected row opens on its own page; another row is selected
+				// by its link as usual.
+				const link = links.find((candidate) => candidate === document.activeElement)
+				const fullHref = link?.dataset.fullHref
+				if (link?.getAttribute('aria-current') !== 'true' || fullHref == null) return
+				event.preventDefault()
+				router.push(fullHref)
+				return
+			}
+			if (event.key !== 'ArrowDown' && event.key !== 'ArrowUp') return
 			const index = links.findIndex((link) => link === document.activeElement)
 			// Only take the arrows from the table, or from nowhere in particular
 			// (the page itself: <body>, or <main> after a click on the page), so
@@ -76,16 +89,19 @@ export function ResultsKeyboard() {
 			if (link == null) return
 			event.preventDefault()
 			link.focus()
+			// Selecting it shows it beside the list (a link that keeps the scroll).
+			if (link.getAttribute('aria-current') !== 'true') link.click()
 		}
 
 		function onOpenRow(event: MouseEvent | KeyboardEvent) {
 			if (event instanceof KeyboardEvent && event.key !== 'Enter') return
-			if (
-				!(event.target instanceof Element) ||
-				event.target.closest('[data-pairs-table] a') == null
-			) {
-				return
-			}
+			if (!(event.target instanceof Element)) return
+			// Leaving for a pair's own page: the selected row on Enter, or the
+			// panel's link. Selecting a row stays on this page.
+			const row = event.target.closest('[data-pairs-table] a')
+			const isOpeningRow =
+				event instanceof KeyboardEvent && row?.getAttribute('aria-current') === 'true'
+			if (!isOpeningRow && event.target.closest('a[href*="/pairs/"]') == null) return
 			// Read outside the try: the React Compiler can't yet compile
 			// optional chaining inside one.
 			const entry: SavedScroll = {
@@ -107,6 +123,6 @@ export function ResultsKeyboard() {
 			document.removeEventListener('click', onOpenRow, true)
 			document.removeEventListener('keydown', onOpenRow, true)
 		}
-	}, [])
+	}, [router])
 	return null
 }

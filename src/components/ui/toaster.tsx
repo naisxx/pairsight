@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useToast } from '@/lib/toast'
 import { SpinnerIcon } from '@/components/ui/icons'
 import {
@@ -17,16 +18,17 @@ const SPINNER_SIZE = 14
 // Mounted once in the root layout. Call toast() from src/lib/toast.ts
 // anywhere in the app to show one — nothing else to wire up per call site.
 export function Toaster() {
+	const t = useTranslations('Toast')
 	const { toasts, dismiss } = useToast()
 
 	return (
 		<ToastProvider>
-			{toasts.map(({ id, title, description, variant, action, isLoading }) => (
+			{toasts.map(({ id, title, description, variant, action, isLoading, durationMs }) => (
 				<Toast
 					key={id}
 					variant={variant}
 					// A loading toast stays until its work closes it (dismissToast).
-					duration={isLoading === true ? Infinity : undefined}
+					duration={isLoading === true ? Infinity : durationMs}
 					onOpenChange={(open) => !open && dismiss(id)}
 				>
 					<div className="grid gap-0.5">
@@ -45,7 +47,7 @@ export function Toaster() {
 							</div>
 						)}
 					</div>
-					<ToastClose />
+					<ToastClose aria-label={t('dismiss')} />
 				</Toast>
 			))}
 			<ToastViewport />

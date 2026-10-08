@@ -37,18 +37,18 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 				]
 
 	return (
-		<header className="border-border bg-surface flex h-12 shrink-0 items-center gap-2 border-b px-3 md:px-5">
+		<header className="border-border bg-bg flex h-[52px] shrink-0 items-center gap-2 border-b px-3 md:px-6">
 			<Button
 				variant="quiet"
 				size="icon"
-				className="md:hidden"
+				className="shrink-0 md:hidden"
 				onClick={openMobile}
 				aria-label={t('openNavigation')}
 			>
 				<MenuIcon size={MENU_ICON_SIZE} />
 			</Button>
 			<nav aria-label={t('breadcrumb')} className="min-w-0">
-				<ol className="type-ui flex min-w-0 items-center gap-1.5">
+				<ol className="flex min-w-0 items-center gap-1.5 text-sm">
 					{trail.map((crumb, index) => {
 						const isLast = index === trail.length - 1
 						return (
@@ -56,8 +56,9 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 								key={`${crumb.label}-${index}`}
 								className={cn(
 									'flex min-w-0 items-center gap-1.5',
-									// Where you are is never the part that's cut short.
-									isLast && 'shrink-0',
+									// Where you are, and the short way home, are never the
+									// parts cut short: the evaluation's name between them is.
+									(isLast || index === 0) && 'shrink-0',
 									// On phones only the first and last two crumbs fit.
 									index > 0 && index < trail.length - 2 && 'hidden sm:flex'
 								)}
@@ -71,7 +72,7 @@ export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: Pipel
 								{crumb.href != null && !isLast ? (
 									<Link
 										href={crumb.href}
-										className="text-text-muted hover:text-text truncate transition-colors duration-150"
+										className="text-text-muted hover:text-text truncate transition-colors duration-150 pointer-coarse:min-w-11 pointer-coarse:py-3"
 									>
 										{crumb.label}
 									</Link>

@@ -2,14 +2,14 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Reveal } from '@/components/ui/reveal'
 import { Button } from '@/components/ui/button'
-import { ArrowRightIcon, SuccessIcon } from '@/components/ui/icons'
+import { ArrowRightIcon } from '@/components/ui/icons'
+import { EmptyState } from '../empty-state'
+import { CaughtUpScene } from '../empty/scenes'
 import type { DashboardRow } from '@/server/pairsight/dashboard'
 import { NewEvaluationButton } from './new-evaluation-button'
 import { StageProgress } from './stage-progress'
-import { Count } from '@/components/ui/count'
 
 const ARROW_SIZE = 14
-const EMPTY_ICON_SIZE = 20
 
 // Evaluations without finished results, each linking to the stage to pick
 // up from: the newest few (`rows`), and how many there are in all (`total`).
@@ -31,31 +31,38 @@ export function ContinueSetup({
 	return (
 		<section
 			aria-labelledby="continue-title"
-			className="border-border bg-surface flex h-full flex-col rounded-md border"
+			className="border-border bg-surface flex h-full flex-col rounded-lg border"
 		>
 			<header className="flex items-center justify-between px-4 pt-4 pb-1">
-				<h2 id="continue-title" className="text-sm font-semibold">
+				<h2 id="continue-title" className="type-heading">
 					{t('continueTitle')}
 				</h2>
-				<Count value={total} className="text-text-muted font-mono text-xs" />
+				{total > 0 && (
+					<span className="text-text-muted text-xs">
+						{t.rich('continueTotal', {
+							count: total,
+							n: (chunks) => <span className="text-text font-mono">{chunks}</span>
+						})}
+					</span>
+				)}
 			</header>
 			{rows.length === 0 ? (
-				<div className="flex flex-1 flex-col items-center justify-center px-6 py-8 text-center">
-					<span className="bg-surface-muted text-text-muted flex size-10 items-center justify-center rounded-full">
-						<SuccessIcon size={EMPTY_ICON_SIZE} />
-					</span>
-					<p className="mt-3 text-sm font-semibold">{t('nothingWaitingTitle')}</p>
-					<p className="type-ui text-text-muted mt-1">{t('nothingWaiting')}</p>
-					<div className="mt-4">
-						{isReadOnly ? (
+				<EmptyState
+					scene={<CaughtUpScene />}
+					title={t('nothingWaitingTitle')}
+					titleAs="p"
+					description={t('nothingWaiting')}
+					className="flex-1 justify-center py-8"
+					actions={
+						isReadOnly ? (
 							<Button variant="secondary" size="sm" asChild>
 								<Link href="/sign-up">{t('startYourOwn')}</Link>
 							</Button>
 						) : (
 							<NewEvaluationButton variant="secondary" size="sm" takenNames={takenNames} />
-						)}
-					</div>
-				</div>
+						)
+					}
+				/>
 			) : (
 				<ul className="flex-1 px-2 pb-2">
 					{rows.map((row, index) => (

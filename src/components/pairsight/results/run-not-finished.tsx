@@ -36,7 +36,7 @@ export async function RunNotFinished({
 	return (
 		<section
 			aria-labelledby="run-not-finished"
-			className="border-border bg-surface mt-6 max-w-2xl rounded-md border p-6"
+			className="border-border bg-surface mt-6 max-w-2xl rounded-lg border p-6"
 		>
 			<h2 id="run-not-finished" className="type-subheading">
 				{t(`notFinishedTitle_${state}`)}

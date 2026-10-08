@@ -1,5 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { ErrorPage } from '@/components/error-page'
+import { LostScene } from '@/components/pairsight/empty/scenes'
 import { DashboardScreen } from '@/components/pairsight/screens/dashboard-screen'
 import { AppShell } from '@/components/pairsight/shell/app-shell'
 import { SandboxBanner } from '@/components/pairsight/shell/sandbox-banner'
@@ -25,7 +26,13 @@ export default async function SandboxPage() {
 		getSessionUser()
 	])
 	if (recording == null) {
-		return <ErrorPage title={t('missingTitle')} description={t('missingDescription')} />
+		return (
+			<ErrorPage
+				scene={<LostScene />}
+				title={t('missingTitle')}
+				description={t('missingDescription')}
+			/>
+		)
 	}
 	const name = user == null ? null : await getProfileName(user.id)
 	return (
@@ -41,8 +48,13 @@ export default async function SandboxPage() {
 				isReadOnly
 				header={
 					<header className="max-w-3xl">
-						<h1 className="type-title">{t('title')}</h1>
-						<p className="text-text-muted mt-1.5 text-sm leading-relaxed">{t('intro')}</p>
+						<h1 className="type-display-sm">{t('title')}</h1>
+						<p className="text-text-muted mt-1.5 text-sm leading-relaxed">
+							{t('intro', {
+								records: Math.max(0, ...dashboard.rows.map((row) => row.recordCount ?? 0)),
+								vendors: Math.max(0, ...dashboard.rows.map((row) => row.vendorCount))
+							})}
+						</p>
 					</header>
 				}
 			/>

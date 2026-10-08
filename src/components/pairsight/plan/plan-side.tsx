@@ -1,23 +1,21 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
-import { InfoIcon, ShieldIcon, ShowIcon, SlidersIcon } from '@/components/ui/icons'
+import { ShieldIcon } from '@/components/ui/icons'
+import { InfoTip } from '@/components/ui/info-tip'
 import { thresholdPreset } from '@/lib/pairsight/decisions'
-import type { PlanCounts } from '@/server/pairsight/plan'
+import { CutoffScale } from '../cutoff-scale'
 import type { IdentityRole } from '@/server/pairsight/fields'
 
 const ICON_SIZE = 15
-const TITLE_ICON_SIZE = 16
 
-// The threshold the run will keep, what Jev is sent (and isn't), and the
-// promise that every vendor-matched pair is assessed, inside the rules or not.
+// Beside the flow, two cards of the same height: the cut-off the run will
+// keep (drawn on Jev's 0–1 scale), and what Jev is sent and never sees.
 export async function PlanSide({
 	jevFields,
-	counts,
 	threshold,
 	rulesHref
 }: {
 	jevFields: IdentityRole[]
-	counts: PlanCounts | null
 	threshold: number
 	rulesHref: string
 }) {
@@ -26,83 +24,70 @@ export async function PlanSide({
 		getTranslations('Roles'),
 		getTranslations('Rules')
 	])
-	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
 	const preset = thresholdPreset(threshold)
 	return (
-		<div className="space-y-4">
+		<div className="grid grid-cols-1 gap-4 @3xl:grid-cols-12">
 			<section
 				aria-labelledby="threshold-plan-title"
-				className="border-border bg-surface rounded-md border p-5"
+				className="border-border bg-surface flex flex-col rounded-lg border p-5 md:p-6 @3xl:col-span-5"
 			>
 				<div className="flex items-start justify-between gap-3">
-					<h2 id="threshold-plan-title" className="flex items-center gap-2 text-sm font-semibold">
-						<SlidersIcon size={TITLE_ICON_SIZE} className="text-text-muted" />
+					<h2 id="threshold-plan-title" className="type-heading flex items-center gap-1">
 						{t('thresholdTitle')}
 					</h2>
 					<Link
 						href={rulesHref}
-						className="text-accent-ink type-ui shrink-0 font-medium hover:underline"
+						className="text-accent-ink type-ui hit-area shrink-0 font-medium hover:underline"
 					>
 						{t('thresholdChange')}
 					</Link>
 				</div>
-				<p className="mt-2 flex items-baseline gap-2">
-					<span className="font-mono text-2xl font-medium">{threshold.toFixed(2)}</span>
+				<p className="mt-4 flex items-baseline gap-2">
+					<span className="font-mono text-4xl leading-none font-medium tracking-[-0.03em]">
+						{threshold.toFixed(2)}
+					</span>
 					<span className="type-ui text-text-muted">
 						{preset == null ? tRules('thresholdCustom') : tRules(`threshold_${preset}`)}
 					</span>
 				</p>
-				<p className="text-text-muted mt-1 text-xs">{t('thresholdNote')}</p>
+				<p className="text-text-muted type-ui mt-3 leading-relaxed">{t('thresholdNote')}</p>
+				{/* Where the line sits on Jev's 0–1 score scale. */}
+				<div className="mt-auto pt-5">
+					<CutoffScale value={threshold} />
+				</div>
 			</section>
 			<section
 				aria-labelledby="sent-title"
-				className="border-border bg-surface rounded-md border p-5"
+				className="border-border bg-surface flex flex-col rounded-lg border p-5 md:p-6 @3xl:col-span-7"
 			>
-				<h2 id="sent-title" className="flex items-center gap-2 text-sm font-semibold">
-					<ShowIcon size={TITLE_ICON_SIZE} className="text-text-muted" />
+				<h2 id="sent-title" className="type-heading flex items-center gap-1">
 					{t('jevSeesTitle')}
+					<InfoTip
+						label={t('jevSeesInfoLabel')}
+						content={`${t('jevSeesDescription')} ${t('sentToJev')}`}
+					/>
 				</h2>
-				<p className="text-text-muted mt-1 text-xs">{t('jevSeesDescription')}</p>
-				<ul className="mt-3 flex flex-wrap gap-1.5">
+				<p className="text-text-muted type-ui mt-0.5">
+					{t('jevSeesCount', { count: jevFields.length })}
+				</p>
+				<ul className="mt-4 flex flex-wrap gap-1.5">
 					{jevFields.map((field) => (
 						<li
 							key={field}
-							className="border-border bg-surface-muted rounded-[6px] border px-2 py-0.5 text-xs"
+							className="border-border bg-surface-muted rounded-full border px-2.5 py-0.5 text-xs"
 						>
 							{tRoles(field)}
 						</li>
 					))}
 				</ul>
-				<p className="bg-surface-muted mt-4 flex items-start gap-2 rounded-sm p-3 text-xs">
+				<p className="border-border mt-auto flex items-start gap-2 border-t pt-4 text-xs">
 					<ShieldIcon size={ICON_SIZE} className="text-text-muted mt-px shrink-0" />
 					<span>
 						<span className="font-medium">{t('notSentTitle')}</span>{' '}
 						<span className="text-text-muted">{t('notSentBody')}</span>
 					</span>
 				</p>
-				<p className="text-text-muted mt-3 flex items-center gap-1.5 text-xs">
-					<InfoIcon size={ICON_SIZE} className="shrink-0" />
-					{t('sentToJev')}
-				</p>
 			</section>
-			{counts != null && (
-				<section
-					aria-labelledby="included-title"
-					className="border-border bg-surface rounded-md border p-5"
-				>
-					<h2 id="included-title" className="text-sm font-semibold">
-						{t('includedTitle')}
-					</h2>
-					<p className="type-ui text-text-muted mt-1 leading-relaxed">
-						{t.rich('included', {
-							inside: counts.vendorPairs - counts.addedByVendorOnly,
-							vendorPairs: counts.vendorPairs,
-							outside: counts.addedByVendorOnly,
-							n: mono
-						})}
-					</p>
-				</section>
-			)}
 		</div>
 	)
 }

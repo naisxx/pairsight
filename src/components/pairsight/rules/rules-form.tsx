@@ -1,16 +1,18 @@
 'use client'
 
-import { useEffect, useEffectEvent, useState, useTransition } from 'react'
+import { useEffect, useEffectEvent, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { ArrowRightIcon, InfoIcon, SpinnerIcon, SuccessIcon } from '@/components/ui/icons'
 import type { SelectOption } from '@/components/ui/select'
 import { MIN_JEV_FIELDS } from '@/lib/pairsight/entity-types'
+import { captureClientError } from '@/lib/observability/capture-client-error'
+import { dismissToast, toast } from '@/lib/toast'
 import { saveRulesAction } from '@/server/actions/pairsight/rules'
 import type { IdentityRole } from '@/server/pairsight/fields'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
-import { IdentitySection } from './identity-section'
+import { IdentitySection, JevFieldsSection } from './identity-section'
 import { SuggestionsCard, type SuggestionsData } from './suggestions-card'
 import { ThresholdSection } from './threshold-section'
 import { useEvaluationView } from '../evaluation-context'
@@ -18,6 +20,8 @@ import { ReadOnlyFieldset } from '../read-only'
 
 // A change is saved once typing pauses this long.
 const AUTOSAVE_DELAY_MS = 700
+// How long a save can be taken back: long enough to notice and reach Undo.
+const UNDO_MS = 10_000
 const ICON_SIZE = 15
 
 type Draft = {
@@ -50,10 +54,13 @@ function toggled<T>(set: ReadonlySet<T>, value: T, isOn: boolean): Set<T> {
 // The "What Jev checks" step: when two records are the same, what Jev sees,
 // and the match cut-off; beside them, the pairs PairSight suggests. Every
 // change saves itself (when valid) a moment after it's made; runs keep their
-// own copy of the settings, so this never changes a past result.
+// own copy of the settings, so this never changes a past result. Each save
+// can be taken back for a few seconds (Undo, on a toast); a run of edits
+// close together undoes as one, back to before the first.
 export function RulesForm({
 	evaluationId,
 	initial,
+	suggested,
 	mappedRoles,
 	suggestions,
 	countries
@@ -66,6 +73,8 @@ export function RulesForm({
 		jevFields: IdentityRole[]
 		threshold: number
 	}
+	// The record type's own wording, to go back to.
+	suggested: { same: string; different: string }
 	mappedRoles: IdentityRole[]
 	// What PairSight suggests for these records (SuggestionsCard).
 	suggestions: SuggestionsData
@@ -106,7 +115,34 @@ export function RulesForm({
 	// The sandbox never saves: its controls are disabled, and this makes sure.
 	const isPending = !view.isReadOnly && (isSaving || (isDirty && invalidReason == null))
 
+	// The save that Undo would go back to, while its toast is up.
+	const undo = useRef<{ toastId: string; base: Draft; until: number } | null>(null)
+	// The next save is an Undo going through, not a change to offer one for.
+	const isRestoring = useRef(false)
+
+	function restore(base: Draft) {
+		if (undo.current != null) dismissToast(undo.current.toastId)
+		undo.current = null
+		isRestoring.current = true
+		setDraft(base)
+	}
+
+	function offerUndo(before: Draft) {
+		const now = Date.now()
+		const current = undo.current
+		// Still within the last one's time: Undo goes back past both.
+		const base = current != null && now < current.until ? current.base : before
+		if (current != null) dismissToast(current.toastId)
+		const toastId = toast({
+			title: t('savedToast'),
+			durationMs: UNDO_MS,
+			action: { label: t('undo'), onClick: () => restore(base) }
+		})
+		undo.current = { toastId, base, until: now + UNDO_MS }
+	}
+
 	function save() {
+		const before = saved
 		startSaving(async () => {
 			const result = await saveRulesAction(payload)
 			if (!result.ok) {
@@ -115,6 +151,12 @@ export function RulesForm({
 			}
 			setError(null)
 			router.refresh()
+			if (isRestoring.current) {
+				isRestoring.current = false
+				toast({ title: t('undoneToast') })
+			} else {
+				offerUndo(before)
+			}
 		})
 	}
 
@@ -128,8 +170,20 @@ export function RulesForm({
 	}, [draftKey, canSave])
 
 	// Leaving mid-pause still saves the last change.
+	// If that fails, say so on the next page rather than lose it quietly.
 	const saveOnLeave = useEffectEvent(() => {
-		if (canSave) void saveRulesAction(payload)
+		if (!canSave) return
+		saveRulesAction(payload).then(
+			(result) => {
+				if (!result.ok) {
+					toast({ variant: 'destructive', title: t('leaveSaveFailed'), description: result.error })
+				}
+			},
+			(cause: unknown) => {
+				const { userMessage } = captureClientError(cause, { evaluationId })
+				toast({ variant: 'destructive', title: t('leaveSaveFailed'), description: userMessage })
+			}
+		)
 	})
 	useEffect(() => () => saveOnLeave(), [])
 
@@ -137,35 +191,35 @@ export function RulesForm({
 
 	return (
 		<>
-			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<ReadOnlyFieldset className="space-y-4 @5xl:col-span-8">
-					<IdentitySection
-						same={draft.same}
-						different={draft.different}
-						country={draft.country}
-						countries={countries}
-						mappedRoles={mappedRoles}
-						jevFields={draft.jevFields}
-						onChange={({ field, ...text }) =>
-							setDraft((current) => ({
-								...current,
-								...text,
-								jevFields:
-									field == null
-										? current.jevFields
-										: toggled(current.jevFields, field.role, field.isOn)
-							}))
-						}
-					/>
-					<ThresholdSection
-						value={draft.threshold}
-						onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
-					/>
-				</ReadOnlyFieldset>
-				<div className="@5xl:col-span-4">
-					<SuggestionsCard data={suggestions} />
-				</div>
-			</div>
+			{/* Two rows of cards, each row one height, so everything lines up. */}
+			<ReadOnlyFieldset className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+				<IdentitySection
+					className="@5xl:col-span-7"
+					same={draft.same}
+					different={draft.different}
+					country={draft.country}
+					countries={countries}
+					suggested={suggested}
+					onChange={(text) => setDraft((current) => ({ ...current, ...text }))}
+				/>
+				<ThresholdSection
+					className="@5xl:col-span-5"
+					value={draft.threshold}
+					onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
+				/>
+				<SuggestionsCard className="@5xl:col-span-7" data={suggestions} />
+				<JevFieldsSection
+					className="@5xl:col-span-5"
+					mappedRoles={mappedRoles}
+					jevFields={draft.jevFields}
+					onToggle={(role, isOn) =>
+						setDraft((current) => ({
+							...current,
+							jevFields: toggled(current.jevFields, role, isOn)
+						}))
+					}
+				/>
+			</ReadOnlyFieldset>
 
 			<ActionBar
 				back={{ href: `${view.base}/vendors`, label: t('back') }}

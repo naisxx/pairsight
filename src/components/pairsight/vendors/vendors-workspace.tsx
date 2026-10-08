@@ -11,9 +11,10 @@ import {
 	PlusIcon,
 	SpinnerIcon,
 	SuccessIcon,
-	TrashIcon,
-	VendorIcon
+	TrashIcon
 } from '@/components/ui/icons'
+import { EmptyState } from '../empty-state'
+import { NoVendorsScene } from '../empty/scenes'
 import { Input } from '@/components/ui/input'
 import { cn } from '@/lib/cn'
 import { NAME_MAX_LENGTH } from '@/lib/pairsight/input-limits'
@@ -31,7 +32,6 @@ import { ReadOnlyFieldset, ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 15
 const STATUS_ICON_SIZE = 17
-const EMPTY_ICON_SIZE = 20
 
 type MissingStep = 'stepName' | 'stepFile' | 'stepConfirm'
 
@@ -105,19 +105,18 @@ export function VendorsWorkspace({
 	return (
 		<>
 			{current == null ? (
-				<div className="border-border bg-surface flex max-w-xl flex-col items-start rounded-md border p-6">
-					<span className="bg-surface-muted text-text-muted flex size-10 items-center justify-center rounded-md">
-						<VendorIcon size={EMPTY_ICON_SIZE} />
-					</span>
-					<h2 className="mt-3 text-sm font-semibold">{t('emptyTitle')}</h2>
-					<p className="type-ui text-text-muted mt-1">
-						{t('emptyDescription', { max: maxVendors })}
-					</p>
-					<Button className="mt-4" onClick={add} disabled={isAdding}>
-						{isAdding ? <SpinnerIcon size={ICON_SIZE} /> : <PlusIcon size={ICON_SIZE} />}
-						{isAdding ? t('adding') : t('add')}
-					</Button>
-				</div>
+				<EmptyState
+					framed
+					scene={<NoVendorsScene />}
+					title={t('emptyTitle')}
+					description={t('emptyDescription', { max: maxVendors })}
+					actions={
+						<Button onClick={add} disabled={isAdding}>
+							{isAdding ? <SpinnerIcon size={ICON_SIZE} /> : <PlusIcon size={ICON_SIZE} />}
+							{isAdding ? t('adding') : t('add')}
+						</Button>
+					}
+				/>
 			) : (
 				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
 					<nav aria-label={t('listLabel')} className="@5xl:col-span-3">
@@ -281,7 +280,7 @@ function VendorName({ vendor, onRemove }: { vendor: VendorListItem; onRemove: ()
 	}
 
 	return (
-		<section className="border-border bg-surface rounded-md border p-4">
+		<section className="border-border bg-surface rounded-lg border p-4">
 			<div className="flex flex-wrap items-end gap-3">
 				<div className="min-w-[220px] flex-1">
 					<label htmlFor={id} className="type-ui font-medium">

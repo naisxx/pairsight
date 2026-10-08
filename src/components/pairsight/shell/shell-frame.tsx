@@ -116,7 +116,7 @@ export function ShellFrame({
 				>
 					<a
 						href="#main"
-						className="bg-surface text-text sr-only rounded-sm px-3 py-2 text-sm focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70]"
+						className="bg-surface text-text sr-only rounded-sm px-3 py-2 text-sm focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[70] focus:inline-flex focus:min-h-11 focus:items-center"
 					>
 						{t('skipToContent')}
 					</a>
@@ -124,8 +124,8 @@ export function ShellFrame({
 					<aside
 						aria-label={t('sidebar')}
 						className={cn(
-							'border-border bg-surface hidden shrink-0 border-r transition-[width] duration-200 ease-out md:block',
-							isCollapsed ? 'w-[60px]' : 'w-[248px]'
+							'border-border bg-bg hidden shrink-0 border-r transition-[width] duration-200 ease-out md:block',
+							isCollapsed ? 'w-[60px]' : 'w-[256px]'
 						)}
 					>
 						<SidebarModeContext value={{ isCollapsed, isMobile: false }}>
@@ -151,7 +151,7 @@ export function ShellFrame({
 									role="dialog"
 									aria-modal="true"
 									aria-label={t('navigation')}
-									className="border-border bg-surface shadow-elevated fixed inset-y-0 left-0 z-50 w-[280px] border-r md:hidden"
+									className="border-border bg-bg shadow-elevated fixed inset-y-0 left-0 z-50 w-[280px] border-r md:hidden"
 									initial={isReduced ? { opacity: 0 } : { x: -DRAWER_WIDTH_PX }}
 									animate={isReduced ? { opacity: 1 } : { x: 0 }}
 									exit={isReduced ? { opacity: 0 } : { x: -DRAWER_WIDTH_PX }}
@@ -176,10 +176,10 @@ export function ShellFrame({
 							{/* The width the page can use: the container that full-bleed parts
 							    (the action bar) measure with cqw. On <main> itself that width
 							    would include a classic scrollbar, and they'd overflow by it. */}
-							<div className="[container-type:inline-size] flex min-h-full flex-col">
+							<div className="app-grid [container-type:inline-size] flex min-h-full flex-col">
 								<motion.div
 									key={pathname}
-									className="page-frame mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 pt-6 pb-10 md:px-8"
+									className="page-frame mx-auto flex w-full max-w-[1280px] flex-1 flex-col px-4 pt-7 pb-10 md:px-8 md:pt-10"
 									initial={isReduced ? false : { opacity: 0 }}
 									animate={{ opacity: 1 }}
 									transition={{ duration: PAGE_DURATION_S, ease: EASE_OUT_SOFT }}

@@ -54,39 +54,6 @@ const vendors = [
 ]
 const noTop = { missed: [], merges: [] }
 
-test('sources: suggested pairs first, then the ones only a vendor added', () => {
-	const overview = buildOverview({
-		summary: summary([
-			pair('p1', true, ['v1'], judged(0.9)),
-			pair('p2', true, [], judged(0.9)),
-			pair('p3', false, ['v1'], judged(0.1))
-		]),
-		vendors,
-		vendorId: 'v1',
-		top: noTop
-	})
-	assert.deepEqual(
-		overview.sources.map((source) => [source.suggested, source.total]),
-		[
-			[true, 2],
-			[false, 1]
-		]
-	)
-	assert.equal(overview.sources[0]?.counts.pairsight_only, 1)
-	assert.equal(overview.sources[1]?.counts.vendor_only, 1)
-	// A source with no pairs isn't listed.
-	const suggestedOnly = buildOverview({
-		summary: summary([pair('p1', true, [], judged(0.9))]),
-		vendors,
-		vendorId: 'v1',
-		top: noTop
-	})
-	assert.deepEqual(
-		suggestedOnly.sources.map((source) => source.suggested),
-		[true]
-	)
-})
-
 test('top disagreements: surest missed duplicates, least sure merges', () => {
 	const { top } = summary([
 		pair('a', true, [], judged(0.7)),
@@ -150,13 +117,4 @@ test('the overview counts every pair: groups, coverage and the other vendor', ()
 		addedByVendor: 1,
 		notCompared: 0
 	})
-	assert.deepEqual(
-		overview.overlap?.groups.map((group) => [group.key, group.total]),
-		[
-			['both', 1],
-			['firstOnly', 0],
-			['secondOnly', 1],
-			['neither', 0]
-		]
-	)
 })

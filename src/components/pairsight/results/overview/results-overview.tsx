@@ -1,35 +1,22 @@
-import { useTranslations } from 'next-intl'
 import { Reveal } from '@/components/ui/reveal'
 import type { Category } from '@/lib/pairsight/decisions'
 import type { EntityType } from '@/lib/pairsight/entity-types'
+import type { StatsRow } from '@/lib/pairsight/stats'
 import type { ResultsOverview as OverviewData } from '@/server/pairsight/result-overview'
-import { CategorySummary } from './category-summary'
 import { CoveragePanel } from './coverage-panel'
-import { DecisionMatrix } from './decision-matrix'
-import { FieldPatternsPanel } from './field-patterns'
-import { MetricStrip } from './metric-strip'
-import { ScoreDistribution } from './score-distribution'
-import { SourceBreakdown } from './source-breakdown'
+import { HeadToHead } from './head-to-head'
+import { LookFirst } from './look-first'
 import { ThresholdSensitivity } from './threshold-sensitivity'
-import { TopDisagreements } from './top-disagreements'
-import { VendorComparison } from './vendor-comparison'
-import { VendorOverlap } from './vendor-overlap'
-import { WorkloadPanel } from './workload-panel'
+import { WhyTheyDisagree } from './why-they-disagree'
 
 type Href = { pathname: string; query: Record<string, string> }
 
-function SectionTitle({ title, hint }: { title: string; hint: string }) {
-	return (
-		<div className="flex flex-wrap items-baseline justify-between gap-2 pt-4">
-			<h2 className="text-text text-[0.9375rem] font-semibold">{title}</h2>
-			<p className="text-text-muted text-xs">{hint}</p>
-		</div>
-	)
-}
+const asString = (href: Href) => `${href.pathname}?${new URLSearchParams(href.query)}`
 
-// The Overview tab (docs/PairSight-UX-Plan.md §4.1): the vendor's metrics and
-// coverage, the categories, how decisions line up and hold up, how vendors
-// compare, and where to look first. Panels enter in a short stagger.
+// The Overview tab (docs/PairSight-UX-Plan.md §4.1), kept to what answers
+// "which vendor, and where do I look?": the vendors head to head, where to
+// look first, what Jev checked, how the cut-off holds, and why they disagree.
+// Panels enter in a short stagger.
 export function ResultsOverview({
 	overview,
 	vendorName,
@@ -37,6 +24,8 @@ export function ResultsOverview({
 	entityType,
 	threshold,
 	detailed,
+	categoryHrefs,
+	statsByVendor,
 	pairHref,
 	vendorHrefs
 }: {
@@ -47,50 +36,54 @@ export function ResultsOverview({
 	threshold: number
 	// The detailed view with some filters set (the rest cleared).
 	detailed: (query: Record<string, string>) => Href
+	// Each vendor's pairs in each group, in the detailed view.
+	categoryHrefs: Record<string, Partial<Record<Category | 'incomplete', string>>>
+	// Each vendor's counts by score, for the cut-off preview.
+	statsByVendor: Record<string, StatsRow[]>
 	pairHref: (pairId: string) => Href
 	vendorHrefs: Record<string, string>
 }) {
-	const t = useTranslations('Overview')
-	const asString = (href: Href) => `${href.pathname}?${new URLSearchParams(href.query)}`
-	const categoryHrefs: Record<Category, string> = {
-		both_matched: asString(detailed({ category: 'both_matched' })),
-		pairsight_only: asString(detailed({ category: 'pairsight_only' })),
-		vendor_only: asString(detailed({ category: 'vendor_only' })),
-		neither_matched: asString(detailed({ category: 'neither_matched' }))
-	}
-	const others = overview.byVendor.filter((vendor) => vendor.id !== vendorId)
-	const overlap = overview.overlap
-	const [firstOverlap, secondOverlap] = overlap?.vendors ?? []
 	let index = 0
 
 	return (
 		<div className="mt-6 flex flex-col gap-4">
+			<Reveal index={index++}>
+				<HeadToHead
+					vendors={overview.byVendor}
+					selectedId={vendorId}
+					vendorHrefs={vendorHrefs}
+					categoryHrefs={categoryHrefs}
+					statsByVendor={statsByVendor}
+					runThreshold={threshold}
+				/>
+			</Reveal>
+
 			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<Reveal index={index++} className="@5xl:col-span-8">
-					<MetricStrip
+				<Reveal index={index++} className="@5xl:col-span-7">
+					<LookFirst
 						vendorName={vendorName}
-						metrics={overview.metrics}
-						others={others}
+						threshold={threshold}
+						missed={overview.top.missed}
+						merges={overview.top.merges}
+						workload={overview.workload}
+						hrefs={{
+							disagreements: asString(detailed({ category: 'disagreements' })),
+							near: asString(detailed({ score: 'near' })),
+							incomplete: asString(detailed({ category: 'incomplete' }))
+						}}
+						pairHref={pairHref}
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-4 @5xl:row-span-2">
+				<Reveal index={index++} className="@5xl:col-span-5">
 					<CoveragePanel
 						coverage={overview.coverage}
-						suggestedType={overview.sources.some((source) => source.suggested) ? entityType : null}
+						suggestedType={overview.coverage.suggested > 0 ? entityType : null}
 						className="h-full"
-					/>
-				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-8">
-					<CategorySummary
-						vendorName={vendorName}
-						metrics={overview.metrics}
-						pairsHref={(category) => detailed({ category })}
 					/>
 				</Reveal>
 			</div>
 
-			<SectionTitle title={t('sectionDecisions')} hint={t('sectionDecisionsHint')} />
 			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
 				<Reveal index={index++} className="@5xl:col-span-7">
 					<ThresholdSensitivity
@@ -103,93 +96,9 @@ export function ResultsOverview({
 					/>
 				</Reveal>
 				<Reveal index={index++} className="@5xl:col-span-5">
-					<DecisionMatrix
-						vendorName={vendorName}
-						counts={overview.metrics.counts}
-						assessed={overview.metrics.assessed}
-						categoryHrefs={categoryHrefs}
-						className="h-full"
-					/>
-				</Reveal>
-			</div>
-			{overview.byVendor.length > 1 && (
-				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-					<Reveal index={index++} className="@5xl:col-span-7">
-						<VendorComparison
-							vendors={overview.byVendor.map((vendor) => ({
-								...vendor,
-								href: vendorHrefs[vendor.id] ?? ''
-							}))}
-							selectedId={vendorId}
-							className="h-full"
-						/>
-					</Reveal>
-					{overlap != null && firstOverlap != null && secondOverlap != null && (
-						<Reveal index={index++} className="@5xl:col-span-5">
-							<VendorOverlap
-								first={firstOverlap.name}
-								second={secondOverlap.name}
-								groups={overlap.groups}
-								className="h-full"
-							/>
-						</Reveal>
-					)}
-				</div>
-			)}
-
-			<SectionTitle title={t('sectionDisagreements')} hint={t('sectionDisagreementsHint')} />
-			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<Reveal index={index++} className="@5xl:col-span-7">
-					<FieldPatternsPanel
+					<WhyTheyDisagree
 						vendorName={vendorName}
 						patterns={overview.fieldPatterns}
-						categoryHrefs={categoryHrefs}
-						className="h-full"
-					/>
-				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-5">
-					<TopDisagreements
-						vendorName={vendorName}
-						threshold={threshold}
-						missed={overview.top.missed}
-						merges={overview.top.merges}
-						pairHref={pairHref}
-						className="h-full"
-					/>
-				</Reveal>
-			</div>
-			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<Reveal index={index++} className="@5xl:col-span-5">
-					<ScoreDistribution
-						vendorName={vendorName}
-						threshold={threshold}
-						assessed={overview.metrics.assessed}
-						bins={overview.histogram}
-						rangeHrefs={overview.histogram.map((bin) =>
-							asString(detailed({ score: `r:${bin.from.toFixed(1)}-${bin.to.toFixed(1)}` }))
-						)}
-						className="h-full"
-					/>
-				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-4">
-					<SourceBreakdown
-						sources={overview.sources}
-						sourceHrefs={{
-							suggested: asString(detailed({ source: 'suggested' })),
-							vendor: asString(detailed({ source: 'vendor' }))
-						}}
-						className="h-full"
-					/>
-				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-3">
-					<WorkloadPanel
-						vendorName={vendorName}
-						workload={overview.workload}
-						hrefs={{
-							disagreements: asString(detailed({ category: 'disagreements' })),
-							near: asString(detailed({ score: 'near' })),
-							incomplete: asString(detailed({ category: 'incomplete' }))
-						}}
 						className="h-full"
 					/>
 				</Reveal>

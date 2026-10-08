@@ -84,9 +84,14 @@ export async function getRunResults({
 		},
 		models: summary.models,
 		overview,
-		// This vendor's counts, so the threshold control can preview another
-		// threshold without a round trip; small whatever the run's size.
-		stats: statsForVendor(summary.rows, vendorIndex),
+		// Every vendor's counts, binned by score, so the Overview can preview
+		// another cut-off live without a round trip; small whatever the run's size.
+		statsByVendor: Object.fromEntries(
+			vendors.map((vendor) => [
+				vendor.id,
+				statsForVendor(summary.rows, summary.vendorIds.indexOf(vendor.id))
+			])
+		),
 		// Each vendor's categories side by side; only worth showing with two or more.
 		vendorCounts:
 			vendors.length < 2
@@ -104,16 +109,20 @@ export async function getRunResults({
 	}
 }
 
-export async function getPairDetail({
+// One pair of a finished run, as the panel beside Detailed analysis needs it:
+// the pair, its two records, Jev's judgment and each vendor's decision. No
+// position in the list (only the pair's own page steps through it), so a
+// selection costs a handful of small reads.
+export async function getPairPanel({
 	scope,
 	runId,
 	pairId,
-	filters
+	vendorFilter
 }: {
 	scope: EvaluationScope
 	runId: string
 	pairId: string
-	filters: ResultFilters
+	vendorFilter: string | undefined
 }) {
 	const run = await getVisibleRun({ scope, runId })
 	const [vendors, dataset, pair] = await Promise.all([
@@ -140,9 +149,7 @@ export async function getPairDetail({
 					}
 				}
 			}
-		}),
-		// Its position is read from the run's pairs as of its summary.
-		readRunSummary(run)
+		})
 	])
 	if (pair == null) return null
 	const records = await db.sourceRecord.findMany({
@@ -164,8 +171,7 @@ export async function getPairDetail({
 	const second = recordsById.get(pair.recordBId)
 	if (first == null || second == null) return null
 
-	const vendorId = pickVendorId(vendors, filters.vendor)
-	const context: PairContext = { runId, threshold: run.threshold, vendorId }
+	const vendorId = pickVendorId(vendors, vendorFilter)
 	const [row] = buildRows({
 		pairs: [pair],
 		records: recordsById,
@@ -173,10 +179,6 @@ export async function getPairDetail({
 		vendorId
 	})
 	if (row == null) return null
-	// Its place in the filtered list it was opened from; if the filters no
-	// longer include this pair, step through the whole run instead.
-	const inFiltered = await pairPosition({ context, filters, pairId })
-	const position = inFiltered ?? (await pairPosition({ context, filters: {}, pairId }))
 	const [recordA, recordB] = byReference(first, second)
 	return {
 		run,
@@ -199,7 +201,37 @@ export async function getPairDetail({
 				})
 			}
 		}),
-		vendorId,
+		vendorId
+	}
+}
+
+// The pair's own page: the panel's pair, plus its place in the list it was
+// opened from, so J/K step through it.
+export async function getPairDetail({
+	scope,
+	runId,
+	pairId,
+	filters
+}: {
+	scope: EvaluationScope
+	runId: string
+	pairId: string
+	filters: ResultFilters
+}) {
+	const [pair, run] = await Promise.all([
+		getPairPanel({ scope, runId, pairId, vendorFilter: filters.vendor }),
+		getVisibleRun({ scope, runId })
+	])
+	if (pair == null) return null
+	// Its position is read from the run's pairs as of its summary.
+	await readRunSummary(run)
+	const context: PairContext = { runId, threshold: run.threshold, vendorId: pair.vendorId }
+	// Its place in the filtered list it was opened from; if the filters no
+	// longer include this pair, step through the whole run instead.
+	const inFiltered = await pairPosition({ context, filters, pairId })
+	const position = inFiltered ?? (await pairPosition({ context, filters: {}, pairId }))
+	return {
+		...pair,
 		position: position?.position ?? null,
 		listSize: position?.total ?? 0,
 		isInFiltered: inFiltered != null,

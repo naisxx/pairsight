@@ -2,15 +2,12 @@
 
 import { useSyncExternalStore, useTransition } from 'react'
 import { useTheme } from 'next-themes'
-import { UI_STYLES } from '@/lib/ui-style'
-import { useUiStyle } from '../use-ui-style'
 import { useTranslations } from 'next-intl'
 import {
 	DropdownMenu,
 	DropdownMenuContent,
 	DropdownMenuItem,
 	DropdownMenuLabel,
-	DropdownMenuSeparator,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
@@ -58,7 +55,6 @@ function useIsHydrated(): boolean {
 export function SidebarThemeMenu() {
 	const t = useTranslations('Theme')
 	const { theme, setTheme } = useTheme()
-	const [style, setStyle] = useUiStyle()
 	const { isCollapsed } = useSidebarMode()
 	const isHydrated = useIsHydrated()
 	const current: ThemeChoice = isHydrated && isThemeChoice(theme) ? theme : 'system'
@@ -68,7 +64,7 @@ export function SidebarThemeMenu() {
 		<DropdownMenuTrigger
 			aria-label={t('change', { current: t(current) })}
 			className={cn(
-				'type-ui text-text-muted hover:bg-surface-hover hover:text-text flex h-8 items-center gap-2 rounded-sm transition-colors duration-150',
+				'type-ui text-text-muted hover:bg-surface-hover hover:text-text flex h-8 items-center gap-2 rounded-sm transition-colors duration-150 pointer-coarse:h-11',
 				isCollapsed ? 'w-8 justify-center' : 'w-full px-2'
 			)}
 		>
@@ -105,14 +101,6 @@ export function SidebarThemeMenu() {
 						</DropdownMenuItem>
 					)
 				})}
-				<DropdownMenuSeparator />
-				<DropdownMenuLabel>{t('style')}</DropdownMenuLabel>
-				{UI_STYLES.map((value) => (
-					<DropdownMenuItem key={value} onSelect={() => setStyle(value)}>
-						{t(value)}
-						{style === value && <CheckIcon size={14} className="text-accent-ink ml-auto" />}
-					</DropdownMenuItem>
-				))}
 			</DropdownMenuContent>
 		</DropdownMenu>
 	)

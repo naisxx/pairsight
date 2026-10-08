@@ -12,91 +12,47 @@
 	--stagger-i: --value(integer);
 }
 
+/* Arrivals start just above zero, not at it: Chrome paints an element once
+   and then fades it on the compositor, and a first paint at opacity 0 never
+   counts as content. A page made only of arrivals (sign-in) then records no
+   first or largest contentful paint at all. 0.01 looks the same. */
 @keyframes rise {
 	from {
-		opacity: 0;
+		opacity: 0.01;
 		transform: translateY(var(--rise-lift, 14px));
 		filter: blur(var(--rise-blur, 6px));
 	}
 }
 
-/* For inline text, which can't be moved: fade out of a blur. */
-@keyframes unblur {
-	from {
-		opacity: 0;
-		filter: blur(10px);
-	}
-}
-
 @keyframes drop {
 	from {
-		opacity: 0;
+		opacity: 0.01;
 		transform: translateY(-10px);
 	}
 }
 
-@keyframes tilt-in {
-	from {
-		opacity: 0;
-		transform: perspective(1600px) rotateX(14deg) translateY(48px) scale(0.96);
-		filter: blur(6px);
-	}
-}
-
-@keyframes hover-float {
-	50% {
-		transform: translateY(-6px);
-	}
-}
-
+/* The empty states' idle float (empty/scenes.tsx). It moves `translate`, so
+   it never fights `rise` (transform) or a card's tilt (rotate). */
 @keyframes drift {
-	33% {
-		transform: translate3d(6%, -4%, 0) scale(1.08);
-	}
-	66% {
-		transform: translate3d(-4%, 3%, 0) scale(0.95);
+	to {
+		translate: 0 -5px;
 	}
 }
 
-@keyframes pan {
-	to {
-		background-position: 200% 50%;
+/* The cut-off drawer's tab, inviting a first look (cutoff-bar.tsx). */
+@keyframes tab-invite {
+	0%,
+	100% {
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--action) 0%, transparent);
+	}
+	40% {
+		box-shadow: 0 0 0 6px color-mix(in srgb, var(--action) 30%, transparent);
 	}
 }
 
 @keyframes grow-x {
 	from {
 		transform: scaleX(0);
-	}
-}
-
-@keyframes sheen {
-	from {
-		transform: translateX(-120%) skewX(-20deg);
-	}
-	to {
-		transform: translateX(260%) skewX(-20deg);
-	}
-}
-
-@keyframes ping {
-	from {
-		box-shadow: 0 0 0 0 color-mix(in oklab, var(--action) 50%, transparent);
-	}
-	70%,
-	to {
-		box-shadow: 0 0 0 7px transparent;
-	}
-}
-
-@keyframes pop {
-	from {
-		opacity: 0;
-		transform: scale(0.3);
-	}
-	60% {
-		opacity: 1;
-		transform: scale(1.12);
 	}
 }
 
@@ -110,22 +66,6 @@
 	}
 }
 
-@keyframes parallax {
-	from {
-		translate: 0 var(--parallax-range, 0px);
-	}
-	to {
-		translate: 0 calc(var(--parallax-range, 0px) * -1);
-	}
-}
-
-@keyframes header-settle {
-	to {
-		background-color: color-mix(in oklab, var(--bg) 80%, transparent);
-		border-color: var(--border);
-	}
-}
-
 /* ---- Static looks (with or without motion) ---- */
 
 /* The product's headline colour: a deep-to-warm brand gradient, darker in
@@ -134,11 +74,9 @@
 	background-image: linear-gradient(
 		100deg,
 		var(--headline-from),
-		var(--headline-via) 45%,
-		var(--headline-to) 70%,
-		var(--headline-from)
+		var(--headline-via) 55%,
+		var(--headline-to)
 	);
-	background-size: 200% auto;
 	background-clip: text;
 	-webkit-background-clip: text;
 	color: transparent;
@@ -146,104 +84,38 @@
 	box-decoration-break: slice;
 }
 
-/* The landing's backdrop: three soft brand glows and a fading dot grid. */
-.hero-backdrop {
+/* The landing (src/components/pairsight/landing): one soft glow of the
+   action colour behind the hero, the same glow on the closing panel, and a
+   faint dot grid on the story's stage. */
+.landing-glow::before {
+	content: '';
 	position: absolute;
-	inset: -4rem 0 0;
+	inset: -6rem 0 auto;
 	z-index: -1;
-	overflow: hidden;
+	height: 46rem;
+	background: radial-gradient(
+		ellipse 60% 55% at 70% 30%,
+		color-mix(in oklab, var(--action) calc(var(--glow-strength) * 100%), transparent),
+		transparent 70%
+	);
 	pointer-events: none;
 }
-.hero-backdrop::before {
+.final-glow::before {
 	content: '';
 	position: absolute;
 	inset: 0;
-	background-image: radial-gradient(var(--border) 1px, transparent 1px);
-	background-size: 22px 22px;
-	mask-image: radial-gradient(ellipse 70% 60% at 60% 35%, black, transparent 75%);
-	opacity: 0.7;
-}
-.hero-blob {
-	position: absolute;
-	border-radius: 9999px;
-	filter: blur(72px);
-	opacity: var(--glow-strength);
-}
-.hero-blob--a {
-	top: 2%;
-	right: 4%;
-	width: 34rem;
-	height: 26rem;
-	background: var(--brand-orange);
-}
-.hero-blob--b {
-	top: 30%;
-	right: 26%;
-	width: 22rem;
-	height: 22rem;
-	background: var(--brand-amber);
-}
-.hero-blob--c {
-	top: -6%;
-	left: -8%;
-	width: 26rem;
-	height: 20rem;
-	background: var(--color-brand);
-	opacity: calc(var(--glow-strength) * 0.7);
-}
-
-/* "How it works": a soft brand wash, with three blurred shapes behind it
-   that drift at their own depths (the parallax is in Motion, below). */
-.how-section {
-	background:
-		linear-gradient(180deg, color-mix(in oklab, var(--surface) 92%, transparent), transparent 60%),
-		color-mix(in oklab, var(--bg) 70%, transparent);
-	border-block: 1px solid var(--border);
-}
-.how-backdrop {
-	position: absolute;
-	inset: 0;
 	z-index: -1;
-	overflow: hidden;
+	background: radial-gradient(
+		ellipse 55% 70% at 50% 0%,
+		color-mix(in oklab, var(--action) calc(var(--glow-strength) * 160%), transparent),
+		transparent 70%
+	);
 	pointer-events: none;
 }
-.how-shape {
-	position: absolute;
-	border-radius: 9999px;
-	filter: blur(64px);
-	opacity: var(--glow-strength);
-}
-.how-shape--a {
-	top: -10%;
-	left: -6%;
-	width: 28rem;
-	height: 22rem;
-	background: var(--brand-orange);
-}
-.how-shape--b {
-	top: 30%;
-	right: -8%;
-	width: 30rem;
-	height: 24rem;
-	background: var(--cat-pairsight);
-	opacity: calc(var(--glow-strength) * 0.8);
-}
-.how-shape--c {
-	bottom: -20%;
-	left: 34%;
-	width: 26rem;
-	height: 20rem;
-	background: var(--brand-amber);
-	opacity: calc(var(--glow-strength) * 0.7);
-}
-
-/* The closing call to action: a deep brand panel. It stays in the darker
-   brand range so white text keeps its contrast. */
-.cta-panel {
-	background:
-		radial-gradient(40rem 20rem at 85% 0%, rgb(255 255 255 / 0.14), transparent 60%),
-		linear-gradient(120deg, #7f2020, var(--brand-deep) 35%, #b8331e);
-	color: #ffffff;
+.stage-grid {
+	background-image: radial-gradient(var(--border) 1px, transparent 1px);
+	background-size: 20px 20px;
+	mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black, transparent 80%);
 }
 
 /* The sign-in/up backdrop: one glow behind the form. */
@@ -268,71 +140,11 @@
 	opacity: calc(var(--glow-strength) * 0.8);
 }
 
-/* The landing header stays on top as you scroll, frosted once it has
-   something under it. */
-.landing-header {
-	position: sticky;
-	top: 0;
-	z-index: 30;
-	border-bottom: 1px solid var(--border);
-	background-color: color-mix(in oklab, var(--bg) 80%, transparent);
-	backdrop-filter: blur(12px);
-}
-
-/* A light sweep across a primary button, on hover. */
-.sheen {
-	position: relative;
-	overflow: hidden;
-}
-.sheen::after {
-	content: '';
-	position: absolute;
-	inset: 0;
-	width: 40%;
-	background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent);
-	transform: translateX(-120%) skewX(-20deg);
-	pointer-events: none;
-}
-
-/* "How it works": after the heading, one step every 600 ms: its number pops,
-   its text follows, and the line draws on to the next number. */
-.how-steps {
-	--view-base: 200ms;
-	--view-step: 600ms;
-}
-.view-after {
-	--view-offset: 140ms;
-}
-
 /* Small things (sidebar steps): a shorter, quicker arrival. */
 .rise-gentle {
 	--rise-lift: 6px;
 	--rise-blur: 2px;
 	--rise-step: 40ms;
-}
-
-.live-dot {
-	display: inline-block;
-	width: 6px;
-	height: 6px;
-	border-radius: 9999px;
-	background: var(--action);
-}
-
-/* Parallax depth: how far a layer travels as its block crosses the screen.
-   Deeper layers (higher) move more; a negative depth moves against the
-   scroll, for layers behind. Used with `.parallax` below. */
-.depth-1 {
-	--parallax-range: 10px;
-}
-.depth-2 {
-	--parallax-range: 24px;
-}
-.depth-3 {
-	--parallax-range: 44px;
-}
-.depth-back {
-	--parallax-range: -36px;
 }
 
 /* ---- Motion ---- */
@@ -343,69 +155,27 @@
 		animation: rise 760ms var(--ease-out-soft) both;
 		animation-delay: calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms));
 	}
-	.unblur {
-		animation: unblur 900ms var(--ease-out-soft) both;
-		animation-delay: calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms));
-	}
 	.drop {
 		animation: drop 600ms var(--ease-out-soft) both;
 	}
 
-	/* Headline words arrive one by one, a beat apart. */
-	.hero-words {
-		--rise-base: 160ms;
-		--rise-step: 45ms;
-		--rise-lift: 0.45em;
-		--rise-blur: 8px;
+	/* Two slow pulses, then still: noticed, not nagging. */
+	.tab-invite {
+		animation: tab-invite 1.6s var(--ease-out-soft) 600ms 2;
 	}
-	.hero-words .rise {
-		display: inline-block;
-	}
-	.text-gradient {
-		animation: pan 9s ease-in-out infinite alternate;
-	}
-	/* An inline gradient that also arrives: both animations together. */
-	.text-gradient.unblur {
+
+	/* Arrive like `rise`, then float gently; -reverse floats the other way,
+	   so two things drift apart. */
+	.empty-drift,
+	.empty-drift-reverse {
 		animation:
-			unblur 900ms var(--ease-out-soft) both,
-			pan 9s ease-in-out 1.2s infinite alternate;
+			rise 760ms var(--ease-out-soft) both,
+			drift 3.2s ease-in-out 900ms infinite alternate;
 		animation-delay:
-			calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms)), 1.2s;
+			calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms)), 900ms;
 	}
-
-	/* The product preview tilts up into place, then idles. */
-	.hero-preview {
-		--rise-base: 1000ms;
-		--rise-step: 55ms;
-		--rise-lift: 8px;
-		--rise-blur: 2px;
-		animation: tilt-in 1100ms var(--ease-out-soft) 450ms both;
-		transform-origin: 50% 100%;
-	}
-	.hero-float {
-		animation: hover-float 7s ease-in-out 1.8s infinite;
-	}
-	.hero-blob {
-		animation: drift 22s ease-in-out infinite;
-	}
-	.hero-blob--b {
-		animation-duration: 28s;
-		animation-direction: reverse;
-	}
-	.hero-blob--c {
-		animation-duration: 34s;
-	}
-
-	.live-dot {
-		animation: ping 2.4s ease-out infinite;
-	}
-
-	/* The sheen runs once by itself after the hero lands, then on hover. */
-	.sheen::after {
-		animation: sheen 1100ms var(--ease-out-soft) 1.9s both;
-	}
-	.sheen:hover::after {
-		animation: sheen 900ms var(--ease-out-soft) both;
+	.empty-drift-reverse {
+		animation-direction: normal, alternate-reverse;
 	}
 
 	/* Bars on the Results overview wipe in from the left, once their card has
@@ -438,56 +208,5 @@
 	}
 	.page-frame > :nth-child(n + 5) {
 		animation-delay: 240ms;
-	}
-
-	/* Below the fold, a block plays its sequence once it scrolls into view
-	   (InView sets data-in-view). Inside it: .on-view rises, .on-view-pop
-	   pops in with a ring, .on-view-draw draws left to right; each at
-	   --view-offset plus --stagger-i steps of --view-step. */
-	[data-in-view] :is(.on-view, .on-view-pop, .on-view-draw) {
-		--at: calc(
-			var(--view-base, 0ms) + var(--view-offset, 0ms) + var(--stagger-i, 0) *
-				var(--view-step, 140ms)
-		);
-	}
-	[data-in-view='false'] :is(.on-view, .on-view-pop) {
-		opacity: 0;
-	}
-	[data-in-view='false'] .on-view-draw {
-		transform: scaleX(0);
-	}
-	[data-in-view='true'] .on-view {
-		animation: rise 820ms var(--ease-out-soft) var(--at) both;
-	}
-	[data-in-view='true'] .on-view-pop {
-		animation:
-			pop 700ms var(--ease-out-soft) var(--at) both,
-			ping 1100ms ease-out calc(var(--at) + 380ms) 1;
-	}
-	[data-in-view='true'] .on-view-draw {
-		transform-origin: left;
-		animation: grow-x 400ms ease-in-out calc(var(--at) + 200ms) both;
-	}
-
-	/* Parallax: a layer drifts from below to above its resting place while
-	   its block crosses the screen, by its depth's range. It moves `translate`,
-	   not `transform`, so it adds to any tilt or entrance on the same layer. */
-	@supports (animation-timeline: view()) {
-		.parallax {
-			animation: parallax linear both;
-			animation-timeline: view();
-			animation-range: cover;
-		}
-	}
-
-	/* The header starts clear over the hero and frosts as the page scrolls. */
-	@supports (animation-timeline: scroll()) {
-		.landing-header {
-			border-bottom-color: transparent;
-			background-color: transparent;
-			animation: header-settle linear both;
-			animation-timeline: scroll();
-			animation-range: 0 96px;
-		}
 	}
 }

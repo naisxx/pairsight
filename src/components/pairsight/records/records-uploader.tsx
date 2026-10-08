@@ -1,6 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { LIMITS } from '@/server/pairsight/limits'
+import { BYTES_PER_MB } from '@/lib/pairsight/tabular-formats'
+import { useEffect, useRef, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
@@ -89,7 +91,20 @@ export function RecordsUploader({
 	const [entityType, setEntityType] = useState<EntityType>(DEFAULT_ENTITY_TYPE)
 	const [errors, setErrors] = useState<string[]>([])
 	const [isReading, startReading] = useTransition()
+	// The file picked last: an earlier one still on its way never lands on it.
+	const latestFile = useRef<File | null>(null)
 	const [isSaving, startSaving] = useTransition()
+	// A file read but not saved yet lives only on this page: the browser asks
+	// before a reload or a closed tab throws it away.
+	const hasUnsaved = loaded != null
+	useEffect(() => {
+		if (!hasUnsaved) return
+		function onLeave(event: BeforeUnloadEvent) {
+			event.preventDefault()
+		}
+		window.addEventListener('beforeunload', onLeave)
+		return () => window.removeEventListener('beforeunload', onLeave)
+	}, [hasUnsaved])
 	const fields = fieldKeys(rolesFor(entityType))
 	const label = (key: FieldKey) => (key === 'reference' ? t('referenceField') : tRoles(key))
 
@@ -122,6 +137,7 @@ export function RecordsUploader({
 		setErrors([])
 		startReading(async () => {
 			const result = await previewSourceFile({ uploadId, sheet })
+			if (latestFile.current !== file) return
 			if (!result.ok) return setErrors([result.error])
 			const data = result.data
 			if (!data.ok) {
@@ -157,6 +173,7 @@ export function RecordsUploader({
 	}
 
 	function onFile(file: File) {
+		latestFile.current = file
 		setChoosing(null)
 		setErrors([])
 		const checked = checkTabularFile(file)
@@ -167,8 +184,11 @@ export function RecordsUploader({
 				evaluationId,
 				kind: 'records',
 				file,
-				onProgress: setUploadPercent
+				onProgress: (percent) => {
+					if (latestFile.current === file) setUploadPercent(percent)
+				}
 			})
+			if (latestFile.current !== file) return
 			setUploadPercent(null)
 			if (!uploaded.ok) {
 				return setErrors([
@@ -261,7 +281,10 @@ export function RecordsUploader({
 				<div className="max-w-3xl space-y-4">
 					<FileDrop
 						label={t('dropTitle')}
-						hint={t('dropHint')}
+						hint={t('dropHint', {
+							records: LIMITS.maxSourceRecords,
+							megabytes: LIMITS.maxFileBytes / BYTES_PER_MB
+						})}
 						busyLabel={
 							uploadPercent == null ? t('reading') : t('uploading', { percent: uploadPercent })
 						}

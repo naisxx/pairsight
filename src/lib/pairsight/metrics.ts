@@ -74,6 +74,9 @@ export function vendorMetrics(pairs: MetricPair[], threshold: number): VendorMet
 // ---- Threshold sensitivity ----
 
 const SWEEP_STEPS = 20
+// The first and last cut-off the sweep reads (0.05 and 0.95).
+export const SWEEP_FROM = 1 / SWEEP_STEPS
+export const SWEEP_TO = (SWEEP_STEPS - 1) / SWEEP_STEPS
 // How far "lower" and "raise" look from the current threshold.
 export const SENSITIVITY_STEP = 0.1
 
@@ -101,18 +104,38 @@ export function sensitivity(pairs: MetricPair[]): SensitivityPoint[] {
 	})
 }
 
-// The thresholds around the current one that give exactly the same precision
-// and recall: how far the threshold can move before the picture changes.
+// How far the cut-off can move before the picture changes: the unbroken
+// stretch of sweep points, around the one nearest the current cut-off, that
+// give exactly the same correct merges and duplicates found. Null when there
+// is no such stretch, or it's a single point (any change moves the numbers);
+// a match further along the sweep, past a point that differs, doesn't count.
 export function stableRange(
 	points: SensitivityPoint[],
-	current: { precision: number | null; recall: number | null }
+	current: { precision: number | null; recall: number | null },
+	threshold: number
 ): { from: number; to: number } | null {
-	const same = points.filter(
-		(point) => point.precision === current.precision && point.recall === current.recall
-	)
-	const first = same[0]
-	const last = same.at(-1)
-	return first == null || last == null ? null : { from: first.threshold, to: last.threshold }
+	const isSame = (point: SensitivityPoint | undefined) =>
+		point != null && point.precision === current.precision && point.recall === current.recall
+	let anchor = -1
+	for (const [index, point] of points.entries()) {
+		const best = points[anchor]
+		if (
+			best == null ||
+			Math.abs(point.threshold - threshold) < Math.abs(best.threshold - threshold)
+		) {
+			anchor = index
+		}
+	}
+	if (!isSame(points[anchor])) return null
+	let start = anchor
+	let end = anchor
+	while (isSame(points[start - 1])) start--
+	while (isSame(points[end + 1])) end++
+	const from = points[start]
+	const to = points[end]
+	return from == null || to == null || start === end
+		? null
+		: { from: from.threshold, to: to.threshold }
 }
 
 // ---- Score distribution ----
@@ -137,41 +160,6 @@ export function histogram(pairs: MetricPair[]): HistogramBin[] {
 		else bin.notMatched++
 	}
 	return bins
-}
-
-// ---- Where vendors agree ----
-
-export type OverlapPair = { status: AssessmentStatus; score: number | null; matchedBy: string[] }
-export type OverlapGroup = {
-	key: 'both' | 'firstOnly' | 'secondOnly' | 'neither'
-	total: number
-	// How many of them PairSight judged the same individual.
-	sameIndividual: number
-}
-
-// Judged pairs grouped by which of two vendors matched them, with how often
-// PairSight agrees each group is the same individual.
-export function vendorOverlap(
-	pairs: OverlapPair[],
-	vendors: [string, string],
-	threshold: number
-): OverlapGroup[] {
-	const groups: OverlapGroup[] = [
-		{ key: 'both', total: 0, sameIndividual: 0 },
-		{ key: 'firstOnly', total: 0, sameIndividual: 0 },
-		{ key: 'secondOnly', total: 0, sameIndividual: 0 },
-		{ key: 'neither', total: 0, sameIndividual: 0 }
-	]
-	for (const pair of pairs) {
-		if (pair.status !== 'succeeded' || pair.score == null) continue
-		const first = pair.matchedBy.includes(vendors[0])
-		const second = pair.matchedBy.includes(vendors[1])
-		const group = groups[first && second ? 0 : first ? 1 : second ? 2 : 3]
-		if (group == null) continue
-		group.total++
-		if (pair.score >= threshold) group.sameIndividual++
-	}
-	return groups
 }
 
 // ---- Review workload ----

@@ -2,9 +2,11 @@
 
 import { useEffect } from 'react'
 import { useRouter } from '@/i18n/routing'
+import { ShortcutsDialog } from '../results/shortcuts-dialog'
 
 // J / K for next and previous, Esc back to the results list — skipped while
-// typing in a field so it never steals keystrokes.
+// typing in a field so it never steals keystrokes, and while a dialog is
+// open (Esc closes that first). `?` lists them.
 export function PairKeyboard({
 	previousHref,
 	nextHref,
@@ -25,6 +27,7 @@ export function PairKeyboard({
 			) {
 				return
 			}
+			if (document.querySelector('[role="dialog"]') != null) return
 			if (event.key === 'j' && nextHref != null) router.push(nextHref)
 			else if (event.key === 'k' && previousHref != null) router.push(previousHref)
 			else if (event.key === 'Escape') router.push(backHref)
@@ -32,5 +35,5 @@ export function PairKeyboard({
 		window.addEventListener('keydown', onKey)
 		return () => window.removeEventListener('keydown', onKey)
 	}, [router, previousHref, nextHref, backHref])
-	return null
+	return <ShortcutsDialog set="pair" />
 }

@@ -32,15 +32,15 @@ function StageNode({ state, number }: { state: PipelineStage['state']; number: n
 	}
 	if (state === 'active') {
 		return (
-			<span className={cn(base, 'border-action bg-surface text-accent-ink border-2 font-semibold')}>
+			<span
+				className={cn(base, 'border-action bg-bg text-accent-ink border-[1.5px] font-semibold')}
+			>
 				{number}
 			</span>
 		)
 	}
 	return (
-		<span className={cn(base, 'border-border-input bg-surface text-text-muted border')}>
-			{number}
-		</span>
+		<span className={cn(base, 'border-border-input bg-bg text-text-muted border')}>{number}</span>
 	)
 }
 
@@ -91,7 +91,7 @@ export function Pipeline({ data }: { data: PipelineData }) {
 					</>
 				)
 				const rowClassName = cn(
-					'relative flex items-center gap-2.5 rounded-sm py-1.5 transition-colors duration-150',
+					'relative flex items-center gap-2.5 rounded-md py-2 transition-colors duration-150',
 					isCollapsed ? 'justify-center px-0' : 'px-2',
 					isViewing
 						? 'bg-selected shadow-[inset_2px_0_0_var(--action)]'
@@ -104,7 +104,7 @@ export function Pipeline({ data }: { data: PipelineData }) {
 							<span
 								aria-hidden
 								className={cn(
-									'absolute top-[26px] h-[calc(100%-14px)] w-px',
+									'absolute top-[30px] h-[calc(100%-18px)] w-px',
 									isCollapsed ? 'left-1/2' : 'left-[17.5px]',
 									stage.state === 'done' ? 'bg-text' : 'bg-border'
 								)}

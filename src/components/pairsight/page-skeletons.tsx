@@ -30,7 +30,7 @@ export function RunSkeleton() {
 	return (
 		<Loading>
 			<HeaderSkeleton />
-			<div className="border-border bg-surface max-w-4xl rounded-md border">
+			<div className="border-border bg-surface max-w-4xl rounded-lg border">
 				<div className="flex flex-col gap-2 px-5 pt-5">
 					<Skeleton className="h-5 w-48" />
 					<Skeleton className="h-4 w-72" />

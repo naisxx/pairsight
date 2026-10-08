@@ -1,22 +1,18 @@
 import type { Metadata } from 'next'
-import { JetBrains_Mono, Poppins } from 'next/font/google'
+import { JetBrains_Mono, Space_Grotesk } from 'next/font/google'
 import { NextIntlClientProvider, hasLocale } from 'next-intl'
-import { cookies } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { routing } from '@/i18n/routing'
 import { QueryProvider } from '@/components/query-provider'
 import { ThemeProvider } from '@/components/theme-provider'
 import { AnalyticsProvider } from '@/lib/analytics/analytics-provider'
 import { Toaster } from '@/components/ui/toaster'
-import { parseUiStyle, UI_STYLE_COOKIE } from '@/lib/ui-style'
 import '../globals.css'
 
-// Poppins isn't a variable font, so each weight the type scale uses is loaded
-// explicitly (globals.css, "The type scale").
-const poppins = Poppins({
+// A variable font: every weight the type scale uses (400–700) comes in one file.
+const spaceGrotesk = Space_Grotesk({
 	subsets: ['latin'],
-	weight: ['400', '500', '600'],
-	variable: '--font-poppins',
+	variable: '--font-space-grotesk',
 	display: 'swap'
 })
 const jetbrainsMono = JetBrains_Mono({
@@ -36,20 +32,16 @@ export default async function LocaleLayout({
 	children: React.ReactNode
 	params: Promise<{ locale: string }>
 }) {
-	const [{ locale }, cookieStore] = await Promise.all([params, cookies()])
+	const { locale } = await params
 	if (!hasLocale(routing.locales, locale)) {
 		notFound()
 	}
-	// Classic or Glass (src/lib/ui-style.ts), from the cookie, so the first
-	// paint is already in the chosen style.
-	const uiStyle = parseUiStyle(cookieStore.get(UI_STYLE_COOKIE)?.value)
 
 	return (
 		// next-themes writes the `dark` class on <html> before hydration.
 		<html
 			lang={locale}
-			className={`${poppins.variable} ${jetbrainsMono.variable}`}
-			data-ui={uiStyle}
+			className={`${spaceGrotesk.variable} ${jetbrainsMono.variable}`}
 			suppressHydrationWarning
 		>
 			<body>
@@ -57,8 +49,9 @@ export default async function LocaleLayout({
 				<ThemeProvider>
 					<NextIntlClientProvider>
 						<QueryProvider>{children}</QueryProvider>
+						{/* Inside the messages: its Dismiss and actions are words too. */}
+						<Toaster />
 					</NextIntlClientProvider>
-					<Toaster />
 				</ThemeProvider>
 			</body>
 		</html>

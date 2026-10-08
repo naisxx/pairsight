@@ -1,5 +1,9 @@
 import type { ResultFilters } from '@/server/pairsight/results'
 
+// Opens the Overview's cut-off drawer on arrival (`?cutoff=open`): Detailed
+// analysis links there to try another cut-off (cutoff-bar.tsx).
+export const CUTOFF_OPEN_PARAM = 'cutoff'
+
 // Result filters as URL query params, dropping empty values and page 1.
 export function toQuery(
 	filters: ResultFilters,

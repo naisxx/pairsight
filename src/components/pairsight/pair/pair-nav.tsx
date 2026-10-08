@@ -27,10 +27,11 @@ export function PairNav({
 	isInFiltered: boolean
 }) {
 	const t = useTranslations('Pair')
-	const step = (href: Href | null, label: string, content: React.ReactNode) => (
+	const step = (href: Href | null, label: string, keys: string, content: React.ReactNode) => (
 		<Button asChild variant="secondary" size="sm" aria-label={label}>
 			<Link
 				href={href ?? resultsHref}
+				aria-keyshortcuts={keys}
 				aria-disabled={href == null}
 				className={cn(href == null && 'pointer-events-none opacity-50')}
 			>
@@ -41,7 +42,7 @@ export function PairNav({
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
 			<Button asChild variant="quiet" size="sm" className="-ml-2">
-				<Link href={resultsHref}>
+				<Link href={resultsHref} aria-keyshortcuts="Escape">
 					<ArrowLeftIcon size={15} />
 					{t('back')}
 					<span className="hidden @2xl:inline-flex">
@@ -71,6 +72,7 @@ export function PairNav({
 				{step(
 					previousHref,
 					t('previousShortcut'),
+					'K',
 					<>
 						<ChevronLeftIcon size={14} />
 						<span className="hidden @2xl:inline">{t('previous')}</span>
@@ -82,6 +84,7 @@ export function PairNav({
 				{step(
 					nextHref,
 					t('nextShortcut'),
+					'J',
 					<>
 						<span className="hidden @2xl:inline">{t('next')}</span>
 						<span className="hidden @3xl:inline-flex">

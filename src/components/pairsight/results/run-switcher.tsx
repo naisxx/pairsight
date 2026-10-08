@@ -38,7 +38,7 @@ export function RunSwitcher({ runId, runs }: { runId: string; runs: RunOption[] 
 				<button
 					type="button"
 					aria-label={t('runSwitcher')}
-					className="border-border-input bg-surface text-text type-ui flex h-8 w-[250px] max-w-full items-center justify-between gap-2 rounded-sm border pr-2.5 pl-3 text-left"
+					className="border-border-input bg-surface text-text type-ui flex h-8 max-w-full min-w-0 flex-1 items-center justify-between gap-2 rounded-sm border pr-2.5 pl-3 text-left sm:w-[250px] sm:flex-none pointer-coarse:h-11"
 				>
 					<span className="truncate">{current != null ? label(current) : t('runSwitcher')}</span>
 					<ChevronDownIcon size={14} className="text-text-muted shrink-0" />

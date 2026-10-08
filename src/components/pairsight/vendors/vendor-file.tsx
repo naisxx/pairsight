@@ -1,5 +1,7 @@
 'use client'
 
+import { LIMITS } from '@/server/pairsight/limits'
+import { BYTES_PER_MB } from '@/lib/pairsight/tabular-formats'
 import { useState, useTransition } from 'react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
@@ -183,7 +185,7 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 	return (
 		<section
 			aria-labelledby={`file-${vendor.id}`}
-			className="border-border bg-surface rounded-md border p-4"
+			className="border-border bg-surface rounded-lg border p-4"
 		>
 			<h2 id={`file-${vendor.id}`} className="text-sm font-semibold">
 				{t('resultsTitle')}
@@ -193,7 +195,10 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 				<div className="mt-3 space-y-3">
 					<FileDrop
 						label={t('dropTitle', { name: vendor.name })}
-						hint={t('dropHint')}
+						hint={t('dropHint', {
+							records: LIMITS.maxSourceRecords,
+							megabytes: LIMITS.maxFileBytes / BYTES_PER_MB
+						})}
 						busyLabel={
 							uploadPercent == null ? t('checking') : t('uploading', { percent: uploadPercent })
 						}

@@ -1,5 +1,6 @@
 'use client'
 
+import { BYTES_PER_MB } from '@/lib/pairsight/tabular-formats'
 import { useTranslations } from 'next-intl'
 import { AlertIcon } from '@/components/ui/icons'
 import { MAX_FILE_BYTES, tabularFormatOf } from '@/lib/pairsight/tabular-formats'
@@ -40,6 +41,8 @@ export function useFileErrorMessage() {
 				return t('duplicate_header', { headers: error.headers.join(', ') })
 			case 'ragged_rows':
 				return t('ragged_rows', { rows: list(error.rows) })
+			case 'too_large':
+				return t('too_large', { megabytes: MAX_FILE_BYTES / BYTES_PER_MB })
 			default:
 				return t(error.code)
 		}

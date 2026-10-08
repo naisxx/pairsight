@@ -107,7 +107,11 @@ test.describe('Sandbox', () => {
 			.first()
 			.click()
 		await page.waitForURL(RESULTS)
-		await expect(page.getByRole('radio', { name: 'Meridian Match' })).toBeVisible()
+		await expect(
+			page
+				.getByRole('region', { name: 'How do the vendors compare?' })
+				.getByRole('link', { name: 'Meridian Match' })
+		).toBeVisible()
 		await step(page, 'What Jev checks').click()
 		await page.waitForURL(`**/sandbox/${SANDBOX.company}/rules`)
 		await expect(page.getByLabel('When are two records the same?', { exact: true })).toHaveValue(
@@ -134,7 +138,7 @@ test.describe('Sandbox', () => {
 		await page.waitForURL(RESULTS)
 		const tile = (name: string) =>
 			page
-				.getByRole('region', { name: 'Pairs by who says what' })
+				.getByRole('region', { name: 'Pairs by who says what', exact: true })
 				.getByRole('link', { name: new RegExp(`^${name}: `) })
 		for (const name of [
 			'Both say same',
@@ -157,22 +161,40 @@ test.describe('Sandbox', () => {
 		expect(report).toContain('PairSight demo · sample data')
 		expect(report).toMatch(/1 Clearline Resolve .* 2 Northwind Match/)
 		expect(report).toContain('Jev sided with Northwind Match in 61 of 116')
+		// The page names the same leader as the report, ranked the same way, and
+		// both say a 1.2-point lead is too close to call a win.
+		expect(report).toContain('but only just')
+		const verdict = page.getByRole('heading', {
+			name: /^Clearline Resolve and Northwind Match are close overall/
+		})
+		await expect(verdict).toContainText('81.2% vs 80.0%')
+		await expect(page.getByText('Best overall', { exact: true })).toHaveCount(1)
+		// The leader's card comes first, as the headline ranks them.
+		await expect(page.getByRole('article').first()).toContainText('Clearline Resolve')
 
-		// The threshold previews live; a run keeps its own, so there's no Apply.
-		await page.getByRole('button', { name: /^Match cut-off/ }).click()
-		const value = page.getByLabel('Cut-off', { exact: true })
-		await value.fill('0.90')
-		await value.press('Enter')
-		await expect(page.getByRole('dialog')).toContainText('becomes')
-		await expect(page.getByRole('dialog').getByRole('button', { name: 'Apply' })).toHaveCount(0)
-		await page.keyboard.press('Escape')
+		// Another cut-off previews live on the cards; the run keeps its own, so
+		// there's no Apply, and nothing's saved.
+		await page.getByRole('button', { name: /^Match cut-off 0\.50/ }).click()
+		const slider = page.getByRole('slider', { name: 'Match cut-off' })
+		await slider.focus()
+		for (let step = 0; step < 4; step++) await page.keyboard.press('PageUp')
+		await expect(slider).toHaveAttribute('aria-valuetext', '0.90')
+		await expect(page.getByText('Preview only · this run used 0.50')).toBeVisible()
+		// The counts move; the lists they open stay at the run's cut-off, and say so.
+		await expect(
+			page.getByText('Preview counts. The pairs these open are at the run’s cut-off, 0.50.').first()
+		).toBeVisible()
+		await expect(page.getByRole('button', { name: 'Apply' })).toHaveCount(0)
 		await page.reload()
 		await expect(page.getByRole('button', { name: /^Match cut-off 0\.50/ })).toBeVisible()
 
 		// Filters are just the URL, so they work; a pair opens, and J moves on.
 		await tile('Only Jev says same').click()
 		await page.waitForURL(/category=pairsight_only/)
-		await page.locator('[data-pairs-table] a[href*="/pairs/"]').first().click()
+		// The first pair shows beside the list; it opens on its own page too.
+		const panel = page.getByRole('complementary', { name: 'The selected pair' })
+		await expect(panel.getByRole('region', { name: 'Who says what' })).toContainText('JevSame')
+		await panel.getByRole('link', { name: /^See all \d+ fields on its own page/ }).click()
 		await page.waitForURL(/\/sandbox\/[0-9a-f-]+\/runs\/[0-9a-f-]+\/pairs\//)
 		await expect(page.getByRole('region', { name: 'Who says what', exact: true })).toContainText(
 			'JevSame'
@@ -180,6 +202,99 @@ test.describe('Sandbox', () => {
 		const first = page.url()
 		await page.keyboard.press('j')
 		await expect(page).not.toHaveURL(first)
+	})
+
+	test('detailed analysis: filters show as chips, ? lists the shortcuts, the full comparison is a link away', async ({
+		page
+	}) => {
+		await page.goto(`/sandbox/${SANDBOX.person}/results`)
+		await page.waitForURL(RESULTS)
+		await page.goto(`${page.url().split('?')[0]}?tab=detailed&status=evaluated`)
+
+		// A filter in force is on screen, and its chip takes it off.
+		const chip = page.getByRole('button', { name: 'Remove Checked?: Checked' })
+		await expect(chip).toBeVisible()
+		await expect(page.getByRole('button', { name: /^Filters/ })).toContainText('1')
+		await chip.click()
+		await expect(page).not.toHaveURL(/status=/)
+		await expect(page.getByRole('button', { name: /^Remove / })).toHaveCount(0)
+
+		// ? lists every shortcut, and so does the hint under the list.
+		await page.keyboard.press('?')
+		const shortcuts = page.getByRole('dialog', { name: 'Keyboard shortcuts' })
+		await expect(shortcuts).toContainText('Move between pairs')
+		await page.keyboard.press('Escape')
+		await expect(shortcuts).toHaveCount(0)
+		await page.getByRole('button', { name: 'Press ? for keyboard shortcuts' }).click()
+		await expect(shortcuts).toContainText('Open the selected pair on its own page')
+		await page.keyboard.press('Escape')
+
+		// Another cut-off is one link away: the Overview, with the drawer open.
+		await expect(page.getByText('This list uses the run’s match cut-off, 0.50.')).toBeVisible()
+		await page.getByRole('link', { name: 'Preview another on the Overview' }).click()
+		await expect(page.getByRole('slider', { name: 'Match cut-off' })).toBeFocused()
+		await expect(page).not.toHaveURL(/cutoff=/)
+		await page.goBack()
+		await expect(page).toHaveURL(/tab=detailed/)
+
+		// The pair's full comparison, from the panel's header.
+		await page
+			.getByRole('complementary', { name: 'The selected pair' })
+			.getByRole('link', { name: 'Full comparison' })
+			.click()
+		await page.waitForURL(/\/pairs\//)
+		// Its own page answers to ? too, and Esc closes the list before leaving.
+		await expect(page.getByRole('region', { name: 'Who says what', exact: true })).toBeVisible()
+		await page.keyboard.press('?')
+		await expect(shortcuts).toContainText('Back to the results')
+		await page.keyboard.press('Escape')
+		await expect(shortcuts).toHaveCount(0)
+		await expect(page).toHaveURL(/\/pairs\//)
+	})
+
+	test('on a phone, a pair opens in a sheet over the list, and steps on from there', async ({
+		browser
+	}) => {
+		const context = await browser.newContext({
+			viewport: { width: 390, height: 844 },
+			hasTouch: true,
+			isMobile: true,
+			// Axe reads the page settled, not mid-animation (as the checks below do).
+			reducedMotion: 'reduce'
+		})
+		const page = await context.newPage()
+		await page.goto(`/sandbox/${SANDBOX.person}/results`)
+		await page.waitForURL(RESULTS)
+		await page.goto(`${page.url().split('?')[0]}?tab=detailed`)
+
+		const selected = page.locator('[data-pairs-table] a[aria-current="true"]')
+		await page.locator('[data-pairs-table] tbody a[href]').nth(1).tap()
+		const sheet = page.getByRole('dialog', { name: 'The selected pair' })
+		await expect(sheet.getByRole('complementary', { name: 'The selected pair' })).toBeVisible()
+		const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+		expect(
+			violations.map(({ id, nodes }) => `${id}: ${nodes.map((n) => n.target).join(' | ')}`)
+		).toEqual([])
+		const first = await selected.getAttribute('aria-label')
+		await sheet.getByRole('button', { name: 'Next pair' }).tap()
+		await expect(selected).not.toHaveAttribute('aria-label', first ?? '')
+		await expect(page).toHaveURL(/sel=/)
+		await sheet.getByRole('button', { name: 'Close the pair' }).tap()
+		await expect(sheet).toHaveCount(0)
+		await context.close()
+	})
+
+	test('the demo dashboard ranks vendors the way Results does, and an old demo link leads back', async ({
+		page
+	}) => {
+		await page.goto('/sandbox')
+		const latest = page.getByRole('region', { name: /vendor check$/ }).first()
+		await expect(latest.getByRole('rowheader').first()).toHaveText('Atlas Resolve')
+		await expect(latest).toContainText(/Atlas Resolve: \d+ disagreements to look at/)
+
+		await page.goto('/sandbox/does-not-exist')
+		await page.getByRole('link', { name: 'Back to the demo' }).click()
+		await page.waitForURL((url) => url.pathname === '/sandbox')
 	})
 
 	test('signed in, the sandbox shows your account but none of your evaluations', async ({
@@ -233,7 +348,10 @@ test.describe('Sandbox', () => {
 			await check('results overview')
 			await page.goto(`${page.url().split('?')[0]}?tab=detailed`)
 			await check('results detailed')
-			await page.locator('[data-pairs-table] a[href*="/pairs/"]').first().click()
+			await page
+				.getByRole('complementary', { name: 'The selected pair' })
+				.getByRole('link', { name: /^See all \d+ fields on its own page/ })
+				.click()
 			await page.waitForURL(/\/pairs\//)
 			await check('pair')
 			await context.close()

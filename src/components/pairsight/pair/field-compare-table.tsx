@@ -49,7 +49,7 @@ function BreakableText({ value }: { value: string }) {
 	))
 }
 
-function DiffText({ value, other }: { value: string; other: string }) {
+export function DiffText({ value, other }: { value: string; other: string }) {
 	const otherWords = new Set(
 		other
 			.toLowerCase()
@@ -168,7 +168,7 @@ export function FieldCompareTable({
 	return (
 		<section
 			aria-labelledby="fields-title"
-			className="border-border bg-surface overflow-hidden rounded-md border"
+			className="border-border bg-surface overflow-hidden rounded-lg border"
 		>
 			<header className="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
 				<h2 id="fields-title" className="type-subheading">

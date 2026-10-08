@@ -2,7 +2,6 @@ import { isLowConfidence, type AssessmentStatus } from './decisions'
 import {
 	emptyCounts,
 	type HistogramBin,
-	type OverlapGroup,
 	type SensitivityPoint,
 	type VendorMetrics,
 	type Workload
@@ -156,27 +155,6 @@ export function statsHistogram(rows: StatsRow[], vendorIndex: number): Histogram
 		else bar.notMatched += row.count
 	}
 	return bars
-}
-
-// Judged pairs by which of two vendors matched them (metrics.ts
-// `vendorOverlap`).
-export function statsOverlap(rows: StatsRow[], first: number, second: number): OverlapGroup[] {
-	const groups: OverlapGroup[] = [
-		{ key: 'both', total: 0, sameIndividual: 0 },
-		{ key: 'firstOnly', total: 0, sameIndividual: 0 },
-		{ key: 'secondOnly', total: 0, sameIndividual: 0 },
-		{ key: 'neither', total: 0, sameIndividual: 0 }
-	]
-	for (const row of rows) {
-		if (!isJudged(row)) continue
-		const a = matchedBy(row, first)
-		const b = matchedBy(row, second)
-		const group = groups[a && b ? 0 : a ? 1 : b ? 2 : 3]
-		if (group == null) continue
-		group.total += row.count
-		if (row.match) group.sameIndividual += row.count
-	}
-	return groups
 }
 
 export function statsWorkload(rows: StatsRow[], vendorIndex: number): Workload {

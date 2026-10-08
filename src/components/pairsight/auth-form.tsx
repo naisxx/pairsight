@@ -45,7 +45,7 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 	return (
 		<form
 			noValidate
-			className="border-border bg-surface mt-7 rounded-md border p-5"
+			className="border-border bg-surface mt-7 rounded-lg border p-5"
 			onSubmit={(event) => {
 				event.preventDefault()
 				setIsSubmitted(true)
@@ -151,7 +151,7 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 						pathname: isSignIn ? '/sign-up' : '/sign-in',
 						query: next != null ? { next } : {}
 					}}
-					className="text-accent-ink font-medium hover:underline"
+					className="text-accent-ink hit-area font-medium hover:underline"
 				>
 					{t(isSignIn ? 'toSignUp' : 'toSignIn')}
 				</Link>
@@ -159,7 +159,7 @@ export function AuthForm({ mode, next }: { mode: 'sign-in' | 'sign-up'; next?: s
 			<p className="type-ui text-text-muted mt-2 text-center">
 				{t.rich('orSandbox', {
 					link: (chunks) => (
-						<Link href="/sandbox" className="text-accent-ink font-medium hover:underline">
+						<Link href="/sandbox" className="text-accent-ink hit-area font-medium hover:underline">
 							{chunks}
 						</Link>
 					)

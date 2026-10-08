@@ -27,7 +27,7 @@ export function RecordsPreview({
 	return (
 		<section
 			aria-labelledby="preview-title"
-			className={cn(!bare && 'border-border bg-surface rounded-md border')}
+			className={cn(!bare && 'border-border bg-surface rounded-lg border')}
 		>
 			<header className="flex items-center justify-between px-4 py-3">
 				<h2 id="preview-title" className="text-sm font-semibold">

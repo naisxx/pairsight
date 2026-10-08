@@ -92,7 +92,7 @@ export async function PairScreen({
 				<p className="text-text-muted font-mono text-xs">
 					{recordA.reference} · {recordB.reference}
 				</p>
-				<h1 className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xl font-semibold tracking-[-0.01em]">
+				<h1 className="type-title mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 md:text-[1.75rem]">
 					<span>{row.recordA.label}</span>
 					<SwapIcon size={18} className="text-text-muted" />
 					<span className="sr-only">{t('comparedWith')}</span>
@@ -102,7 +102,7 @@ export async function PairScreen({
 
 			<section
 				aria-label={t('decisions')}
-				className="border-border bg-surface type-ui mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-md border px-4 py-3"
+				className="border-border bg-surface type-ui mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border px-4 py-3"
 			>
 				<span className="flex items-center gap-2">
 					<span className="text-text-muted">{vendorName}</span>

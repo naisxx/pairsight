@@ -7,7 +7,7 @@ import { mappedIdentityRoles } from '@/server/pairsight/fields'
 import { parseColumnRoles } from '@/server/pairsight/json'
 import { computePlan } from '@/server/pairsight/plan'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
-import { entityTypeOf } from '@/lib/pairsight/entity-types'
+import { ENTITY_CONFIG, entityTypeOf } from '@/lib/pairsight/entity-types'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 import { RefreshWhile } from '@/components/pairsight/refresh-while'
 
@@ -34,6 +34,7 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					jevFields: parseIdentityRoles(evaluation.jevFields),
 					threshold: evaluation.threshold
 				}}
+				suggested={ENTITY_CONFIG[entityTypeOf(evaluation.entityType)].identity}
 				mappedRoles={[...mappedIdentityRoles(parseColumnRoles(workspace.dataset.columnRoles))]}
 				suggestions={{
 					state: splink?.state ?? 'waiting',

@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import type { AssessmentStatus } from './decisions'
-import { histogram, sensitivity, vendorMetrics, vendorOverlap, workload } from './metrics'
+import { histogram, sensitivity, vendorMetrics, workload } from './metrics'
 import {
 	binPairs,
 	scoreBin,
@@ -10,7 +10,6 @@ import {
 	statsHistogram,
 	statsMetrics,
 	statsMetricsAt,
-	statsOverlap,
 	statsSensitivity,
 	statsWorkload
 } from './stats'
@@ -73,12 +72,6 @@ for (const threshold of [0.5, 0.35, 0.62, 0.625]) {
 				)
 			}
 		})
-		const overlapPairs = pairs.map((pair) => ({
-			status: pair.status,
-			score: pair.score,
-			matchedBy: pair.matchedByExportIds
-		}))
-		assert.deepEqual(statsOverlap(rows, 0, 1), vendorOverlap(overlapPairs, ['v1', 'v2'], threshold))
 	})
 }
 

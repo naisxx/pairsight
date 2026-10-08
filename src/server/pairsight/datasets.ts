@@ -57,15 +57,22 @@ export async function saveSourceDataset({
 	const evaluation = await getOwnedEvaluation({ ownerId, id: evaluationId })
 	const jevFields = [...new Set(Object.values(columnRoles).filter(isIdentityRole))]
 	// A replacement of another kind starts from the new type's identity
-	// definition; the same type keeps what the user set.
-	const isSameType = entityTypeOf(evaluation.entityType) === entityType
-	const typeDefaults = isSameType
-		? { entityType }
-		: {
-				entityType,
-				identitySame: defaultIdentity(entityType).same,
-				identityDifferent: defaultIdentity(entityType).different
-			}
+	// definition, unless the wording is the user's own: that's never thrown
+	// away unasked (Rules offers the new type's wording beside it). The same
+	// type keeps what the user set.
+	const previousType = entityTypeOf(evaluation.entityType)
+	const previous = defaultIdentity(previousType)
+	const isUntouched =
+		evaluation.identitySame.trim() === previous.same.trim() &&
+		evaluation.identityDifferent.trim() === previous.different.trim()
+	const typeDefaults =
+		previousType === entityType || !isUntouched
+			? { entityType }
+			: {
+					entityType,
+					identitySame: defaultIdentity(entityType).same,
+					identityDifferent: defaultIdentity(entityType).different
+				}
 	const dataset = await db.sourceDataset.create({
 		data: { evaluationId, fileName, rowCount, referenceColumn, columnRoles, savedAt: null },
 		select: { id: true }

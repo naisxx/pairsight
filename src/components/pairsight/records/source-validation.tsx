@@ -53,7 +53,7 @@ export function SourceValidation({
 	return (
 		<section
 			aria-labelledby="validation-title"
-			className={cn(bare ? 'border-border border-t' : 'border-border bg-surface rounded-md border')}
+			className={cn(bare ? 'border-border border-t' : 'border-border bg-surface rounded-lg border')}
 		>
 			<header className={cn('px-4 py-3', bare && isClear && 'sr-only')}>
 				<h2 id="validation-title" className="text-sm font-semibold">

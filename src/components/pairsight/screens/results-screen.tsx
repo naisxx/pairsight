@@ -2,22 +2,30 @@ import { getFormatter, getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Chip } from '@/components/ui/chip'
-import { CloseIcon, FilterIcon } from '@/components/ui/icons'
-import { Kbd } from '@/components/ui/kbd'
+import { ArrowRightIcon, CloseIcon } from '@/components/ui/icons'
+import { EmptyState } from '@/components/pairsight/empty-state'
+import { NoMatchesScene } from '@/components/pairsight/empty/scenes'
+import type { Category } from '@/lib/pairsight/decisions'
+import { ShortcutsDialog } from '@/components/pairsight/results/shortcuts-dialog'
 import { ResultsOverview } from '@/components/pairsight/results/overview/results-overview'
 import { Pagination } from '@/components/pairsight/results/pagination'
 import { PairFilters } from '@/components/pairsight/results/pair-filters'
 import { PairsTable } from '@/components/pairsight/results/pairs-table'
-import { hasActiveFilters, toQuery } from '@/components/pairsight/results/query'
+import { CUTOFF_OPEN_PARAM, hasActiveFilters, toQuery } from '@/components/pairsight/results/query'
 import { ResultsKeyboard } from '@/components/pairsight/results/results-keyboard'
 import { ResultsTabs } from '@/components/pairsight/results/results-tabs'
 import { RunStatusChip } from '@/components/pairsight/results/run-status-chip'
 import { ExportMenu } from '@/components/pairsight/results/export-menu'
 import { RunSwitcher } from '@/components/pairsight/results/run-switcher'
-import { VendorSegmented } from '@/components/pairsight/results/vendor-segmented'
-import { ThresholdControl } from '@/components/pairsight/threshold-control'
+import { CutoffBar } from '@/components/pairsight/results/cutoff-bar'
+import { CutoffPreviewProvider } from '@/components/pairsight/results/cutoff-preview'
+import { Verdict } from '@/components/pairsight/results/verdict'
 import { RunNotFinished } from '@/components/pairsight/results/run-not-finished'
-import { getRunResults, parseResultFilters } from '@/server/pairsight/results'
+import { getPairPanel, getRunResults, parseResultFilters } from '@/server/pairsight/results'
+import { isUuid } from '@/server/pairsight/schemas'
+import type { EvaluationScope } from '@/server/pairsight/scope'
+import { PairPanel } from '@/components/pairsight/results/pair-panel'
+import { PairSelection } from '@/components/pairsight/results/pair-selection'
 import { getRunProgress } from '@/server/pairsight/runs'
 import { runBase } from '@/lib/pairsight/evaluation-view'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
@@ -66,7 +74,29 @@ export async function ResultsScreen({
 	}
 
 	const parsed = parseResultFilters(rawFilters)
-	const results = await getRunResults({ scope, runId, filters: parsed })
+	const isDetailedTab = parsed.tab === 'detailed'
+	// Detailed analysis: the pair shown beside the list, the chosen one (read
+	// alongside the list, not after it) or else the first on this page.
+	const [results, chosen] = await Promise.all([
+		getRunResults({ scope, runId, filters: parsed }),
+		selectedPair({ scope, runId, vendor: parsed.vendor, pairId: isDetailedTab ? parsed.sel : null })
+	])
+	const selected =
+		chosen ??
+		(isDetailedTab && parsed.sel == null
+			? await selectedPair({ scope, runId, vendor: parsed.vendor, pairId: results.rows[0]?.id })
+			: null)
+	// The pairs either side of it on this page, rendered too, so stepping to
+	// one is instant (pair-selection.tsx).
+	const selectedIndex = results.rows.findIndex((row) => row.id === selected?.detail.row.id)
+	const neighbours =
+		selectedIndex === -1
+			? []
+			: await Promise.all(
+					[results.rows[selectedIndex - 1], results.rows[selectedIndex + 1]].map((row) =>
+						selectedPair({ scope, runId, vendor: parsed.vendor, pairId: row?.id })
+					)
+				)
 	const { run, vendorId } = results
 	const filters = { ...parsed, vendor: vendorId }
 	const tab = filters.tab === 'detailed' ? 'detailed' : 'overview'
@@ -83,6 +113,28 @@ export async function ResultsScreen({
 		pathname: `${base}/pairs/${pairId}`,
 		query: toQuery({ vendor: vendorId, tab: 'detailed' })
 	})
+	// Each vendor's pairs in each group, in the detailed view.
+	const categoryHrefs = Object.fromEntries(
+		results.vendors.map((vendor) => [
+			vendor.id,
+			Object.fromEntries(
+				(
+					[
+						'both_matched',
+						'pairsight_only',
+						'vendor_only',
+						'neither_matched',
+						'incomplete'
+					] satisfies Array<Category | 'incomplete'>
+				).map((category) => [
+					category,
+					`${resultsPath}?${new URLSearchParams(
+						toQuery({ vendor: vendor.id, tab: 'detailed', category })
+					)}`
+				])
+			)
+		])
+	)
 	const vendorHrefs = Object.fromEntries(
 		results.vendors.map((vendor) => [
 			vendor.id,
@@ -93,23 +145,20 @@ export async function ResultsScreen({
 	)
 
 	return (
-		<>
+		<CutoffPreviewProvider runThreshold={run.threshold}>
 			{/* Widens the page column (globals.css, .page-frame). */}
 			<span data-wide-page hidden />
 			<ResultsKeyboard />
 			<header>
-				<div className="flex flex-wrap items-start justify-between gap-4">
-					<div className="min-w-0">
-						<div className="flex flex-wrap items-center gap-2">
-							<h1 className="text-text type-title">{run.evaluation.name}</h1>
-							<RunStatusChip status={run.status} />
-							{incomplete > 0 && (
-								<Chip tone="outline" className="border-border-input border-dashed">
-									{t('incompleteCount', { count: incomplete })}
-								</Chip>
-							)}
-						</div>
-						<p className="text-text-muted type-ui mt-1">
+				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+					<div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+						<RunStatusChip status={run.status} />
+						{incomplete > 0 && (
+							<Chip tone="outline" className="border-border-input border-dashed">
+								{t('incompleteCount', { count: incomplete })}
+							</Chip>
+						)}
+						<p className="text-text-muted type-ui">
 							{t.rich('runMeta', {
 								model: results.models.join(', ') || run.jevModel,
 								date: format.dateTime(run.completedAt ?? run.createdAt, {
@@ -124,24 +173,13 @@ export async function ResultsScreen({
 							)}
 						</p>
 					</div>
-					<div className="flex flex-wrap items-center gap-2">
+					<div className="flex w-full items-center gap-2 sm:w-auto">
 						<ExportMenu runId={run.id} runNumber={run.number} pairCount={run.pairCount} />
 						<RunSwitcher runId={run.id} runs={workspace.runs} />
 					</div>
 				</div>
 
-				<div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-2">
-					{results.vendors.length > 1 && vendorId != null && (
-						<VendorSegmented vendors={results.vendors} vendorId={vendorId} hrefs={vendorHrefs} />
-					)}
-					<ThresholdControl
-						threshold={run.threshold}
-						rulesHref={`${view.base}/rules`}
-						vendorName={vendorName}
-						stats={results.stats}
-					/>
-				</div>
-
+				{/* The tabs come first: the verdict below belongs to the Overview. */}
 				<ResultsTabs
 					tab={tab}
 					overviewHref={{ pathname: resultsPath, query: toQuery({ vendor: vendorId }) }}
@@ -151,7 +189,52 @@ export async function ResultsScreen({
 					}}
 					detailedCount={results.matching}
 				/>
+
+				{/* The verdict leads the Overview; Detailed analysis starts at its list,
+				    so its heading is for screen readers only. */}
+				{tab === 'detailed' && (
+					<h1 className="sr-only">{t('detailedHeading', { name: run.evaluation.name })}</h1>
+				)}
 			</header>
+
+			{/* On the Overview, the cut-off drawer: its tab hangs under the tabs here
+			    and sticks under the top bar as the page scrolls. Detailed analysis's
+			    list uses the run's own cut-off: one line says so, and links to the
+			    Overview with the drawer open to try another. */}
+			{tab === 'overview' ? (
+				<CutoffBar rulesHref={`${view.base}/rules`} />
+			) : (
+				<p className="text-text-muted type-ui mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
+					<span>
+						{t.rich('cutoffDetailedHint', {
+							value: run.threshold.toFixed(2),
+							n: (chunks) => <span className="text-text font-mono font-medium">{chunks}</span>
+						})}
+					</span>
+					<Link
+						href={{
+							pathname: resultsPath,
+							query: { ...toQuery({ vendor: vendorId }), [CUTOFF_OPEN_PARAM]: 'open' }
+						}}
+						className="text-accent-ink hit-area inline-flex items-center gap-1 font-medium hover:underline"
+					>
+						{t('cutoffDetailedLink')}
+						<ArrowRightIcon size={13} />
+					</Link>
+				</p>
+			)}
+			{tab === 'overview' && (
+				<Verdict
+					statsByVendor={results.statsByVendor}
+					runThreshold={run.threshold}
+					vendors={results.overview.byVendor}
+					disagreementsHref={
+						results.overview.workload.disagreements > 0
+							? detailed({ category: 'disagreements' })
+							: null
+					}
+				/>
+			)}
 
 			{tab === 'overview' ? (
 				vendorId == null ? null : (
@@ -162,12 +245,16 @@ export async function ResultsScreen({
 						entityType={entityTypeOf(run.entityType)}
 						threshold={run.threshold}
 						detailed={detailed}
+						categoryHrefs={categoryHrefs}
+						statsByVendor={results.statsByVendor}
 						pairHref={pairHref}
 						vendorHrefs={vendorHrefs}
 					/>
 				)
 			) : (
 				<div className="mt-5 flex flex-col gap-3">
+					{/* Headings to jump between with a screen reader: the list, then the pair. */}
+					<h2 className="sr-only">{t('pairsHeading')}</h2>
 					<PairFilters
 						vendors={results.vendors}
 						vendorId={vendorId}
@@ -175,48 +262,92 @@ export async function ResultsScreen({
 						isFiltered={isFiltered}
 					/>
 					{results.rows.length === 0 ? (
-						<div className="border-border bg-surface flex flex-col items-center justify-center rounded-md border px-6 py-16 text-center">
-							<span className="bg-surface-muted text-text-muted flex size-10 items-center justify-center rounded-md">
-								<FilterIcon size={20} />
-							</span>
-							<h2 className="type-subheading mt-3">{isFiltered ? t('noResults') : t('noPairs')}</h2>
-							<p className="text-text-muted type-ui mt-1 max-w-sm">
-								{isFiltered ? t('noResultsHint') : t('noPairsHint')}
-							</p>
-							{isFiltered && (
-								<Button asChild variant="secondary" size="sm" className="mt-4">
-									<Link href={detailed({})}>
-										<CloseIcon size={13} />
-										{t('clear')}
-									</Link>
-								</Button>
-							)}
-						</div>
+						<EmptyState
+							framed
+							scene={<NoMatchesScene />}
+							title={isFiltered ? t('noResults') : t('noPairs')}
+							description={isFiltered ? t('noResultsHint') : t('noPairsHint')}
+							className="py-14"
+							actions={
+								isFiltered && (
+									<Button asChild variant="secondary" size="sm">
+										<Link href={detailed({})}>
+											<CloseIcon size={13} />
+											{t('clear')}
+										</Link>
+									</Button>
+								)
+							}
+						/>
 					) : (
-						<div>
-							<PairsTable
-								runId={run.id}
-								base={base}
-								filters={filters}
-								rows={results.rows}
-								threshold={run.threshold}
-								vendorName={vendorName}
-							/>
-							<Pagination
-								base={base}
-								filters={filters}
-								page={results.page}
-								pageCount={results.pageCount}
-								pageSize={results.pageSize}
-								total={results.matching}
-							/>
-							<p className="text-text-muted mt-3 flex flex-wrap items-center gap-1 text-xs [@media(pointer:coarse)]:hidden">
-								{t.rich('keyboardHint', { key: (chunks) => <Kbd>{chunks}</Kbd> })}
-							</p>
+						<div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 @5xl:grid-cols-12">
+							<PairSelection
+								selectedId={selected?.detail.row.id ?? null}
+								rows={results.rows.map((row) => ({
+									id: row.id,
+									href: `${resultsPath}?${new URLSearchParams(
+										toQuery({ ...filters, tab: 'detailed', sel: row.id })
+									)}`
+								}))}
+								panels={[selected, ...neighbours].flatMap((pair) =>
+									pair == null
+										? []
+										: [
+												{
+													id: pair.detail.row.id,
+													node: (
+														<PairPanel
+															detail={pair.detail}
+															fullHref={{
+																pathname: `${base}/pairs/${pair.detail.row.id}`,
+																query: toQuery({ ...filters, tab: 'detailed', sel: undefined })
+															}}
+														/>
+													)
+												}
+											]
+								)}
+							>
+								<div className="@5xl:col-span-7">
+									<PairsTable
+										base={base}
+										filters={filters}
+										rows={results.rows}
+										threshold={run.threshold}
+									/>
+									<Pagination
+										base={base}
+										filters={filters}
+										page={results.page}
+										pageCount={results.pageCount}
+										pageSize={results.pageSize}
+										total={results.matching}
+									/>
+									<ShortcutsDialog set="results" showHint />
+								</div>
+							</PairSelection>
 						</div>
 					)}
 				</div>
 			)}
-		</>
+		</CutoffPreviewProvider>
 	)
+}
+
+// The pair Detailed analysis shows beside its list. Null when there's none
+// to show (or the id isn't one).
+async function selectedPair({
+	scope,
+	runId,
+	vendor,
+	pairId
+}: {
+	scope: EvaluationScope
+	runId: string
+	vendor: string | undefined
+	pairId: string | null | undefined
+}) {
+	if (pairId == null || !isUuid(pairId)) return null
+	const detail = await getPairPanel({ scope, runId, pairId, vendorFilter: vendor })
+	return detail == null ? null : { detail }
 }

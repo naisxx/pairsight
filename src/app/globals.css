@@ -1,26 +1,30 @@
 @import 'tailwindcss';
 @import 'tw-animate-css';
 @import './motion.css';
-@import './glass.css';
 
 /* Dark mode is class-based (next-themes sets `.dark` on <html>) so the
    Light / Dark / System menu can override the OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Touch screens: controls grow to a 44px target (pointer-coarse:min-h-11). */
+@custom-variant pointer-coarse (@media (pointer: coarse));
+
 /* Tailwind v4 is CSS-first — no tailwind.config.js. Static tokens (nothing
    that needs to change with color scheme) live directly in @theme. The font
    variables are set by next/font in src/app/[locale]/layout.tsx. */
 @theme {
-	--font-sans: var(--font-poppins), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-sans:
+		var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 	--font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
 	/* The logo's coral. Fixed in both themes (it's the mark, not an action
 	   colour), so it lives here rather than in :root/.dark. */
 	--color-brand: #e45742;
 	--radius-sm: 6px;
-	--radius: 10px;
-	/* The same 10px under the name the design's panels, menus and popovers use. */
-	--radius-md: 10px;
-	--radius-lg: 16px;
+	/* Buttons and inputs. */
+	--radius: 8px;
+	--radius-md: 8px;
+	/* Cards, panels and dialogs. */
+	--radius-lg: 12px;
 
 	/* One easing for everything that moves: fast out, gentle settle. Dialogs
 	   ease in and fade back out (a touch quicker, so closing never lags);
@@ -31,6 +35,9 @@
 	--animate-fade-out: fade-out 150ms ease-in;
 	--animate-pop-out: pop-out 160ms ease-in;
 	--animate-float-in: float-in 160ms var(--ease-out-soft);
+	/* The phone's bottom sheet (ui/sheet.tsx): up from the edge, and back. */
+	--animate-sheet-in: sheet-in 280ms var(--ease-out-soft);
+	--animate-sheet-out: sheet-out 200ms ease-in;
 
 	@keyframes fade-in {
 		from {
@@ -60,6 +67,16 @@
 			scale: 0.96;
 		}
 	}
+	@keyframes sheet-in {
+		from {
+			transform: translateY(100%);
+		}
+	}
+	@keyframes sheet-out {
+		to {
+			transform: translateY(100%);
+		}
+	}
 	@keyframes float-in {
 		from {
 			opacity: 0;
@@ -68,29 +85,37 @@
 	}
 }
 
-/* The PairSight palette, "Coral × Slate" (docs/PairSight-UX-Plan.md §6):
-   brand coral on cool slate neutrals. Every text/background and control-edge
-   pair is contrast-checked in both themes by scripts/check-contrast.test.mjs —
-   change a value here and that test tells you whether it still passes.
-   Large areas are never tinted with the brand (coral over dark slate turns
-   maroon): selection uses --selected plus a coral edge, changed values use
-   --diff, and --accent is for small chips only. */
+/* The PairSight palette (DESIGN.md, docs/PairSight-UX-Plan.md §6): brand
+   coral on pure neutral greys, no tint in either theme. Depth comes from the
+   surface ladder (bg → surface-muted → surface → surface-elevated) and 1px
+   hairlines, not shadows.
+
+   The brand works the way ClickHouse uses its yellow: exactly three variants.
+   --action fills (primary buttons, the verdict's numbers, the current step,
+   the input focus edge, featured cards); --action-active is hover and press;
+   --action-disabled is a dimmed coral for a control that can't be used yet.
+   Large areas are never tinted with it otherwise.
+
+   Every text/background and control-edge pair is contrast-checked in both
+   themes by scripts/check-contrast.test.mjs: change a value here and that
+   test tells you whether it still passes. */
 :root {
-	--bg: #f6f7f9;
+	--bg: #f6f6f6;
 	--surface: #ffffff;
 	--surface-elevated: #ffffff;
-	--surface-muted: #eef1f4;
-	--surface-hover: #f1f4f7;
-	--selected: #e6edf6;
-	--ghost: #eff2f6;
-	--diff: #e4edfb;
+	--surface-muted: #f0f0f0;
+	--surface-hover: #f2f2f2;
+	--selected: #ebebeb;
+	--ghost: #efefef;
+	--diff: #ececec;
 	--diff-ink: #1d5fb8;
-	--border: #dde2e9;
-	--border-input: #7d8898;
-	--text: #0f1720;
-	--text-muted: #4e5a6a;
+	--border: #e3e3e3;
+	--border-input: #848484;
+	--text: #0a0a0a;
+	--text-muted: #5a5a5a;
 	--action: #c93a22;
-	--action-hover: #ae2f19;
+	--action-active: #ae2f19;
+	--action-disabled: #f3d6cf;
 	--action-ink: #ffffff;
 	--accent: #fdece8;
 	--accent-ink: #b3321c;
@@ -111,8 +136,8 @@
 	--cat-pairsight-subtle: #f1ecfb;
 	--cat-vendor: #0b6e68;
 	--cat-vendor-subtle: #e3f4f2;
-	--cat-neither: #56606e;
-	--cat-neither-subtle: #eef1f4;
+	--cat-neither: #5e5e5e;
+	--cat-neither-subtle: #efefef;
 	--brand-deep: #972828;
 	--brand-orange: #eb7f31;
 	--brand-amber: #fcad38;
@@ -124,56 +149,59 @@
 	--glow-strength: 0.22;
 	/* Two neutral-and-warm chart series for data that isn't a category
 	   (metrics, vendors side by side). */
-	--series-a: #364152;
+	--series-a: #3a3a3a;
 	--series-b: #c25a12;
-	--shadow: 0 1px 2px rgba(15, 23, 32, 0.06), 0 8px 24px rgba(15, 23, 32, 0.08);
+	/* Floating layers only (menus, popovers, dialogs, toasts): cards and
+	   panels have no shadow. */
+	--shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
 	color-scheme: light;
 }
 
 .dark {
-	--bg: #0b0f14;
-	--surface: #121821;
-	--surface-elevated: #18202b;
-	--surface-muted: #0e131a;
-	--surface-hover: #19212c;
-	--selected: #1e2b3f;
-	--ghost: #151c26;
-	--diff: #1d2c47;
+	--bg: #0a0a0a;
+	--surface: #161616;
+	--surface-elevated: #1f1f1f;
+	--surface-muted: #111111;
+	--surface-hover: #1c1c1c;
+	--selected: #242424;
+	--ghost: #1a1a1a;
+	--diff: #262626;
 	--diff-ink: #8fb6ff;
-	--border: #263140;
-	--border-input: #6b788b;
-	--text: #e8edf3;
-	--text-muted: #a3aebc;
+	--border: #2a2a2a;
+	--border-input: #6f6f6f;
+	--text: #ffffff;
+	--text-muted: #a3a3a3;
 	--action: #ff6a4d;
-	--action-hover: #ff8469;
+	--action-active: #e8573c;
+	--action-disabled: #3a201b;
 	--action-ink: #1a0b07;
 	--accent: #2a1a24;
 	--accent-ink: #ff8f79;
 	--ring: #ff8f79;
 	--focus: #6aaeff;
 	--success: #4ade9a;
-	--success-subtle: #10271d;
+	--success-subtle: #12221a;
 	--warning: #f7c04f;
-	--warning-subtle: #2a2210;
+	--warning-subtle: #262011;
 	--danger: #ff6f94;
-	--danger-subtle: #2e1520;
+	--danger-subtle: #2a161c;
 	--info: #6aaeff;
-	--info-subtle: #12213a;
+	--info-subtle: #141d2a;
 	--cat-both: #86a8ff;
-	--cat-both-subtle: #18223a;
+	--cat-both-subtle: #181d2a;
 	--cat-pairsight: #be9cff;
-	--cat-pairsight-subtle: #221a38;
+	--cat-pairsight-subtle: #1f1a2a;
 	--cat-vendor: #3dd9c5;
-	--cat-vendor-subtle: #0f2a28;
-	--cat-neither: #9aa6b6;
-	--cat-neither-subtle: #1b2230;
-	--series-a: #c9d2de;
+	--cat-vendor-subtle: #112321;
+	--cat-neither: #a3a3a3;
+	--cat-neither-subtle: #1f1f1f;
+	--series-a: #d4d4d4;
 	--series-b: #f59e5b;
 	--headline-from: #ff6a4d;
 	--headline-via: #f59e5b;
 	--headline-to: #fcad38;
 	--glow-strength: 0.16;
-	--shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px rgba(0, 0, 0, 0.45);
+	--shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.5);
 	color-scheme: dark;
 }
 
@@ -219,7 +247,8 @@
 	--color-text: var(--text);
 	--color-text-muted: var(--text-muted);
 	--color-action: var(--action);
-	--color-action-hover: var(--action-hover);
+	--color-action-active: var(--action-active);
+	--color-action-disabled: var(--action-disabled);
 	--color-action-ink: var(--action-ink);
 	--color-accent: var(--accent);
 	--color-accent-ink: var(--accent-ink);
@@ -276,31 +305,77 @@
    text-sm/text-xs, so a heading or a label looks the same on every screen.
    Colour stays separate (text-text, text-text-muted, …).
 
-   Two voices: Poppins for the interface, JetBrains Mono for data the user
-   reads exactly — record references, raw values, scores, counts, rule keys.
-   Poppins' digits are proportional (a 1 is half the width of a 0) and it has
-   no tabular figures, so numbers that sit in columns or change live use the
-   mono roles; otherwise they misalign and jitter. */
+   Two voices: Space Grotesk for the interface, JetBrains Mono for data the
+   user reads exactly — record references, raw values, scores, counts. Numbers
+   that sit in columns or change live use the mono roles so they line up and
+   don't jitter.
+
+   Display roles are the big, tight headlines: bold, with negative tracking
+   that grows with the size. They step down a size on narrow screens. */
+@utility type-display-xl {
+	font-size: 2.5rem;
+	line-height: 1.05;
+	font-weight: 700;
+	letter-spacing: -0.035em;
+	@media (width >= 48rem) {
+		font-size: 4.5rem;
+	}
+}
+@utility type-display-lg {
+	font-size: 2.5rem;
+	line-height: 1.08;
+	font-weight: 700;
+	letter-spacing: -0.035em;
+	@media (width >= 48rem) {
+		font-size: 3.5rem;
+	}
+}
+@utility type-display-md {
+	font-size: 1.875rem;
+	line-height: 1.15;
+	font-weight: 700;
+	letter-spacing: -0.035em;
+	@media (width >= 48rem) {
+		font-size: 2.5rem;
+	}
+}
+@utility type-display-sm {
+	font-size: 1.625rem;
+	line-height: 1.2;
+	font-weight: 700;
+	letter-spacing: -0.03em;
+	@media (width >= 48rem) {
+		font-size: 2rem;
+	}
+}
 @utility type-title {
 	font-size: 1.375rem;
 	line-height: 1.875rem;
-	font-weight: 600;
-	letter-spacing: -0.01em;
+	font-weight: 700;
+	letter-spacing: -0.0125em;
 	@media (width >= 48rem) {
 		font-size: 1.5rem;
 		line-height: 2rem;
 	}
 }
 @utility type-heading {
+	font-size: 1.125rem;
+	line-height: 1.625rem;
+	font-weight: 600;
+	letter-spacing: -0.01em;
+}
+@utility type-subheading {
 	font-size: 1rem;
 	line-height: 1.5rem;
 	font-weight: 600;
-	letter-spacing: -0.005em;
 }
-@utility type-subheading {
-	font-size: 0.875rem;
-	line-height: 1.25rem;
+/* The small uppercase label over a section or a card ("Current evaluation"). */
+@utility type-eyebrow {
+	font-size: 0.75rem;
+	line-height: 1rem;
 	font-weight: 600;
+	letter-spacing: 0.125em;
+	text-transform: uppercase;
 }
 @utility type-body {
 	font-size: 0.875rem;
@@ -337,12 +412,68 @@
 	font-variant-ligatures: none;
 }
 
+/* A small control's tap area, grown to at least 44px on touch screens
+   without changing how it looks: the (i) tips, icon toggles, checkboxes
+   and inline text links. Never smaller than the control itself. */
+@utility hit-area {
+	position: relative;
+	@media (pointer: coarse) {
+		&::after {
+			content: '';
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: max(100%, 44px);
+			height: max(100%, 44px);
+			translate: -50% -50%;
+		}
+	}
+}
+
+/* A warm wash of the brand coral, fading into the card surface: the one
+   card a screen leads with (the Results verdict, the Plan's pair count).
+   Mixed from tokens, so it works in both themes. */
+@utility bg-brand-wash {
+	background-image: linear-gradient(
+		115deg,
+		color-mix(in srgb, var(--action) 16%, var(--surface)) 0%,
+		color-mix(in srgb, var(--action) 5%, var(--surface)) 45%,
+		var(--surface) 100%
+	);
+}
+
 /* ---- App shell (src/components/pairsight/shell/) ----
    The page scrolls inside <main>; the page sits in an inline-size container
    (shell-frame.tsx) so the action bar can span its full width from inside the
    centred page column, and page layouts respond to the room the page has
    rather than the window (@5xl: and friends), since the sidebar takes some. */
 @layer components {
+	/* A very faint 64px grid behind the page, strongest at the top and fading
+	   out down the page. It's drawn on a layer under the page's content (the
+	   container isolates it), so anything with a surface of its own — cards,
+	   the action bar — stays solid; the sidebar and top bar sit outside it.
+	   Two gradients, no image; the lines are the hairline token at 20%. */
+	.app-grid {
+		position: relative;
+		isolation: isolate;
+	}
+	.app-grid::before {
+		--grid-line: color-mix(in srgb, var(--border) 20%, transparent);
+		content: '';
+		position: absolute;
+		/* Only as tall as it's visible, so a long page doesn't paint (or
+		   scroll) a full-height masked layer. */
+		inset: 0 0 auto;
+		height: 760px;
+		z-index: -1;
+		pointer-events: none;
+		background-image:
+			linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+			linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+		background-size: 64px 64px;
+		mask-image: linear-gradient(to bottom, #000 0, transparent 100%);
+	}
+
 	/* Results and pair detail are wider than the setup steps. */
 	.page-frame:has([data-wide-page]) {
 		max-width: 1440px;

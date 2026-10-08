@@ -12,13 +12,16 @@ export function ErrorPage({
 	title,
 	description,
 	digest,
-	action
+	action,
+	scene
 }: {
 	title: string
 	description: string
 	digest?: string
 	// One or more links/buttons, styled with errorPageActionClassName.
 	action?: ReactNode
+	// The drawn picture above the title (pairsight/empty/scenes.tsx).
+	scene?: ReactNode
 }) {
 	return (
 		<main
@@ -26,9 +29,10 @@ export function ErrorPage({
 			className="bg-bg text-text flex min-h-dvh flex-col items-center justify-center px-6 text-center"
 		>
 			<Wordmark />
-			<h1 className="mt-8 text-xl font-semibold">{title}</h1>
-			<p className="text-text-muted mt-2 max-w-sm text-sm">{description}</p>
-			{action != null && <div className="mt-5 flex gap-4 text-sm font-medium">{action}</div>}
+			{scene != null && <div className="mt-10">{scene}</div>}
+			<h1 className="type-display-sm mt-8">{title}</h1>
+			<p className="text-text-muted mt-3 max-w-sm text-[0.9375rem]">{description}</p>
+			{action != null && <div className="mt-6 flex gap-4 text-sm font-medium">{action}</div>}
 			{digest && (
 				<p className="text-text-muted mt-6 font-mono text-xs">
 					Reference: <code>{digest}</code>
