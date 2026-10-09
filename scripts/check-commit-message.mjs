@@ -87,9 +87,10 @@ async function main() {
 	const rangeIndex = args.indexOf('--range')
 	if (rangeIndex !== -1) {
 		// CI mode: validate every commit header in base..head.
-		const { execSync } = await import('node:child_process')
+		// No shell: the range goes to git as one argument, never as shell text.
+		const { execFileSync } = await import('node:child_process')
 		const range = args[rangeIndex + 1]
-		const log = execSync(`git log --format=%B -z ${range}`, { encoding: 'utf-8' })
+		const log = execFileSync('git', ['log', '--format=%B', '-z', range], { encoding: 'utf-8' })
 		const commits = log.split('\0').filter(Boolean)
 		let failed = false
 		for (const commitMessage of commits) {

@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import { failOnCspViolations } from './csp'
 import { padded } from './padding'
 import { readPdfText } from './pdf'
 import {
@@ -9,6 +10,8 @@ import {
 	workbookFromCsv,
 	XLSX_MIME
 } from './workbooks'
+
+failOnCspViolations()
 
 // The PairSight vertical slice, end to end, against local Supabase and the Jev
 // stub (scripts/jev-stub.mjs). Opt in with E2E_PAIRSIGHT=1 — CI's e2e job has
@@ -92,7 +95,10 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText(/^Upload Vendor [A-C]’s file/)).toBeVisible()
 		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/${file}`)
 		const complete = page.getByRole('checkbox', { name: /^Yes, this file has all of/ })
-		await expect(complete).toBeEnabled()
+		// Checking the file builds and keeps every pair it implies: near the
+		// 100K limit that outlasts the default few seconds when the database
+		// is busy, while the page says it's still checking.
+		await expect(complete).toBeEnabled({ timeout: 30_000 })
 		await complete.click()
 		// Confirming saves every pair the file matched: a 100K-pair file takes
 		// more than the default few seconds when the database is busy.

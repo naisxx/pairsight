@@ -1,8 +1,11 @@
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { failOnCspViolations } from './csp'
 
 // The signed-out surface: landing, sign-in/up and the error page. None of it
 // touches the database, so unlike the PairSight specs this runs in CI too.
+
+failOnCspViolations()
 
 // WCAG 2.2 A and AA, the bar the design is held to (docs/PairSight-UX-Plan.md §12).
 const WCAG_TAGS = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa']
@@ -100,6 +103,23 @@ test('a chosen theme survives a reload, applied before the page paints', async (
 	await page.getByRole('menuitemradio', { name: 'System' }).click()
 	await page.reload({ waitUntil: 'domcontentloaded' })
 	expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(false)
+})
+
+// src/proxy.ts: each page view gets its own nonce (a reused one could be
+// copied into an injected script), and the pages still work under it: the
+// theme menu needs both the page's scripts and next-themes' inline one.
+test('pages run under a fresh script nonce', async ({ page }) => {
+	const nonces: string[] = []
+	for (const path of ['/', '/sign-in', '/']) {
+		const response = await page.goto(path)
+		const csp = (await response?.allHeaders())?.['content-security-policy'] ?? ''
+		expect(csp).toContain("'strict-dynamic'")
+		expect(csp).toContain("frame-ancestors 'none'")
+		nonces.push(/'nonce-([^']+)'/.exec(csp)?.[1] ?? '')
+	}
+	expect(new Set(nonces).size).toBe(nonces.length)
+	await page.getByRole('button', { name: 'Theme' }).click()
+	await expect(page.getByRole('menuitemradio', { name: 'Dark' })).toBeVisible()
 })
 
 test('an unknown page answers 404 and says so', async ({ page }) => {

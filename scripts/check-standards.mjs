@@ -207,7 +207,10 @@ function ruleFilesIn(ctx) {
 		.sort()
 }
 
+// Windows filesystems have no execute bit (every file stats as 0o666), so
+// there the git index mode below is the only meaningful check.
 function isExecutable(ctx, path) {
+	if (process.platform === 'win32') return true
 	const EXECUTE_BITS = 0o111
 	return (statSync(join(ctx.root, path)).mode & EXECUTE_BITS) !== 0
 }
@@ -224,16 +227,30 @@ function isIgnored(ctx, path) {
 	return ctx.git('check-ignore', '-q', '--', path).status === 0
 }
 
+// The package each tool's bin comes from.
+const BIN_PACKAGES = { eslint: 'eslint', tsc: 'typescript' }
+
+// The tool's own JS entry, run with this Node: node_modules/.bin holds shell
+// shims, which Windows can only run through their .cmd twins and a shell.
+function binEntry(ctx, name) {
+	const packageDir = join(ctx.root, 'node_modules', BIN_PACKAGES[name])
+	const manifest = join(packageDir, 'package.json')
+	if (!existsSync(manifest)) return null
+	const { bin } = JSON.parse(readFileSync(manifest, 'utf8'))
+	const entry = typeof bin === 'string' ? bin : bin?.[name]
+	return entry ? join(packageDir, entry) : null
+}
+
 function runBinary(ctx, name, args) {
-	const bin = join(ctx.root, 'node_modules', '.bin', name)
-	if (!existsSync(bin)) {
+	const entry = binEntry(ctx, name)
+	if (!entry) {
 		return {
 			error: `${name} is not installed under node_modules — run the package manager's install first`
 		}
 	}
 	try {
 		return {
-			stdout: execFileSync(bin, args, {
+			stdout: execFileSync(process.execPath, [entry, ...args], {
 				cwd: ctx.root,
 				encoding: 'utf8',
 				stdio: ['ignore', 'pipe', 'pipe']
@@ -432,7 +449,8 @@ export const CHECKS = [
 			const problems = []
 			if (!ctx.has(SECRETS_SCRIPT)) problems.push(`${SECRETS_SCRIPT} is missing`)
 			// Same three properties as the commit-msg hook: present, executable on
-			// disk, and 100755 in the index so a fresh clone gets a working hook.
+			// disk (where the filesystem has the bit), and 100755 in the index so
+			// a fresh clone gets a working hook.
 			if (!ctx.has(PRE_COMMIT_HOOK)) {
 				problems.push(`${PRE_COMMIT_HOOK} is missing`)
 			} else {

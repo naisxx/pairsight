@@ -1,19 +1,19 @@
 import type { NextConfig } from 'next'
 import createNextIntlPlugin from 'next-intl/plugin'
 import { withSentryConfig } from '@sentry/nextjs'
+import { FIXED_CSP } from './src/lib/csp'
 
 const withNextIntl = createNextIntlPlugin('./src/i18n/request.ts')
 
 // Sent with every response (docs/rules/secrets.md covers what this isn't: a
-// substitute for keeping secrets server-side). The CSP here only limits what
-// can't break the app: no framing (clickjacking), no <base> or form posts to
-// another origin, no plugins. A script-src policy needs per-request nonces
-// for Next's and next-themes' inline scripts, and is its own change.
+// substitute for keeping secrets server-side). The CSP here is the fixed half
+// (src/lib/csp.ts); pages get the script half too, from src/proxy.ts, since
+// it needs a nonce per page view.
 // HSTS is the host's to send: on Vercel it's set on every HTTPS domain.
 const SECURITY_HEADERS = [
 	{
 		key: 'Content-Security-Policy',
-		value: "frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none'"
+		value: FIXED_CSP
 	},
 	// For browsers that predate frame-ancestors.
 	{ key: 'X-Frame-Options', value: 'DENY' },

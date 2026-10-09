@@ -3,8 +3,20 @@ import { createServerClient } from '@supabase/ssr'
 import createIntlMiddleware from 'next-intl/middleware'
 import { routing } from '@/i18n/routing'
 import type { AuthOnlySupabaseClient } from '@/lib/supabase/auth-only'
+import { FIXED_CSP, NONCE_HEADER } from '@/lib/csp'
 
 const intlProxy = createIntlMiddleware(routing)
+
+// The page CSP: the fixed half plus scripts. Only scripts carrying this
+// request's nonce run, plus whatever those load ('strict-dynamic'), so an
+// injected <script> or inline handler does nothing. Next reads the nonce from
+// the request's header and stamps it on its own scripts; next-themes gets it
+// from the layout. React's dev build uses eval for its error stacks, so dev
+// alone allows it.
+function pagePolicy(nonce: string) {
+	const devEval = process.env.NODE_ENV === 'development' ? " 'unsafe-eval'" : ''
+	return `${FIXED_CSP}; script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${devEval}; script-src-attr 'none'`
+}
 
 // Refreshes the Supabase session cookie on every request, then hands off to
 // next-intl's locale routing. Order matters: Supabase's cookie writes have
@@ -52,7 +64,16 @@ export default async function proxy(request: NextRequest) {
 		}
 	}
 
-	const intlResponse = intlProxy(request)
+	// A fresh nonce per page view: a guessable one would let a script in.
+	// Built after Supabase so its cookie writes on `request` come along.
+	const nonce = Buffer.from(crypto.randomUUID()).toString('base64')
+	const csp = pagePolicy(nonce)
+	const requestHeaders = new Headers(request.headers)
+	requestHeaders.set(NONCE_HEADER, nonce)
+	requestHeaders.set('Content-Security-Policy', csp)
+	// next-intl forwards the headers of the request it's given to the page.
+	const intlResponse = intlProxy(new NextRequest(request, { headers: requestHeaders }))
+	intlResponse.headers.set('Content-Security-Policy', csp)
 	// Copy the whole cookie object, not just (name, value): the options carry
 	// httpOnly / secure / sameSite / maxAge / path, and dropping them would
 	// downgrade a freshly refreshed session cookie into a permissive one.
