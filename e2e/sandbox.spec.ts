@@ -1,8 +1,11 @@
 import { execSync } from 'node:child_process'
 import AxeBuilder from '@axe-core/playwright'
 import { expect, test, type Page } from '@playwright/test'
+import { failOnCspViolations } from './csp'
 import { readPdfText } from './pdf'
 import { exportFindings, readWorkbook } from './workbooks'
+
+failOnCspViolations()
 
 // The public sandbox (/sandbox): the whole app, read-only, on the prepared
 // evaluation from `pnpm demo:seed`. Needs the local database, so it's opt-in

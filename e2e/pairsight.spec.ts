@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
+import { failOnCspViolations } from './csp'
 import { padded } from './padding'
 import { readPdfText } from './pdf'
 import {
@@ -9,6 +10,8 @@ import {
 	workbookFromCsv,
 	XLSX_MIME
 } from './workbooks'
+
+failOnCspViolations()
 
 // The PairSight vertical slice, end to end, against local Supabase and the Jev
 // stub (scripts/jev-stub.mjs). Opt in with E2E_PAIRSIGHT=1 — CI's e2e job has

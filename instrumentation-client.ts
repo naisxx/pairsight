@@ -1,5 +1,11 @@
 import * as Sentry from '@sentry/nextjs'
 import posthog from 'posthog-js'
+import { z } from 'zod'
+
+// Pages forbid eval (src/proxy.ts). Zod probes for it once with a caught
+// `new Function`, which still files a CSP violation; jitless skips the probe
+// and the eval-built parsers it would gate, which the browser blocks anyway.
+z.config({ jitless: true })
 
 // A direct-to-storage upload is an XHR/fetch to a presigned URL, and Sentry's
 // breadcrumb records that URL verbatim — including the signature and access-key

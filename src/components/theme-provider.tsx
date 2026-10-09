@@ -17,7 +17,7 @@ const INERT_SCRIPT = { type: 'application/json' }
 // Class-based so the Light / Dark / System menu can override the OS setting;
 // next-themes injects the blocking script that sets `.dark` before paint, so
 // there is no light flash on a dark preference.
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
+export function ThemeProvider({ children, nonce }: { children: React.ReactNode; nonce?: string }) {
 	const isClientRender = useSyncExternalStore(
 		noSubscription,
 		() => true,
@@ -29,6 +29,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 			defaultTheme="system"
 			enableSystem
 			disableTransitionOnChange
+			nonce={nonce}
 			scriptProps={isClientRender ? INERT_SCRIPT : undefined}
 		>
 			{children}
