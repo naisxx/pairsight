@@ -74,6 +74,9 @@ function createFixture() {
 	}
 	git(root, 'init', '-q')
 	git(root, 'add', '-A')
+	// What the template's index records. A filesystem without the execute bit
+	// (Windows) would otherwise add the hooks as 100644.
+	git(root, 'update-index', '--chmod=+x', '.githooks/commit-msg', '.githooks/pre-commit')
 	return root
 }
 
@@ -243,14 +246,21 @@ test('per-tool-entry-points fails when an optional per-tool file exists without 
 	assert.match(results['per-tool-entry-points'].detail, /GEMINI\.md exists but/)
 })
 
-test('commit-msg-hook fails when the hook is not executable on disk', () => {
-	const results = withFixture(
-		(root) => chmodSync(join(root, '.githooks/commit-msg'), 0o644),
-		['commit-msg-hook']
-	)
-	assert.equal(results['commit-msg-hook'].ok, false)
-	assert.match(results['commit-msg-hook'].detail, /not executable/)
-})
+test(
+	'commit-msg-hook fails when the hook is not executable on disk',
+	{
+		skip:
+			process.platform === 'win32' && 'Windows files have no execute bit; the index check covers it'
+	},
+	() => {
+		const results = withFixture(
+			(root) => chmodSync(join(root, '.githooks/commit-msg'), 0o644),
+			['commit-msg-hook']
+		)
+		assert.equal(results['commit-msg-hook'].ok, false)
+		assert.match(results['commit-msg-hook'].detail, /not executable/)
+	}
+)
 
 test('commit-msg-hook fails when the hook is executable locally but not in the git index', () => {
 	const results = withFixture(

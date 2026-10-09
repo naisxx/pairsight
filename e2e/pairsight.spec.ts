@@ -95,7 +95,10 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText(/^Upload Vendor [A-C]’s file/)).toBeVisible()
 		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/${file}`)
 		const complete = page.getByRole('checkbox', { name: /^Yes, this file has all of/ })
-		await expect(complete).toBeEnabled()
+		// Checking the file builds and keeps every pair it implies: near the
+		// 100K limit that outlasts the default few seconds when the database
+		// is busy, while the page says it's still checking.
+		await expect(complete).toBeEnabled({ timeout: 30_000 })
 		await complete.click()
 		// Confirming saves every pair the file matched: a 100K-pair file takes
 		// more than the default few seconds when the database is busy.
