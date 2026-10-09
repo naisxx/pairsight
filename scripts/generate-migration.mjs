@@ -18,7 +18,8 @@
 // prisma/schema/migrations/ replayed onto it (`prisma migrate deploy`) —
 // this script only diffs from there, it does not replay history itself.
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
+import { createRequire } from 'node:module'
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 
@@ -69,6 +70,15 @@ function findDestructivePattern(sql) {
 	return DESTRUCTIVE_PATTERNS.find((pattern) => pattern.test(sql))
 }
 
+// Prisma's CLI run with this Node, its arguments passed as a list: no shell,
+// so a database URL with `$`, quotes or spaces in its password reaches Prisma
+// as written instead of being expanded or split.
+const PRISMA_CLI = createRequire(import.meta.url).resolve('prisma/build/index.js')
+
+function prisma(args, options) {
+	return execFileSync(process.execPath, [PRISMA_CLI, ...args], options)
+}
+
 function main() {
 	const { check, name, dbUrl } = parseArgs()
 
@@ -77,8 +87,8 @@ function main() {
 		process.exit(1)
 	}
 
-	const diff = execSync(
-		`pnpm prisma migrate diff --from-url "${dbUrl}" --to-schema-datamodel ${SCHEMA_DIR} --script`,
+	const diff = prisma(
+		['migrate', 'diff', '--from-url', dbUrl, '--to-schema-datamodel', SCHEMA_DIR, '--script'],
 		{ encoding: 'utf-8' }
 	).trim()
 
@@ -114,7 +124,7 @@ function main() {
 
 	// Replay the migration we just wrote, proving it applies — not just
 	// that it was syntactically generated.
-	execSync(`pnpm prisma migrate deploy`, {
+	prisma(['migrate', 'deploy'], {
 		stdio: 'inherit',
 		env: { ...process.env, DATABASE_URL: dbUrl }
 	})
