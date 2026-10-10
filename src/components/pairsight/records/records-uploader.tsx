@@ -323,6 +323,7 @@ export function RecordsUploader({
 		<>
 			<div className="space-y-4">
 				<ValidationPanel title={t('errorsTitle')} messages={errors} />
+				{preview.encoding != null && <p className="text-text-muted text-xs">{t('encodingNote')}</p>}
 				<RecordsFileCard
 					fileName={loaded.file.name}
 					meta={`${t('notSaved')} · ${fileType(loaded.file.name, preview.sheet)} · ${formatSize(loaded.file.size)}`}

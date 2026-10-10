@@ -1,10 +1,12 @@
 import { getTranslations } from 'next-intl/server'
+import { DataHealth } from '@/components/pairsight/records/data-health'
 import { RecordsUploader } from '@/components/pairsight/records/records-uploader'
 import { SavedRecords } from '@/components/pairsight/records/saved-records'
 import { StepHeader } from '@/components/pairsight/step-layout'
 import { getDatasetPreview } from '@/server/pairsight/datasets'
 import { entityTypeOf, rolesFor } from '@/lib/pairsight/entity-types'
 import { parseColumnRoles, parseRecordValues } from '@/server/pairsight/json'
+import { parseProfile } from '@/server/pairsight/profile/profile'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 
 const PREVIEW_ROWS = 10
@@ -26,7 +28,10 @@ export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	}
 
 	const records = await getDatasetPreview(dataset.id, PREVIEW_ROWS)
-	const roles = rolesFor(entityTypeOf(workspace.evaluation.entityType))
+	const type = entityTypeOf(workspace.evaluation.entityType)
+	const roles = rolesFor(type)
+	// Saved before profiling: none until its pairs are next worked out.
+	const profile = parseProfile(dataset.profile)
 	const columnRoles = parseColumnRoles(dataset.columnRoles)
 	// Stored values don't keep the file's column order, so: the reference,
 	// then mapped fields in field order, then the rest.
@@ -49,6 +54,7 @@ export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				headers={headers}
 				referenceColumn={dataset.referenceColumn}
 				columnRoles={columnRoles}
+				health={profile == null ? null : <DataHealth profile={profile} type={type} />}
 				rows={records.map((record) => {
 					const values = parseRecordValues(record.values)
 					return {
