@@ -15,7 +15,7 @@ import {
 	toSourceRecord,
 	type ColumnCheck
 } from './source-records'
-import { scanTable, type TableError } from './tabular'
+import { scanTable, type LegacyEncoding, type TableError } from './tabular'
 import { deleteUpload, readStoredUpload } from './uploads'
 
 // An uploaded records file (uploads.ts) previewed and saved, each in one
@@ -38,6 +38,8 @@ export type FilePreview =
 			suggestedReference: string | undefined
 			detection: Pick<TypeDetection, 'type' | 'confident'>
 			sheet: string | undefined
+			// Set when a CSV wasn't UTF-8 and was read as Windows text.
+			encoding?: LegacyEncoding
 	  }
 	| { ok: false; error: TableError }
 
@@ -130,6 +132,7 @@ export async function previewSourceUpload({
 			rowCount: scan.rowCount,
 			sheet: scan.sheet
 		}),
+		...(scan.encoding == null ? {} : { encoding: scan.encoding }),
 		columnChecks: (checker ?? columnChecker(scan.headers, MAX_LISTED_ISSUES)).result()
 	}
 }

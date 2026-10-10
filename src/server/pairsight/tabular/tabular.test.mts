@@ -75,6 +75,58 @@ test('the column limit and unsupported formats are reported, not thrown', async 
 	})
 })
 
+test('a CSV that isn’t UTF-8 is read as Windows text, and says so', async () => {
+	// "ref,name\nR1,Zoë Müller £5" in Windows-1252: ë, ü and £ are single bytes.
+	const bytes = new Uint8Array([
+		...new TextEncoder().encode('ref,name\nR1,Zo'),
+		0xeb,
+		...new TextEncoder().encode(' M'),
+		0xfc,
+		...new TextEncoder().encode('ller '),
+		0xa3,
+		...new TextEncoder().encode('5\n')
+	])
+	assert.deepEqual(await scanTable({ fileName: 'old.csv', bytes, maxRows: 10 }), {
+		ok: true,
+		headers: ['ref', 'name'],
+		rowCount: 1,
+		encoding: 'windows-1252'
+	})
+	assert.deepEqual(await readTable({ fileName: 'old.csv', bytes, maxRows: 10 }), {
+		ok: true,
+		table: { headers: ['ref', 'name'], rows: [['R1', 'Zoë Müller £5']] }
+	})
+	// UTF-8 stays UTF-8, with nothing to say.
+	const utf8 = new TextEncoder().encode('ref,name\nR1,Zoë Müller £5\n')
+	assert.deepEqual(await scanTable({ fileName: 'new.csv', bytes: utf8, maxRows: 10 }), {
+		ok: true,
+		headers: ['ref', 'name'],
+		rowCount: 1
+	})
+})
+
+test('numbers a sheet pads with zeros read as shown, leading zeros kept', async () => {
+	const book = new ExcelJS.Workbook()
+	const sheet = book.addWorksheet('Records')
+	sheet.addRows([
+		['ref', 'phone', 'spaced', 'code', 'price', 'plain'],
+		['R1', 7700900123, 7700900123, 123, 5, 42]
+	])
+	const formats = ['00000000000', '00000 000000', '000000', '0.00', 'General']
+	formats.forEach((format, index) => {
+		sheet.getCell(2, index + 2).numFmt = format
+	})
+	const bytes = new Uint8Array(await book.xlsx.writeBuffer())
+	assert.deepEqual(await readTable({ fileName: 'padded.xlsx', bytes, maxRows: 10 }), {
+		ok: true,
+		sheet: 'Records',
+		table: {
+			headers: ['ref', 'phone', 'spaced', 'code', 'price', 'plain'],
+			rows: [['R1', '07700900123', '07700 900123', '000123', '5.00', '42']]
+		}
+	})
+})
+
 // A workbook built in memory, one sheet per entry, rows as given.
 async function workbook(sheets: Record<string, ExcelJS.CellValue[][]>): Promise<Uint8Array> {
 	const book = new ExcelJS.Workbook()

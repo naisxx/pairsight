@@ -13,6 +13,10 @@ const COLUMN_PADDING = 2
 const DECIMAL = /^-?(0|[1-9]\d*)\.(\d+)$/
 // A number format that fixes the decimals shown ("0.00"), read back as shown.
 const FIXED_DECIMALS = /^0\.(0+)$/
+// A whole-number format of digit places and separators ("00000000000",
+// "00000 000000", "0000-0000"): how a sheet keeps a phone number's or a
+// code's leading zeros while storing it as a number. Read back as shown.
+const DIGIT_PATTERN = /^[0#][0#\s\-()]*$/
 
 type CellValue = ExcelJS.CellValue
 // Rows read in a batch before they're handed on.
@@ -29,12 +33,29 @@ function dateText(date: Date): string {
 	return hasTime ? `${day} ${pad(date.getUTCHours())}:${pad(date.getUTCMinutes())}` : day
 }
 
+// A whole number laid out by a DIGIT_PATTERN format, as Excel shows it:
+// each 0 is a digit or a padding zero, each # a digit if there is one left,
+// anything else is kept. Digits beyond the pattern go in front.
+function patterned(value: number, pattern: string): string {
+	const digits = String(value).split('')
+	let shown = ''
+	for (const place of [...pattern].reverse()) {
+		if (place === '0') shown = (digits.pop() ?? '0') + shown
+		else if (place === '#') shown = (digits.pop() ?? '') + shown
+		else shown = place + shown
+	}
+	return `${digits.join('')}${shown}`.trim()
+}
+
 // A cell as the text a person reads in Excel. Formulas give their last
 // result; error cells (#N/A) and empty cells give ''.
 function cellText(value: CellValue, numFmt: string | undefined): string {
 	if (value == null) return ''
 	if (value instanceof Date) return dateText(value)
 	if (typeof value === 'number') {
+		if (numFmt != null && Number.isSafeInteger(value) && value >= 0 && DIGIT_PATTERN.test(numFmt)) {
+			return patterned(value, numFmt)
+		}
 		const decimals = numFmt == null ? null : FIXED_DECIMALS.exec(numFmt)?.[1]
 		return decimals == null ? String(value) : value.toFixed(decimals.length)
 	}
