@@ -102,6 +102,10 @@ model SourceDataset {
 	scoredAt        DateTime?      @db.Timestamptz(6)
 	// How it went: versions, timings, pairs scored and kept, or why skipped.
 	scoreSummary    Json?
+	// What the file looks like field by field (src/server/pairsight/profile/):
+	// set on save, refreshed at scoring if the evaluation's country changed.
+	// Null for datasets saved before profiling; scoring fills it in.
+	profile         Json?
 	records         SourceRecord[]
 	pairScores      PairScore[]
 	vendorExports   VendorExport[]

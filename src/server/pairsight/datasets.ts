@@ -4,7 +4,9 @@ import { env } from '@/lib/env'
 import { db } from '@/server/db/client'
 import { defaultIdentity } from './judgment'
 import type { SourceRecordInput } from './source-records'
-import { isIdentityRole, type FieldRole } from './fields'
+import { isIdentityRole, mapRecordFields, type FieldRole } from './fields'
+import type { MappedFields } from './normalize'
+import { profileRecords } from './profile/profile'
 import { getOwnedEvaluation } from './evaluations'
 import { recordKeys } from './record-keys'
 import { chunks } from './chunks'
@@ -25,6 +27,7 @@ export async function getCurrentDataset(evaluationId: string) {
 			rowCount: true,
 			referenceColumn: true,
 			columnRoles: true,
+			profile: true,
 			createdAt: true
 		}
 	})
@@ -77,7 +80,12 @@ export async function saveSourceDataset({
 		data: { evaluationId, fileName, rowCount, referenceColumn, columnRoles, savedAt: null },
 		select: { id: true }
 	})
+	// Every record's mapped fields, for its profile: at most a dataset's
+	// worth (LIMITS.maxSourceRecords), held while the file is read anyway.
+	const mapped: MappedFields[] = []
 	const write = async (records: SourceRecordInput[]) => {
+		for (const record of records)
+			mapped.push(mapRecordFields({ values: record.values, columnRoles }))
 		for (const batch of chunks(records, SAVE_BATCH)) {
 			await db.sourceRecord.createMany({
 				data: batch.map((record) => ({
@@ -97,11 +105,17 @@ export async function saveSourceDataset({
 	}
 	try {
 		await readRecords(write)
+		const profile = profileRecords(mapped, { type: entityType, country: evaluation.countryCode })
 		await db.$transaction([
-			// Current now, and queued for Splink (splink/score-dataset.ts).
+			// Current now, profiled, and queued for Splink (splink/score-dataset.ts).
 			db.sourceDataset.update({
 				where: { id: dataset.id },
-				data: { savedAt: new Date(), scoreStatus: 'pending', scorePool: env.RUN_WORKER_POOL }
+				data: {
+					savedAt: new Date(),
+					profile,
+					scoreStatus: 'pending',
+					scorePool: env.RUN_WORKER_POOL
+				}
 			}),
 			db.evaluation.update({ where: { id: evaluationId }, data: { jevFields, ...typeDefaults } })
 		])

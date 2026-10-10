@@ -8,10 +8,16 @@ import { Readable } from 'node:stream'
 import { pipeline } from 'node:stream/promises'
 import { env } from '@/lib/env'
 import { captureError } from '@/lib/observability/capture-error'
-import { entityTypeOf } from '@/lib/pairsight/entity-types'
+import { entityTypeOf, type EntityType } from '@/lib/pairsight/entity-types'
 import { db, type Prisma } from '@/server/db/client'
 import { log as rootLog } from '@/server/lib/logger'
-import { loadScoringRecords } from '../scoring-records'
+import { loadScoringRecords, type ScoringRecord } from '../scoring-records'
+import {
+	keyContextFor,
+	parseProfile,
+	profileRecords,
+	type DatasetProfile
+} from '../profile/profile'
 import { chunks } from '../chunks'
 import { LIMITS } from '../limits'
 import { SPLINK_PLAN_FLOOR } from './floor'
@@ -132,10 +138,37 @@ async function storePairs(datasetId: string, file: string) {
 	}
 }
 
+// The dataset's profile (profile/profile.ts) for the evaluation's country as
+// it is now: the one saved with the file, or a fresh one when there's none
+// (saved before profiling) or the country has changed since, kept for the
+// Records screen.
+async function currentProfile({
+	datasetId,
+	stored,
+	records,
+	type,
+	country
+}: {
+	datasetId: string
+	stored: unknown
+	records: ScoringRecord[]
+	type: EntityType
+	country: string
+}): Promise<DatasetProfile> {
+	const saved = parseProfile(stored)
+	if (saved != null && saved.country === country) return saved
+	const profile = profileRecords(
+		records.map((record) => record.fields),
+		{ type, country }
+	)
+	await db.sourceDataset.update({ where: { id: datasetId }, data: { profile } })
+	return profile
+}
+
 export async function scoreDataset(datasetId: string): Promise<void> {
 	const dataset = await db.sourceDataset.findUniqueOrThrow({
 		where: { id: datasetId },
-		select: { evaluation: { select: { entityType: true, countryCode: true } } }
+		select: { profile: true, evaluation: { select: { entityType: true, countryCode: true } } }
 	})
 	const entityType = entityTypeOf(dataset.evaluation.entityType)
 	const python = splinkPython()
@@ -148,9 +181,16 @@ export async function scoreDataset(datasetId: string): Promise<void> {
 		const recordsPath = path.join(folder, 'records.csv')
 		const outPath = path.join(folder, 'pairs.csv')
 		const records = await loadScoringRecords(datasetId)
+		const profile = await currentProfile({
+			datasetId,
+			stored: dataset.profile,
+			records,
+			type: entityType,
+			country: dataset.evaluation.countryCode
+		})
 		await pipeline(
 			Readable.from(
-				splinkRecordLines(records, { type: entityType, country: dataset.evaluation.countryCode })
+				splinkRecordLines(records, { type: entityType, context: keyContextFor(profile) })
 			),
 			createWriteStream(recordsPath)
 		)
