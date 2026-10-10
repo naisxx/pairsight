@@ -702,6 +702,87 @@ The plan as first written:
     fictional filler (`e2e/padding.ts`), so each test's own pairs still
     decide its outcome.
 
+### 12. Profile the records before picking pairs (built, 2026-10-10)
+
+- **Why:** real files carry stand-ins for "not known" ("N/A", all zeros,
+  `test@test.com`, a date of birth of 1 January 1900), values hundreds of
+  records share (a switchboard, `info@`), dates written day or month first
+  and phones from abroad. To a matcher, two strangers who both say "N/A"
+  look alike, and a date it can't read is no evidence at all. The research
+  is clear on what helps: blanket cleaning barely moves accuracy and heavy
+  cleaning hurts it (Randall et al. 2013, BMC Medical Informatics; Grannis
+  et al. 2019, JAMIA), while turning stand-ins into blanks helped every time
+  and Splink's own guidance is to profile first and add cleaned values
+  rather than overwrite. So the file is profiled once, and the profile
+  decides a few targeted fixes, applied only to the values pairs are picked
+  by. Jev, the comparison view and every screen keep what the file says.
+- **Built:**
+  - **The profile** (`src/server/pairsight/profile/`), worked out when a
+    file is saved and kept on `source_datasets.profile`: per field, how
+    many records have a value, how varied it is, its commonest values, how
+    many can't be read (phones, emails, dates), the stand-ins, and which
+    way round its dates are written. A value is a stand-in when it's a
+    known filler, or when at least 10 records and 0.5% of the file share it
+    in a field where each record's should be its own (email, phone, date of
+    birth, company number, tax ID, website, barcode, part number, SKU). The
+    date order comes from the whole column (a part above 12 settles it),
+    else the evaluation's country. Scoring profiles again if the country
+    has changed since, and profiles files saved before this.
+  - **Keys from the profile** (`profile/clean.ts`, through `matchKey`): a
+    stand-in is blank, and so is every key made from it; a date of birth is
+    one ISO date however it was written; a phone is read for the record's
+    own country, and gets back a leading 0 a spreadsheet dropped.
+  - **"What we noticed in this file"** on Records lists the stand-ins, the
+    shared values, how the dates are read and anything unreadable, with how
+    full each field is in a tip. A clean file gets one line saying so.
+  - **Reading files as written:** a CSV that isn't UTF-8 is read as
+    Windows Western European text (and the upload says so) rather than
+    turning "Zoë" into "Zo�"; an Excel number padded with zeros by its
+    format ("07700 900123") keeps them. These change the stored values, so
+    Jev sees them too: they're how the file reads, not a cleaning.
+  - **Organisation names** drop a few more legal forms ("Pvt Ltd",
+    "GmbH & Co. KG", "Limited Liability Partnership") and a leading "The".
+  - **The benchmark plants the mess** (`scripts/scale/defects.mts`,
+    `export.mts --defects`): stand-ins in 5% of records, a shared value in
+    3%, phones that lost their 0 (10%), Irish people with phones written
+    two ways (5%), and every date of birth day first. `score.py` reports
+    the duplicates each defect touched.
+- **Measured** (plan's floor; duplicates found, pairs to check, pairs the
+  wide net scored):
+
+  | File                     | Before                      | After                       |
+  | ------------------------ | --------------------------- | --------------------------- |
+  | People 10K, clean        | 91.2%, 1,128, 17,526        | unchanged                   |
+  | People 10K, messy        | 65.5%, 785, 69,715          | 88.0%, 1,069, 16,991        |
+  | People 100K, clean       | 90.1%, 31,154, 1.67M        | unchanged                   |
+  | People 100K, messy       | 52.6%, 7,424, 6.93M (137 s) | 87.4%, 26,835, 1.61M (23 s) |
+  | Organisations 10K, clean | 79.9%, 926, 6,022           | unchanged                   |
+  | Organisations 10K, messy | 79.9%, 815, 99,383          | 79.9%, 923, 5,997           |
+  | Products 10K, clean      | 97.9%, 1,159, 14,082        | unchanged                   |
+  | Products 10K, messy      | 95.3%, 1,167, 26,023        | 97.9%, 1,172, 14,075        |
+
+  On messy people, the unreadable dates had taken out every duplicate that
+  leans on the date of birth (a typo, swapped names): 2 of 92 and 2 of 112
+  found, back to 84 and 108. What's still missed is a duplicate whose only
+  shared detail was replaced by a stand-in: that evidence is gone.
+
+- **Measured and not built:**
+  - **The profile steering the model** (term frequency and wide-net rules
+    per column, in the service). Once stand-ins and shared values are
+    blank, no wide-net rule is skewed (each holds a few hundred pairs at
+    10K), and the skewed fields (city, brand, category) already have term
+    frequency or held weights. Nothing for it to change on the benchmark;
+    worth another look if a real file shows a wide-net field dominated by
+    a value that isn't a stand-in (a head office's postcode, say).
+  - **The longer legal-form list doesn't move "suffix and & written
+    differently"** (4 of 79): those names already clean to the same key.
+    They're firms with common names, no ids and another postcode, and the
+    evidence is thin, not dirty. The list is for real files' forms.
+- **Left for later:** address parsing into extra keys (house number,
+  street); showing on the Plan when training was skipped or the duplicate
+  share assumed (`scoreSummary`); flagging Excel numbers of 16 digits or
+  more, which lose digits before PairSight sees them.
+
 ### Later
 
 - **On-prem packaging:** web, worker, Splink service and Postgres as

@@ -48,6 +48,9 @@ rules.
 - The same goes for a model (each type's comparisons, wide net, training
   groups and held weights; `M_FLOOR` in `model.py`) and the floors
   (`STORE_FLOOR` in the service, `SPLINK_PLAN_FLOOR` in `splink/floor.ts`).
+- And for how keys are made (`match-keys.ts`, `normalize.ts`, the profile in
+  `src/server/pairsight/profile/`): run the benchmark clean and with
+  `--defects`, since a stand-in or a date only shows on a messy file.
 - **What a model may learn and what it holds.** Training is unsupervised,
   so a field it never sees disagree in its training groups can come out as
   either worthless or a veto. Fields where a difference means a different
