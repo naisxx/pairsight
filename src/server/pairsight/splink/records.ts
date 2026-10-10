@@ -1,11 +1,13 @@
 import type { EntityType, KeyField } from '@/lib/pairsight/entity-types'
 import { matchKey } from '../match-keys'
+import type { KeyContext } from '../profile/clean'
 import type { ScoringRecord } from '../scoring-records'
 
 // The records as the Splink service reads them (services/splink: each type's
 // COLUMNS in person.py, company.py, product.py): each column a cleaned key
-// (match-keys.ts), the same cleaning Jev's comparison view uses. Pure, so the
-// benchmark (scripts/splink-spike/export.mts) writes the same file.
+// (match-keys.ts): the cleaning Jev's comparison view uses, plus what the
+// file's profile settled (profile/). Pure, so the benchmark
+// (scripts/splink-spike/export.mts) writes the same file.
 
 const KEYS = {
 	person: {
@@ -71,12 +73,12 @@ function cell(value: string | null): string {
 // big dataset never sits in memory as one string.
 export function* splinkRecordLines(
 	records: Iterable<ScoringRecord>,
-	{ type, country }: { type: EntityType; country: string }
+	{ type, context }: { type: EntityType; context: KeyContext }
 ): Generator<string> {
 	const fields: readonly KeyField[] = Object.values(KEYS[type])
 	yield `${splinkColumns(type).join(',')}\n`
 	for (const record of records) {
-		const keys = fields.map((field) => cell(matchKey({ field, fields: record.fields, country })))
+		const keys = fields.map((field) => cell(matchKey({ field, fields: record.fields, context })))
 		yield `${[cell(record.id), ...keys].join(',')}\n`
 	}
 }

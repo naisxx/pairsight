@@ -1,13 +1,16 @@
 import { doubleMetaphone } from 'double-metaphone'
 import { parseKeyField, type KeyTransform } from '@/lib/pairsight/derived-keys'
 import type { KeyField } from '@/lib/pairsight/entity-types'
-import { normalizeField, type MappedFields } from './normalize'
+import type { MappedFields } from './normalize'
+import { cleanField, isIdentityRole, isPlaceholder, type KeyContext } from './profile/clean'
 
 // A record's cleaned keys, as PairSight's pair suggestions read them
 // (src/server/pairsight/splink/records.ts): a field's normal key, or one
 // derived from it (src/lib/pairsight/derived-keys.ts). Each derived key starts
 // from the field's normal key, so "Smyth " and "SMYTH" are already one value
-// before the transform loosens it further. Null means no usable key.
+// before the transform loosens it further. Null means no usable key: blank,
+// or a value the file's profile says stands for "not known" (profile/), which
+// blanks every key derived from it too.
 
 const PREFIX_LENGTH = 4
 const PHONE_TAIL_LENGTH = 7
@@ -94,22 +97,28 @@ function transformKey({
 	}
 }
 
-// A record's key for one field, derived or not. For a plain field this is
-// exactly normalizeField, the value Jev's comparison view reads too.
+// A record's key for one field, derived or not, cleaned as the file's
+// profile settled (profile/clean.ts).
 export function matchKey({
 	field,
 	fields,
-	country
+	context
 }: {
 	field: KeyField
 	fields: MappedFields
-	country: string
+	context: KeyContext
 }): string | null {
 	const { base, transform } = parseKeyField(field)
+	const value = cleanField({ field: base, fields, context })
+	if (
+		isIdentityRole(base) &&
+		isPlaceholder({ role: base, raw: fields[base], key: value, context })
+	) {
+		return null
+	}
 	if (transform === 'last7') {
 		return transformKey({ transform, value: '', raw: fields.phone })
 	}
-	const value = normalizeField({ field: base, fields, country })
 	if (value == null || transform == null) return value
 	return transformKey({ transform, value, raw: base === 'name' ? undefined : fields[base] })
 }

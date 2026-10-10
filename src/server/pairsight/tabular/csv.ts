@@ -1,5 +1,5 @@
 import Papa from 'papaparse'
-import type { TabularAdapter } from './format'
+import type { LegacyEncoding, TabularAdapter } from './format'
 
 const BOM = '﻿'
 // A cell starting with one of these is a formula to a spreadsheet; written
@@ -29,11 +29,25 @@ export function csvLines(rows: string[][]): string {
 
 // Rows read in a batch before they're handed on.
 const READ_BATCH = 2_000
+// What Excel's plain "CSV" and older Windows tools write. Every byte is a
+// character in it, so it can't fail, and it reads Latin-1 files right too.
+const WINDOWS_ENCODING: LegacyEncoding = 'windows-1252'
+
+// A CSV's text: UTF-8 when the bytes are valid UTF-8 (anything saved as
+// "CSV UTF-8", and plain ASCII), else Windows Western European, rather than
+// turning "Zoë" into "Zo�".
+export function decodeCsv(bytes: Uint8Array): { text: string; encoding?: LegacyEncoding } {
+	try {
+		const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes)
+		return { text: text.replace(new RegExp(`^${BOM}`), '') }
+	} catch {
+		return { text: new TextDecoder(WINDOWS_ENCODING).decode(bytes), encoding: WINDOWS_ENCODING }
+	}
+}
 
 // A CSV's rows, a batch at a time: Papa parses the text row by row and
 // pauses after each batch, so the parsed file is never held whole.
-async function* csvRows(bytes: Uint8Array): AsyncGenerator<string[][]> {
-	const text = new TextDecoder('utf-8').decode(bytes).replace(new RegExp(`^${BOM}`), '')
+async function* csvRows(text: string): AsyncGenerator<string[][]> {
 	let batch: string[][] = []
 	let paused: Papa.Parser | null = null
 	let isDone = false
@@ -65,14 +79,16 @@ async function* csvRows(bytes: Uint8Array): AsyncGenerator<string[][]> {
 	}
 }
 
-// CSV, UTF-8. Reading drops a byte-order mark and blank lines; writing adds
-// the mark and uses CRLF line endings.
+// CSV, UTF-8 (or Windows Western European, read only). Reading drops a
+// byte-order mark and blank lines; writing adds the mark and uses CRLF line
+// endings.
 export const csvAdapter: TabularAdapter = {
 	format: 'csv',
 	mimeType: 'text/csv; charset=utf-8',
 	extension: '.csv',
 	async open(bytes) {
-		return { ok: true, rows: csvRows(bytes) }
+		const { text, encoding } = decodeCsv(bytes)
+		return { ok: true, rows: csvRows(text), ...(encoding == null ? {} : { encoding }) }
 	},
 	async encode(table) {
 		return new TextEncoder().encode(`${CSV_START}${csvLines([table.headers, ...table.rows])}`)

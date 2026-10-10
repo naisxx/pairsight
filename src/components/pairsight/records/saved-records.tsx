@@ -32,7 +32,8 @@ export function SavedRecords({
 	headers,
 	referenceColumn,
 	columnRoles,
-	rows
+	rows,
+	health
 }: {
 	evaluationId: string
 	roles: readonly FieldRole[]
@@ -43,6 +44,8 @@ export function SavedRecords({
 	referenceColumn: string
 	columnRoles: Record<string, FieldRole>
 	rows: Array<{ rowNumber: number; cells: string[] }>
+	// What PairSight noticed in the file (data-health.tsx), when profiled.
+	health: React.ReactNode
 }) {
 	const t = useTranslations('Records')
 	const tRoles = useTranslations('Roles')
@@ -105,6 +108,7 @@ export function SavedRecords({
 						/>
 					}
 				/>
+				{health}
 			</div>
 
 			<ActionBar back={{ href: view.homeHref, label: t('back') }}>

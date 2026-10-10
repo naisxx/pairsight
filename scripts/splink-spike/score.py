@@ -41,6 +41,32 @@ def pair_keys(path: Path) -> set[tuple[str, str]]:
     return {canonical(a, b) for a, b in table[["a", "b"]].itertuples(index=False)}
 
 
+def defect_lines(
+    folder: Path, known: dict[tuple[str, str], str], found_keys: set[tuple[str, str]]
+) -> list[str]:
+    """Item 12: for a --defects export, the planted duplicates with a defect
+    on either record, and how many the plan's floor still finds."""
+    path = folder / "defects.csv"
+    if not path.exists():
+        return []
+    table = pd.read_csv(path, dtype=str, keep_default_na=False)
+    defects: dict[str, set[str]] = {}
+    for record, defect in table[["id", "defect"]].itertuples(index=False):
+        defects.setdefault(defect, set()).add(record)
+    lines = [
+        "",
+        f"Duplicates touched by a planted defect, at the plan's floor (weight {PLAN_FLOOR}):",
+        "",
+        "| Defect | Records | Duplicates touched | Found |",
+        "| --- | --- | --- | --- |",
+    ]
+    for defect, records in sorted(defects.items()):
+        touched = [key for key in known if key[0] in records or key[1] in records]
+        found = sum(1 for key in touched if key in found_keys)
+        lines.append(f"| {defect} | {len(records):,} | {len(touched)} | {found} |")
+    return lines
+
+
 def main(name: str) -> None:
     folder = OUT / name
     truth = pd.read_csv(folder / "truth.csv", dtype=str, keep_default_na=False)
@@ -103,6 +129,7 @@ def main(name: str) -> None:
         found = sum(1 for key in found_keys if known[key] == kind)
         lines.append(f"| {kind} | {planted} | {found} |")
 
+    lines += defect_lines(folder, known, found_keys)
     report = "\n".join(lines) + "\n"
     (folder / "results.md").write_text(report, encoding="utf-8")
     print(report)

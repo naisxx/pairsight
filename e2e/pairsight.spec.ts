@@ -360,6 +360,58 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('navigation').getByText('10K records')).toBeVisible()
 	})
 
+	// Scale Roadmap item 12: the saved file's profile, on Records. A file
+	// made here: stand-ins for blank emails, one number many people share,
+	// dates of birth day first, saved by an old Windows tool (not UTF-8).
+	test('Records says what it noticed in a messy file, and reads an old Windows CSV', async ({
+		page
+	}) => {
+		const two = (value: number) => String(value).padStart(2, '0')
+		const rows = Array.from({ length: 220 }, (_, index) => {
+			const email = index < 15 ? 'N/A' : `person${index}@mail.example`
+			const phone =
+				index < 20 ? '(415) 555-0100' : `(2${two(10 + (index % 89))}) 555-01${two(index % 100)}`
+			const birth = `${two(1 + (index % 28))}/${two(1 + (index % 12))}/19${two(50 + (index % 40))}`
+			const first = index === 0 ? 'Zoë' : `Quill${index}`
+			return `M${index},${first},Varrow${index},${email},${phone},${birth}`
+		})
+		const csv = ['id,first_name,last_name,email,phone,date_of_birth', ...rows].join('\n')
+		await signUp(page)
+		await createEvaluation(page, 'Messy file')
+		await page.locator('input[type=file]').setInputFiles({
+			name: 'messy.csv',
+			mimeType: 'text/csv',
+			// ë as one byte (0xEB), as Windows-1252 writes it.
+			buffer: Buffer.from(csv, 'latin1')
+		})
+		await expect(page.getByText(/This file isn’t saved as UTF-8/)).toBeVisible()
+		await page.getByRole('button', { name: 'Next: vendors' }).click()
+		await page.waitForURL('**/vendors')
+		await page.goto(page.url().replace(/\/vendors$/, '/records'))
+
+		const health = page.getByRole('region', { name: 'What we noticed in this file' })
+		await expect(health).toContainText('‘N/A’ stands in for “not known” in 15 records')
+		await expect(health).toContainText('(415) 555-0100 is shared by 20 records')
+		await expect(health).toContainText('dates are written day first')
+		await expect(health).toContainText('Jev and every screen still see exactly what your file says')
+		await page.getByRole('button', { name: 'Preview rows' }).click()
+		await expect(page.getByRole('cell', { name: 'Zoë' })).toBeVisible()
+	})
+
+	test('a clean file gets one quiet line on Records', async ({ page }) => {
+		await signUp(page)
+		await createEvaluation(page, 'Clean file')
+		await uploadFile(page, 'product-source.csv')
+		await page.getByRole('button', { name: 'Next: vendors' }).click()
+		await page.waitForURL('**/vendors')
+		await page.goto(page.url().replace(/\/vendors$/, '/records'))
+		await expect(
+			page
+				.getByRole('region', { name: 'What we noticed in this file' })
+				.getByText('Nothing in this file needs special handling.')
+		).toBeVisible()
+	})
+
 	test('a file too small to learn from is refused, and says how many it needs', async ({
 		page
 	}) => {
@@ -1516,8 +1568,10 @@ test.describe('PairSight vertical slice', () => {
 			test.slow()
 			await signUp(page)
 			await createEvaluation(page, 'Stuck call')
-			// 30 people sharing one phone number (an office line): 435 pairs,
-			// more than one round of calls.
+			// 30 people sharing one phone number (an office line), merged by the
+			// vendor into groups of 28 and 2: 379 pairs, more than one round of calls.
+			// (PairSight itself doesn't suggest them: a number that many share
+			// tells no one apart.)
 			const marker = await uploadRecords(page, 'crowd-source.csv')
 			await addVendor(page, 'crowd-vendor.csv')
 			await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
@@ -1531,7 +1585,7 @@ test.describe('PairSight vertical slice', () => {
 				.getByRole('article', { name: 'Run 1 · Stuck call' })
 			// Every other pair is checked well before that call gives up.
 			const progress = card.getByRole('progressbar')
-			await expect(progress).toHaveAttribute('aria-valuemax', '435')
+			await expect(progress).toHaveAttribute('aria-valuemax', '379')
 			await expect
 				.poll(
 					async () =>

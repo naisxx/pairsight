@@ -527,6 +527,14 @@ bar.
       numbers (first 20 shown, plus "and 14 more").
     - **Warnings** don't block.
   - Replacing the file is a secondary action that asks for confirmation.
+  - Once saved, **"What we noticed in this file"** sits under the file card:
+    stand-ins for "not known" ("N/A" in 312 emails), values too many records
+    share (a switchboard number), which way round the dates are read, and
+    values that couldn't be read, each saying it only changes how pairs are
+    picked. How full each field is sits in an (i) tip. A clean file gets one
+    line: "Nothing in this file needs special handling." A CSV that isn't
+    UTF-8 gets a note on the upload that it was read as Western European
+    text (Scale Roadmap, item 12).
   - Under 200 records: refused, saying PairSight needs at least 200 to learn
     what a duplicate looks like.
 - **Vendors:**

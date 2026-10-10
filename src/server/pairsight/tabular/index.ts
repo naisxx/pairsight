@@ -12,6 +12,7 @@ import { xlsxAdapter } from './xlsx'
 export type { Table, TableError, TableResult } from './table'
 export { FIRST_DATA_ROW } from './table'
 export type { TableScan } from './scan'
+export type { LegacyEncoding } from './format'
 
 const ADAPTERS: Record<TabularFormat, TabularAdapter> = { csv: csvAdapter, xlsx: xlsxAdapter }
 

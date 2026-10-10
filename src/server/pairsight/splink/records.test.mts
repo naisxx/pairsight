@@ -2,12 +2,16 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { ENTITY_TYPES, type EntityType } from '@/lib/pairsight/entity-types'
+import { keyContextFor, profileRecords } from '../profile/profile'
 import type { ScoringRecord } from '../scoring-records'
 import { splinkColumns, splinkRecordLines } from './records'
 
+// A file with nothing for its profile to settle.
+const context = keyContextFor(profileRecords([], { type: 'person', country: 'GB' }))
+
 // One record's line as column -> value.
 function written(type: EntityType, record: ScoringRecord): (column: string) => string | undefined {
-	const [, line] = [...splinkRecordLines([record], { type, country: 'GB' })]
+	const [, line] = [...splinkRecordLines([record], { type, context })]
 	const cells = (line ?? '').trimEnd().split(',')
 	return (column) => cells[splinkColumns(type).indexOf(column)]
 }
@@ -30,7 +34,7 @@ test('records go to Splink as cleaned keys, one line each', () => {
 				},
 				{ id: 'r2', fields: { first_name: 'Ann, "Annie"' } }
 			],
-			{ type: 'person', country: 'GB' }
+			{ type: 'person', context }
 		)
 	]
 	assert.equal(lines[0], `${splinkColumns('person').join(',')}\n`)
@@ -42,6 +46,7 @@ test('records go to Splink as cleaned keys, one line each', () => {
 	assert.equal(value('email'), 'jane.smith+news@example.com')
 	assert.equal(value('email_local'), 'jane.smith')
 	assert.equal(value('phone'), '+447700900123')
+	assert.equal(value('dob'), '1990-04-12')
 	assert.equal(value('dob_year'), '1990')
 	assert.equal(value('postcode'), 'SO45HQ')
 	assert.equal(value('postcode_district'), 'SO4')

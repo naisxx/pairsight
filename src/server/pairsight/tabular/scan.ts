@@ -1,5 +1,5 @@
 import { LIMITS } from '../limits'
-import type { TabularAdapter } from './format'
+import type { LegacyEncoding, TabularAdapter } from './format'
 import { FIRST_DATA_ROW, type TableError } from './table'
 
 // Reads a file a batch of rows at a time, checking it as it goes: the header,
@@ -13,7 +13,13 @@ import { FIRST_DATA_ROW, type TableError } from './table'
 // with one scan first and writes on a second.
 
 export type TableScan =
-	| { ok: true; headers: string[]; rowCount: number; sheet?: string }
+	| {
+			ok: true
+			headers: string[]
+			rowCount: number
+			sheet?: string
+			encoding?: LegacyEncoding
+	  }
 	| { ok: false; error: TableError }
 
 // The error checks in the order a user should see them, as one table would
@@ -101,6 +107,7 @@ export async function scanRows({
 		ok: true,
 		headers: headers ?? [],
 		rowCount,
-		...(opened.sheet == null ? {} : { sheet: opened.sheet })
+		...(opened.sheet == null ? {} : { sheet: opened.sheet }),
+		...(opened.encoding == null ? {} : { encoding: opened.encoding })
 	}
 }
