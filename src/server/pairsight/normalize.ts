@@ -55,9 +55,11 @@ export function normalizePostcode(value: string | undefined): string | null {
 }
 
 // Legal-form words a company name may carry or drop ("Acme Ltd" / "ACME
-// Limited" / "Acme"), removed from the end of the name.
+// Limited" / "Acme" / "Acme Pvt Ltd"), removed from the end of the name.
 const LEGAL_SUFFIXES = new Set([
+	'ab',
 	'ag',
+	'aps',
 	'bv',
 	'co',
 	'company',
@@ -67,28 +69,46 @@ const LEGAL_SUFFIXES = new Set([
 	'inc',
 	'incorporated',
 	'kg',
+	'kk',
 	'limited',
 	'llc',
 	'llp',
 	'lp',
 	'ltd',
+	'ltda',
 	'nv',
 	'oy',
 	'plc',
+	'private',
+	'pte',
 	'public',
 	'pty',
+	'pvt',
 	'sa',
 	'sarl',
 	'sas',
+	'sl',
 	'spa',
-	'srl'
+	'srl',
+	'ug'
 ])
+// Legal forms of several words whose middle words aren't legal forms alone
+// ("liability" in "Limited Liability Partnership", the "&" in "GmbH & Co. KG").
+const LEGAL_PHRASES = [
+	/ limited liability (partnership|company)$/,
+	/ limited partnership$/,
+	/ gmbh (&|\+|and) co\.? kg$/
+]
+// A leading "the" ("The Acme Group" / "Acme Group").
+const LEADING_THE = /^the (?=\S)/
 
 export function normalizeCompanyName(value: string | undefined): string | null {
 	const name = normalizeText(value)
 	if (name == null) return null
-	const words = name
-		.replace(/&/g, ' and ')
+	const trimmed = LEGAL_PHRASES.reduce((text, phrase) => text.replace(phrase, ''), name)
+	const words = trimmed
+		.replace(LEADING_THE, '')
+		.replace(/[&+]/g, ' and ')
 		.replace(/[^\p{L}\p{N}\s]/gu, '')
 		.split(/\s+/)
 		.filter((word) => word !== '')
