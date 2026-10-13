@@ -31,25 +31,6 @@
 	}
 }
 
-/* The empty states' idle float (empty/scenes.tsx). It moves `translate`, so
-   it never fights `rise` (transform) or a card's tilt (rotate). */
-@keyframes drift {
-	to {
-		translate: 0 -5px;
-	}
-}
-
-/* The cut-off drawer's tab, inviting a first look (cutoff-bar.tsx). */
-@keyframes tab-invite {
-	0%,
-	100% {
-		box-shadow: 0 0 0 0 color-mix(in srgb, var(--action) 0%, transparent);
-	}
-	40% {
-		box-shadow: 0 0 0 6px color-mix(in srgb, var(--action) 30%, transparent);
-	}
-}
-
 @keyframes grow-x {
 	from {
 		transform: scaleX(0);
@@ -118,28 +99,6 @@
 	mask-image: radial-gradient(ellipse 75% 70% at 50% 50%, black, transparent 80%);
 }
 
-/* The sign-in/up backdrop: one glow behind the form. */
-.auth-backdrop {
-	position: fixed;
-	inset: 0;
-	z-index: -1;
-	overflow: hidden;
-	pointer-events: none;
-}
-.auth-backdrop::before {
-	content: '';
-	position: absolute;
-	top: -12rem;
-	left: 50%;
-	width: 40rem;
-	height: 26rem;
-	translate: -50% 0;
-	border-radius: 9999px;
-	background: linear-gradient(100deg, var(--color-brand), var(--brand-orange), var(--brand-amber));
-	filter: blur(90px);
-	opacity: calc(var(--glow-strength) * 0.8);
-}
-
 /* Small things (sidebar steps): a shorter, quicker arrival. */
 .rise-gentle {
 	--rise-lift: 6px;
@@ -149,45 +108,35 @@
 
 /* ---- Motion ---- */
 
+/* Inside the product nothing loops and nothing runs longer than 240ms
+   (pairsight-handoff Motion): arrivals are quick, then everything is still. */
 @media (prefers-reduced-motion: no-preference) {
 	/* One arrival, staggered by `stagger-*` after `--rise-base`. */
 	.rise {
-		animation: rise 760ms var(--ease-out-soft) both;
+		animation: rise 240ms var(--ease-out-soft) both;
 		animation-delay: calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms));
 	}
 	.drop {
-		animation: drop 600ms var(--ease-out-soft) both;
+		animation: drop 240ms var(--ease-out-soft) both;
 	}
 
-	/* Two slow pulses, then still: noticed, not nagging. */
-	.tab-invite {
-		animation: tab-invite 1.6s var(--ease-out-soft) 600ms 2;
-	}
-
-	/* Arrive like `rise`, then float gently; -reverse floats the other way,
-	   so two things drift apart. */
+	/* The empty states' loose cards arrive like `rise`, then stay put. */
 	.empty-drift,
 	.empty-drift-reverse {
-		animation:
-			rise 760ms var(--ease-out-soft) both,
-			drift 3.2s ease-in-out 900ms infinite alternate;
-		animation-delay:
-			calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms)), 900ms;
-	}
-	.empty-drift-reverse {
-		animation-direction: normal, alternate-reverse;
+		animation: rise 240ms var(--ease-out-soft) both;
+		animation-delay: calc(var(--rise-base, 0ms) + var(--stagger-i, 0) * var(--rise-step, 70ms));
 	}
 
 	/* Bars on the Results overview wipe in from the left, once their card has
 	   arrived. */
 	.bar-wipe {
-		animation: wipe 1100ms var(--ease-out-soft) 350ms backwards;
+		animation: wipe 240ms var(--ease-out-soft) 350ms backwards;
 	}
 
 	/* Score bars fill from the left. */
 	.score-fill {
 		transform-origin: left;
-		animation: grow-x 900ms var(--ease-out-soft) both;
+		animation: grow-x 240ms var(--ease-out-soft) both;
 		animation-delay: calc(var(--rise-base, 0ms) + 240ms);
 	}
 
@@ -195,7 +144,7 @@
 	.page-frame > * {
 		--rise-lift: 10px;
 		--rise-blur: 3px;
-		animation: rise 560ms var(--ease-out-soft) both;
+		animation: rise 240ms var(--ease-out-soft) both;
 	}
 	.page-frame > :nth-child(2) {
 		animation-delay: 60ms;
@@ -209,4 +158,17 @@
 	.page-frame > :nth-child(n + 5) {
 		animation-delay: 240ms;
 	}
+}
+
+/* A vendor card's legend, hovered or focused: the other categories' tiles
+   shade out, so the mosaic shows where that one sits (mosaic.tsx). */
+.mosaic-card:has([data-legend='both_matched']:is(:hover, :focus-visible))
+	[data-tile]:not([data-tile='both_matched']),
+.mosaic-card:has([data-legend='vendor_only']:is(:hover, :focus-visible))
+	[data-tile]:not([data-tile='vendor_only']),
+.mosaic-card:has([data-legend='pairsight_only']:is(:hover, :focus-visible))
+	[data-tile]:not([data-tile='pairsight_only']),
+.mosaic-card:has([data-legend='neither_matched']:is(:hover, :focus-visible))
+	[data-tile]:not([data-tile='neither_matched']) {
+	opacity: 0.2;
 }

@@ -1,6 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -3 22 22" width="32" height="32">
-	<!-- The mark from wordmark.tsx (LogoGlyph), in the fixed brand coral, squared up for a tab icon. -->
-	<rect x="1" y="1" width="12" height="14" rx="3" fill="#e45742" />
-	<rect x="9" y="1" width="12" height="14" rx="3" fill="none" stroke="#e45742" stroke-width="2" />
-	<path d="M4.5 6h5M4.5 10h3.5" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" />
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+	<!-- The mark from wordmark.tsx (LogoGlyph): vendor, agreement, checker. On a
+	     charcoal tile, so the middle tile is paper on charcoal and reads on light
+	     and dark tab bars alike. apple-icon.png is this, rendered at 180px. -->
+	<rect width="32" height="32" rx="7" fill="#0D0D0E" />
+	<rect x="2" y="12" width="8" height="8" rx="2" fill="#FF4A1C" />
+	<rect x="12" y="12" width="8" height="8" rx="2" fill="#F4F3F0" />
+	<rect x="22" y="12" width="8" height="8" rx="2" fill="#BFD9E6" />
 </svg>

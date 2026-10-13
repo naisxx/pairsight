@@ -9,3 +9,7 @@ export const FIXED_CSP =
 // The request header src/proxy.ts puts this page view's script nonce in, for
 // the layout to hand to the scripts Next doesn't stamp itself (next-themes).
 export const NONCE_HEADER = 'x-nonce'
+
+// The request header src/proxy.ts sets to 'dark' on the landing page, which
+// is dark until someone picks a theme; the layout hands it to next-themes.
+export const THEME_DEFAULT_HEADER = 'x-theme-default'

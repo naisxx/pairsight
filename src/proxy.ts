@@ -3,9 +3,12 @@ import { createServerClient } from '@supabase/ssr'
 import createIntlMiddleware from 'next-intl/middleware'
 import { routing } from '@/i18n/routing'
 import type { AuthOnlySupabaseClient } from '@/lib/supabase/auth-only'
-import { FIXED_CSP, NONCE_HEADER } from '@/lib/csp'
+import { FIXED_CSP, NONCE_HEADER, THEME_DEFAULT_HEADER } from '@/lib/csp'
 
 const intlProxy = createIntlMiddleware(routing)
+
+// The landing page, with or without its locale prefix (/, /en).
+const LANDING_PATH = new RegExp(`^/(${routing.locales.join('|')})?/?$`)
 
 // The page CSP: the fixed half plus scripts. Only scripts carrying this
 // request's nonce run, plus whatever those load ('strict-dynamic'), so an
@@ -71,6 +74,11 @@ export default async function proxy(request: NextRequest) {
 	const requestHeaders = new Headers(request.headers)
 	requestHeaders.set(NONCE_HEADER, nonce)
 	requestHeaders.set('Content-Security-Policy', csp)
+	if (LANDING_PATH.test(request.nextUrl.pathname)) {
+		requestHeaders.set(THEME_DEFAULT_HEADER, 'dark')
+	} else {
+		requestHeaders.delete(THEME_DEFAULT_HEADER)
+	}
 	// next-intl forwards the headers of the request it's given to the page.
 	const intlResponse = intlProxy(new NextRequest(request, { headers: requestHeaders }))
 	intlResponse.headers.set('Content-Security-Policy', csp)
