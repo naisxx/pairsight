@@ -33,6 +33,9 @@ Read these before working on product features:
   the agreed path past v1's limits (worker, database-side results, Splink,
   automatic pair selection), in build order. Each item is planned and built
   on its own, starting from the code the previous one left.
+- [`docs/PairSight-OnPrem.md`](docs/PairSight-OnPrem.md): PairSight
+  installed on a customer's own machine (Windows first): the build order,
+  and the Jev key an admin sets in Settings, stored encrypted.
 
 Jev facts there are verified against TypeSafe's docs. Anything marked open
 must be tested against the real API; don't fill the gaps with assumptions.
