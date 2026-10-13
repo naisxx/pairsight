@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { EXACT_FORMATS } from '@/i18n/formats'
 import { Link } from '@/i18n/routing'
 import { mosaicOf } from '@/lib/pairsight/mosaic'
-import { demoMosaicCounts } from '@/server/pairsight/demo-mosaic'
+import { landingDemo } from '@/server/pairsight/landing-demo'
 import { Glyph } from './glyph'
 import { Mosaic } from './mosaic'
 import { SlimBar } from './slim-bar'
@@ -29,8 +29,11 @@ export async function AuthShell({
 	homeHref?: '/' | '/evaluations'
 	children: React.ReactNode
 }) {
-	const [t, counts] = await Promise.all([getTranslations('Auth'), demoMosaicCounts()])
-	const mosaic = counts == null ? null : mosaicOf(counts)
+	const t = await getTranslations('Auth')
+	// The products demo's best vendor, from its recorded run: the same mosaic
+	// the landing page leads with, and nothing here waits on the database.
+	const [leader] = landingDemo().vendors
+	const mosaic = leader == null ? null : mosaicOf(leader.counts)
 	return (
 		<div className="bg-bg text-text flex min-h-dvh flex-col text-base">
 			<SlimBar homeHref={homeHref} homeLabel={t('home')} className="drop">
