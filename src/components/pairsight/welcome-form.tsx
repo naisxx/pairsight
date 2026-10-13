@@ -3,7 +3,7 @@
 import { useId, useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
-import { SpinnerIcon, WarningCircleIcon } from '@/components/ui/icons'
+import { ArrowRightIcon, SpinnerIcon, WarningCircleIcon } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { FULL_NAME_MAX_LENGTH, fullNameSchema } from '@/lib/auth/profile'
 import { saveProfile } from '@/server/actions/auth'
@@ -24,7 +24,7 @@ export function WelcomeForm({ next }: { next?: string }) {
 	return (
 		<form
 			noValidate
-			className="border-border bg-surface mt-7 rounded-lg border p-5"
+			className="mt-8 flex flex-col"
 			onSubmit={(event) => {
 				event.preventDefault()
 				setIsSubmitted(true)
@@ -45,7 +45,7 @@ export function WelcomeForm({ next }: { next?: string }) {
 					{formError}
 				</div>
 			)}
-			<label htmlFor={`${id}-name`} className="type-ui font-medium">
+			<label htmlFor={`${id}-name`} className="mb-1.5 block text-sm font-semibold">
 				{t('nameLabel')}
 			</label>
 			<Input
@@ -53,23 +53,27 @@ export function WelcomeForm({ next }: { next?: string }) {
 				autoComplete="name"
 				autoFocus
 				maxLength={FULL_NAME_MAX_LENGTH}
-				className="mt-1.5"
+				className="text-base"
 				value={name}
 				onChange={(event) => setName(event.target.value)}
 				aria-invalid={showFieldError}
 				aria-describedby={`${id}-${showFieldError ? 'error' : 'hint'}`}
 			/>
 			{showFieldError ? (
-				<p id={`${id}-error`} className="text-danger mt-1.5 text-xs">
+				<p id={`${id}-error`} className="text-danger mt-1.5 text-sm">
 					{fieldError}
 				</p>
 			) : (
-				<p id={`${id}-hint`} className="text-text-muted mt-1.5 text-xs">
+				<p id={`${id}-hint`} className="text-text-muted mt-1.5 text-sm">
 					{t('nameHint')}
 				</p>
 			)}
-			<Button type="submit" className="mt-5 w-full" disabled={isPending}>
-				{isPending && <SpinnerIcon />}
+			<Button
+				type="submit"
+				className="mt-5 self-start"
+				disabled={isPending}
+				cap={isPending ? <SpinnerIcon /> : <ArrowRightIcon />}
+			>
 				{t('continue')}
 			</Button>
 		</form>
