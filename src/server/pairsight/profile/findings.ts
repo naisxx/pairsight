@@ -1,4 +1,5 @@
 import { rolesFor, type EntityType, type IdentityRole } from '@/lib/pairsight/entity-types'
+import type { GuessSignal } from './country-guess'
 import type { DatasetProfile } from './profile'
 
 // What Records says about a file's profile (profile.ts): only what changes
@@ -16,9 +17,16 @@ export type HealthFinding =
 	| { kind: 'overused'; role: IdentityRole; value: string; count: number }
 	| { kind: 'dates'; order: 'dmy' | 'mdy'; assumed: boolean }
 	| { kind: 'unreadable'; role: IdentityRole; count: number }
+	| { kind: 'country'; code: string; from: GuessSignal[] }
 
 export function healthFindings(profile: DatasetProfile, type: EntityType): HealthFinding[] {
 	const findings: HealthFinding[] = []
+	// Where the records look to be from, while the evaluation's country is
+	// still the one set from that: it decides how local numbers and dates read.
+	const guess = profile.countryGuess
+	if (guess?.applied === true && guess.code === profile.country) {
+		findings.push({ kind: 'country', code: guess.code, from: guess.from })
+	}
 	for (const role of rolesFor(type)) {
 		const field = profile.fields[role]
 		if (field == null) continue

@@ -157,10 +157,15 @@ async function currentProfile({
 }): Promise<DatasetProfile> {
 	const saved = parseProfile(stored)
 	if (saved != null && saved.country === country) return saved
-	const profile = profileRecords(
-		records.map((record) => record.fields),
-		{ type, country }
-	)
+	// Profiled again for the new country; where the file looked to be from
+	// doesn't change with it (datasets.ts compares it with the country).
+	const profile = {
+		...profileRecords(
+			records.map((record) => record.fields),
+			{ type, country }
+		),
+		countryGuess: saved?.countryGuess
+	}
 	await db.sourceDataset.update({ where: { id: datasetId }, data: { profile } })
 	return profile
 }

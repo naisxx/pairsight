@@ -7,6 +7,7 @@ import {
 } from '@/lib/pairsight/entity-types'
 import type { MappedFields } from '../normalize'
 import { cleanField, isPlaceholder, type KeyContext } from './clean'
+import { GUESS_SIGNALS } from './country-guess'
 import { dateOrderEvidence, isNumericDate, parseDate, type DateOrder } from './dates'
 
 // What a records file looks like, field by field, read once when it's saved
@@ -67,7 +68,14 @@ export const datasetProfileSchema = z.object({
 	fields: z.partialRecord(z.enum(IDENTITY_ROLES), fieldProfileSchema),
 	// Numeric dates of birth: which way round, and whether the file said so
 	// or the evaluation's country decided.
-	dates: z.object({ order: z.enum(['dmy', 'mdy']).nullable(), assumed: z.boolean() })
+	dates: z.object({ order: z.enum(['dmy', 'mdy']).nullable(), assumed: z.boolean() }),
+	// Where the file looked to be from (country-guess.ts), and whether the
+	// evaluation's country was set from it (datasets.ts). Absent on profiles
+	// from before the guess, and null when the file gave too little to go on.
+	countryGuess: z
+		.object({ code: z.string(), from: z.array(z.enum(GUESS_SIGNALS)), applied: z.boolean() })
+		.nullable()
+		.optional()
 })
 
 export type FieldProfile = z.infer<typeof fieldProfileSchema>
