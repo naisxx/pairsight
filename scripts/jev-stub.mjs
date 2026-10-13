@@ -22,6 +22,11 @@
 // POST /accept?marker=<text>, so a test can stop its own run with a
 // configuration error and then resume it.
 //
+// A request whose key is REFUSED_KEY gets 401, as Jev answers a wrong key,
+// so Settings' key check can be tested. GET /keys?marker=<text> lists the
+// last four characters of every key used on calls containing <text>, so a
+// test can prove a run used the key saved in Settings.
+//
 // POST /slow?marker=<text> delays every answer to a call containing <text>
 // by a few seconds until POST /fast?marker=<text>, so a test can
 // catch its own run part-way (to pause it) on a stub that's otherwise
@@ -47,6 +52,8 @@ const retrySeen = new Set()
 // Recent request bodies for /calls; capped so a long dev session can't grow it forever.
 const MAX_RECORDED_CALLS = 5_000
 const recordedCalls = []
+const REFUSED_KEY = 'e2e-refused-key'
+const KEY_TAIL = 4
 // marker -> the status a call containing it gets (401 or 403).
 const rejectedMarkers = new Map()
 // marker -> { kind, status?, retryAfter?, remaining?, until? } (see above).
@@ -196,33 +203,42 @@ const server = createServer((request, response) => {
 	}
 	if (request.method === 'GET' && request.url?.startsWith('/calls')) {
 		const marker = new URL(request.url, 'http://stub').searchParams.get('marker') ?? ''
-		const count = marker === '' ? 0 : recordedCalls.filter((raw) => raw.includes(marker)).length
+		const count = marker === '' ? 0 : recordedCalls.filter(({ raw }) => raw.includes(marker)).length
 		return send(response, 200, { count })
+	}
+	if (request.method === 'GET' && request.url?.startsWith('/keys')) {
+		const marker = new URL(request.url, 'http://stub').searchParams.get('marker') ?? ''
+		const keys = new Set(
+			recordedCalls.filter(({ raw }) => marker !== '' && raw.includes(marker)).map(({ key }) => key)
+		)
+		return send(response, 200, { keys: [...keys] })
 	}
 	if (request.method !== 'POST' || !request.url?.endsWith('/systemone')) {
 		return send(response, 404, { error: 'not_found' })
 	}
-	if (!/^Bearer \S+/.test(request.headers.authorization ?? '')) {
+	const key = /^Bearer (\S+)/.exec(request.headers.authorization ?? '')?.[1]
+	if (key == null || key === REFUSED_KEY) {
 		return send(response, 401, { error: 'invalid_api_key' })
 	}
+	const keyTail = key.slice(-KEY_TAIL)
 	let raw = ''
 	request.on('data', (chunk) => (raw += chunk))
 	request.on('end', () => {
-		if (troubled(raw, request, response)) return
+		if (troubled(raw, keyTail, request, response)) return
 		const isSlow = [...slowMarkers].some((marker) => raw.includes(marker))
-		if (isSlow) setTimeout(() => answer(raw, response), SLOW_ANSWER_MS)
-		else answer(raw, response)
+		if (isSlow) setTimeout(() => answer(raw, keyTail, response), SLOW_ANSWER_MS)
+		else answer(raw, keyTail, response)
 	})
 })
 
-function record(raw) {
-	recordedCalls.push(raw)
+function record(raw, key) {
+	recordedCalls.push({ raw, key })
 	if (recordedCalls.length > MAX_RECORDED_CALLS) recordedCalls.shift()
 }
 
 // A bad day for this call's marker, if it has one: answers (or doesn't) and
 // returns true.
-function troubled(raw, request, response) {
+function troubled(raw, key, request, response) {
 	const entry = [...troubles].find(([marker]) => raw.includes(marker))
 	if (entry == null) return false
 	const [marker, trouble] = entry
@@ -231,7 +247,7 @@ function troubled(raw, request, response) {
 		return false
 	}
 	trouble.remaining--
-	record(raw)
+	record(raw, key)
 	if (trouble.kind === 'hang') return true
 	if (trouble.kind === 'garbage') {
 		response.writeHead(200, { 'content-type': 'text/html' })
@@ -252,8 +268,8 @@ function troubled(raw, request, response) {
 }
 
 // Answers one judgment request (after the slow delay, if any).
-function answer(raw, response) {
-	record(raw)
+function answer(raw, key, response) {
+	record(raw, key)
 	const rejected = [...rejectedMarkers].find(([marker]) => raw.includes(marker))
 	if (rejected != null) {
 		return send(response, rejected[1], { error: 'invalid_api_key' })

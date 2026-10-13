@@ -1,7 +1,21 @@
+import { randomBytes } from 'node:crypto'
 import { defineConfig, devices } from '@playwright/test'
 
 const isPairsight = process.env.E2E_PAIRSIGHT === '1'
 const JEV_STUB_PORT = 4010
+
+// The PairSight specs reach the app's database directly for what has no
+// screen yet (e2e/db.ts): the same env files the app reads, .env.local first
+// as Next does. A variable already set wins.
+if (isPairsight) {
+	for (const file of ['.env.local', '.env']) {
+		try {
+			process.loadEnvFile(file)
+		} catch {
+			// No such file: nothing to load.
+		}
+	}
+}
 
 export default defineConfig({
 	testDir: './e2e',
@@ -83,7 +97,10 @@ export default defineConfig({
 									RUN_WORKER_POOL: 'e2e',
 									// Above the stub's slow answers (6 s), so only a call that
 									// never answers times out, and soon.
-									TYPESAFE_TIMEOUT_MS: '10000'
+									TYPESAFE_TIMEOUT_MS: '10000',
+									// A fresh one per run: a key saved in Settings by the suite
+									// is removed again by the test that saved it.
+									PAIRSIGHT_SECRET_KEY: randomBytes(32).toString('base64')
 								}
 							: {}
 					}

@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs'
 import { expect, test, type Page } from '@playwright/test'
 import { failOnCspViolations } from './csp'
+import { makeAdmin, removeAdmin } from './db'
 import { padded } from './padding'
 import { readPdfText } from './pdf'
 import {
@@ -237,7 +238,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(renamed).toHaveCount(0)
 		await page.getByRole('button', { name: 'Undo' }).click()
 		await expect(renamed).toBeVisible()
-		await expect(page.getByText('Evaluation restored')).toBeVisible()
+		await expect(page.getByText('Evaluation restored', { exact: true })).toBeVisible()
 		// Left alone, the delete goes through once the Undo has gone.
 		await deleteRenamed()
 		await expect(renamed).toHaveCount(0)
@@ -868,7 +869,7 @@ test.describe('PairSight vertical slice', () => {
 		// A stopped run is in Completed, marked as failed, with the reason and the fix.
 		const runs = page.getByRole('dialog', { name: 'Runs' })
 		const card = runs.getByRole('article', { name: 'Run 1 · Key problem' })
-		await expect(card.getByRole('alert')).toContainText('its access key was refused', {
+		await expect(card.getByRole('alert')).toContainText('Jev refused its key', {
 			timeout: 120_000
 		})
 		await expect(runs.getByRole('radio', { name: /^Completed/ })).toBeChecked()
@@ -899,6 +900,57 @@ test.describe('PairSight vertical slice', () => {
 		await reviewPlan(page)
 		return marker
 	}
+
+	// Settings: an admin's Jev key replaces the server's own. Jev checks it
+	// before it's saved (the stub refuses one key), only its end is ever shown,
+	// and the next run's calls carry it. Removing it goes back to the server's.
+	test('an admin sets the Jev key in Settings: checked first, then runs use it', async ({
+		page
+	}) => {
+		const email = await signUp(page)
+		await page.getByRole('button', { name: 'Account: Test Person' }).click()
+		await page.getByRole('menuitem', { name: 'Settings' }).click()
+		await page.waitForURL('**/settings')
+		await expect(page.getByText('Runs use the Jev key this server was set up with.')).toBeVisible()
+		// Not an admin: the connection is shown, not changeable.
+		await expect(page.getByText('Only an admin can change the Jev key.')).toBeVisible()
+		await expect(page.getByLabel('Jev key')).toHaveCount(0)
+
+		await makeAdmin(email)
+		await page.reload()
+		const key = page.getByLabel('Jev key')
+		await expect(page.getByLabel('Jev’s address')).toHaveValue(`${JEV_STUB}/v1`)
+		await key.fill('e2e-refused-key')
+		await page.getByRole('button', { name: 'Check and save' }).click()
+		await expect(
+			page.getByRole('alert').filter({ hasText: 'Jev didn’t accept this key' })
+		).toBeVisible()
+
+		const tail = Math.random().toString(36).slice(2, 6).padEnd(4, '0')
+		await key.fill(`e2e-saved-key-${tail}`)
+		await page.getByRole('button', { name: 'Check and save' }).click()
+		await expect(page.getByText(`••••${tail}`)).toBeVisible()
+		await expect(page.getByText(`e2e-saved-key-${tail}`)).toHaveCount(0)
+		await expect(page.getByLabel('New Jev key')).toHaveValue('')
+
+		try {
+			await page.goto('/evaluations')
+			await createEvaluation(page, 'Own Jev key')
+			const marker = await uploadRecords(page, 'demo-source.csv')
+			await addVendor(page, 'demo-vendor-a.csv')
+			await runEvaluation(page)
+			const response = await page.request.get(`${JEV_STUB}/keys?marker=${marker}`)
+			expect(await response.json()).toEqual({ keys: [tail] })
+		} finally {
+			// The saved key is this server's: never leave it for other tests.
+			await page.goto('/settings')
+			await page.getByRole('button', { name: 'Remove key' }).click()
+			await expect(
+				page.getByText('Runs use the Jev key this server was set up with.')
+			).toBeVisible()
+			await removeAdmin(email)
+		}
+	})
 
 	test('a run keeps going with the page closed, and is finished when you come back', async ({
 		context,
