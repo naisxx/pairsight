@@ -132,11 +132,29 @@ test('an unknown page answers 404 and says so', async ({ page }) => {
 	await expect(page.getByText('We can’t find that page')).toBeVisible()
 })
 
+test('the footer’s Privacy and Terms open their pages', async ({ page }) => {
+	for (const name of ['Privacy', 'Terms']) {
+		await page.goto('/')
+		await page.getByRole('contentinfo').getByRole('link', { name, exact: true }).click()
+		await expect(page).toHaveURL(new RegExp(`/${name.toLowerCase()}$`))
+		await expect(page.getByRole('heading', { level: 1, name })).toBeVisible()
+	}
+})
+
+// The files Records and Vendors offer to download (pnpm samples:build).
+test('the sample files are served as CSV', async ({ request }) => {
+	for (const name of ['records', 'vendor-pairs', 'vendor-groups']) {
+		const response = await request.get(`/samples/pairsight-sample-${name}.csv`)
+		expect(response.status()).toBe(200)
+		expect((await response.text()).split('\n').length).toBeGreaterThan(2)
+	}
+})
+
 for (const colorScheme of ['light', 'dark'] as const) {
 	test.describe(`accessibility, ${colorScheme}`, () => {
 		test.use({ colorScheme, contextOptions: { reducedMotion: 'reduce' } })
 
-		for (const path of ['/', '/sign-in', '/sign-up', '/no-such-page']) {
+		for (const path of ['/', '/sign-in', '/sign-up', '/privacy', '/no-such-page']) {
 			test(`${path} has no WCAG A/AA violations`, async ({ page }) => {
 				await page.goto(path)
 				// A not-found page streams in as a bare shell first (Next sends the
