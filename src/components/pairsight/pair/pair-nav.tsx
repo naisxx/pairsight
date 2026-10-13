@@ -1,7 +1,7 @@
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { ArrowLeftIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icons'
+import { ChevronLeftIcon, ChevronRightIcon } from '@/components/ui/icons'
 import { Kbd } from '@/components/ui/kbd'
 import { cn } from '@/lib/cn'
 import { exactTitle } from '@/components/ui/count'
@@ -28,7 +28,7 @@ export function PairNav({
 }) {
 	const t = useTranslations('Pair')
 	const step = (href: Href | null, label: string, keys: string, content: React.ReactNode) => (
-		<Button asChild variant="secondary" size="sm" aria-label={label}>
+		<Button asChild variant="secondary" aria-label={label}>
 			<Link
 				href={href ?? resultsHref}
 				aria-keyshortcuts={keys}
@@ -41,19 +41,20 @@ export function PairNav({
 	)
 	return (
 		<div className="flex flex-wrap items-center justify-between gap-3">
-			<Button asChild variant="quiet" size="sm" className="-ml-2">
-				<Link href={resultsHref} aria-keyshortcuts="Escape">
-					<ArrowLeftIcon size={15} />
-					{t('back')}
-					<span className="hidden @2xl:inline-flex">
-						<Kbd>Esc</Kbd>
-					</span>
-				</Link>
-			</Button>
-			<div className="flex items-center gap-2">
+			<Link
+				href={resultsHref}
+				aria-keyshortcuts="Escape"
+				className="text-text decoration-border-strong hover:decoration-text inline-flex min-h-11 items-center gap-2 underline underline-offset-[3px] transition-[text-decoration-color] duration-150"
+			>
+				{t('back')}
+				<span className="hidden no-underline @2xl:inline-flex">
+					<Kbd>Esc</Kbd>
+				</span>
+			</Link>
+			<div className="flex flex-wrap items-center gap-2">
 				{position != null && (
 					<span
-						className="text-text-muted type-ui"
+						className="text-text-muted text-sm"
 						title={exactTitle([position, total], () =>
 							t.markup(
 								isInFiltered ? 'positionFiltered' : 'positionAll',
@@ -65,7 +66,7 @@ export function PairNav({
 						{t.rich(isInFiltered ? 'positionFiltered' : 'positionAll', {
 							position,
 							total,
-							n: (chunks) => <span className="text-text font-mono">{chunks}</span>
+							n: (chunks) => <span className="font-mono">{chunks}</span>
 						})}
 					</span>
 				)}
@@ -74,7 +75,9 @@ export function PairNav({
 					t('previousShortcut'),
 					'K',
 					<>
-						<ChevronLeftIcon size={14} />
+						<span className="@2xl:hidden">
+							<ChevronLeftIcon size={16} />
+						</span>
 						<span className="hidden @2xl:inline">{t('previous')}</span>
 						<span className="hidden @3xl:inline-flex">
 							<Kbd>K</Kbd>
@@ -90,7 +93,9 @@ export function PairNav({
 						<span className="hidden @3xl:inline-flex">
 							<Kbd>J</Kbd>
 						</span>
-						<ChevronRightIcon size={14} />
+						<span className="@2xl:hidden">
+							<ChevronRightIcon size={16} />
+						</span>
 					</>
 				)}
 			</div>
