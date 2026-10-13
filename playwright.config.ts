@@ -20,6 +20,18 @@ export default defineConfig({
 	},
 	projects: [
 		{ name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@pushback/ },
+		// The landing's scroll-linked walkthrough is driven by script so it plays
+		// the same everywhere; it's checked in Safari's and Firefox's engines too.
+		{
+			name: 'webkit',
+			use: { ...devices['Desktop Safari'] },
+			testMatch: /landing-motion\.spec\.ts/
+		},
+		{
+			name: 'firefox',
+			use: { ...devices['Desktop Firefox'] },
+			testMatch: /landing-motion\.spec\.ts/
+		},
 		// Jev pushing back slows every call the server makes (one shared limit),
 		// so those tests run on their own, once everything else has finished.
 		{

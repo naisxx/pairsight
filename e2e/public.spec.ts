@@ -26,88 +26,91 @@ test('the landing page is served unprefixed, and /en redirects to it', async ({ 
 	expect(new URL(page.url()).pathname).toBe('/')
 })
 
-// The hero's panel runs on the demo's real recorded run
-// (prisma/demo/sandbox-snapshot.json): 8 checked pairs, two vendors.
-test('the landing’s demo results respond: vendor, match cut-off and a pair', async ({ page }) => {
+// The hero's panel runs on the products demo's real recorded run
+// (prisma/demo/sandbox-products-snapshot.json): 286 checked pairs, two vendors.
+test('the landing’s demo results switch vendor', async ({ page }) => {
 	await page.goto('/')
-	const panel = page.getByRole('region', { name: 'Demo results you can try' })
-	const count = (category: string) => panel.getByTestId(`count-${category}`)
-	const expectCounts = async (counts: [number, number, number, number]) => {
-		const categories = ['both_matched', 'pairsight_only', 'vendor_only', 'neither_matched']
-		for (const [index, category] of categories.entries()) {
-			await expect(count(category)).toHaveText(String(counts[index]))
+	const panel = page.getByRole('region', { name: 'Demo results' })
+	const expectLegend = async (counts: [number, number, number, number]) => {
+		const labels = ['both say same', 'only the vendor', 'only Jev', 'both say different']
+		for (const [index, label] of labels.entries()) {
+			// What's on screen: a phone's shorter label sits beside it, hidden.
+			await expect(panel.getByRole('listitem').filter({ hasText: label })).toHaveText(
+				`${counts[index]} ${label}`,
+				{ useInnerText: true }
+			)
 		}
 	}
 
-	// The demo's recorded run: Northwind Match at 0.50 merged 157 pairs, 134 of
-	// which Jev agrees with, and found 134 of Jev's 178 duplicates.
-	await expectCounts([134, 44, 23, 64])
-	await expect(panel.getByText('85.4%')).toBeVisible()
-	await expect(panel.getByText('75.3%')).toBeVisible()
+	// Best overall score first: Atlas Resolve. The panel moves on to the next
+	// vendor by itself until someone picks one, so pick it.
+	const atlas = panel.getByRole('button', { name: 'Atlas Resolve' })
+	await expect(atlas).toHaveAttribute('aria-pressed', 'true')
+	await atlas.click()
+	await expect(panel.locator('.landing-vendor-timer')).toHaveCount(0)
+	await expect(
+		panel.getByRole('img', { name: /^286 tiles, one per checked pair, for Atlas Resolve/ })
+	).toBeVisible()
+	await expectLegend([158, 44, 42, 42])
+	await expect(panel).toContainText(
+		'Atlas Resolve agrees with Jev on 200 of 286 pairs. Overall score 78.6%.'
+	)
 
-	// At the lowest cut-off Jev calls every pair the same.
-	await panel.getByRole('slider', { name: 'Match cut-off' }).focus()
-	await page.keyboard.press('Home')
-	await expect(panel.locator('output')).toHaveText('0.01')
-	await expectCounts([157, 108, 0, 0])
-
-	await page.keyboard.press('End')
-	await panel.getByRole('radio', { name: 'Clearline Resolve' }).click()
-	await panel.getByRole('slider', { name: 'Match cut-off' }).focus()
-	for (let step = 0; step < 49; step++) await page.keyboard.press('ArrowLeft')
-	await expect(panel.locator('output')).toHaveText('0.50')
-	await expectCounts([158, 20, 53, 34])
-
-	// Opening a pair shows its two records and what the vendor said.
-	await panel.getByRole('button', { name: /Freya Selbelvar/ }).click()
-	const detail = panel.locator('#hero-pair')
-	await expect(detail).toContainText('P001497 · P001496')
-	await expect(detail).toContainText('Clearline Resolve kept these apart')
+	await panel.getByRole('button', { name: 'Meridian Match' }).click()
+	await expect(atlas).toHaveAttribute('aria-pressed', 'false')
+	await expectLegend([118, 15, 82, 71])
+	await expect(panel).toContainText(
+		'Meridian Match agrees with Jev on 189 of 286 pairs. Overall score 70.9%.'
+	)
 })
 
 test('the landing’s FAQ opens, and the section links scroll', async ({ page }) => {
 	await page.goto('/')
-	const answer = page.getByText('Jev is TypeSafe’s AI.', { exact: false })
+	const answer = page.getByText('Jev is the AI that checks each pair.', { exact: false })
 	await expect(answer).toBeHidden()
 	await page.getByText('Who is Jev?').click()
 	await expect(answer).toBeVisible()
 
-	await page
-		.getByRole('navigation', { name: 'Sections' })
-		.getByRole('link', { name: 'FAQ' })
-		.click()
-	await expect(page.getByRole('heading', { name: 'Quick answers.' })).toBeInViewport()
-	await page
-		.getByRole('navigation', { name: 'Sections' })
-		.getByRole('link', { name: 'A closer look' })
-		.click()
-	await expect(page.locator('#look')).toBeInViewport()
+	const sections = page.getByRole('navigation', { name: 'Sections' })
+	await sections.getByRole('link', { name: 'Questions' }).click()
+	await expect(page.getByRole('heading', { name: 'Asked and answered.' })).toBeInViewport()
+	// The landing scrolls smoothly: let it come to rest before the next click.
+	await expect(page.locator('html')).not.toHaveClass(/lenis-scrolling/)
+	await sections.getByRole('link', { name: 'Inside' }).click()
+	await expect(page.locator('#inside')).toBeInViewport()
 })
 
-test('a chosen theme survives a reload, applied before the page paints', async ({ page }) => {
+test('the landing page starts dark, and a chosen theme survives a reload before paint', async ({
+	page
+}) => {
+	const theme = () => page.evaluate(() => document.documentElement.dataset.theme)
 	await page.emulateMedia({ colorScheme: 'light' })
+	// Nothing chosen yet: the landing page is dark, the app follows the system.
 	await page.goto('/')
-	await page.getByRole('button', { name: 'Theme' }).click()
-	await page.getByRole('menuitemradio', { name: 'Dark' }).click()
-	await expect(page.locator('html')).toHaveClass(/\bdark\b/)
+	expect(await theme()).toBe('dark')
+	await page.goto('/sign-in')
+	expect(await theme()).toBe('light')
 
-	// The class is set by an inline script in <head>, so it's already there
-	// when the document has only just been parsed: no light flash first.
-	await page.reload({ waitUntil: 'domcontentloaded' })
-	expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(true)
-
-	// And back: the OS preference (light here) is followed again, once the
-	// page is interactive (the menu is a client component).
+	await page.goto('/')
 	await page.waitForLoadState('networkidle')
-	await page.getByRole('button', { name: 'Theme' }).click()
-	await page.getByRole('menuitemradio', { name: 'System' }).click()
+	const toggle = page.getByRole('button', { name: 'Dark theme' })
+	await expect(toggle).toHaveAttribute('aria-pressed', 'true')
+	await toggle.click()
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
+	await expect(toggle).toHaveAttribute('aria-pressed', 'false')
+
+	// The attribute is set by an inline script in <head>, so it's already
+	// there when the document has only just been parsed: no flash first. The
+	// choice now wins on the landing page too.
 	await page.reload({ waitUntil: 'domcontentloaded' })
-	expect(await page.evaluate(() => document.documentElement.classList.contains('dark'))).toBe(false)
+	expect(await theme()).toBe('light')
+	await page.goto('/sign-in', { waitUntil: 'domcontentloaded' })
+	expect(await theme()).toBe('light')
 })
 
 // src/proxy.ts: each page view gets its own nonce (a reused one could be
 // copied into an injected script), and the pages still work under it: the
-// theme menu needs both the page's scripts and next-themes' inline one.
+// theme switch needs both the page's scripts and next-themes' inline one.
 test('pages run under a fresh script nonce', async ({ page }) => {
 	const nonces: string[] = []
 	for (const path of ['/', '/sign-in', '/']) {
@@ -118,8 +121,9 @@ test('pages run under a fresh script nonce', async ({ page }) => {
 		nonces.push(/'nonce-([^']+)'/.exec(csp)?.[1] ?? '')
 	}
 	expect(new Set(nonces).size).toBe(nonces.length)
-	await page.getByRole('button', { name: 'Theme' }).click()
-	await expect(page.getByRole('menuitemradio', { name: 'Dark' })).toBeVisible()
+	await page.waitForLoadState('networkidle')
+	await page.getByRole('button', { name: 'Dark theme' }).click()
+	await expect(page.locator('html')).toHaveAttribute('data-theme', 'light')
 })
 
 test('an unknown page answers 404 and says so', async ({ page }) => {
@@ -141,5 +145,17 @@ for (const colorScheme of ['light', 'dark'] as const) {
 				await expectNoAxeViolations(page)
 			})
 		}
+
+		// The landing's phone layout (under 600px) is its own arrangement.
+		test.describe('on a phone', () => {
+			test.use({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })
+			for (const path of ['/', '/sign-in']) {
+				test(`${path} has no WCAG A/AA violations`, async ({ page }) => {
+					await page.goto(path)
+					await expect(page.locator('html')).toHaveAttribute('lang', /.+/)
+					await expectNoAxeViolations(page)
+				})
+			}
+		})
 	})
 }
