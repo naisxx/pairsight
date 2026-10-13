@@ -9,6 +9,7 @@ import { RefreshWhile } from '@/components/pairsight/refresh-while'
 import { StartRunButton } from '@/components/pairsight/start-run-button'
 import { ACTION_HINT_ID, ActionBar, StepHeader } from '@/components/pairsight/step-layout'
 import { AlertIcon, ArrowRightIcon, InfoIcon } from '@/components/ui/icons'
+import { getJevCredentials } from '@/server/ai/jev-credentials'
 import { estimateCostUsd } from '@/server/pairsight/cost'
 import { estimateRunDuration } from '@/server/pairsight/run-estimate'
 import { recentCheckRate } from '@/server/pairsight/run-speed'
@@ -32,12 +33,18 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const [t, format] = await Promise.all([getTranslations('Plan'), getFormatter()])
 	const { dataset } = workspace
 	const latestRun = workspace.runs[0]
-	const [plan, vendors, pairsPerSecond] = await Promise.all([
+	const [plan, vendors, pairsPerSecond, jev] = await Promise.all([
 		computePlan({ scope, evaluationId: id }),
 		dataset == null ? Promise.resolve([]) : listVendors(id, dataset.id),
-		recentCheckRate()
+		recentCheckRate(),
+		// The demo never starts a run, so it never needs a key.
+		view.isReadOnly ? Promise.resolve(null) : getJevCredentials()
 	])
+
 	const counts = ('counts' in plan ? plan.counts : undefined) ?? null
+	// New pairs need a Jev key to be checked: say so before Start run. A run
+	// whose pairs were all checked before sends nothing, so needs none.
+	const isMissingJev = !view.isReadOnly && jev == null && (counts?.toEvaluate ?? 0) > 0
 	const costUsd = counts == null ? 0 : estimateCostUsd(counts.toEvaluate)
 	const contributors = ('contributors' in plan ? plan.contributors : undefined) ?? []
 	const splink = ('splink' in plan ? plan.splink : undefined) ?? null
@@ -45,7 +52,9 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const [firstBlocker] = plan.blockers
 	const blockedReason =
 		firstBlocker == null
-			? null
+			? isMissingJev
+				? t('blockedNoJev')
+				: null
 			: firstBlocker === 'too_many_pairs'
 				? t('blockedOver', { count: (counts?.uniquePairs ?? 0) - LIMITS.maxPairsPerRun })
 				: t(firstBlocker, { min: MIN_RECORDS })
@@ -118,7 +127,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 								<StartRunButton
 									evaluationId={id}
 									pairCount={counts.uniquePairs}
-									isDisabled={plan.blockers.length > 0}
+									isDisabled={plan.blockers.length > 0 || isMissingJev}
 									describedBy={blockedReason == null ? undefined : ACTION_HINT_ID}
 								/>
 							</ReadOnlyGate>
@@ -155,7 +164,20 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					blockedReason == null ? undefined : (
 						<>
 							<InfoIcon size={ICON_SIZE} className="shrink-0" />
-							<span>{blockedReason}</span>
+							<span>
+								{blockedReason}
+								{firstBlocker == null && isMissingJev && (
+									<>
+										{' '}
+										<Link
+											href="/settings"
+											className="text-text decoration-border-strong hover:decoration-text underline underline-offset-[3px]"
+										>
+											{t('blockedNoJevLink')}
+										</Link>
+									</>
+								)}
+							</span>
 						</>
 					)
 				}

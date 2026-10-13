@@ -3,6 +3,7 @@ import { env } from '@/lib/env'
 import { trackAiCall } from '@/server/lib/ai-usage/sink'
 import type { TrackedModel } from '@/server/lib/ai-usage/models'
 import type { AiUsageMeta } from '@/server/lib/ai-usage/track'
+import { getJevCredentials, type JevCredentials } from './jev-credentials'
 import { retryAfterMs } from './retry-after'
 
 // TypeSafe's System One API (the Jev decision model). The only file that calls
@@ -70,7 +71,8 @@ export type DecisionContext = {
 }
 
 /**
- * A tracked System One decision call. Returns the parsed JSON body untouched
+ * A tracked System One decision call, with this server's Jev key and address
+ * unless others are given. Returns the parsed JSON body untouched
  * (callers validate it — the shape is an external contract) and throws
  * `TypesafeError` for anything else, never a plain error: a non-2xx (with
  * Jev's Retry-After), a timeout or dropped connection at any point, a body
@@ -78,12 +80,16 @@ export type DecisionContext = {
  */
 export async function requestDecision(
 	context: DecisionContext,
-	request: DecisionRequest
+	request: DecisionRequest,
+	// A key and address to try instead of this server's (jev-credentials.ts):
+	// the Settings page checks a key this way before it's saved.
+	credentials?: JevCredentials
 ): Promise<unknown> {
-	const apiKey = env.TYPESAFE_API_KEY
-	if (apiKey == null || apiKey === '') {
-		throw new TypesafeError({ kind: 'config', message: 'TYPESAFE_API_KEY is not set' })
+	const jev = credentials ?? (await getJevCredentials())
+	if (jev == null) {
+		throw new TypesafeError({ kind: 'config', message: 'No Jev key is set up' })
 	}
+	const { apiKey, baseUrl } = jev
 
 	return trackAiCall({ provider: 'typesafe', ...context }, async () => {
 		// One deadline for the whole call, body included: a body that stops
@@ -91,7 +97,7 @@ export async function requestDecision(
 		const signal = AbortSignal.timeout(env.TYPESAFE_TIMEOUT_MS)
 		let response: Response
 		try {
-			response = await fetch(`${env.TYPESAFE_API_BASE_URL}/systemone`, {
+			response = await fetch(`${baseUrl}/systemone`, {
 				method: 'POST',
 				headers: { authorization: `Bearer ${apiKey}`, 'content-type': 'application/json' },
 				body: JSON.stringify({ model: context.model, ...request }),

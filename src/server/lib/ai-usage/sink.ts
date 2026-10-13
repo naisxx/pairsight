@@ -2,6 +2,8 @@ import 'server-only'
 import { after } from 'next/server'
 import { db } from '@/server/db/client'
 import { captureError } from '@/lib/observability/capture-error'
+import { isOnPrem } from '@/server/deployment'
+import { BUNDLED_RATE_CARD } from './bundled-rates'
 import { openRouterSlug } from './models'
 import { costMicroUsd, rateCard } from './pricing'
 import { createAiTracker, type AiUsageRow } from './track'
@@ -47,7 +49,8 @@ function recordUsage(row: AiUsageRow): void {
 }
 
 async function persist(row: AiUsageRow): Promise<void> {
-	const rates = await rateCard()
+	// On-prem nothing is fetched from OpenRouter: the rates it shipped with.
+	const rates = isOnPrem() ? BUNDLED_RATE_CARD : await rateCard()
 	// Two lookups, two jobs. The tier-suffixed slug is what prices the call,
 	// since `:batch` is a separate upstream entry at half price. The base slug
 	// is what gets stored, because `service_tier` already carries the tier and

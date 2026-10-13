@@ -2,6 +2,7 @@ import 'server-only'
 import { env } from '@/lib/env'
 import { AppError } from '@/lib/errors/app-error'
 import { MIN_RECORDS } from '@/lib/pairsight/entity-types'
+import { getJevCredentials } from '@/server/ai/jev-credentials'
 import { db } from '@/server/db/client'
 import { chunks } from './chunks'
 import { pairKey } from './pairs'
@@ -56,6 +57,11 @@ export async function startRun({
 		throw new AppError(BLOCKER_MESSAGES[blocker ?? 'no_dataset'], { code: blocker ?? 'no_dataset' })
 	}
 	const { evaluation, dataset, comparison, config, judgmentKey: key, exports } = plan
+	if (plan.counts.toEvaluate > 0 && (await getJevCredentials()) == null) {
+		throw new AppError('Runs need a Jev key first. An admin can add one in Settings.', {
+			code: 'no_jev_key'
+		})
+	}
 
 	const run = await db.$transaction(
 		async (tx) => {

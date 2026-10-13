@@ -12,14 +12,30 @@
 //
 // Exit codes: 0 clean (or upstream unreachable), 1 a mapped slug is gone.
 
+import { readFileSync } from 'node:fs'
 import { fetchRateCard } from '../src/server/lib/ai-usage/pricing.ts'
 import { OPENROUTER_SLUGS } from '../src/server/lib/ai-usage/models.ts'
+
+// The rate card on-prem installs price with instead (pnpm ai:rate-card).
+const BUNDLED_RATE_CARD = 'src/server/lib/ai-usage/rate-card.json'
 
 const mapped = Object.entries(OPENROUTER_SLUGS)
 
 if (mapped.length === 0) {
 	console.log('No models mapped — nothing to check. (A project with no AI calls is fine here.)')
 	process.exit(0)
+}
+
+// Offline, so checked first: an on-prem install prices a model only if the
+// bundled card has it, and an unpriced call is NULL there for good.
+const bundled = JSON.parse(readFileSync(BUNDLED_RATE_CARD, 'utf8')).rates
+const unbundled = mapped.filter(([, slug]) => bundled[slug] == null)
+if (unbundled.length > 0) {
+	console.error(
+		`${BUNDLED_RATE_CARD} has no rates for: ${unbundled.map(([model]) => model).join(', ')}. ` +
+			`Run pnpm ai:rate-card and commit the file.`
+	)
+	process.exit(1)
 }
 
 let rates
@@ -62,4 +78,16 @@ const withoutBatch = mapped
 	.map(([model]) => model)
 if (withoutBatch.length > 0) {
 	console.log(`No batch tier upstream for: ${withoutBatch.join(', ')} (fine unless you use it).`)
+}
+
+// Rates move every few weeks; on-prem keeps the day it shipped with. Worth
+// refreshing before a release, not worth failing a PR over.
+const moved = mapped
+	.filter(([, slug]) => JSON.stringify(bundled[slug]) !== JSON.stringify(rates.get(slug)))
+	.map(([model]) => model)
+if (moved.length > 0) {
+	console.log(
+		`The bundled rate card is behind OpenRouter for: ${moved.join(', ')}. ` +
+			`Run pnpm ai:rate-card before the next on-prem release.`
+	)
 }

@@ -786,7 +786,8 @@ The plan as first written:
 ### Later
 
 - **On-prem packaging:** web, worker, Splink service and Postgres as
-  containers, with the customer's local Jev.
+  containers, with the customer's own Jev key. In progress, Windows first:
+  see `docs/PairSight-OnPrem.md`.
 - **Rerun item 0's scale files** at 100k and 1M once items 1–6 exist.
 - Human review, analytics events, the prompt-audit fixes, vendor-specific
   file formats and legacy `.xls`, verified ground-truth uploads and an
