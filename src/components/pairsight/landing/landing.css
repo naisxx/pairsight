@@ -1,0 +1,861 @@
+/* The landing page's own drawing (pairsight-handoff Landing.dc.html), ported
+   to the app's tokens: --border is the design's --line, --surface-muted its
+   --bg2, --brand / --brand-text its coral, --ice / --ice-text its ice. Static
+   for now: the glow rests where it starts, and nothing moves on scroll. */
+
+/* The ground: a 48px plan of faint lines with a dot at each crossing, and two
+   tinted copies masked to circles around the pointer (vermilion within
+   240px, ice within 480px). Until the pointer moves they rest at 72% across,
+   380px down. */
+.landing-grid,
+.landing-grid > i {
+	--k: color-mix(in srgb, var(--border) 55%, var(--bg));
+	background-image:
+		radial-gradient(circle at 0.5px 0.5px, var(--k) 2px, transparent 2.5px),
+		linear-gradient(to right, color-mix(in srgb, var(--k) 40%, transparent) 1px, transparent 1px),
+		linear-gradient(to bottom, color-mix(in srgb, var(--k) 40%, transparent) 1px, transparent 1px);
+	background-position:
+		-1px -1px,
+		0 0,
+		0 0;
+	background-size: 48px 48px;
+}
+.landing-grid {
+	position: absolute;
+	inset: 0;
+}
+.landing-grid > i {
+	position: absolute;
+	inset: 0;
+	--k: var(--c);
+	opacity: var(--o);
+	mask-image: radial-gradient(
+		circle var(--r) at var(--cx, 72%) var(--cy, 380px),
+		#000 0,
+		transparent 100%
+	);
+}
+
+/* The two lit copies: ice reaches further, vermilion is brighter. */
+.landing-glow-ice {
+	--c: var(--ice-text);
+	--r: 480px;
+	--o: 0.35;
+}
+.landing-glow-brand {
+	--c: var(--color-brand);
+	--r: 240px;
+	--o: 0.6;
+}
+
+/* The hero's soft light, where the pointer rests. */
+.landing-spot {
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: radial-gradient(
+		460px circle at var(--mx, 72%) var(--my, 34%),
+		color-mix(in srgb, var(--text) 6%, transparent),
+		transparent 62%
+	);
+}
+
+/* "Different": vermilion, with an ice outline of the same word a little
+   down and to the right, the two answers that don't line up. */
+.landing-double {
+	position: relative;
+	display: inline-block;
+	color: var(--brand-text);
+}
+.landing-double::after {
+	content: attr(data-text);
+	position: absolute;
+	left: 0;
+	top: 0;
+	color: transparent;
+	-webkit-text-stroke: 1.5px var(--ice-text);
+	transform: translate(0.075em, 0.075em);
+	pointer-events: none;
+}
+
+/* A value that differs from the other record's. */
+.landing-diff {
+	border-radius: 3px;
+	padding: 0 3px;
+	background: color-mix(in srgb, var(--color-brand) 20%, transparent);
+	box-shadow: inset 0 -2px 0 var(--color-brand);
+}
+
+/* A figure's pairs, shown on hover or focus. */
+.landing-figure-pairs {
+	display: grid;
+	grid-template-rows: 0fr;
+}
+.landing-figure:hover .landing-figure-pairs,
+.landing-figure:focus-visible .landing-figure-pairs {
+	grid-template-rows: 1fr;
+}
+.landing-figure:hover .landing-figure-value,
+.landing-figure:focus-visible .landing-figure-value {
+	color: var(--brand-text);
+}
+
+/* A question: no disclosure triangle; open, its tile turns ink and stands
+   on end. */
+.landing-faq > summary {
+	list-style: none;
+}
+.landing-faq > summary::-webkit-details-marker {
+	display: none;
+}
+.landing-faq[open] .landing-faq-glyph {
+	background: var(--inverse);
+	color: var(--on-inverse);
+	transform: rotate(90deg);
+}
+
+/* The landing's one deep shadow, under the panels that float: softer on
+   paper, darker on charcoal. */
+.landing-shadow {
+	box-shadow: 0 48px 96px -48px rgb(11 18 32 / 0.35);
+}
+:root[data-theme='dark'] .landing-shadow {
+	box-shadow: 0 48px 96px -40px rgb(0 0 0 / 0.7);
+}
+
+/* The Blind scene's bars: what a pair passes through on its way to Jev. */
+.landing-pillar {
+	width: 6px;
+	height: 400px;
+	border-radius: 6px;
+	border: 1px solid color-mix(in srgb, var(--ice) 60%, transparent);
+	background: linear-gradient(
+		to bottom,
+		color-mix(in srgb, var(--ice) 50%, transparent),
+		color-mix(in srgb, var(--ice) 12%, transparent)
+	);
+}
+
+/* A value Jev never sees: a dashed bar where it would be. */
+.landing-masked {
+	display: block;
+	opacity: 0.6;
+	background: repeating-linear-gradient(90deg, var(--text-muted) 0 8px, transparent 8px 12px);
+}
+
+/* ---- Motion (pairsight-handoff Motion.dc.html) ----
+   Arrivals ease with cubic-bezier(0.2, 0, 0, 1). Everything here only runs
+   when the system allows motion; otherwise the page rests as drawn above. */
+
+@keyframes landing-up {
+	from {
+		opacity: 0;
+		transform: translateY(18px);
+	}
+}
+@keyframes landing-register {
+	from {
+		opacity: 0;
+		transform: translate(0.6em, 0.34em);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	/* The hero's label, headline, lead and buttons: rise 18px and fade in,
+	   80ms apart, once. */
+	.landing-arrive {
+		animation: landing-up 0.8s cubic-bezier(0.2, 0, 0, 1) both;
+	}
+	/* The ice outline travels in from the lower right and stops just off the
+	   solid word. */
+	.landing-double::after {
+		animation: landing-register 1.3s cubic-bezier(0.2, 0, 0, 1) 0.5s both;
+	}
+}
+
+@keyframes landing-fill {
+	from {
+		transform: scaleX(0);
+	}
+}
+@keyframes landing-float {
+	50% {
+		transform: translateY(-9px);
+	}
+}
+
+/* The vendor timer's bar, along the bottom of the active vendor button. */
+.landing-vendor-timer {
+	display: none;
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	width: 100%;
+	height: 3px;
+	background: var(--color-brand);
+	transform-origin: left;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	.landing-vendor-timer {
+		display: block;
+		animation: landing-fill 5.2s linear both;
+	}
+	/* A vendor switch recolours the tiles in a ripple from the middle, each
+	   waiting 40ms per tile of distance (--d); a tile grows under the
+	   pointer. */
+	.landing-mosaic > span {
+		transition-property: background-color, transform;
+		transition-duration: 0.5s, 0.2s;
+		transition-delay: var(--d, 0s), 0s;
+	}
+	.landing-mosaic > span:hover {
+		transform: scale(1.5);
+	}
+	/* The two pinned pairs bob 9px, out of step. */
+	.landing-float {
+		animation: landing-float 6s ease-in-out infinite;
+	}
+}
+
+@keyframes landing-marquee {
+	to {
+		transform: translateX(-50%);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	/* The ticker: one row drifts left over 60s, the other right over 70s;
+	   both stop under the pointer. */
+	.landing-ticker-row {
+		animation: landing-marquee 60s linear infinite;
+	}
+	.landing-ticker-row-back {
+		animation-duration: 70s;
+		animation-direction: reverse;
+	}
+	.landing-ticker:hover .landing-ticker-row {
+		animation-play-state: paused;
+	}
+}
+
+@keyframes landing-breath {
+	from {
+		opacity: calc(var(--o) * 0.7);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	/* The glow breathes between 70% and 100% of its strength, the two
+	   colours out of step. */
+	.landing-grid > i {
+		animation: landing-breath 5s ease-in-out infinite alternate;
+	}
+	.landing-glow-brand {
+		animation-delay: -2.5s;
+	}
+	/* The hero panel tilts up to 7 degrees toward the pointer. */
+	.landing-stage {
+		transform: perspective(1100px) rotateY(calc(var(--px, 0) * 7deg))
+			rotateX(calc(var(--py, 0) * -7deg));
+		transition: transform 0.3s ease-out;
+	}
+}
+
+/* ---- Scroll-linked (scroll-scene.ts sets their progress) ----
+   Each runs paused for 1,000ms; the script moves it through as the element
+   crosses its `data-range`. Only on while the script runs (.landing-motion),
+   so without it the page rests in its finished state. */
+
+@keyframes ls-up {
+	from {
+		opacity: 0;
+		transform: translateY(18px);
+	}
+}
+@keyframes ls-grow {
+	from {
+		transform: scaleX(0);
+	}
+}
+@keyframes ls-draw {
+	from {
+		stroke-dashoffset: 1;
+	}
+}
+@keyframes ls-drift {
+	from {
+		transform: translateY(110px);
+	}
+	to {
+		transform: translateY(-110px);
+	}
+}
+
+.landing-motion :is(.landing-reveal, .landing-grow, .landing-draw, .landing-drift) {
+	animation-duration: 1000ms;
+	animation-timing-function: linear;
+	animation-fill-mode: both;
+	animation-play-state: paused;
+}
+/* Cards, the four statements and the figures rise in as they enter. */
+.landing-motion .landing-reveal {
+	animation-name: ls-up;
+}
+/* The agreement bars grow from the left. */
+.landing-motion .landing-grow {
+	animation-name: ls-grow;
+	transform-origin: left;
+}
+/* The cut-off chart's lines draw. */
+.landing-motion .landing-draw {
+	stroke-dasharray: 1;
+	animation-name: ls-draw;
+}
+/* The two rings drift 220px against the scroll. */
+.landing-motion .landing-drift {
+	animation-name: ls-drift;
+}
+
+/* ---- Hovers and loops ---- */
+
+@keyframes landing-sway {
+	from {
+		left: var(--from);
+	}
+	to {
+		left: var(--to);
+	}
+}
+
+@media (prefers-reduced-motion: no-preference) {
+	/* A card lifts 4px; the kept run's cards fan out under it. */
+	.landing-card {
+		transition:
+			transform 0.3s cubic-bezier(0.2, 0, 0, 1),
+			border-color 0.3s;
+	}
+	.landing-card:hover {
+		transform: translateY(-4px);
+		border-color: var(--text-muted);
+	}
+	.landing-run-back-1,
+	.landing-run-back-2 {
+		transition: transform 0.35s cubic-bezier(0.2, 0, 0, 1);
+	}
+	.landing-card:hover .landing-run-back-1 {
+		transform: translateY(8px);
+	}
+	.landing-card:hover .landing-run-back-2 {
+		transform: translateY(16px);
+	}
+	/* The cut-off knob sways across the stretch where nothing changes. */
+	.landing-knob {
+		animation: landing-sway 4.5s ease-in-out infinite alternate;
+	}
+	/* Hovering one statement dims the others. */
+	.landing-truths > li {
+		transition: opacity 0.24s;
+	}
+	.landing-truths:hover > li {
+		opacity: 0.35;
+	}
+	.landing-truths > li:hover {
+		opacity: 1;
+	}
+	/* A figure turns vermilion and unfolds its pairs. */
+	.landing-figure-value {
+		transition: color 0.2s;
+	}
+	.landing-figure-pairs {
+		transition: grid-template-rows 0.45s cubic-bezier(0.2, 0, 0, 1);
+	}
+	/* An opened question's tile turns and fills with ink. */
+	.landing-faq-glyph {
+		transition:
+			background-color 0.18s,
+			color 0.18s,
+			transform 0.24s cubic-bezier(0.2, 0, 0, 1);
+	}
+	/* The main buttons: a sheen sweeps across, a vermilion glow, the arrow
+	   steps 4px. */
+	.landing-cta {
+		position: relative;
+		overflow: hidden;
+		transition:
+			transform 0.18s cubic-bezier(0.2, 0, 0, 1),
+			box-shadow 0.24s;
+	}
+	.landing-cta::before {
+		content: '';
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: -60%;
+		width: 40%;
+		background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.45), transparent);
+		transform: skewX(-18deg);
+		transition: left 0.6s cubic-bezier(0.2, 0, 0, 1);
+		pointer-events: none;
+	}
+	.landing-cta:hover {
+		box-shadow: 0 14px 34px -10px color-mix(in srgb, var(--color-brand) 60%, transparent);
+	}
+	.landing-cta:hover::before {
+		left: 120%;
+	}
+	.landing-cta svg {
+		transition: transform 0.24s cubic-bezier(0.2, 0, 0, 1);
+	}
+	.landing-cta:hover svg {
+		transform: translateX(4px);
+	}
+}
+
+/* ---- The walkthrough, pinned ----
+   On a wide screen with motion, "How it works" pins for 6,200px of scroll
+   in a 720px stage, and the three scenes play in turn. Every timing below
+   is the design's `contain X% contain Y%` on the walkthrough (set on each
+   element as data-range). Otherwise the scenes stack, finished. */
+
+.landing-haze,
+.landing-depth,
+.landing-rail {
+	display: none;
+}
+.landing-haze {
+	position: absolute;
+	inset: 0;
+	opacity: 0;
+	pointer-events: none;
+}
+.landing-haze-far {
+	background: radial-gradient(circle, var(--text-muted) 1.2px, transparent 1.6px) 0 0 / 14px 14px;
+}
+.landing-haze-mid {
+	background: radial-gradient(circle, var(--text-muted) 2px, transparent 2.5px) 7px 7px / 28px 28px;
+}
+
+/* The three scenes take turns: Narrow to a third, Blind to two thirds, then
+   Open, each rising 48px out as the next rises in. */
+@keyframes ls-scene-1 {
+	0%,
+	26% {
+		opacity: 1;
+		transform: none;
+	}
+	33%,
+	100% {
+		opacity: 0;
+		transform: translateY(-48px);
+	}
+}
+@keyframes ls-scene-2 {
+	0%,
+	26% {
+		opacity: 0;
+		transform: translateY(48px);
+	}
+	33%,
+	60% {
+		opacity: 1;
+		transform: none;
+	}
+	67%,
+	100% {
+		opacity: 0;
+		transform: translateY(-48px);
+	}
+}
+@keyframes ls-scene-3 {
+	0%,
+	60% {
+		opacity: 0;
+		transform: translateY(48px);
+	}
+	67%,
+	100% {
+		opacity: 1;
+		transform: none;
+	}
+}
+/* Narrow: every possible pair zooms past and fades; the suggested pairs
+   light one by one; the vendors' extra pairs fly in. */
+@keyframes ls-haze {
+	from {
+		opacity: 0.9;
+		transform: scale(1);
+	}
+	to {
+		opacity: 0;
+		transform: scale(2.6);
+	}
+}
+@keyframes ls-pop {
+	from {
+		transform: scale(0);
+	}
+}
+@keyframes ls-fly {
+	from {
+		opacity: 0;
+		transform: translateX(260px) scale(0.4);
+	}
+}
+/* Blind: the record crosses the panes to Jev; each label rides with it to
+   its pane, then drops back struck out. */
+@keyframes ls-carry {
+	0%,
+	6% {
+		transform: translateX(0);
+	}
+	88%,
+	100% {
+		transform: translateX(320px);
+	}
+}
+@keyframes ls-strike-1 {
+	0%,
+	6% {
+		opacity: 1;
+		transform: none;
+		filter: none;
+		text-decoration: none;
+	}
+	21% {
+		opacity: 1;
+		transform: translateX(60px);
+		filter: none;
+		text-decoration: none;
+	}
+	33%,
+	100% {
+		opacity: 0.4;
+		transform: scale(0.9);
+		filter: blur(1px);
+		text-decoration: line-through;
+	}
+}
+@keyframes ls-strike-2 {
+	0%,
+	6% {
+		opacity: 1;
+		transform: none;
+		filter: none;
+		text-decoration: none;
+	}
+	38% {
+		opacity: 1;
+		transform: translateX(130px);
+		filter: none;
+		text-decoration: none;
+	}
+	50%,
+	100% {
+		opacity: 0.4;
+		transform: scale(0.9);
+		filter: blur(1px);
+		text-decoration: line-through;
+	}
+}
+@keyframes ls-strike-3 {
+	0%,
+	6% {
+		opacity: 1;
+		transform: none;
+		filter: none;
+		text-decoration: none;
+	}
+	55% {
+		opacity: 1;
+		transform: translateX(200px);
+		filter: none;
+		text-decoration: none;
+	}
+	68%,
+	100% {
+		opacity: 0.4;
+		transform: scale(0.9);
+		filter: blur(1px);
+		text-decoration: line-through;
+	}
+}
+/* Open: the two records pull apart, the rows rise in, the verdict last. */
+@keyframes ls-dock-a {
+	from {
+		transform: translateX(56%) rotate(-2deg);
+	}
+}
+@keyframes ls-dock-b {
+	from {
+		transform: translateX(-56%) rotate(2deg);
+	}
+}
+@keyframes ls-row {
+	from {
+		opacity: 0;
+		transform: translateY(26px) scale(0.96);
+	}
+}
+/* The loose tiles drift at their own speeds; the rail fills. */
+@keyframes ls-depth {
+	from {
+		transform: translateY(var(--a));
+	}
+	to {
+		transform: translateY(var(--b));
+	}
+}
+@keyframes ls-rail {
+	from {
+		transform: scaleY(0);
+	}
+	to {
+		transform: scaleY(1);
+	}
+}
+
+@media (min-width: 900px) {
+	.landing-motion .landing-story {
+		height: 6200px;
+	}
+	.landing-motion .landing-pin {
+		position: sticky;
+		top: 0;
+		height: 720px;
+	}
+	.landing-motion .landing-scenes {
+		position: relative;
+		height: 100%;
+	}
+	.landing-motion .landing-scene {
+		position: absolute;
+		inset: 0;
+		flex-wrap: nowrap;
+	}
+	.landing-motion .landing-scene-text {
+		height: 420px;
+	}
+	.landing-motion :is(.landing-haze, .landing-depth) {
+		display: block;
+	}
+	.landing-motion .landing-rail {
+		display: block;
+		position: absolute;
+		left: -28px;
+		top: 50%;
+		width: 2px;
+		height: 220px;
+		margin-top: -110px;
+		background: var(--border);
+	}
+	.landing-motion .landing-rail > i {
+		position: absolute;
+		inset: 0;
+		background: var(--color-brand);
+		transform-origin: top;
+	}
+
+	.landing-motion
+		:is(
+			.landing-scene,
+			.landing-haze,
+			.landing-dot,
+			.landing-added,
+			.landing-carry,
+			.landing-strike-1,
+			.landing-strike-2,
+			.landing-strike-3,
+			.landing-pop,
+			.landing-dock-a,
+			.landing-dock-b,
+			.landing-row,
+			.landing-verdict,
+			.landing-depth,
+			.landing-rail > i
+		) {
+		animation-duration: 1000ms;
+		animation-timing-function: linear;
+		animation-fill-mode: both;
+		animation-play-state: paused;
+	}
+	/* Their resting offsets (the card at Jev, the labels struck small) are the
+	   keyframes' end now, so the static ones step aside. */
+	.landing-motion :is(.landing-carry, .landing-strike-1, .landing-strike-2, .landing-strike-3) {
+		translate: none;
+		scale: none;
+	}
+	.landing-motion .landing-scene-1 {
+		animation-name: ls-scene-1;
+	}
+	.landing-motion .landing-scene-2 {
+		animation-name: ls-scene-2;
+	}
+	.landing-motion .landing-scene-3 {
+		animation-name: ls-scene-3;
+	}
+	.landing-motion .landing-haze {
+		animation-name: ls-haze;
+	}
+	.landing-motion .landing-dot {
+		animation-name: ls-pop;
+		animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+	}
+	.landing-motion .landing-added {
+		animation-name: ls-fly;
+	}
+	.landing-motion .landing-carry {
+		animation-name: ls-carry;
+	}
+	.landing-motion .landing-strike-1 {
+		animation-name: ls-strike-1;
+	}
+	.landing-motion .landing-strike-2 {
+		animation-name: ls-strike-2;
+	}
+	.landing-motion .landing-strike-3 {
+		animation-name: ls-strike-3;
+	}
+	.landing-motion .landing-pop {
+		animation-name: ls-pop;
+	}
+	.landing-motion .landing-dock-a {
+		animation-name: ls-dock-a;
+	}
+	.landing-motion .landing-dock-b {
+		animation-name: ls-dock-b;
+	}
+	.landing-motion .landing-row {
+		animation-name: ls-row;
+	}
+	.landing-motion .landing-verdict {
+		animation-name: ls-up;
+	}
+	.landing-motion .landing-depth {
+		animation-name: ls-depth;
+	}
+	.landing-motion .landing-rail > i {
+		animation-name: ls-rail;
+	}
+}
+
+/* Less motion: nothing animates or eases anywhere on the landing; every
+   part shows its settled state, and the glow rests at its starting point
+   (the script that moves things doesn't start). */
+@media (prefers-reduced-motion: reduce) {
+	[data-landing] *,
+	[data-landing] *::before,
+	[data-landing] *::after {
+		animation: none !important;
+		transition: none !important;
+	}
+}
+
+/* ---- Phone (pairsight-handoff Phone, under 600px) ----
+   No glow: the ground is a faint grid behind the hero alone. */
+@media (max-width: 599px) {
+	.landing-grid {
+		opacity: 0.5;
+		mask-image: radial-gradient(circle 300px at 70% 300px, #000, transparent);
+	}
+	.landing-grid > i {
+		display: none;
+	}
+}
+
+/* The ticker's pause button shows only where the rows move. */
+.landing-ticker-pause {
+	display: none;
+}
+@media (prefers-reduced-motion: no-preference) {
+	.landing-ticker-pause {
+		display: inline-flex;
+	}
+	.landing-ticker[data-paused] .landing-ticker-row {
+		animation-play-state: paused;
+	}
+}
+
+/* ---- Hover and press ----
+   Every control on the landing answers the pointer: a quick ease on hover,
+   and a slight press while held. Things you can only hover lift or light. */
+@media (prefers-reduced-motion: no-preference) {
+	.landing-press {
+		transition-property:
+			transform, background-color, color, border-color, opacity, text-decoration-color, box-shadow;
+		transition-duration: 0.15s;
+		transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+	}
+	.landing-press:active {
+		transform: scale(0.97);
+	}
+
+	/* The ticker's pairs lift a touch under the pointer. */
+	.landing-ticker-row > li {
+		transition:
+			transform 0.2s cubic-bezier(0.2, 0, 0, 1),
+			border-color 0.2s;
+	}
+	.landing-ticker-row > li:hover {
+		transform: translateY(-2px);
+		border-color: var(--border-strong);
+	}
+
+	/* The closing mark's tiles pop like the hero's. */
+	.landing-mark > span {
+		position: relative;
+		transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1);
+	}
+	.landing-mark > span:hover {
+		z-index: 1;
+		transform: scale(1.5);
+	}
+
+	/* A keycap goes down when the pointer rests on it; a download tag lights. */
+	.landing-key {
+		transition:
+			transform 0.12s cubic-bezier(0.2, 0, 0, 1),
+			border-bottom-width 0.12s;
+	}
+	.landing-key:hover {
+		transform: translateY(2px);
+		border-bottom-width: 1px;
+	}
+	.landing-tag {
+		transition:
+			border-color 0.15s,
+			color 0.15s;
+	}
+	.landing-tag:hover {
+		border-color: var(--text-muted);
+	}
+
+	/* A bar's group brightens under the pointer. */
+	.landing-grow > span {
+		transition: filter 0.15s;
+	}
+	.landing-grow > span:hover {
+		filter: brightness(1.12);
+	}
+
+	/* The theme switch's half-moon turns as the pointer reaches it. */
+	.landing-theme svg {
+		transition: transform 0.5s cubic-bezier(0.2, 0, 0, 1);
+	}
+	.landing-theme:hover svg {
+		transform: rotate(40deg);
+	}
+
+	/* A question's tile shades in as the pointer reaches it. */
+	.landing-faq > summary:hover .landing-faq-glyph {
+		background: var(--border);
+	}
+	.landing-faq[open] > summary:hover .landing-faq-glyph {
+		background: var(--inverse);
+	}
+}
+
+/* A section a link moved focus to isn't a control: no ring round it. */
+[data-landing] [tabindex='-1']:focus {
+	outline: none;
+}

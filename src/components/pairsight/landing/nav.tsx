@@ -1,84 +1,62 @@
-'use client'
-
-import { useState } from 'react'
-import { useTranslations } from 'next-intl'
-import { m, useMotionValueEvent, useScroll, useSpring } from 'motion/react'
+import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/cn'
-import { ThemeMenu } from '../theme-menu'
+import { ThemeToggle } from '../theme-toggle'
 import { Wordmark } from '../wordmark'
+import { WRAP } from './parts'
 import { LANDING_SECTIONS } from './sections'
 
-// A section counts as current once its top passes this share of the viewport.
-const ACTIVE_LINE = 0.4
-const PROGRESS_SPRING = { stiffness: 220, damping: 40, restDelta: 0.001 }
+// A quiet text link in the bar, lit on hover.
+export const NAV_LINK =
+	'landing-press text-text-body hover:bg-surface-muted hover:text-text inline-flex min-h-11 items-center rounded-[10px] px-3.5 transition-[background-color,color] duration-150'
 
-// The landing's floating pill: the wordmark, a link to each section (the
-// current one marked), the theme menu, Sign in and the demo, with a thin bar
-// along the top showing how far down the page you are.
-export function LandingNav() {
-	const t = useTranslations('HomePage')
-	const { scrollY, scrollYProgress } = useScroll()
-	const progress = useSpring(scrollYProgress, PROGRESS_SPRING)
-	const [active, setActive] = useState<string | null>(null)
-
-	useMotionValueEvent(scrollY, 'change', () => {
-		const line = window.innerHeight * ACTIVE_LINE
-		let current: string | null = null
-		for (const section of LANDING_SECTIONS) {
-			const top = document.getElementById(section.id)?.getBoundingClientRect().top
-			if (top != null && top < line) current = section.id
-		}
-		setActive(current)
-	})
-
+// The landing's top bar (pairsight-handoff Landing): the mark, a link to
+// each section, the theme switch, Sign in and the demo.
+export async function LandingNav() {
+	const t = await getTranslations('HomePage')
 	return (
-		<>
-			<m.div
-				aria-hidden
-				className="bg-action fixed inset-x-0 top-0 z-50 h-0.5 origin-left"
-				style={{ scaleX: progress }}
-			/>
-			<header className="fixed inset-x-0 top-3 z-40 px-3 md:top-4 md:px-5">
-				<div className="border-border bg-surface/80 mx-auto flex h-14 max-w-[1160px] items-center gap-2 rounded-full border pr-2 pl-4 shadow-[0_8px_30px_-12px_rgb(15_23_32/0.25)] backdrop-blur-md md:pl-5">
-					<Link href="/" aria-label={t('home')} className="shrink-0 rounded-sm">
-						<Wordmark labelClassName="max-[380px]:sr-only" />
+		<header className="bg-bg relative z-[2]">
+			<div
+				className={cn(
+					WRAP,
+					'border-border flex min-h-[76px] flex-wrap items-center gap-x-4 gap-y-2 border-b max-[599px]:min-h-16 max-[599px]:gap-x-2'
+				)}
+			>
+				<Link
+					href="/"
+					aria-label={t('home')}
+					className="landing-press inline-flex min-h-11 items-center rounded-sm hover:opacity-80 max-[599px]:flex-1"
+				>
+					<Wordmark labelClassName="text-2xl max-[599px]:text-xl" />
+				</Link>
+				<nav
+					aria-label={t('sectionsNav')}
+					className="hidden flex-auto justify-center gap-0.5 min-[900px]:flex"
+				>
+					{LANDING_SECTIONS.map((section) => (
+						<a key={section.id} href={`#${section.id}`} className={NAV_LINK}>
+							{t(section.label)}
+						</a>
+					))}
+				</nav>
+				<div className="ml-auto flex items-center gap-x-4 max-[599px]:gap-x-2 min-[900px]:ml-0">
+					<ThemeToggle className="landing-press landing-theme" />
+					<Link href="/sign-in" className={cn(NAV_LINK, 'max-[599px]:hidden')}>
+						{t('signIn')}
 					</Link>
-					<nav aria-label={t('sectionsNav')} className="mx-auto hidden min-[900px]:block">
-						<ul className="flex items-center gap-0.5">
-							{LANDING_SECTIONS.map((section) => (
-								<li key={section.id}>
-									<a
-										href={`#${section.id}`}
-										aria-current={active === section.id ? 'true' : undefined}
-										className={cn(
-											'type-ui rounded-full px-3 py-1.5 whitespace-nowrap transition-colors duration-150',
-											active === section.id
-												? 'bg-surface-muted text-text'
-												: 'text-text-muted hover:text-text'
-										)}
-									>
-										{t(section.label)}
-									</a>
-								</li>
-							))}
-						</ul>
-					</nav>
-					<nav
-						aria-label={t('accountNav')}
-						className="ml-auto flex shrink-0 items-center gap-1 min-[900px]:ml-0"
+					<Button
+						asChild
+						size="lg"
+						className="landing-cta h-[46px] max-[599px]:h-11 max-[599px]:rounded-[12px] max-[599px]:px-3.5"
 					>
-						<ThemeMenu />
-						<Button variant="quiet" size="sm" asChild>
-							<Link href="/sign-in">{t('signIn')}</Link>
-						</Button>
-						<Button size="sm" className="rounded-full" asChild>
-							<Link href="/sandbox">{t('explore')}</Link>
-						</Button>
-					</nav>
+						<Link href="/sandbox">
+							<span className="max-[599px]:hidden">{t('openDemo')}</span>
+							<span className="min-[600px]:hidden">{t('openDemoShort')}</span>
+						</Link>
+					</Button>
 				</div>
-			</header>
-		</>
+			</div>
+		</header>
 	)
 }
