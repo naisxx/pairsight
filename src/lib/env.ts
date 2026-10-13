@@ -7,6 +7,11 @@ import { z } from 'zod'
 // process.env reference exists in code without a matching entry here.
 const envSchema = z.object({
 	DATABASE_URL: z.string().url(),
+	// Where this copy runs (docs/PairSight-OnPrem.md). `onprem`: on a
+	// customer's own machine, so nothing but Jev calls leaves it (AI usage is
+	// priced from the bundled rate card), the first account becomes the
+	// admin, and admins manage people in Settings.
+	PAIRSIGHT_DEPLOYMENT: z.enum(['hosted', 'onprem']).default('hosted'),
 	// Only read by the Prisma CLI (`migrate dev`/`migrate deploy`), never by
 	// the running app — so it's required in CI/local dev (where migrations
 	// run) but optional here, or every Vercel deployment would be forced to
@@ -50,6 +55,16 @@ const envSchema = z.object({
 	// How long one Jev call may take before it's given up and tried again
 	// later. Lowered only by the e2e suite, to test a call that never answers.
 	TYPESAFE_TIMEOUT_MS: z.coerce.number().int().min(1).default(20_000),
+	// Encrypts the Jev key an admin saves on the Settings page
+	// (src/server/lib/secrets/crypto.ts): 32 random bytes, base64. Unset, a
+	// key can't be saved there and runs use TYPESAFE_API_KEY (hosted only:
+	// on-prem ignores it, docs/PairSight-OnPrem.md).
+	PAIRSIGHT_SECRET_KEY: z
+		.string()
+		.refine((value) => value === '' || Buffer.from(value, 'base64').length === 32, {
+			message: 'must be 32 random bytes, base64-encoded'
+		})
+		.optional(),
 	// How many Jev calls the background run worker starts with at once,
 	// shared across running runs (src/server/pairsight/worker). It adapts
 	// from there: up to RUN_WORKER_CONCURRENCY_MAX while Jev answers cleanly,

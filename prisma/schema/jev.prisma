@@ -1,0 +1,23 @@
+// The Jev connection an admin sets on the Settings page: the key and address
+// a server's runs use instead of its TYPESAFE_API_* environment variables
+// (src/server/ai/jev-credentials.ts). One per worker pool, so servers sharing
+// a database (a dev server and the e2e server) each keep their own.
+//
+// The key is only ever stored encrypted (src/server/lib/secrets/crypto.ts)
+// and never read back out to a page: the page shows its last four characters.
+//
+// jev_connections holds a credential, so its create migration ENABLEs ROW
+// LEVEL SECURITY (no policy, no FORCE), like every table here.
+model JevConnection {
+	pool        String   @id
+	baseUrl     String
+	keyCipher   Bytes
+	keyLast4    String
+	// When Jev last accepted this key: it's checked before it's saved.
+	checkedAt   DateTime @db.Timestamptz(6)
+	updatedById String?  @db.Uuid
+	createdAt   DateTime @default(now()) @db.Timestamptz(6)
+	updatedAt   DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+	@@map("jev_connections")
+}

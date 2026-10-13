@@ -1,0 +1,1 @@
+ALTER TABLE "jev_connections" ENABLE ROW LEVEL SECURITY;
