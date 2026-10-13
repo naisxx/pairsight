@@ -1,15 +1,13 @@
 import { MIN_RECORDS } from '@/lib/pairsight/entity-types'
 import { getFormatter, getTranslations } from 'next-intl/server'
-import { EXACT_FORMATS } from '@/i18n/formats'
 import { Link } from '@/i18n/routing'
 import { RUNS_PARAM } from '@/lib/pairsight/evaluation-view'
 import { Button } from '@/components/ui/button'
 import { PlanBlockers } from '@/components/pairsight/plan/plan-blockers'
-import { PlanLedger } from '@/components/pairsight/plan/plan-ledger'
-import { PlanSide } from '@/components/pairsight/plan/plan-side'
+import { PlanSummary } from '@/components/pairsight/plan/plan-summary'
 import { RefreshWhile } from '@/components/pairsight/refresh-while'
 import { StartRunButton } from '@/components/pairsight/start-run-button'
-import { ActionBar, StepEmphasis, StepHeader } from '@/components/pairsight/step-layout'
+import { ACTION_HINT_ID, ActionBar, StepHeader } from '@/components/pairsight/step-layout'
 import { AlertIcon, ArrowRightIcon, InfoIcon } from '@/components/ui/icons'
 import { estimateCostUsd } from '@/server/pairsight/cost'
 import { estimateRunDuration } from '@/server/pairsight/run-estimate'
@@ -20,9 +18,13 @@ import { listVendors } from '@/server/pairsight/vendor-exports'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 import { ReadOnlyGate } from '@/components/pairsight/read-only'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
+import { parseColumnRoles } from '@/server/pairsight/json'
 
 const ICON_SIZE = 15
-const COST_FRACTION_DIGITS = 4
+// The cost to the cent: a smaller estimate says "less than a cent" rather
+// than a fraction nobody needs.
+const CENTS = 2
+const ONE_CENT = 0.01
 
 export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const { workspace, view, scope } = loaded
@@ -36,6 +38,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 		recentCheckRate()
 	])
 	const counts = ('counts' in plan ? plan.counts : undefined) ?? null
+	const costUsd = counts == null ? 0 : estimateCostUsd(counts.toEvaluate)
 	const contributors = ('contributors' in plan ? plan.contributors : undefined) ?? []
 	const splink = ('splink' in plan ? plan.splink : undefined) ?? null
 	const drafts = vendors.filter((vendor) => vendor.kind === 'draft').map((vendor) => vendor.name)
@@ -49,21 +52,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 
 	return (
 		<>
-			<StepHeader
-				title={
-					counts == null || counts.uniquePairs === 0
-						? t('title')
-						: t.rich(
-								'titleCount',
-								{
-									count: counts.uniquePairs,
-									em: (chunks) => <StepEmphasis>{chunks}</StepEmphasis>
-								},
-								EXACT_FORMATS
-							)
-				}
-				description={t('description')}
-			/>
+			<StepHeader step="plan" title={t('title')} description={t('description')} />
 			{/* Splink is still looking: the plan fills in by itself when it's done. */}
 			<RefreshWhile isActive={splink?.state === 'waiting'} />
 
@@ -94,28 +83,71 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 				</div>
 			)}
 
-			<div className="flex flex-col gap-4">
-				{counts != null && dataset != null && splink != null && (
-					<PlanLedger
-						counts={counts}
-						fileName={dataset.fileName}
-						cost={format.number(estimateCostUsd(counts.toEvaluate), {
-							style: 'currency',
-							currency: 'USD',
-							maximumFractionDigits: COST_FRACTION_DIGITS
-						})}
-						duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
-						splink={splink}
-						entityType={entityTypeOf(workspace.evaluation.entityType)}
-						isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
-					/>
-				)}
-				<PlanSide
-					jevFields={'config' in plan && plan.config != null ? plan.config.jevFields : []}
+			{counts != null && dataset != null && splink != null && (
+				<PlanSummary
+					base={view.base}
+					counts={counts}
+					entityType={entityTypeOf(workspace.evaluation.entityType)}
+					fileName={dataset.fileName}
+					vendors={vendors
+						.filter((vendor) => vendor.kind === 'export')
+						.map((vendor) => ({ id: vendor.id, name: vendor.name, pairs: vendor.pairCount ?? 0 }))}
+					identitySame={workspace.evaluation.identitySame}
+					jevFieldCount={'config' in plan && plan.config != null ? plan.config.jevFields.length : 0}
+					// The record ID, then every other column the file has.
+					columnCount={1 + Object.keys(parseColumnRoles(dataset.columnRoles)).length}
 					threshold={workspace.evaluation.threshold}
-					rulesHref={`${view.base}/rules`}
+					cost={
+						costUsd < ONE_CENT
+							? t('runCostUnderCent')
+							: t('runCostValue', {
+									cost: format.number(costUsd, {
+										style: 'currency',
+										currency: 'USD',
+										minimumFractionDigits: CENTS,
+										maximumFractionDigits: CENTS
+									})
+								})
+					}
+					duration={estimateRunDuration({ newChecks: counts.toEvaluate, pairsPerSecond })}
+					splink={splink}
+					isOverLimit={counts.uniquePairs > LIMITS.maxPairsPerRun}
+					start={
+						<>
+							<ReadOnlyGate action="run">
+								<StartRunButton
+									evaluationId={id}
+									pairCount={counts.uniquePairs}
+									isDisabled={plan.blockers.length > 0}
+									describedBy={blockedReason == null ? undefined : ACTION_HINT_ID}
+								/>
+							</ReadOnlyGate>
+							{/* Read-only, starting is out of reach, so the way on is the run that exists. */}
+							{view.isReadOnly && latestRun != null && (
+								<Button
+									variant="secondary"
+									className="bg-on-inverse text-inverse border-on-inverse hover:bg-on-inverse/90 min-h-13"
+									asChild
+								>
+									<Link
+										href={`${view.base}/runs/${latestRun.id}/results?${RUNS_PARAM}=${latestRun.id}`}
+									>
+										{t('seeRun')}
+										<ArrowRightIcon size={ICON_SIZE} />
+									</Link>
+								</Button>
+							)}
+						</>
+					}
 				/>
-			</div>
+			)}
+			{view.isReadOnly && latestRun != null && (
+				<p className="text-text-muted mt-5 text-sm">
+					{t('demoFinished', {
+						date: format.dateTime(latestRun.createdAt, { dateStyle: 'medium' })
+					})}
+				</p>
+			)}
 
 			<ActionBar
 				back={{ href: `${view.base}/rules`, label: t('back') }}
@@ -127,24 +159,7 @@ export async function PlanScreen({ loaded }: { loaded: LoadedWorkspace }) {
 						</>
 					)
 				}
-			>
-				<ReadOnlyGate action="run">
-					<StartRunButton
-						evaluationId={id}
-						pairCount={counts?.uniquePairs ?? 0}
-						isDisabled={plan.blockers.length > 0}
-					/>
-				</ReadOnlyGate>
-				{/* Read-only, starting is out of reach, so the way on is the run that exists. */}
-				{view.isReadOnly && latestRun != null && (
-					<Button variant="secondary" asChild>
-						<Link href={`${view.base}/runs/${latestRun.id}/results?${RUNS_PARAM}=${latestRun.id}`}>
-							{t('seeRun')}
-							<ArrowRightIcon size={ICON_SIZE} />
-						</Link>
-					</Button>
-				)}
-			</ActionBar>
+			/>
 		</>
 	)
 }

@@ -5,18 +5,10 @@ import { useTranslations } from 'next-intl'
 import { Link, useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Dialog } from '@/components/ui/dialog'
-import {
-	ArrowRightIcon,
-	InfoIcon,
-	PlusIcon,
-	SpinnerIcon,
-	SuccessIcon,
-	TrashIcon
-} from '@/components/ui/icons'
+import { ArrowRightIcon, InfoIcon, PlusIcon, SpinnerIcon, TrashIcon } from '@/components/ui/icons'
 import { EmptyState } from '../empty-state'
 import { NoVendorsScene } from '../empty/scenes'
 import { Input } from '@/components/ui/input'
-import { cn } from '@/lib/cn'
 import { NAME_MAX_LENGTH } from '@/lib/pairsight/input-limits'
 import { toast } from '@/lib/toast'
 import {
@@ -31,7 +23,6 @@ import { useEvaluationView } from '../evaluation-context'
 import { ReadOnlyFieldset, ReadOnlyGate } from '../read-only'
 
 const ICON_SIZE = 15
-const STATUS_ICON_SIZE = 17
 
 type MissingStep = 'stepName' | 'stepFile' | 'stepConfirm'
 
@@ -42,30 +33,32 @@ function missingStep(vendor: VendorListItem): MissingStep | null {
 	return vendor.fileName == null ? 'stepFile' : 'stepConfirm'
 }
 
-// The Vendors step: a list of vendors on the left (ready, or what each still
-// needs), the selected one's editor on the right, and Continue once every
-// vendor is ready. Vendors are saved as you go, so leaving half-way is fine.
+// The Vendors step (pairsight-handoff Vendors): a card per vendor, side by
+// side, each its own editor (name, file, how it was read, the checks, and
+// confirming it complete), then the way to add another, and Continue once
+// every vendor is ready. Vendors are saved as you go, so leaving half-way is
+// fine.
 export function VendorsWorkspace({
 	evaluationId,
 	vendors,
 	maxVendors,
-	maxPairs
+	maxPairs,
+	suggestedOverlap
 }: {
 	evaluationId: string
 	vendors: VendorListItem[]
 	maxVendors: number
 	maxPairs: number
+	// For each ready vendor: how many of its pairs PairSight suggests anyway.
+	suggestedOverlap: Record<string, { found: number; total: number }>
 }) {
 	const t = useTranslations('Vendors')
 	const router = useRouter()
 	const view = useEvaluationView()
-	const [selectedId, setSelectedId] = useState<string | null>(null)
 	const [removing, setRemoving] = useState<VendorListItem | null>(null)
 	const [isAdding, startAdding] = useTransition()
 	const [isRemoving, startRemoving] = useTransition()
 	const firstUnfinished = vendors.find((vendor) => missingStep(vendor) != null)
-	const current =
-		vendors.find((vendor) => vendor.id === selectedId) ?? firstUnfinished ?? vendors[0] ?? null
 	const canAdd = vendors.length < maxVendors
 	const unfinishedStep = firstUnfinished == null ? null : missingStep(firstUnfinished)
 	const blockedReason =
@@ -82,29 +75,13 @@ export function VendorsWorkspace({
 				toast({ title: result.error, variant: 'destructive' })
 				return
 			}
-			setSelectedId(result.data.id)
 			router.refresh()
 		})
 	}
 
-	const addButton = (
-		<ReadOnlyGate action="vendor">
-			<Button
-				variant="quiet"
-				size="sm"
-				className="w-full justify-start"
-				onClick={add}
-				disabled={!canAdd || isAdding}
-			>
-				{isAdding ? <SpinnerIcon size={ICON_SIZE} /> : <PlusIcon size={ICON_SIZE} />}
-				{isAdding ? t('adding') : t('add')}
-			</Button>
-		</ReadOnlyGate>
-	)
-
 	return (
 		<>
-			{current == null ? (
+			{vendors.length === 0 ? (
 				<EmptyState
 					framed
 					scene={<NoVendorsScene />}
@@ -118,72 +95,60 @@ export function VendorsWorkspace({
 					}
 				/>
 			) : (
-				<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-					<nav aria-label={t('listLabel')} className="@5xl:col-span-3">
-						<ul className="relative flex gap-2 overflow-x-auto @5xl:flex-col @5xl:gap-1">
-							{vendors.map((vendor) => {
-								const step = missingStep(vendor)
-								const isSelected = vendor.id === current.id
-								return (
-									<li key={vendor.id} className="shrink-0">
-										<button
-											type="button"
-											onClick={() => setSelectedId(vendor.id)}
-											aria-current={isSelected ? 'true' : undefined}
-											className={cn(
-												'flex w-full min-w-[180px] items-center gap-2.5 rounded-sm border px-3 py-2.5 text-left transition-[background-color,border-color] duration-150',
-												isSelected
-													? 'border-border bg-surface-hover shadow-[inset_2px_0_0_var(--action)]'
-													: 'hover:bg-surface-hover border-transparent'
-											)}
-										>
-											{step == null ? (
-												<SuccessIcon
-													size={STATUS_ICON_SIZE}
-													variant="solid"
-													className="text-text shrink-0"
-												/>
-											) : (
-												<span
-													aria-hidden
-													className="border-text-muted size-[15px] shrink-0 rounded-full border-[1.5px] border-dashed"
-												/>
-											)}
-											<span className="min-w-0">
-												<span className="type-ui block truncate font-medium">
-													{vendor.name === '' ? t('untitled') : vendor.name}
-												</span>
-												<span className="text-text-muted type-caption block">
-													{step == null
-														? t('statusReady', { format: vendor.format ?? 'pair' })
-														: t('needs', { step: t(step) })}
-												</span>
-											</span>
-										</button>
-									</li>
-								)
-							})}
-							<li className="shrink-0">
-								{canAdd ? (
-									addButton
-								) : (
-									<p className="text-text-muted type-caption px-3 py-2">
-										{t('maxVendors', { max: maxVendors })}
-									</p>
-								)}
-							</li>
-						</ul>
-					</nav>
-					<ReadOnlyFieldset className="space-y-4 @5xl:col-span-9">
-						<VendorName
-							key={`name-${current.id}`}
-							vendor={current}
-							onRemove={() => setRemoving(current)}
-						/>
-						<VendorFile key={`file-${current.id}`} vendor={current} maxPairs={maxPairs} />
-					</ReadOnlyFieldset>
-				</div>
+				<>
+					<section
+						aria-label={t('listLabel')}
+						className="grid grid-cols-1 items-start gap-4 @5xl:grid-cols-2"
+					>
+						{vendors.map((vendor, index) => {
+							const step = missingStep(vendor)
+							return (
+								<ReadOnlyFieldset key={vendor.id}>
+									<VendorFile
+										vendor={vendor}
+										index={index}
+										maxPairs={maxPairs}
+										suggestedOverlap={suggestedOverlap[vendor.id]}
+										name={<VendorName key={`name-${vendor.id}`} vendor={vendor} />}
+										status={
+											step == null
+												? t('statusReady', { format: vendor.format ?? 'pair' })
+												: t('needs', { step: t(step) })
+										}
+										remove={
+											<Button variant="quiet" size="sm" onClick={() => setRemoving(vendor)}>
+												<TrashIcon size={ICON_SIZE} />
+												{t('remove')}
+											</Button>
+										}
+									/>
+								</ReadOnlyFieldset>
+							)
+						})}
+					</section>
+					{canAdd ? (
+						<ReadOnlyGate action="vendor" isBlock>
+							<button
+								type="button"
+								onClick={add}
+								disabled={isAdding}
+								className="border-border-strong text-text-muted hover:border-text mt-4 flex w-full flex-col items-center rounded-[16px] border-[1.5px] border-dashed p-7 text-center transition-[border-color] duration-150 disabled:cursor-default"
+							>
+								<span className="text-text flex items-center gap-2 font-semibold">
+									{isAdding ? <SpinnerIcon size={ICON_SIZE} /> : <PlusIcon size={ICON_SIZE} />}
+									{isAdding ? t('adding') : t('add')}
+								</span>
+								{view.isReadOnly ? t('addHintDemo') : t('addHint', { max: maxVendors })}
+							</button>
+						</ReadOnlyGate>
+					) : (
+						<p className="border-border-strong text-text-muted mt-4 rounded-[16px] border-[1.5px] border-dashed p-7 text-center">
+							{t('maxVendors', { max: maxVendors })}
+						</p>
+					)}
+				</>
 			)}
+			<p className="text-text-muted mt-4 text-sm">{t('filesNote')}</p>
 
 			<ActionBar
 				back={{ href: `${view.base}/records`, label: t('back') }}
@@ -238,7 +203,6 @@ export function VendorsWorkspace({
 										return
 									}
 									setRemoving(null)
-									setSelectedId(null)
 									toast({ title: t('removed', { name }) })
 									router.refresh()
 								})
@@ -254,8 +218,8 @@ export function VendorsWorkspace({
 	)
 }
 
-// The vendor's name, saved when you leave the field, and its Remove button.
-function VendorName({ vendor, onRemove }: { vendor: VendorListItem; onRemove: () => void }) {
+// The vendor's name, as its card's heading: saved when you leave the field.
+function VendorName({ vendor }: { vendor: VendorListItem }) {
 	const t = useTranslations('Vendors')
 	const router = useRouter()
 	const [name, setName] = useState(vendor.name)
@@ -280,40 +244,33 @@ function VendorName({ vendor, onRemove }: { vendor: VendorListItem; onRemove: ()
 	}
 
 	return (
-		<section className="border-border bg-surface rounded-lg border p-4">
-			<div className="flex flex-wrap items-end gap-3">
-				<div className="min-w-[220px] flex-1">
-					<label htmlFor={id} className="type-ui font-medium">
-						{t('nameLabel')}
-					</label>
-					<Input
-						id={id}
-						className="mt-1.5"
-						value={name}
-						maxLength={NAME_MAX_LENGTH}
-						disabled={isSaving}
-						onChange={(event) => {
-							setName(event.target.value)
-							setError(null)
-						}}
-						onBlur={save}
-						onKeyDown={(event) => {
-							if (event.key === 'Enter') event.currentTarget.blur()
-						}}
-						aria-invalid={error != null}
-						aria-describedby={error == null ? undefined : `${id}-error`}
-					/>
-					{error != null && (
-						<p id={`${id}-error`} className="text-danger mt-1 text-xs">
-							{error}
-						</p>
-					)}
-				</div>
-				<Button variant="danger" onClick={onRemove}>
-					<TrashIcon size={ICON_SIZE} />
-					{t('remove')}
-				</Button>
-			</div>
-		</section>
+		<div className="min-w-0 flex-1">
+			<label htmlFor={id} className="sr-only">
+				{t('nameLabel')}
+			</label>
+			<Input
+				id={id}
+				className="font-display text-text hover:border-border-input disabled:text-text -ml-2 h-auto min-h-11 w-full truncate border-transparent bg-transparent px-2 py-0.5 text-[1.625rem] leading-tight font-semibold tracking-[-0.025em] disabled:bg-transparent"
+				value={name}
+				placeholder={t('untitled')}
+				maxLength={NAME_MAX_LENGTH}
+				disabled={isSaving}
+				onChange={(event) => {
+					setName(event.target.value)
+					setError(null)
+				}}
+				onBlur={save}
+				onKeyDown={(event) => {
+					if (event.key === 'Enter') event.currentTarget.blur()
+				}}
+				aria-invalid={error != null}
+				aria-describedby={error == null ? undefined : `${id}-error`}
+			/>
+			{error != null && (
+				<p id={`${id}-error`} className="text-danger mt-1 text-sm">
+					{error}
+				</p>
+			)}
+		</div>
 	)
 }

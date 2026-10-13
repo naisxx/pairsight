@@ -7,7 +7,7 @@ import { useFormatter, useTranslations } from 'next-intl'
 import { useRouter } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { RetryIcon, SpinnerIcon } from '@/components/ui/icons'
+import { SpinnerIcon } from '@/components/ui/icons'
 import { OptionSelect } from '@/components/ui/select'
 import { cn } from '@/lib/cn'
 import { toast } from '@/lib/toast'
@@ -18,6 +18,7 @@ import {
 } from '@/server/actions/pairsight/vendors'
 import type { VendorListItem } from '@/server/pairsight/vendor-exports'
 import type { VendorColumns, VendorFormat } from '@/server/pairsight/vendors'
+import { SAMPLE_FILES, SampleLink } from '../sample-link'
 import { FileDrop } from '../file-drop'
 import { useEvaluationView } from '../evaluation-context'
 import { uploadFile } from '../upload-file'
@@ -25,13 +26,13 @@ import { TabularFileIcon, useFileTypeLabel } from '../file-type'
 import { SheetPicker, type SheetChoice } from '../sheet-picker'
 import { checkTabularFile, useFileErrorMessage, useRowList, ValidationPanel } from '../validation'
 import { FormatExample } from './format-example'
-import { VendorStats } from './vendor-stats'
+import { Glyph } from '../glyph'
+import { VendorSwatch } from '../vendor-swatch'
 
 type Checked = Extract<VendorFileCheck, { ok: true }>
 type Pending = { format: VendorFormat; first: string; second: string }
 
-const FILE_ICON_SIZE = 24
-const SMALL_ICON_SIZE = 14
+const FILE_ICON_SIZE = 22
 const FORMATS: VendorFormat[] = ['pair', 'group']
 
 function toPending(columns: VendorColumns | null): Pending {
@@ -48,11 +49,34 @@ function fromPending({ format, first, second }: Pending): VendorColumns | null {
 		: { format, groupColumn: first, referenceColumn: second }
 }
 
-// A vendor's file: drop it in, and PairSight works out the format and columns
-// from your records' references and checks every row. "Change" (or a file it
-// can't read on its own) opens the format and column pickers. A file that
-// passes is kept on the draft; confirming it complete makes the vendor ready.
-export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPairs: number }) {
+// A vendor's card (pairsight-handoff Vendors): its name and how many pairs it
+// matched, then its file. Drop it in, and PairSight works out the format and
+// columns from your records' references and checks every row; how it was read
+// and what the checks found are shown under it. "Change" (or a file it can't
+// read on its own) opens the format and column pickers. A file that passes is
+// kept on the draft; confirming it complete makes the vendor ready.
+export function VendorFile({
+	vendor,
+	index,
+	maxPairs,
+	name,
+	status,
+	remove,
+	suggestedOverlap
+}: {
+	vendor: VendorListItem
+	// Its place in the list: which colour it takes (vendor-swatch.tsx).
+	index: number
+	maxPairs: number
+	// The vendor's name field, as the card's heading.
+	name: React.ReactNode
+	// Ready, or what it still needs.
+	status: string
+	// Its Remove button, at the foot of the card.
+	remove?: React.ReactNode
+	// Ready: how many of its pairs PairSight suggests anyway.
+	suggestedOverlap?: { found: number; total: number }
+}) {
 	const t = useTranslations('Vendors')
 	const format = useFormatter()
 	const router = useRouter()
@@ -180,19 +204,37 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 						: []),
 					...(issues.tooManyPairs ? [t('tooManyPairs', { max: maxPairs })] : [])
 				]
-	const col = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
+	const col = (chunks: React.ReactNode) => <span className="text-text">{chunks}</span>
+	const unknownCount = issues?.unknownCount ?? 0
 
 	return (
-		<section
-			aria-labelledby={`file-${vendor.id}`}
-			className="border-border bg-surface rounded-lg border p-4"
+		<article
+			aria-label={vendor.name === '' ? t('untitled') : vendor.name}
+			className="border-border bg-surface flex min-w-0 flex-col rounded-lg border p-6 md:p-7"
 		>
-			<h2 id={`file-${vendor.id}`} className="text-sm font-semibold">
-				{t('resultsTitle')}
-			</h2>
+			<header className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-2">
+				<div className="flex min-w-0 flex-1 items-center gap-2.5">
+					<VendorSwatch index={index} className="size-3" />
+					{name}
+				</div>
+				{stats != null && (
+					<span className="text-text-muted text-sm">
+						{t.rich('pairsMatched', {
+							count: stats.pairs,
+							n: (chunks) => (
+								<span className="text-text mr-1 font-mono text-[2rem] leading-none font-semibold tracking-[-0.03em]">
+									{chunks}
+								</span>
+							)
+						})}
+					</span>
+				)}
+			</header>
+			<p className="text-text-muted mt-1 text-sm">{status}</p>
+			<h3 className="sr-only">{t('resultsTitle')}</h3>
 
 			{showDrop ? (
-				<div className="mt-3 space-y-3">
+				<div className="mt-4 space-y-3">
 					<FileDrop
 						label={t('dropTitle', { name: vendor.name })}
 						hint={t('dropHint', {
@@ -205,6 +247,12 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 						isBusy={isChecking}
 						onFile={onFile}
 					/>
+					<p className="text-text-muted text-sm">
+						{t.rich('sampleHint', {
+							pairs: (chunks) => <SampleLink href={SAMPLE_FILES.vendorPairs}>{chunks}</SampleLink>,
+							groups: (chunks) => <SampleLink href={SAMPLE_FILES.vendorGroups}>{chunks}</SampleLink>
+						})}
+					</p>
 					{isReplacing && (
 						<Button variant="quiet" size="sm" onClick={() => setIsReplacing(false)}>
 							{t('cancel')}
@@ -213,61 +261,60 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 				</div>
 			) : (
 				<>
-					<div className="mt-3 flex flex-wrap items-center gap-3">
+					<div className="border-border bg-bg mt-[18px] flex flex-wrap items-center gap-3.5 rounded-[14px] border px-[18px] py-4">
 						{fileName != null && (
 							<TabularFileIcon
 								fileName={fileName}
 								size={FILE_ICON_SIZE}
-								className="text-text-muted shrink-0"
+								className="text-text shrink-0"
 							/>
 						)}
-						<div className="min-w-0 flex-1">
-							<p className="type-ui truncate font-mono font-medium">{fileName}</p>
+						<span className="min-w-0 flex-[1_1_200px]">
+							<strong className="block truncate font-mono font-semibold">{fileName}</strong>
 							{stats != null && (
-								<p className="text-text-muted text-xs">
-									{checked == null
-										? t.rich('fileMeta', { rows: stats.rows, n: col })
-										: t.rich('fileMetaColumns', {
-												rows: stats.rows,
-												columns: checked.headers.length,
-												n: col
-											})}
+								<span className="text-text-muted font-mono text-sm">
+									{columns?.format === 'group' && stats.groups != null
+										? t('metaGroups', { groups: stats.groups })
+										: columns?.format === 'pair'
+											? t('metaPairs', { rows: stats.rows })
+											: t('metaRows', { rows: stats.rows })}
 									{fileName != null && ` · ${fileType(fileName, checked?.sheet)}`}
-								</p>
+								</span>
 							)}
-						</div>
+						</span>
 						{isChecking && <SpinnerIcon className="text-text-muted" />}
 						{isDraft && (
 							<Button
 								variant="secondary"
-								size="sm"
 								onClick={() => setIsReplacing(true)}
 								disabled={isChecking || isConfirming}
 							>
-								<RetryIcon size={SMALL_ICON_SIZE} />
 								{t('replace')}
 							</Button>
 						)}
 					</div>
 
 					{columns != null && (
-						<p className="type-ui text-text-muted mt-3 flex flex-wrap items-center gap-x-2">
-							<span>
+						<>
+							<div className="mt-6 flex flex-wrap items-center justify-between gap-2">
+								<p className="text-text-muted type-eyebrow">{t('howRead')}</p>
+								{isDraft && file != null && (
+									<Button
+										variant="quiet"
+										size="sm"
+										className="-my-2"
+										onClick={() => setIsChoosing((open) => !open)}
+									>
+										{isChoosing ? t('done') : t('change')}
+									</Button>
+								)}
+							</div>
+							<p className="border-border bg-bg text-text-muted mt-2.5 rounded-md border px-3.5 py-3 font-mono text-[0.8125rem] break-words">
 								{columns.format === 'pair'
 									? t.rich('readAsPair', { ...columns, col })
 									: t.rich('readAsGroup', { ...columns, col })}
-							</span>
-							{isDraft && file != null && (
-								<Button
-									variant="quiet"
-									size="sm"
-									className="h-7 px-2"
-									onClick={() => setIsChoosing((open) => !open)}
-								>
-									{isChoosing ? t('done') : t('change')}
-								</Button>
-							)}
-						</p>
+							</p>
+						</>
 					)}
 					{sheets != null && file != null && (
 						<div className="mt-3">
@@ -281,7 +328,7 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 						</div>
 					)}
 					{checked?.detection != null && (
-						<p role="alert" className="bg-warning-subtle text-warning type-ui mt-3 rounded-sm p-3">
+						<p role="alert" className="bg-warning-subtle text-warning mt-3 rounded-sm p-3 text-sm">
 							{t(checked.detection.reason)}
 						</p>
 					)}
@@ -290,7 +337,23 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 						<ColumnPicker headers={checked.headers} pending={pending} onChange={choose} />
 					)}
 
-					{stats != null && <VendorStats stats={stats} unknownCount={issues?.unknownCount ?? 0} />}
+					{stats != null && (
+						<ul aria-label={t('statsLabel')} className="mt-4">
+							{unknownCount === 0 && <Check>{t('checkKnown')}</Check>}
+							<Check>{t('checkDuplicates', { count: stats.duplicates })}</Check>
+							<Check>{t('checkSelf', { count: stats.selfPairs })}</Check>
+							{suggestedOverlap != null && (
+								<Check>
+									{t.rich('checkSuggested', { ...suggestedOverlap, n: (chunks) => chunks })}
+									<span className="text-text-muted block text-sm">
+										{t('checkSuggestedNote', {
+											rest: suggestedOverlap.total - suggestedOverlap.found
+										})}
+									</span>
+								</Check>
+							)}
+						</ul>
+					)}
 				</>
 			)}
 
@@ -303,10 +366,10 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 			{!showDrop && (isDraft ? vendor.fileName != null || checked != null : true) && (
 				<label
 					className={cn(
-						'mt-4 flex gap-3 rounded-sm border p-3 transition-[background-color,border-color] duration-150',
-						// Confirmed reads as done (success), never as the coral of an error.
-						!isDraft ? 'border-success bg-success-subtle' : 'border-border-input',
-						isDraft && hasPassingFile ? 'cursor-pointer' : 'cursor-default'
+						'border-border bg-bg mt-[18px] flex gap-3 rounded-[14px] border px-4 py-3.5 transition-[border-color] duration-150',
+						isDraft && hasPassingFile
+							? 'hover:border-border-strong cursor-pointer'
+							: 'cursor-default'
 					)}
 				>
 					<Checkbox
@@ -324,11 +387,11 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 								router.refresh()
 							})
 						}}
-						className="mt-0.5"
+						className="data-[state=checked]:bg-text data-[state=checked]:text-bg data-[state=checked]:border-text mt-0.5 size-[22px] rounded-[6px] border-[1.5px] disabled:opacity-100"
 					/>
-					<span className="type-ui">
-						<span className="font-medium">{t('completeConfirm', { name: vendor.name })}</span>
-						<span className="text-text-muted mt-0.5 block text-xs">
+					<span>
+						<span className="font-semibold">{t('completeConfirm', { name: vendor.name })}</span>
+						<span className="text-text-muted mt-0.5 block text-sm">
 							{!isDraft && vendor.confirmedAt != null
 								? t('confirmedOn', {
 										date: format.dateTime(vendor.confirmedAt, { dateStyle: 'medium' })
@@ -342,7 +405,18 @@ export function VendorFile({ vendor, maxPairs }: { vendor: VendorListItem; maxPa
 					</span>
 				</label>
 			)}
-		</section>
+			{remove != null && <div className="mt-auto flex justify-end pt-4">{remove}</div>}
+		</article>
+	)
+}
+
+// One check the file passed, with its tile.
+function Check({ children }: { children: React.ReactNode }) {
+	return (
+		<li className="border-border flex items-start gap-3 border-t py-3">
+			<Glyph kind="check" className="size-6 text-[0.8125rem]" />
+			<span>{children}</span>
+		</li>
 	)
 }
 

@@ -69,7 +69,7 @@ export function ThresholdSection({
 	return (
 		<RulesCard
 			id="threshold"
-			eyebrow={t('thresholdEyebrow')}
+			letter={t('letter.threshold')}
 			title={
 				<>
 					{t('thresholdTitle')}
@@ -79,16 +79,12 @@ export function ThresholdSection({
 			description={t('thresholdShort')}
 			className={className}
 		>
-			<p className="flex items-baseline gap-2">
-				<span className="font-mono text-5xl leading-none font-medium tracking-[-0.04em]">
+			<div className="flex flex-wrap items-center gap-x-8 gap-y-4">
+				<span className="text-text font-mono text-[3.5rem] leading-none font-semibold tracking-[-0.03em]">
 					{value.toFixed(2)}
 				</span>
-				<span className="type-ui text-text-muted">
-					{choice === 'custom' ? t('thresholdCustom') : t(`threshold_${choice}`)}
-				</span>
-			</p>
-			<div className="mt-5 space-y-3">
 				<Segmented<Choice>
+					isFill="narrow"
 					label={t('thresholdTitle')}
 					value={choice}
 					onChange={choose}
@@ -98,47 +94,44 @@ export function ThresholdSection({
 							label: (
 								<>
 									{t(`threshold_${name}`)}
-									<span className="font-mono text-xs">{THRESHOLD_PRESETS[name].toFixed(2)}</span>
+									<span className="font-mono">{THRESHOLD_PRESETS[name].toFixed(2)}</span>
 								</>
 							)
 						})),
 						{ value: 'custom', label: t('thresholdCustom') }
 					]}
-					isFill
 				/>
-				{choice === 'custom' && (
-					<div className="flex flex-wrap items-center gap-3">
-						<label htmlFor="threshold-custom" className="type-ui font-medium">
-							{t('thresholdCustomLabel')}
-						</label>
-						<Input
-							id="threshold-custom"
-							inputMode="decimal"
-							className="h-8 w-[84px] text-center font-mono"
-							value={text}
-							aria-describedby="threshold-custom-hint"
-							onChange={(event) => setText(event.target.value)}
-							onBlur={commitText}
-							onKeyDown={(event) => {
-								if (event.key === 'Enter') commitText()
-							}}
-						/>
-						<span id="threshold-custom-hint" className="text-text-muted text-xs">
-							{t('thresholdCustomHint', {
-								min: MIN_THRESHOLD.toFixed(2),
-								max: MAX_THRESHOLD.toFixed(2)
-							})}
-						</span>
-					</div>
-				)}
 			</div>
-			{/* Where the line sits on Jev's 0–1 score scale, and where scores fall. */}
-			<div className="mt-auto pt-6">
-				<CutoffScale value={value} />
-				<p className="type-ui text-text-muted mt-3">
-					{t(`thresholdNote_${choice}`, { value: value.toFixed(2) })}
-				</p>
-			</div>
+			{choice === 'custom' && (
+				<div className="mt-4 flex flex-wrap items-center gap-3">
+					<label htmlFor="threshold-custom" className="font-semibold">
+						{t('thresholdCustomLabel')}
+					</label>
+					<Input
+						id="threshold-custom"
+						inputMode="decimal"
+						className="w-[96px] text-center font-mono"
+						value={text}
+						aria-describedby="threshold-custom-hint"
+						onChange={(event) => setText(event.target.value)}
+						onBlur={commitText}
+						onKeyDown={(event) => {
+							if (event.key === 'Enter') commitText()
+						}}
+					/>
+					<span id="threshold-custom-hint" className="text-text-muted text-sm">
+						{t('thresholdCustomHint', {
+							min: MIN_THRESHOLD.toFixed(2),
+							max: MAX_THRESHOLD.toFixed(2)
+						})}
+					</span>
+				</div>
+			)}
+			{/* Where the line sits on Jev's 0-1 score scale, and where scores fall. */}
+			<CutoffScale value={value} className="mt-8" />
+			<p className="text-text-muted mt-3 text-sm">
+				{t(`thresholdNote_${choice}`, { value: value.toFixed(2) })}
+			</p>
 		</RulesCard>
 	)
 }

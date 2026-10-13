@@ -1,6 +1,7 @@
 'use client'
 
 import { BYTES_PER_MB } from '@/lib/pairsight/tabular-formats'
+import { useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { AlertIcon } from '@/components/ui/icons'
 import { MAX_FILE_BYTES, tabularFormatOf } from '@/lib/pairsight/tabular-formats'
@@ -11,6 +12,8 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 // the affected rows — icon and text, never color alone.
 
 const MAX_LISTED = 20
+// How long a new validation panel keeps itself in view while the page settles.
+const SETTLE_MS = 1000
 
 export function useRowList() {
 	const t = useTranslations('Records')
@@ -49,10 +52,39 @@ export function useFileErrorMessage() {
 	}
 }
 
+// What to fix, announced as it appears and brought into view: a file's
+// problems show under the drop zone, often at the foot of the screen behind
+// the dock, so the panel scrolls up to clear it (scroll-mb, past the dock's
+// hint) whenever its messages change. The drop zone may still be growing
+// back from its "uploading" size as they arrive, so for a moment the panel
+// keeps itself in view as the layout around it settles.
 export function ValidationPanel({ title, messages }: { title: string; messages: string[] }) {
+	const panel = useRef<HTMLDivElement>(null)
+	// A primitive to watch: the messages, one string.
+	const shown = messages.join('\n')
+	useEffect(() => {
+		const element = panel.current
+		const around = element?.parentElement
+		if (shown === '' || element == null || around == null) return
+		const isReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+		const reveal = () =>
+			element.scrollIntoView({ block: 'nearest', behavior: isReduced ? 'auto' : 'smooth' })
+		reveal()
+		const settling = new ResizeObserver(reveal)
+		settling.observe(around)
+		const stop = setTimeout(() => settling.disconnect(), SETTLE_MS)
+		return () => {
+			clearTimeout(stop)
+			settling.disconnect()
+		}
+	}, [shown])
 	if (messages.length === 0) return null
 	return (
-		<div role="alert" className="border-danger/40 bg-danger-subtle rounded-lg border p-4">
+		<div
+			ref={panel}
+			role="alert"
+			className="border-danger/40 bg-danger-subtle scroll-mb-16 rounded-lg border p-4"
+		>
 			<p className="text-danger type-subheading flex items-center gap-2">
 				<AlertIcon />
 				{title}

@@ -5,9 +5,10 @@ import { StepHeader } from '@/components/pairsight/step-layout'
 import { countryOptions } from '@/server/pairsight/countries'
 import { mappedIdentityRoles } from '@/server/pairsight/fields'
 import { parseColumnRoles } from '@/server/pairsight/json'
+import { parseProfile } from '@/server/pairsight/profile/profile'
 import { computePlan } from '@/server/pairsight/plan'
 import { parseIdentityRoles } from '@/server/pairsight/schemas'
-import { ENTITY_CONFIG, entityTypeOf } from '@/lib/pairsight/entity-types'
+import { ENTITY_CONFIG, entityTypeOf, rolesFor } from '@/lib/pairsight/entity-types'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 import { RefreshWhile } from '@/components/pairsight/refresh-while'
 
@@ -20,9 +21,19 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const plan = await computePlan({ scope, evaluationId: id })
 	const { evaluation } = plan
 	const splink = 'splink' in plan ? plan.splink : null
+	const mapped = mappedIdentityRoles(parseColumnRoles(workspace.dataset.columnRoles))
+	// Where the file looked to be from, if the country was set from it.
+	const guess = parseProfile(workspace.dataset.profile)?.countryGuess
+	const countryGuess = guess?.applied === true ? { code: guess.code, from: guess.from } : null
 	return (
 		<>
-			<StepHeader title={t('title')} description={t('description')} />
+			<StepHeader
+				step="rules"
+				title={t('title')}
+				description={
+					view.isReadOnly ? `${t('description')} ${t('descriptionDemo')}` : t('description')
+				}
+			/>
 			{/* Suggestions still being worked out: the card fills in by itself. */}
 			<RefreshWhile isActive={splink?.state === 'waiting'} />
 			<RulesForm
@@ -35,7 +46,11 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					threshold: evaluation.threshold
 				}}
 				suggested={ENTITY_CONFIG[entityTypeOf(evaluation.entityType)].identity}
-				mappedRoles={[...mappedIdentityRoles(parseColumnRoles(workspace.dataset.columnRoles))]}
+				// In the record type's own order: the stored mapping keeps none.
+				mappedRoles={rolesFor(entityTypeOf(evaluation.entityType)).filter((role) =>
+					mapped.has(role)
+				)}
+				idColumn={workspace.dataset.referenceColumn}
 				suggestions={{
 					state: splink?.state ?? 'waiting',
 					entityType: entityTypeOf(evaluation.entityType),
@@ -44,6 +59,7 @@ export async function RulesScreen({ loaded }: { loaded: LoadedWorkspace }) {
 					vendorCheck: ('vendorCheck' in plan ? plan.vendorCheck : undefined) ?? []
 				}}
 				countries={countryOptions(locale)}
+				countryGuess={countryGuess}
 			/>
 		</>
 	)

@@ -38,8 +38,9 @@ export function uploadFile({
 	evaluationId: string
 	kind: 'records' | 'vendor'
 	file: File
-	// 0–100 as the file goes up.
-	onProgress?: (percent: number) => void
+	// 0–99 as the file goes up; null once every byte is sent, while the
+	// server stores and reads it (the caller then says it's reading).
+	onProgress?: (percent: number | null) => void
 }): Promise<UploadResult> {
 	const query = new URLSearchParams({ kind, fileName: file.name })
 	return new Promise((resolve) => {
@@ -47,7 +48,9 @@ export function uploadFile({
 		request.open('PUT', `/api/evaluations/${evaluationId}/uploads?${query}`)
 		request.setRequestHeader('Content-Type', 'application/octet-stream')
 		request.upload.onprogress = (event) => {
-			if (event.lengthComputable) onProgress?.(Math.round((event.loaded / event.total) * PERCENT))
+			if (!event.lengthComputable) return
+			const percent = Math.round((event.loaded / event.total) * PERCENT)
+			onProgress?.(percent >= PERCENT ? null : percent)
 		}
 		request.onload = () => {
 			const body = parseJson(request.responseText)

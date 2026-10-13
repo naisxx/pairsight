@@ -14,6 +14,7 @@ import {
 	type SourcePreview
 } from '@/server/actions/pairsight/sources'
 import { DEFAULT_ENTITY_TYPE, rolesFor, type EntityType } from '@/lib/pairsight/entity-types'
+import { SAMPLE_FILES, SampleLink } from '../sample-link'
 import { FileDrop } from '../file-drop'
 import { uploadFile } from '../upload-file'
 import { useFileTypeLabel } from '../file-type'
@@ -291,6 +292,11 @@ export function RecordsUploader({
 						isBusy={isReading && choosing == null}
 						onFile={onFile}
 					/>
+					<p className="text-text-muted text-sm">
+						{t.rich('sampleHint', {
+							a: (chunks) => <SampleLink href={SAMPLE_FILES.records}>{chunks}</SampleLink>
+						})}
+					</p>
 					{choosing != null && (
 						<SheetPicker
 							fileName={choosing.file.name}

@@ -87,9 +87,12 @@ export function RecordsFileCard({
 				<p className="type-ui text-text-muted">
 					{t('mappingSummary', { mapped: matchedFields.length, total: columns })}
 				</p>
+				{/* One line, as growing lists are: what doesn't fit fades at the edge
+				    and is a swipe (or the arrow keys) away. */}
 				<ul
 					aria-label={t('mappedFields')}
-					className="mt-2 flex gap-1.5 overflow-hidden whitespace-nowrap"
+					tabIndex={0}
+					className="scroll-fade-x mt-2 flex [scrollbar-width:none] gap-1.5 overflow-x-auto whitespace-nowrap"
 				>
 					{matchedFields.map((field) => (
 						<li
