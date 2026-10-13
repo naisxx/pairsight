@@ -1,37 +1,47 @@
-import { Link } from '@/i18n/routing'
-import { Button } from '@/components/ui/button'
-import { ArrowLeftIcon } from '@/components/ui/icons'
-import { cn } from '@/lib/cn'
+import { useTranslations } from 'next-intl'
+import { STAGE_KEYS, stepNumber, type StageKey } from '@/lib/pairsight/stages'
+import { Dock } from './shell/dock'
 
-const BACK_ICON_SIZE = 15
 // The hint's id, so a blocked primary action can point at why
 // (aria-describedby). One action bar per page, so one id.
 export const ACTION_HINT_ID = 'action-bar-hint'
 
-// Every step: a title, one sentence of context, the content, then the action
-// bar with the stage's one primary action (docs/PairSight-UX-Plan.md §3–4).
-// StepHeader and ActionBar carry the design's PageHeader and SetupActionBar
-// look; each screen adopts the Back button and blocked reason as it's ported.
+// Every step: a title, one sentence of context, the content, then the dock
+// with the stage's one next action (docs/PairSight-UX-Plan.md §3–4).
 
 export function StepHeader({
+	step,
 	title,
 	description,
 	children
 }: {
+	// Which step this is, said above the title ("Step 03 of 05").
+	step?: StageKey
 	// A string, or a sentence with its key number wrapped in <StepEmphasis>.
 	title: React.ReactNode
 	description: React.ReactNode
 	// Sits beside the title: a status chip, a count.
 	children?: React.ReactNode
 }) {
+	const t = useTranslations('Steps')
 	return (
-		<header className="mb-8 flex flex-wrap items-start justify-between gap-4">
-			<div className="max-w-3xl">
-				<div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-					<h1 className="text-text type-display-sm text-balance">{title}</h1>
+		<header className="mb-10 flex flex-wrap items-start justify-between gap-4">
+			<div className="max-w-[1040px]">
+				{step != null && (
+					<p className="text-text-muted type-eyebrow mb-3.5">
+						{t('stepOf', {
+							number: stepNumber(step),
+							total: stepNumber(STAGE_KEYS.length)
+						})}
+					</p>
+				)}
+				<div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+					<h1 className="text-text font-display text-[clamp(2.5rem,4.6vw,3.75rem)] leading-[1.02] font-semibold tracking-[-0.025em] text-balance">
+						{title}
+					</h1>
 					{children}
 				</div>
-				<p className="text-text-muted mt-2 max-w-2xl text-[0.9375rem] leading-relaxed">
+				<p className="text-text-body mt-4 max-w-[680px] text-[1.1875rem] leading-[1.875rem]">
 					{description}
 				</p>
 			</div>
@@ -47,59 +57,19 @@ export function StepEmphasis({ children }: { children: React.ReactNode }) {
 export function ActionBar({
 	hint,
 	back,
-	children,
-	className
+	children
 }: {
 	hint?: React.ReactNode
-	// The previous stage, on the left.
+	// The previous stage, before the next action.
 	back?: { href: string; label: string }
-	children: React.ReactNode
-	className?: string
+	// None on Check and start, where Start run sits with what it starts.
+	children?: React.ReactNode
 }) {
-	// Docked to the bottom of the page: `mt-auto` rests it at the bottom of a
-	// short page (the transparent `pt-8` keeps a gap above it) and sticky
-	// keeps it in view on a long one. It spans <main> edge to edge — the page
-	// sits in an inline-size container (shell-frame.tsx) as wide as main's
-	// visible area, so 50cqw is half of it — while its contents line up with
-	// the page column.
+	// The page's next action lives in the dock with the steps (shell/dock.tsx),
+	// rendered here so a submit button stays inside its form.
 	return (
-		<div className="pointer-events-none sticky bottom-0 z-20 mx-[calc(50%-50cqw)] mt-auto -mb-10 pt-8">
-			<div data-action-bar className="border-border bg-bg pointer-events-auto border-t">
-				<div
-					className={cn(
-						'mx-auto flex max-w-[1280px] flex-wrap items-center gap-3 px-4 py-3 md:px-8',
-						className
-					)}
-				>
-					{back != null && (
-						<Button variant="secondary" asChild>
-							<Link href={back.href}>
-								<ArrowLeftIcon size={BACK_ICON_SIZE} />
-								{back.label}
-							</Link>
-						</Button>
-					)}
-					{/* Narrow, the hint gets its own line on top, so Back and the main
-					    action share one row below it instead of stacking three high. */}
-					{hint != null && (
-						<p
-							id={ACTION_HINT_ID}
-							role="status"
-							className="text-text-muted type-ui order-first flex min-w-0 basis-full items-center gap-1.5 @3xl:order-none @3xl:ml-auto @3xl:basis-auto"
-						>
-							{hint}
-						</p>
-					)}
-					<div
-						className={cn(
-							'ml-auto flex min-w-0 flex-wrap items-center justify-end gap-3',
-							hint != null && '@3xl:ml-0'
-						)}
-					>
-						{children}
-					</div>
-				</div>
-			</div>
-		</div>
+		<Dock back={back} hint={hint} hintId={ACTION_HINT_ID}>
+			{children}
+		</Dock>
 	)
 }

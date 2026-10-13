@@ -92,9 +92,14 @@ test.describe('PairSight vertical slice', () => {
 	// the records), then the completeness confirmation that makes it ready.
 	async function addVendor(page: Page, file: string) {
 		await page.getByRole('button', { name: 'Add vendor' }).click()
-		await expect(page.getByText(/^Upload Vendor [A-C]’s file/)).toBeVisible()
+		const upload = page.getByText(/^Upload Vendor [A-C]’s file/)
+		await expect(upload).toBeVisible()
+		// Every vendor has its own card: this one's confirmation names it.
+		const vendor = /Vendor [A-C]/.exec((await upload.textContent()) ?? '')?.[0] ?? ''
 		await page.locator('input[type=file]').setInputFiles(`${FIXTURES}/${file}`)
-		const complete = page.getByRole('checkbox', { name: /^Yes, this file has all of/ })
+		const complete = page.getByRole('checkbox', {
+			name: `Yes, this file has all of ${vendor}’s matches for these records`
+		})
 		// Checking the file builds and keeps every pair it implies: near the
 		// 100K limit that outlasts the default few seconds when the database
 		// is busy, while the page says it's still checking.
@@ -106,11 +111,9 @@ test.describe('PairSight vertical slice', () => {
 		await expect(complete).toBeDisabled()
 	}
 
-	// The selected vendor's matched-pair count.
+	// The newest vendor's matched-pair count, in its card's heading.
 	async function expectVendorPairs(page: Page, count: number) {
-		await expect(page.getByLabel('What’s in the file')).toContainText(
-			new RegExp(`Matched pairs\\s*${count}(?!\\d)`)
-		)
+		await expect(page.getByText(new RegExp(`^${count} pairs? matched$`)).last()).toBeVisible()
 	}
 
 	// Rules save themselves; the plan opens once they have.
@@ -198,7 +201,9 @@ test.describe('PairSight vertical slice', () => {
 
 		// 2 both matched, 2 vendor only, 2 PairSight only: 50% precision and recall.
 		const latest = page.getByRole('region', { name: 'Dashboard check' })
-		await expect(latest.getByRole('row', { name: /Vendor A/ })).toContainText('50.0%')
+		await expect(latest.getByRole('listitem').filter({ hasText: 'Vendor A' })).toContainText(
+			'50.0%'
+		)
 		await latest.getByRole('link', { name: '4 disagreements for Vendor A' }).click()
 		await page.waitForURL(/category=disagreements/)
 		await expect(matching(page)).toHaveText('4 pairs')
@@ -218,14 +223,25 @@ test.describe('PairSight vertical slice', () => {
 		await rename.getByRole('button', { name: 'Save name' }).click()
 		await expect(page.getByRole('link', { name: 'Renamed', exact: true })).toBeVisible()
 
-		await page.getByRole('button', { name: 'Actions for Renamed' }).click()
-		await page.getByRole('menuitem', { name: 'Delete' }).click()
-		await page
-			.getByRole('dialog', { name: 'Delete this evaluation?' })
-			.getByRole('button', { name: 'Delete evaluation' })
-			.click()
-		await expect(page.getByRole('link', { name: 'Renamed', exact: true })).toHaveCount(0)
-		await expect(summary).toContainText(/Evaluations\s*1/)
+		const deleteRenamed = async () => {
+			await page.getByRole('button', { name: 'Actions for Renamed' }).click()
+			await page.getByRole('menuitem', { name: 'Delete' }).click()
+			await page
+				.getByRole('dialog', { name: 'Delete this evaluation?' })
+				.getByRole('button', { name: 'Delete evaluation' })
+				.click()
+		}
+		const renamed = page.getByRole('link', { name: 'Renamed', exact: true })
+		// Gone at once, with a few seconds to change your mind.
+		await deleteRenamed()
+		await expect(renamed).toHaveCount(0)
+		await page.getByRole('button', { name: 'Undo' }).click()
+		await expect(renamed).toBeVisible()
+		await expect(page.getByText('Evaluation restored')).toBeVisible()
+		// Left alone, the delete goes through once the Undo has gone.
+		await deleteRenamed()
+		await expect(renamed).toHaveCount(0)
+		await expect(summary).toContainText(/Evaluations\s*1/, { timeout: 20_000 })
 
 		await page.getByRole('searchbox', { name: 'Search evaluations' }).fill('nothing like this')
 		await expect(page.getByText('No evaluations match “nothing like this”')).toBeVisible()
@@ -260,9 +276,12 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('region', { name: 'The pairs Jev will check' })).toContainText(
 			'most likely to be the same organisation'
 		)
-		await expect(page.getByLabel('When are two records the same?', { exact: true })).toHaveValue(
+		await expect(page.getByLabel('Two records are the same when', { exact: true })).toHaveValue(
 			/same organisation/
 		)
+		// UK postcodes: the country is set from them, and says so.
+		await expect(page.locator('#identity-country')).toContainText('United Kingdom')
+		await expect(page.getByText(/We set this from the postcodes in your file/)).toBeVisible()
 		await reviewPlan(page)
 		await startRun(page)
 
@@ -275,7 +294,9 @@ test.describe('PairSight vertical slice', () => {
 		await tile(page, 'Only vendor says same').click()
 		await page.waitForURL(/tab=detailed/)
 		// Records are named by the organisation's name.
-		await expect(page.getByRole('table').getByText('Orbis Logistics Ltd')).toBeVisible()
+		await expect(
+			page.getByRole('table').getByText('Orbis Logistics Ltd').filter({ visible: true })
+		).toBeVisible()
 	})
 
 	test('products: detected from the columns, their pairs picked, variants kept apart', async ({
@@ -357,7 +378,11 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('button', { name: 'Next: vendors' }).click()
 		await page.waitForURL('**/vendors', { timeout: 60_000 })
 		expect(uploads).toHaveLength(1)
-		await expect(page.getByRole('navigation').getByText('10K records')).toBeVisible()
+		await expect(
+			page
+				.getByRole('list', { name: 'Steps' })
+				.getByRole('link', { name: /^Records, completed\. 10K records/ })
+		).toBeVisible()
 	})
 
 	// Scale Roadmap item 12: the saved file's profile, on Records. A file
@@ -394,7 +419,6 @@ test.describe('PairSight vertical slice', () => {
 		await expect(health).toContainText('(415) 555-0100 is shared by 20 records')
 		await expect(health).toContainText('dates are written day first')
 		await expect(health).toContainText('Jev and every screen still see exactly what your file says')
-		await page.getByRole('button', { name: 'Preview rows' }).click()
 		await expect(page.getByRole('cell', { name: 'Zoë' })).toBeVisible()
 	})
 
@@ -524,10 +548,10 @@ test.describe('PairSight vertical slice', () => {
 		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await reviewPlan(page)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
-		await expect(plan).toContainText(/Pairs Jev will check\s*8/)
 		// All 4 vendor pairs are checked; PairSight suggested 3 of them too.
-		await expect(plan).toContainText(/Pairs PairSight suggested\s*7/)
-		await expect(plan).toContainText(/Pairs your vendors matched\s*\+4/)
+		await expect(plan).toContainText(
+			/Pairs to check\s*8 = 7 suggested by PairSight \+ 1 added because a vendor matched it/
+		)
 		await expect(plan).toContainText('3 vendor pairs PairSight suggested too, counted once')
 		await startRun(page)
 
@@ -542,9 +566,9 @@ test.describe('PairSight vertical slice', () => {
 		// Every pair was checked, so there's no "Not checked yet" to open.
 		await expect(tile(page, 'Not checked yet')).toHaveCount(0)
 		// Coverage: 7 pairs PairSight suggested, 1 added only because the vendor matched it.
-		const coverage = page.getByRole('region', { name: 'What did Jev check?' })
-		await expect(coverage).toContainText(/Suggested by PairSight\s*7/)
-		await expect(coverage).toContainText(/Added because a vendor matched it\s*1/)
+		const coverage = page.getByRole('region', { name: 'What was checked' })
+		await expect(coverage).toContainText('7 suggested by PairSight')
+		await expect(coverage).toContainText('1 added because a vendor matched it')
 
 		// Export: every pair in one CSV, with the vendor's decision and category
 		// beside Jev's, matching the tiles above.
@@ -597,7 +621,7 @@ test.describe('PairSight vertical slice', () => {
 		await page.keyboard.press('/')
 		await expect(page.getByRole('searchbox', { name: 'Search by name or record ID' })).toBeFocused()
 		// Click away from the search so the arrow keys reach the list.
-		await matching(page).click()
+		await page.getByRole('heading', { level: 1 }).click()
 		// A short window scrolled down, so coming back has a position to restore.
 		await page.setViewportSize({ width: 1280, height: 480 })
 		// The page scrolls inside the shell's <main>, not the window.
@@ -615,8 +639,8 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/pairs/**')
 		// Vendor only: the vendor matched it, PairSight didn't.
 		const decisions = page.getByRole('region', { name: 'Who says what' })
-		await expect(decisions).toContainText(/Vendor A\s*Same/)
-		await expect(decisions).toContainText(/Jev\s*Different/)
+		await expect(decisions).toContainText('Vendor A: same')
+		await expect(decisions).toContainText('Jev says different')
 		await expect(page.getByText(/Jev is an AI and can be wrong/)).toBeVisible()
 		const firstPair = page.url()
 		await page.keyboard.press('j')
@@ -687,11 +711,12 @@ test.describe('PairSight vertical slice', () => {
 
 		// The plan shows it, and nothing needs Jev again.
 		await reviewPlan(page)
-		const side = page.getByRole('region', { name: 'Match cut-off' })
-		await expect(side).toContainText(/0\.35\s*Lenient/)
 		const plan = page.getByRole('region', { name: 'From records to pairs' })
+		await expect(plan).toContainText(/Match cut-off\s*0\.35 · Lenient/)
 		await expect(plan).toContainText(/Already checked\s*8/)
-		await expect(plan).toContainText(/New checks by Jev\s*0\s*About \$0\.00/)
+		await expect(plan).toContainText(/New checks by Jev\s*0/)
+		await expect(plan).toContainText('nothing new is sent: it costs nothing')
+		await expect(plan).not.toContainText('Estimated cost')
 		// Every score was reused, so it's complete at once: straight to its results.
 		await startRun(page)
 
@@ -731,7 +756,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByText('Not final yet')).toBeVisible()
 
 		// The status filter keeps judged pairs only, applied as it changes.
-		await page.getByRole('link', { name: /^Detailed analysis/ }).click()
+		await page.getByRole('link', { name: /^Pairs \d/ }).click()
 		await page.waitForURL(/tab=detailed/)
 		await page.getByRole('button', { name: 'Filters' }).click()
 		await page.getByRole('combobox', { name: 'Checked?' }).click()
@@ -762,7 +787,7 @@ test.describe('PairSight vertical slice', () => {
 		// Failcase fails again when it's retried.
 		const rowCalls = await jevCalls(page, marker)
 		await page.locator('tbody tr').filter({ hasText: 'Failcase' }).locator('a').click()
-		await expect(panel).toContainText(/failcase\.doe@/)
+		await expect(panel).toContainText('Failcase Doe')
 		await panel.getByRole('button', { name: 'Check this pair again' }).click()
 		await expect(
 			page.getByText('Jev couldn’t check it this time either.', { exact: false })
@@ -921,7 +946,7 @@ test.describe('PairSight vertical slice', () => {
 			.click()
 		await page.waitForURL(/\/runs\/[0-9a-f-]+\/results/)
 		const notFinished = page.getByRole('region', { name: 'This run is paused' })
-		await expect(notFinished).toContainText(/pairs checked so far/)
+		await expect(notFinished).toContainText(/Pairs checked so far.*of 8 pairs/)
 		await expect(page.getByText('Correct merges')).toHaveCount(0)
 		await expect(page.getByRole('button', { name: 'Download' })).toHaveCount(0)
 
@@ -974,12 +999,12 @@ test.describe('PairSight vertical slice', () => {
 
 		// Saved, the file reads back with its mapping; replacing it asks first.
 		await page.goto(page.url().replace(/\/vendors$/, '/records'))
-		await expect(page.getByLabel('File details')).toContainText(/We matched \d+ fields? to your/)
+		await expect(page.getByLabel('File details')).toContainText(/220 rows · \d+ columns/)
 		await expect(page.getByLabel('File details')).toContainText('demo-source.csv')
 		await page.getByRole('button', { name: 'Replace file' }).click()
 		const replace = page.getByRole('dialog', { name: 'Use a different file?' })
 		await replace.getByRole('button', { name: 'No, keep this one' }).click()
-		await expect(page.getByLabel('File details')).toContainText(/We matched \d+ fields? to your/)
+		await expect(page.getByLabel('File details')).toContainText(/220 rows · \d+ columns/)
 		await page.getByRole('link', { name: 'Next: vendors' }).click()
 		await page.waitForURL('**/vendors')
 
@@ -993,7 +1018,9 @@ test.describe('PairSight vertical slice', () => {
 		const name = page.getByLabel('What’s this vendor called?')
 		await name.fill('Acme Match')
 		await name.press('Enter')
-		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText('Acme Match')
+		await expect(page.getByText('Name saved', { exact: true })).toBeVisible()
+		await page.reload()
+		await expect(page.getByLabel('What’s this vendor called?')).toHaveValue('Acme Match')
 	})
 
 	test('a plan over the limit is blocked, and says where its pairs come from', async ({ page }) => {
@@ -1044,7 +1071,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('switch')).toHaveCount(0)
 		// The card fills in by itself once PairSight has looked at the records.
 		await expect(suggestions).toContainText(/pairs suggested/, { timeout: 60_000 })
-		await expect(suggestions).toContainText('Most suggested pairs share')
+		await expect(suggestions).toContainText('share the same')
 		await expect(suggestions).toContainText(
 			/These already include 1 of the 1 pairs Vendor A matched/
 		)
@@ -1052,10 +1079,15 @@ test.describe('PairSight vertical slice', () => {
 
 		await reviewPlan(page)
 		const ledger = page.getByRole('region', { name: 'From records to pairs' })
-		await expect(ledger).toContainText(/Pairs PairSight suggested\s*\d+/)
+		await expect(ledger).toContainText(/\d+ suggested by PairSight/)
 		await expect(page.locator('body')).not.toContainText(/splink/i)
 
 		await startRun(page)
+		// What the suggestions cover is in What was checked's How this works.
+		await page
+			.getByRole('region', { name: 'What was checked' })
+			.getByRole('button', { name: 'How this works' })
+			.click()
 		await expect(
 			page.getByText(/PairSight suggested pairs that share something it compares/)
 		).toBeVisible()
@@ -1096,16 +1128,20 @@ test.describe('PairSight vertical slice', () => {
 			const suggestions = page.getByRole('region', { name: 'The pairs Jev will check' })
 			await expect(suggestions).toContainText(`most likely to be the same ${thing}`)
 			await expect(suggestions).toContainText(/pairs suggested/, { timeout: 60_000 })
-			await expect(suggestions).toContainText('Most suggested pairs share')
+			await expect(suggestions).toContainText('share the same')
 			await expect(suggestions).toContainText(
 				/These already include 1 of the 1 pairs Vendor A matched/
 			)
 
 			await reviewPlan(page)
 			await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
-				/Pairs PairSight suggested\s*\d+/
+				/\d+ suggested by PairSight/
 			)
 			await startRun(page)
+			await page
+				.getByRole('region', { name: 'What was checked' })
+				.getByRole('button', { name: 'How this works' })
+				.click()
 			await expect(
 				page.getByText(`PairSight suggested pairs that share something it compares: ${shared}`)
 			).toBeVisible()
@@ -1126,9 +1162,9 @@ test.describe('PairSight vertical slice', () => {
 		await page.waitForURL('**/rules')
 		await reviewPlan(page)
 		await expect(page.getByRole('region', { name: 'From records to pairs' })).toContainText(
-			/Pairs Jev will check\s*5\.89K/
+			/Pairs to check\s*5,(88[5-9]|89[0-4]) =/
 		)
-		await expect(page.getByText(/· (under a minute|about \d)/)).toBeVisible()
+		await expect(page.getByText(/^(Under a minute|About \d+ (minute|hour)s?)$/)).toBeVisible()
 		await expect(page.getByText(/more than one run can check/)).toHaveCount(0)
 		await expect(page.getByRole('button', { name: 'Start run' })).toBeEnabled()
 		await page.getByRole('button', { name: 'Start run' }).click()
@@ -1155,11 +1191,14 @@ test.describe('PairSight vertical slice', () => {
 		await expect(tile(page, 'Only Jev says same')).toContainText('1')
 		await tile(page, 'Only Jev says same').click()
 		await page.waitForURL(/tab=detailed/)
-		await expect(page.getByRole('table').getByText('Catherine Smyth')).toBeVisible()
+		// Visible only: a narrow list also shows record B under record A.
+		await expect(
+			page.getByRole('table').getByText('Catherine Smyth').filter({ visible: true })
+		).toBeVisible()
 		// The first pair shows beside the list; its own page says why it was checked.
 		await page
 			.getByRole('complementary', { name: 'The selected pair' })
-			.getByRole('link', { name: /^See all \d+ fields on its own page/ })
+			.getByRole('link', { name: 'Open full comparison' })
 			.click()
 		await page.waitForURL('**/pairs/**')
 		await expect(
@@ -1206,7 +1245,7 @@ test.describe('PairSight vertical slice', () => {
 		await expect(page.getByRole('radio', { name: /^Strict/ })).toBeChecked()
 
 		// An empty definition is never saved: the reason shows, the plan waits.
-		const same = page.getByLabel('When are two records the same?', { exact: true })
+		const same = page.getByLabel('Two records are the same when', { exact: true })
 		const definition = await same.inputValue()
 		await same.fill('')
 		await expect(page.getByText('Tell Jev when two records are the same').first()).toBeVisible()
@@ -1241,7 +1280,7 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'demo-vendor-a.csv')
 		await page.getByRole('link', { name: 'Next: what Jev checks' }).click()
 		await page.waitForURL('**/rules')
-		const same = page.getByLabel('When are two records the same?', { exact: true })
+		const same = page.getByLabel('Two records are the same when', { exact: true })
 		const suggested = await same.inputValue()
 		const useSuggested = page.getByRole('button', { name: 'Use the suggested wording' })
 		await expect(useSuggested).toHaveCount(0)
@@ -1278,7 +1317,7 @@ test.describe('PairSight vertical slice', () => {
 
 		// Vendor B starts as a draft that survives a reload until it's finished.
 		await page.getByRole('button', { name: 'Add vendor' }).click()
-		const vendorList = page.getByRole('navigation', { name: 'Vendors' })
+		const vendorList = page.getByRole('region', { name: 'Vendors' })
 		await expect(vendorList).toContainText('Needs: upload a file that passes the checks')
 		await page.reload()
 		await expect(vendorList).toContainText('Needs: upload a file that passes the checks')
@@ -1292,7 +1331,7 @@ test.describe('PairSight vertical slice', () => {
 			page.getByText('Read as one record per row, grouped by match_id · record IDs in record')
 		).toBeVisible()
 		await expectVendorPairs(page, 3)
-		await page.getByRole('checkbox', { name: /^Yes, this file has all of/ }).click()
+		await page.getByRole('checkbox', { name: /^Yes, this file has all of Vendor B/ }).click()
 		await expect(vendorList).toContainText('List of groups · ready')
 		await runEvaluation(page)
 
@@ -1304,12 +1343,12 @@ test.describe('PairSight vertical slice', () => {
 			'true'
 		)
 		// Beside the list, the selected pair says what every vendor decided.
-		await page.getByRole('link', { name: /^Detailed analysis/ }).click()
+		await page.getByRole('link', { name: /^Pairs \d/ }).click()
 		await expect(
 			page
 				.getByRole('complementary', { name: 'The selected pair' })
 				.getByRole('region', { name: 'Who says what' })
-		).toContainText(/Vendor A.*Vendor B.*Jev/)
+		).toContainText(/Jev.*Vendor A.*Vendor B/)
 	})
 
 	test('three vendors are compared side by side, and that’s the limit', async ({ page }) => {
@@ -1319,8 +1358,8 @@ test.describe('PairSight vertical slice', () => {
 		await addVendor(page, 'demo-vendor-a.csv')
 		await addVendor(page, 'demo-vendor-b.csv')
 		await addVendor(page, 'demo-vendor-c.csv')
-		await expect(page.getByRole('navigation', { name: 'Vendors' })).toContainText(
-			/Vendor C\s*List of pairs · ready/
+		await expect(page.getByRole('article', { name: 'Vendor C' })).toContainText(
+			'List of pairs · ready'
 		)
 		// A fourth can't be added: the button gives way to the limit.
 		await expect(page.getByRole('button', { name: 'Add vendor' })).toHaveCount(0)
@@ -1345,12 +1384,12 @@ test.describe('PairSight vertical slice', () => {
 		)
 		await expect(tile(page, 'Both say same')).toBeVisible()
 		// Beside the list, the selected pair says what every vendor decided.
-		await page.getByRole('link', { name: /^Detailed analysis/ }).click()
+		await page.getByRole('link', { name: /^Pairs \d/ }).click()
 		await expect(
 			page
 				.getByRole('complementary', { name: 'The selected pair' })
 				.getByRole('region', { name: 'Who says what' })
-		).toContainText(/Vendor A.*Vendor B.*Vendor C.*Jev/)
+		).toContainText(/Jev.*Vendor C.*Vendor A.*Vendor B/)
 	})
 
 	test('locked steps can’t be opened by URL: they land where the evaluation is up to', async ({
@@ -1409,7 +1448,7 @@ test.describe('PairSight vertical slice', () => {
 		}
 	})
 
-	test('the sidebar shows the pipeline, collapses, and remembers its width', async ({ page }) => {
+	test('the dock shows the steps and what each holds', async ({ page }) => {
 		await signUp(page)
 		await createEvaluation(page, 'Shell')
 		const pipeline = page.getByRole('list', { name: 'Steps' })
@@ -1432,30 +1471,18 @@ test.describe('PairSight vertical slice', () => {
 			})
 		).toBeVisible()
 
-		const shell = page.locator('.app-shell')
-		await expect(shell).toHaveAttribute('data-collapsed', 'false')
-		await page.getByRole('button', { name: 'Collapse sidebar' }).click()
-		await expect(shell).toHaveAttribute('data-collapsed', 'true')
-		await expect(page.getByRole('button', { name: 'Expand sidebar' })).toBeVisible()
-		// The width is remembered, and the server renders it on the first paint.
-		await page.reload()
-		await expect(shell).toHaveAttribute('data-collapsed', 'true')
-		await page.keyboard.press('[')
-		await expect(shell).toHaveAttribute('data-collapsed', 'false')
-		await expect(page.getByRole('button', { name: 'Collapse sidebar' })).toBeVisible()
-
-		// On phones the sidebar is a drawer, opened from the top bar.
+		// The step you're on is marked in the dock; narrow, only it keeps
+		// its name.
+		const dock = page.getByRole('navigation', { name: 'Evaluation steps' })
+		await expect(dock.getByRole('link', { name: /^Vendors,/ })).toHaveAttribute(
+			'aria-current',
+			'step'
+		)
+		await expect(pipeline.getByText('Records', { exact: true })).toBeVisible()
 		await page.setViewportSize({ width: 390, height: 844 })
-		await page.getByRole('button', { name: 'Open navigation' }).click()
-		const drawer = page.getByRole('dialog', { name: 'Navigation' })
-		await expect(drawer).toBeVisible()
-		await expect(shell).toHaveAttribute('data-mobile-open', 'true')
-		await drawer.getByRole('button', { name: 'Close navigation' }).click()
-		await expect(drawer).toHaveCount(0)
-		await page.getByRole('button', { name: 'Open navigation' }).click()
-		await expect(drawer).toBeVisible()
-		await page.keyboard.press('Escape')
-		await expect(shell).toHaveAttribute('data-mobile-open', 'false')
+		await expect(pipeline.getByText('Records', { exact: true })).toBeHidden()
+		await expect(pipeline.getByText('Vendors', { exact: true })).toBeVisible()
+		await expect(dock.getByRole('link', { name: /^Records, completed\./ })).toBeVisible()
 	})
 
 	test('sign-in checks each field once submitted, and can show the password', async ({ page }) => {
@@ -1540,7 +1567,7 @@ test.describe('PairSight vertical slice', () => {
 		// and expects it to finish complete anyway: every pair checked, none failed.
 		async function expectFinishesComplete(page: Page, name: string, trouble: string) {
 			const marker = await readyToStart(page, name)
-			await expect(page.getByText(/· (under a minute|about \d)/)).toBeVisible()
+			await expect(page.getByText(/^(Under a minute|About \d+ (minute|hour)s?)$/)).toBeVisible()
 			await page.request.post(
 				`${JEV_STUB}/${trouble}${trouble.includes('?') ? '&' : '?'}marker=${marker}`
 			)
@@ -1585,7 +1612,11 @@ test.describe('PairSight vertical slice', () => {
 				.getByRole('article', { name: 'Run 1 · Stuck call' })
 			// Every other pair is checked well before that call gives up.
 			const progress = card.getByRole('progressbar')
-			await expect(progress).toHaveAttribute('aria-valuemax', '379')
+			// The vendor's 379, plus any PairSight suggests between the two groups
+			// (they share a street and a city, so now and then it picks one).
+			await expect
+				.poll(async () => Number(await progress.getAttribute('aria-valuemax')))
+				.toBeGreaterThanOrEqual(379)
 			await expect
 				.poll(
 					async () =>

@@ -20,6 +20,18 @@ export default defineConfig({
 	},
 	projects: [
 		{ name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@pushback/ },
+		// The landing's scroll-linked walkthrough is driven by script so it plays
+		// the same everywhere; it's checked in Safari's and Firefox's engines too.
+		{
+			name: 'webkit',
+			use: { ...devices['Desktop Safari'] },
+			testMatch: /landing-motion\.spec\.ts/
+		},
+		{
+			name: 'firefox',
+			use: { ...devices['Desktop Firefox'] },
+			testMatch: /landing-motion\.spec\.ts/
+		},
 		// Jev pushing back slows every call the server makes (one shared limit),
 		// so those tests run on their own, once everything else has finished.
 		{
@@ -51,7 +63,10 @@ export default defineConfig({
 			? []
 			: [
 					{
-						command: 'pnpm dev',
+						// CI tests what ships: its e2e job builds first, then serves that
+						// build. A dev server compiles each page on its first visit and
+						// hydrates late, so clicks and timed waits race it.
+						command: process.env.CI ? 'pnpm start' : 'pnpm dev',
 						url: 'http://localhost:3000',
 						// PairSight specs need this server's stub env. Reusing whatever
 						// already listens on 3000 (often a dev server Playwright left

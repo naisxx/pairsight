@@ -1,4 +1,4 @@
-import { CheckIcon, PlusIcon, SwapIcon } from '@/components/ui/icons'
+import { CheckIcon, PlusIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
 import { LogoGlyph } from '../wordmark'
 
@@ -10,7 +10,6 @@ import { LogoGlyph } from '../wordmark'
 
 const CHECK_SIZE = 10
 const PLUS_SIZE = 14
-const SWAP_SIZE = 18
 
 // A placeholder line of text.
 function Line({ width, className }: { width: string; className?: string }) {
@@ -228,7 +227,7 @@ export function RunsStackScene() {
 					}}
 				>
 					<span className="flex items-center gap-1.5">
-						<LogoGlyph className="h-2.5 w-[14px]" />
+						<LogoGlyph className="h-1 w-[14px]" />
 						<Line width="50%" />
 					</span>
 					<span className="bg-border relative h-1.5 rounded-full">
@@ -295,27 +294,6 @@ export function UnpluggedScene() {
 			<Badge tone="danger" className="top-[14px] left-[108px] text-[11px] font-bold">
 				!
 			</Badge>
-		</Frame>
-	)
-}
-
-// The Results verdict's picture: two records side by side, weighed against
-// each other.
-export function ComparisonScene() {
-	return (
-		<Frame className="h-[150px] w-[260px]">
-			<RecordCard
-				index={0}
-				className="empty-drift top-[18px] left-[20px] w-[120px] -rotate-6 p-3"
-			/>
-			<RecordCard
-				index={1}
-				accent
-				className="empty-drift-reverse top-[30px] left-[118px] w-[120px] rotate-6 p-3"
-			/>
-			<span className="rise stagger-3 bg-action text-action-ink ring-surface/60 absolute top-[56px] left-[110px] flex size-10 items-center justify-center rounded-full ring-8">
-				<SwapIcon size={SWAP_SIZE} />
-			</span>
 		</Frame>
 	)
 }

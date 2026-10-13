@@ -1,27 +1,13 @@
 import { cn } from '@/lib/cn'
 
-// The mark: two overlapping records, the first filled with two lines of
-// "data", in the fixed brand coral (both themes).
+// The mark: three tiles in a row — the vendor (vermilion), agreement (the
+// text colour, so ink on paper and paper on charcoal) and the checker (ice).
 export function LogoGlyph({ className }: { className?: string }) {
 	return (
-		<svg viewBox="0 0 22 16" className={cn('h-4 w-[22px] shrink-0', className)} aria-hidden>
-			<rect x="1" y="1" width="12" height="14" rx="3" className="fill-brand" />
-			<rect
-				x="9"
-				y="1"
-				width="12"
-				height="14"
-				rx="3"
-				fill="none"
-				strokeWidth="2"
-				className="stroke-brand"
-			/>
-			<path
-				d="M4.5 6h5M4.5 10h3.5"
-				strokeWidth="1.6"
-				strokeLinecap="round"
-				className="stroke-white"
-			/>
+		<svg viewBox="0 0 28 8" className={cn('h-2.5 w-[34px] shrink-0', className)} aria-hidden>
+			<rect x="0" y="0" width="8" height="8" rx="2" className="fill-brand" />
+			<rect x="10" y="0" width="8" height="8" rx="2" fill="currentColor" />
+			<rect x="20" y="0" width="8" height="8" rx="2" className="fill-ice" />
 		</svg>
 	)
 }
@@ -31,13 +17,18 @@ export function Wordmark({
 	labelClassName
 }: {
 	className?: string
-	// Lets the collapsed sidebar hide the name while the glyph stays.
+	// Lets a tight spot hide the name while the mark stays.
 	labelClassName?: string
 }) {
 	return (
-		<span className={cn('text-text inline-flex items-center gap-2', className)}>
+		<span className={cn('text-text inline-flex items-center gap-2.5', className)}>
 			<LogoGlyph />
-			<span className={cn('text-[0.9375rem] font-semibold tracking-[-0.01em]', labelClassName)}>
+			<span
+				className={cn(
+					'font-display text-[1.375rem] leading-none font-semibold tracking-[-0.025em]',
+					labelClassName
+				)}
+			>
 				PairSight
 			</span>
 		</span>

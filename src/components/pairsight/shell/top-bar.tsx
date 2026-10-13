@@ -3,99 +3,133 @@
 import { useTranslations } from 'next-intl'
 import { Link, usePathname } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { ChevronRightIcon, MenuIcon } from '@/components/ui/icons'
 import { cn } from '@/lib/cn'
-import { currentStageKey, type Crumb, type PipelineData } from './pipeline-types'
-import { useShell } from './shell-frame'
-import { EvaluationStatusChip } from './status-chip'
+import { ThemeToggle } from '../theme-toggle'
+import { Wordmark } from '../wordmark'
 import { RunsTrigger } from '../runs/runs-trigger'
+import { AccountMenu } from './account-menu'
+import type { Crumb, PipelineData, ShellViewer } from './pipeline-types'
+import { EvaluationStatusChip } from './status-chip'
 
-const MENU_ICON_SIZE = 18
-const CRUMB_SEPARATOR_SIZE = 11
+const EVALUATIONS_HREF = '/evaluations'
 
-// The bar above the page: the phone menu button, where you are, and the
-// evaluation's status. On an evaluation the last crumbs are the stage the
-// page belongs to; the stage links back to its page from deeper ones (a pair
-// back to its results).
-export function TopBar({ crumbs, pipeline }: { crumbs: Crumb[]; pipeline?: PipelineData }) {
+// An underlined text link, the top bar's quiet way to another section.
+const TEXT_LINK_CLASS_NAME =
+	'text-text decoration-border-strong hover:decoration-text inline-flex min-h-11 min-w-11 items-center justify-center underline underline-offset-[3px] transition-[text-decoration-color] duration-150'
+
+// The slim bar over every app page (pairsight-handoff Components): the mark,
+// where you are (home / evaluation, with the sandbox's tag), then the
+// evaluation's status, Runs, the way back to your evaluations from the
+// sandbox, the theme switch and the account. In the sandbox, signed out, the last two are Sign
+// in and the way to an account of your own. The steps live in the dock.
+export function TopBar({
+	crumbs,
+	homeHref,
+	pipeline,
+	viewer,
+	badge
+}: {
+	crumbs: Crumb[]
+	homeHref: string
+	pipeline?: PipelineData
+	viewer: ShellViewer
+	// Beside the breadcrumb: the sandbox's "read-only demo" tag.
+	badge?: React.ReactNode
+}) {
 	const t = useTranslations('Shell')
-	const tSteps = useTranslations('Steps')
+	const tSandbox = useTranslations('Sandbox')
 	const pathname = usePathname()
-	const { openMobile } = useShell()
-	const stage =
-		pipeline == null
-			? undefined
-			: pipeline.stages.find(
-					(candidate) => candidate.key === currentStageKey(pipeline.stages, pathname)
-				)
-	const trail: Crumb[] =
-		stage == null
-			? crumbs
-			: [
-					...crumbs,
-					{ label: tSteps(stage.key), href: pathname === stage.href ? undefined : stage.href }
-				]
 
 	return (
-		<header className="border-border bg-bg flex h-[52px] shrink-0 items-center gap-2 border-b px-3 md:px-6">
-			<Button
-				variant="quiet"
-				size="icon"
-				className="shrink-0 md:hidden"
-				onClick={openMobile}
-				aria-label={t('openNavigation')}
-			>
-				<MenuIcon size={MENU_ICON_SIZE} />
-			</Button>
-			<nav aria-label={t('breadcrumb')} className="min-w-0">
-				<ol className="flex min-w-0 items-center gap-1.5 text-sm">
-					{trail.map((crumb, index) => {
-						const isLast = index === trail.length - 1
-						return (
-							<li
-								key={`${crumb.label}-${index}`}
-								className={cn(
-									'flex min-w-0 items-center gap-1.5',
-									// Where you are, and the short way home, are never the
-									// parts cut short: the evaluation's name between them is.
-									(isLast || index === 0) && 'shrink-0',
-									// On phones only the first and last two crumbs fit.
-									index > 0 && index < trail.length - 2 && 'hidden sm:flex'
-								)}
-							>
-								{index > 0 && (
-									<ChevronRightIcon
-										size={CRUMB_SEPARATOR_SIZE}
-										className="text-text-muted shrink-0"
-									/>
-								)}
-								{crumb.href != null && !isLast ? (
-									<Link
-										href={crumb.href}
-										className="text-text-muted hover:text-text truncate transition-colors duration-150 pointer-coarse:min-w-11 pointer-coarse:py-3"
-									>
-										{crumb.label}
-									</Link>
-								) : (
-									<span
-										aria-current={isLast ? 'page' : undefined}
-										className="text-text truncate font-medium"
-									>
-										{crumb.label}
-									</span>
-								)}
-							</li>
+		<header className="shrink-0 px-4 md:px-8">
+			<div className="border-border mx-auto flex min-h-16 max-w-[1216px] flex-wrap items-center gap-x-4 gap-y-1 border-b py-2.5">
+				<Link
+					href={homeHref}
+					aria-label={t('home')}
+					className="inline-flex min-h-11 shrink-0 items-center"
+				>
+					{/* Inside an evaluation a phone keeps the tiles only, so its name has
+					    room beside them; the link is still named "home". */}
+					<Wordmark
+						labelClassName={crumbs.length > 1 ? 'max-[599px]:sr-only' : 'max-[380px]:sr-only'}
+					/>
+				</Link>
+				{/* Below a wide screen the actions take the first row, so where you are gets
+				    a row of its own; it never wraps, the evaluation's name truncating
+				    first. A phone keeps its own layout (only the last crumb). */}
+				<nav
+					aria-label={t('breadcrumb')}
+					className="min-w-0 flex-1 min-[600px]:max-xl:order-last min-[600px]:max-xl:basis-full"
+				>
+					<ol className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[0.9375rem] min-[600px]:flex-nowrap">
+						{crumbs.map((crumb, index) => {
+							const isLast = index === crumbs.length - 1
+							return (
+								<li
+									key={`${crumb.label}-${index}`}
+									// On a phone only where you are stays: the mark already leads
+									// back to the start, and the bar keeps to two rows.
+									className={cn(
+										'flex min-w-0 items-center gap-2',
+										!isLast && 'shrink-0 max-[599px]:hidden'
+									)}
+								>
+									{index > 0 && (
+										<span aria-hidden className="text-text-muted max-[599px]:hidden">
+											/
+										</span>
+									)}
+									{crumb.href != null && !isLast ? (
+										<Link href={crumb.href} className={cn(TEXT_LINK_CLASS_NAME, 'truncate')}>
+											{crumb.label}
+										</Link>
+									) : (
+										<span
+											aria-current={pathname === crumb.href ? 'page' : undefined}
+											className="text-text truncate font-semibold"
+										>
+											{crumb.label}
+										</span>
+									)}
+								</li>
+							)
+						})}
+						{badge != null && <li className="flex shrink-0 items-center">{badge}</li>}
+					</ol>
+				</nav>
+				<div className="ml-auto flex shrink-0 items-center gap-2">
+					{pipeline != null && (
+						<div className="hidden sm:block">
+							<EvaluationStatusChip status={pipeline.status} />
+						</div>
+					)}
+					<RunsTrigger />
+					{viewer == null ? (
+						<Link href="/sign-in" className={cn(TEXT_LINK_CLASS_NAME, 'px-1')}>
+							{t('signIn')}
+						</Link>
+					) : (
+						// In the sandbox, the way back to your own; elsewhere the
+						// breadcrumb already starts there.
+						homeHref !== EVALUATIONS_HREF && (
+							<Link href={EVALUATIONS_HREF} className={cn(TEXT_LINK_CLASS_NAME, 'px-1')}>
+								{t('evaluations')}
+							</Link>
 						)
-					})}
-				</ol>
-			</nav>
-			<div className="ml-auto flex items-center gap-2">
-				{pipeline != null && (
-					<div className="hidden sm:block">
-						<EvaluationStatusChip status={pipeline.status} />
-					</div>
-				)}
-				<RunsTrigger />
+					)}
+					<ThemeToggle />
+					{viewer == null ? (
+						<Button asChild>
+							<Link href="/sign-up">
+								{/* One line on a phone, so the page starts sooner. */}
+								<span className="sm:hidden">{tSandbox('signUpShort')}</span>
+								<span className="hidden sm:inline">{tSandbox('signUp')}</span>
+							</Link>
+						</Button>
+					) : (
+						<AccountMenu email={viewer.email} name={viewer.name} />
+					)}
+				</div>
 			</div>
 		</header>
 	)

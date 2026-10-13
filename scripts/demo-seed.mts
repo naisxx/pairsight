@@ -14,6 +14,10 @@ import { PrismaClient } from '@prisma/client'
 import { chunks } from '../src/server/pairsight/chunks.ts'
 import { ENTITY_TYPES, type EntityType } from '../src/lib/pairsight/entity-types.ts'
 import { SANDBOX_EVALUATION_IDS } from '../src/lib/pairsight/sandbox.ts'
+import { mapRecordFields, type FieldRole } from '../src/server/pairsight/fields.ts'
+import { parseColumnRoles } from '../src/server/pairsight/json.ts'
+import { guessCountry } from '../src/server/pairsight/profile/country-guess.ts'
+import { profileRecords } from '../src/server/pairsight/profile/profile.ts'
 import {
 	SANDBOX_ID_KIND,
 	SANDBOX_SNAPSHOTS,
@@ -26,6 +30,29 @@ const TRANSACTION_TIMEOUT_MS = 120_000
 const SCORE_BATCH = 5_000
 
 const db = new PrismaClient()
+
+// A demo file's profile, as an upload gets one (datasets.ts), so its Records
+// page shows "What we noticed in this file" like any other. Its country is
+// the recorded one; where the file looks to be from is said only when the
+// two agree.
+function demoProfile({
+	records,
+	columnRoles,
+	type,
+	country
+}: {
+	records: Array<{ values: Record<string, string> }>
+	columnRoles: Record<string, FieldRole>
+	type: EntityType
+	country: string
+}) {
+	const mapped = records.map(({ values }) => mapRecordFields({ values, columnRoles }))
+	const guess = guessCountry(mapped)
+	return {
+		...profileRecords(mapped, { type, country }),
+		countryGuess: guess == null ? null : { ...guess, applied: guess.code === country }
+	}
+}
 
 async function seed(type: EntityType, file: string) {
 	const snapshot = sandboxSnapshotSchema.parse(JSON.parse(readFileSync(file, 'utf8')))
@@ -80,6 +107,12 @@ async function seed(type: EntityType, file: string) {
 					rowCount: dataset.records.length,
 					referenceColumn: dataset.referenceColumn,
 					columnRoles: dataset.columnRoles ?? {},
+					profile: demoProfile({
+						records: dataset.records,
+						columnRoles: parseColumnRoles(dataset.columnRoles ?? {}),
+						type,
+						country: evaluation.countryCode
+					}),
 					createdAt: new Date(snapshot.run.createdAt),
 					// Scored when it was recorded: the suggestions below.
 					scoreStatus: 'done',

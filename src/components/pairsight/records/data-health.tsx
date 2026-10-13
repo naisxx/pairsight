@@ -1,20 +1,31 @@
-import { getFormatter, getTranslations } from 'next-intl/server'
+import { getFormatter, getLocale, getTranslations } from 'next-intl/server'
 import { InfoTip } from '@/components/ui/info-tip'
-import { InfoIcon, SuccessIcon } from '@/components/ui/icons'
+import { Glyph } from '../glyph'
 import type { EntityType } from '@/lib/pairsight/entity-types'
 import { fillRates, healthFindings, type HealthFinding } from '@/server/pairsight/profile/findings'
 import type { DatasetProfile } from '@/server/pairsight/profile/profile'
-
-const ICON_SIZE = 15
 
 // What PairSight noticed in the saved file (profile/findings.ts): stand-ins
 // for "not known", values too many records share, how dates are written,
 // values it couldn't read. Each changes only how pairs are picked; the line
 // under the title says so, since Jev and every screen keep the file as is.
-export async function DataHealth({ profile, type }: { profile: DatasetProfile; type: EntityType }) {
+export async function DataHealth({
+	profile,
+	type,
+	isReadOnly
+}: {
+	profile: DatasetProfile
+	type: EntityType
+	// The demo: nothing to change, so no advice to change it.
+	isReadOnly: boolean
+}) {
 	const t = await getTranslations('Records')
 	const tRoles = await getTranslations('Roles')
 	const format = await getFormatter()
+	const regions = new Intl.DisplayNames([await getLocale()], { type: 'region' })
+	// Where the records are from decides how numbers and dates read; it's
+	// changed in What Jev checks, except in the read-only demo.
+	const changeCountry = isReadOnly ? null : <> {t('healthChangeCountry')}</>
 	const findings = healthFindings(profile, type)
 	const rates = fillRates(profile, type)
 	const strong = (chunks: React.ReactNode) => <span className="font-medium">{chunks}</span>
@@ -43,12 +54,28 @@ export async function DataHealth({ profile, type }: { profile: DatasetProfile; t
 					m: mono
 				})
 			case 'dates':
-				return t.rich(finding.assumed ? 'healthDatesAssumed' : 'healthDates', {
-					field: tRoles('date_of_birth'),
-					order: finding.order,
-					b: strong,
-					m: mono
-				})
+				return (
+					<>
+						{t.rich(finding.assumed ? 'healthDatesAssumed' : 'healthDates', {
+							field: tRoles('date_of_birth'),
+							order: finding.order,
+							b: strong,
+							m: mono
+						})}
+						{finding.assumed && changeCountry}
+					</>
+				)
+			case 'country':
+				return (
+					<>
+						{t.rich('healthCountry', {
+							country: regions.of(finding.code) ?? finding.code,
+							from: format.list(finding.from.map((signal) => t(`healthCountryFrom.${signal}`))),
+							b: strong
+						})}
+						{changeCountry}
+					</>
+				)
 			case 'unreadable':
 				return t.rich('healthUnreadable', {
 					field: tRoles(finding.role),
@@ -59,13 +86,16 @@ export async function DataHealth({ profile, type }: { profile: DatasetProfile; t
 	}
 
 	return (
-		<section aria-labelledby="health-title" className="border-border bg-surface rounded-lg border">
-			<header className="flex items-start gap-2 px-4 pt-3">
+		<section
+			aria-labelledby="health-title"
+			className="border-border bg-surface rounded-lg border p-6 md:p-7"
+		>
+			<header className="flex items-start gap-2">
 				<div className="min-w-0 flex-1">
-					<h2 id="health-title" className="text-sm font-semibold">
+					<h2 id="health-title" className="text-text-muted type-eyebrow">
 						{t('healthTitle')}
 					</h2>
-					<p className="text-text-muted mt-0.5 text-xs">{t('healthDescription')}</p>
+					<p className="text-text-muted mt-2 text-sm">{t('healthDescription')}</p>
 				</div>
 				{rates.length > 0 && (
 					<InfoTip
@@ -89,18 +119,21 @@ export async function DataHealth({ profile, type }: { profile: DatasetProfile; t
 				)}
 			</header>
 			{findings.length === 0 ? (
-				<p className="type-ui text-success flex gap-2 px-4 pt-2 pb-3">
-					<SuccessIcon size={ICON_SIZE} variant="solid" className="mt-0.5 shrink-0" />
+				<p className="border-border mt-3.5 flex items-start gap-3 border-t pt-3 text-base">
+					<Glyph kind="check" className="size-6 text-[0.8125rem]" />
 					{t('healthNone')}
 				</p>
 			) : (
-				<ul className="divide-border mt-2 max-h-64 divide-y overflow-y-auto">
+				<ul className="divide-border border-border mt-3.5 max-h-64 divide-y overflow-y-auto border-t">
 					{findings.map((finding) => (
 						<li
 							key={`${finding.kind}-${'role' in finding ? finding.role : ''}-${'value' in finding ? finding.value : ''}`}
-							className="type-ui flex gap-2 px-4 py-2.5"
+							className="flex items-start gap-3 py-3 text-base"
 						>
-							<InfoIcon size={ICON_SIZE} className="text-text-muted mt-0.5 shrink-0" />
+							<Glyph
+								kind={finding.kind === 'country' ? 'check' : 'missing'}
+								className="size-6 text-[0.8125rem]"
+							/>
 							<p>{line(finding)}</p>
 						</li>
 					))}

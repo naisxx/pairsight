@@ -37,6 +37,20 @@ Read these before working on product features:
 Jev facts there are verified against TypeSafe's docs. Anything marked open
 must be tested against the real API; don't fill the gaps with assumptions.
 
+### Redesign in progress
+
+The app is being restyled to a design handoff, staged as its `HANDOFF.md`
+describes. The handoff lives outside git, in `pairsight-handoff/`. Read its
+`HANDOFF.md` before any UI work.
+
+- `pairsight-handoff/design/*.dc.html` and `pairsight-handoff/screenshots/`
+  are the source of truth for look and motion. The `.dc.html` files are a
+  spec to port, not code to import: never add their runtime (`support.js`,
+  `<x-dc>`, `<sc-for>`, `{{holes}}`) to the app.
+- Behaviour, routes, API calls and data don't change; only presentation and
+  the navigation chrome (top bar and dock) do.
+- Every screen works in light and dark (`data-theme` on `<html>`).
+
 ## React and Next.js performance
 
 - Treat performance as a correctness requirement for every React and Next.js

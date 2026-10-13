@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import {
 	applyFilters,
 	buildRows,
+	byOrder,
 	byReference,
 	countCategories,
 	parseResultFilters,
@@ -121,6 +122,20 @@ test('invalid URL filters are ignored, and an unknown vendor falls back to the f
 		{ reference: 'R9' },
 		{ reference: 'R10' }
 	])
+})
+
+test('byOrder puts the vendors in ranked order, so the best is picked by default', () => {
+	const vendors = [{ id: 'v1' }, { id: 'v2' }, { id: 'v3' }]
+	assert.deepEqual(
+		byOrder(vendors, ['v2', 'v3', 'v1']).map((vendor) => vendor.id),
+		['v2', 'v3', 'v1']
+	)
+	assert.equal(pickVendorId(byOrder(vendors, ['v2', 'v1', 'v3']), undefined), 'v2')
+	// A vendor the ranking doesn't know keeps its place after those it does.
+	assert.deepEqual(
+		byOrder(vendors, ['v3']).map((vendor) => vendor.id),
+		['v3', 'v1', 'v2']
+	)
 })
 
 test('disagreements, score sides, ranges and the band filter on PairSight decisions', () => {

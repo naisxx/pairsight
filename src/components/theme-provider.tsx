@@ -14,10 +14,19 @@ function noSubscription() {
 // still matches the server's, which ran before paint.
 const INERT_SCRIPT = { type: 'application/json' }
 
-// Class-based so the Light / Dark / System menu can override the OS setting;
-// next-themes injects the blocking script that sets `.dark` before paint, so
-// there is no light flash on a dark preference.
-export function ThemeProvider({ children, nonce }: { children: React.ReactNode; nonce?: string }) {
+// A data-theme attribute on <html>, so the theme switch can override the OS
+// setting; next-themes injects the blocking script that sets it before
+// paint, so there is no light flash on a dark preference. With nothing saved
+// it follows the system, except where the page asks for dark (the landing).
+export function ThemeProvider({
+	children,
+	nonce,
+	defaultTheme
+}: {
+	children: React.ReactNode
+	nonce?: string
+	defaultTheme: 'dark' | 'system'
+}) {
 	const isClientRender = useSyncExternalStore(
 		noSubscription,
 		() => true,
@@ -25,8 +34,8 @@ export function ThemeProvider({ children, nonce }: { children: React.ReactNode; 
 	)
 	return (
 		<NextThemesProvider
-			attribute="class"
-			defaultTheme="system"
+			attribute="data-theme"
+			defaultTheme={defaultTheme}
 			enableSystem
 			disableTransitionOnChange
 			nonce={nonce}

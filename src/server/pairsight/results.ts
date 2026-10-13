@@ -1,10 +1,18 @@
 import 'server-only'
+import { rankVendors } from '@/lib/pairsight/ranking'
 import { statsForVendor, statsMetrics } from '@/lib/pairsight/stats'
 import { db } from '@/server/db/client'
 import { categorize } from './decisions'
 import { parseColumnRoles, parseRecordValues } from './json'
 import { buildOverview } from './result-overview'
-import { buildRows, byReference, PAGE_SIZE, pickVendorId, type ResultFilters } from './result-rows'
+import {
+	buildRows,
+	byOrder,
+	byReference,
+	PAGE_SIZE,
+	pickVendorId,
+	type ResultFilters
+} from './result-rows'
 import {
 	countPairs,
 	pairPage,
@@ -39,6 +47,15 @@ async function resultsContext({ scope, runId }: { scope: EvaluationScope; runId:
 	return { run, vendors, summary }
 }
 
+// The run's vendors best first, as the Overview ranks them (ranking.ts): the
+// order the pair page steps through, and whose first is shown when no vendor
+// is asked for.
+function rankedVendorIds(summary: Awaited<ReturnType<typeof readRunSummary>>): string[] {
+	return rankVendors(
+		summary.vendorIds.map((id, index) => ({ id, metrics: statsMetrics(summary.rows, index) }))
+	).map((vendor) => vendor.id)
+}
+
 export async function getRunResults({
 	scope,
 	runId,
@@ -49,7 +66,7 @@ export async function getRunResults({
 	filters: ResultFilters
 }) {
 	const { run, vendors, summary } = await resultsContext({ scope, runId })
-	const vendorId = pickVendorId(vendors, filters.vendor)
+	const vendorId = pickVendorId(byOrder(vendors, rankedVendorIds(summary)), filters.vendor)
 	const context: PairContext = { runId, threshold: run.threshold, vendorId }
 	const vendorIndex = vendorId == null ? -1 : summary.vendorIds.indexOf(vendorId)
 	const isDetailed = filters.tab === 'detailed'
@@ -171,7 +188,12 @@ export async function getPairPanel({
 	const second = recordsById.get(pair.recordBId)
 	if (first == null || second == null) return null
 
-	const vendorId = pickVendorId(vendors, vendorFilter)
+	// With no vendor asked for (or one not in this run), the best-scoring one;
+	// only then does it need the run's summary to rank them.
+	const isKnownVendor = vendors.some((vendor) => vendor.id === vendorFilter)
+	const vendorId = isKnownVendor
+		? vendorFilter
+		: pickVendorId(byOrder(vendors, rankedVendorIds(await readRunSummary(run))), vendorFilter)
 	const [row] = buildRows({
 		pairs: [pair],
 		records: recordsById,
@@ -224,7 +246,9 @@ export async function getPairDetail({
 	])
 	if (pair == null) return null
 	// Its position is read from the run's pairs as of its summary.
-	await readRunSummary(run)
+	const summary = await readRunSummary(run)
+	// The vendors best first, as the Overview ranks them (ranking.ts).
+	const vendorOrder = rankedVendorIds(summary)
 	const context: PairContext = { runId, threshold: run.threshold, vendorId: pair.vendorId }
 	// Its place in the filtered list it was opened from; if the filters no
 	// longer include this pair, step through the whole run instead.
@@ -232,6 +256,9 @@ export async function getPairDetail({
 	const position = inFiltered ?? (await pairPosition({ context, filters: {}, pairId }))
 	return {
 		...pair,
+		vendors: [...pair.vendors].sort(
+			(a, b) => vendorOrder.indexOf(a.id) - vendorOrder.indexOf(b.id)
+		),
 		position: position?.position ?? null,
 		listSize: position?.total ?? 0,
 		isInFiltered: inFiltered != null,

@@ -1,7 +1,4 @@
 import { useTranslations } from 'next-intl'
-import { FlowIcon } from '@/components/ui/icons'
-import type { ResultCategory } from '@/server/pairsight/results'
-import { CategoryBadge } from '../result-parts'
 
 // Why this pair was compared: PairSight suggested it (and why), or a vendor
 // matched it and it was added so every vendor match is checked.
@@ -19,57 +16,19 @@ export function PairOrigin({
 	return (
 		<section
 			aria-labelledby="origin-title"
-			className="border-border bg-surface rounded-lg border p-4"
+			className="bg-surface border-border rounded-lg border p-6 md:p-7"
 		>
-			<h2 id="origin-title" className="type-subheading flex items-center gap-2">
-				<FlowIcon className="text-text-muted" />
+			<h2 id="origin-title" className="text-text-muted type-eyebrow">
 				{t('originTitle')}
 			</h2>
-			<p className="type-ui mt-2">
+			<p className="text-text-body mt-3 text-base">
 				{isSuggested
 					? suggestedBecause.length > 0
 						? t('originSuggested', { reasons: suggestedBecause.join(', ') })
 						: t('originSuggestedPlain')
 					: t('originVendor', { vendors: matchingVendors.join(t('and')) || '—' })}
 			</p>
-			<p className="text-text-muted mt-2 text-xs">{t('originNote')}</p>
-		</section>
-	)
-}
-
-// Each vendor's decision and category for this pair, when more than one
-// vendor is compared.
-export function VendorDecisions({
-	vendors
-}: {
-	vendors: Array<{ id: string; name: string; isMatch: boolean; category: ResultCategory }>
-}) {
-	const t = useTranslations('Pair')
-	if (vendors.length < 2) return null
-	return (
-		<section
-			aria-labelledby="vendors-title"
-			className="border-border bg-surface rounded-lg border p-4"
-		>
-			<h2 id="vendors-title" className="type-subheading">
-				{t('vendorsTitle')}
-			</h2>
-			<ul className="divide-border mt-2 divide-y">
-				{vendors.map((vendor) => (
-					<li
-						key={vendor.id}
-						className="type-ui flex flex-wrap items-center justify-between gap-x-2 gap-y-1 py-2"
-					>
-						<span className="min-w-0">{vendor.name}</span>
-						<span className="flex items-center gap-2">
-							<span className={vendor.isMatch ? 'font-medium' : 'text-text-muted'}>
-								{vendor.isMatch ? t('matched') : t('notMatched')}
-							</span>
-							<CategoryBadge category={vendor.category} />
-						</span>
-					</li>
-				))}
-			</ul>
+			<p className="text-text-muted mt-3 text-sm">{t('originNote')}</p>
 		</section>
 	)
 }

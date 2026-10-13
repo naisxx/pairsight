@@ -12,7 +12,7 @@ import { dismissToast, toast } from '@/lib/toast'
 import { saveRulesAction } from '@/server/actions/pairsight/rules'
 import type { IdentityRole } from '@/server/pairsight/fields'
 import { ACTION_HINT_ID, ActionBar } from '../step-layout'
-import { IdentitySection, JevFieldsSection } from './identity-section'
+import { IdentitySection, JevFieldsSection, type CountryGuessHint } from './identity-section'
 import { SuggestionsCard, type SuggestionsData } from './suggestions-card'
 import { ThresholdSection } from './threshold-section'
 import { useEvaluationView } from '../evaluation-context'
@@ -62,8 +62,10 @@ export function RulesForm({
 	initial,
 	suggested,
 	mappedRoles,
+	idColumn,
 	suggestions,
-	countries
+	countries,
+	countryGuess
 }: {
 	evaluationId: string
 	initial: {
@@ -76,9 +78,13 @@ export function RulesForm({
 	// The record type's own wording, to go back to.
 	suggested: { same: string; different: string }
 	mappedRoles: IdentityRole[]
+	// The record ID's column, which Jev never sees.
+	idColumn: string
 	// What PairSight suggests for these records (SuggestionsCard).
 	suggestions: SuggestionsData
 	countries: SelectOption[]
+	// Where the file looked to be from, when the country was set from it.
+	countryGuess: CountryGuessHint | null
 }) {
 	const t = useTranslations('Rules')
 	const tSandbox = useTranslations('Sandbox')
@@ -171,7 +177,11 @@ export function RulesForm({
 
 	// Leaving mid-pause still saves the last change.
 	// If that fails, say so on the next page rather than lose it quietly.
+	// Undo belongs to this page: it closes on the way out, so it's never
+	// offered over the next step (or a run started from these settings).
 	const saveOnLeave = useEffectEvent(() => {
+		if (undo.current != null) dismissToast(undo.current.toastId)
+		undo.current = null
 		if (!canSave) return
 		saveRulesAction(payload).then(
 			(result) => {
@@ -191,27 +201,21 @@ export function RulesForm({
 
 	return (
 		<>
-			{/* Two rows of cards, each row one height, so everything lines up. */}
-			<ReadOnlyFieldset className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
+			{/* The four cards, one under another, in the order they're decided. */}
+			<ReadOnlyFieldset className="flex flex-col gap-4">
 				<IdentitySection
-					className="@5xl:col-span-7"
 					same={draft.same}
 					different={draft.different}
 					country={draft.country}
 					countries={countries}
+					countryGuess={countryGuess}
 					suggested={suggested}
 					onChange={(text) => setDraft((current) => ({ ...current, ...text }))}
 				/>
-				<ThresholdSection
-					className="@5xl:col-span-5"
-					value={draft.threshold}
-					onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
-				/>
-				<SuggestionsCard className="@5xl:col-span-7" data={suggestions} />
 				<JevFieldsSection
-					className="@5xl:col-span-5"
 					mappedRoles={mappedRoles}
 					jevFields={draft.jevFields}
+					idColumn={idColumn}
 					onToggle={(role, isOn) =>
 						setDraft((current) => ({
 							...current,
@@ -219,17 +223,28 @@ export function RulesForm({
 						}))
 					}
 				/>
+				<ThresholdSection
+					value={draft.threshold}
+					onChange={(threshold) => setDraft((current) => ({ ...current, threshold }))}
+				/>
+				<SuggestionsCard data={suggestions} />
 			</ReadOnlyFieldset>
+			{view.isReadOnly && (
+				<p className="text-text-muted mt-5 text-sm">
+					{tSandbox('settingsFixed')}{' '}
+					<Link
+						href="/sign-up"
+						className="text-text decoration-border-strong hover:decoration-text underline underline-offset-[3px]"
+					>
+						{tSandbox('setYourOwn')}
+					</Link>
+				</p>
+			)}
 
 			<ActionBar
 				back={{ href: `${view.base}/vendors`, label: t('back') }}
 				hint={
-					view.isReadOnly ? (
-						<>
-							<InfoIcon size={ICON_SIZE} className="shrink-0" />
-							<span>{tSandbox('readOnlyStatus')}</span>
-						</>
-					) : error != null ? (
+					view.isReadOnly ? undefined : error != null ? (
 						<span role="alert" className="text-danger">
 							{t('statusFailed', { error })}
 						</span>

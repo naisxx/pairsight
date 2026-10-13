@@ -12,6 +12,8 @@ const NON_TEXT = 3
 
 const css = readFileSync(new URL('../src/app/globals.css', import.meta.url), 'utf-8')
 
+// The block whose selector list ends with `selector`: [data-theme='light']
+// finds the ":root, [data-theme='light']" block.
 function tokens(selector) {
 	const start = css.indexOf(`${selector} {`)
 	assert.ok(start !== -1, `globals.css has no "${selector}" block`)
@@ -23,8 +25,8 @@ function tokens(selector) {
 	return values
 }
 
-const light = tokens(':root')
-const themes = { light, dark: { ...light, ...tokens('.dark') } }
+const light = tokens("[data-theme='light']")
+const themes = { light, dark: { ...light, ...tokens("[data-theme='dark']") } }
 
 function luminance(hex) {
 	const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255)
@@ -50,12 +52,17 @@ const STATUSES = ['success', 'warning', 'danger', 'info']
 const CATEGORIES = ['cat-both', 'cat-pairsight', 'cat-vendor', 'cat-neither']
 
 const pairs = [
-	...['text', 'text-muted'].flatMap((fg) => SURFACES.map((bg) => [fg, bg, TEXT])),
+	...['text', 'text-body', 'text-muted'].flatMap((fg) => SURFACES.map((bg) => [fg, bg, TEXT])),
 	['action-ink', 'action', TEXT],
 	['action-ink', 'action-active', TEXT],
 	// The coral fills the input focus edge and the current step's edge.
 	...['bg', 'surface', 'surface-elevated'].map((bg) => ['action', bg, NON_TEXT]),
 	['accent-ink', 'accent', TEXT],
+	...['bg', 'surface'].map((bg) => ['brand-text', bg, TEXT]),
+	...['bg', 'surface'].map((bg) => ['ice-text', bg, TEXT]),
+	// The dock and the verdict bar: inverted grounds.
+	['on-inverse', 'inverse', TEXT],
+	['inverse-brand', 'inverse', TEXT],
 	['text', 'accent', TEXT],
 	['accent-ink', 'surface', TEXT],
 	['text', 'diff', TEXT],
@@ -92,9 +99,9 @@ for (const [theme, values] of Object.entries(themes)) {
 	})
 }
 
-// Dark mode once read as "night mode" (warm brown), then as navy (blue
-// tinted). Neutrals are pure greys now: every channel within a couple of
-// points, so a future tweak can't tint the palette either way unnoticed.
+// The design's neutrals are paper and charcoal: a faint warmth in light
+// mode, near-pure greys in dark. Every channel stays within a few points, so
+// a future tweak can't tint the palette (brown, navy) unnoticed.
 const NEUTRALS = [
 	'bg',
 	'surface',
@@ -106,10 +113,12 @@ const NEUTRALS = [
 	'diff',
 	'border',
 	'border-input',
+	'border-strong',
 	'text',
+	'text-body',
 	'text-muted'
 ]
-const MAX_CHANNEL_SPREAD = 2
+const MAX_CHANNEL_SPREAD = 12
 
 for (const [theme, values] of Object.entries(themes)) {
 	test(`${theme} theme keeps neutral surfaces and text untinted`, () => {
@@ -121,11 +130,15 @@ for (const [theme, values] of Object.entries(themes)) {
 	})
 }
 
-// The brand's third variant is a dimmed coral for a control that can't be
-// used: quiet next to the live coral, but still visibly a button on the page.
+// The brand's third variant is a dimmed vermilion for a control that can't
+// be used: quiet next to the live one, but still visibly a button on the
+// page. Vermilion is a light colour, so in light mode no tint can sit 3:1
+// from it and still read as a button; 2.5:1 is the bar there.
+const DISABLED_APART = 2.5
+
 for (const [theme, values] of Object.entries(themes)) {
-	test(`${theme} theme keeps the disabled coral dim but visible`, () => {
-		assert.ok(ratio(values['action-disabled'], values.action) >= NON_TEXT)
+	test(`${theme} theme keeps the disabled vermilion dim but visible`, () => {
+		assert.ok(ratio(values['action-disabled'], values.action) >= DISABLED_APART)
 		assert.ok(ratio(values['action-disabled'], values.bg) >= 1.1)
 		assert.ok(ratio(values['text-muted'], values['action-disabled']) >= NON_TEXT)
 	})

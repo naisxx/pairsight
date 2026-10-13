@@ -41,43 +41,52 @@ test.describe('Sandbox', () => {
 	const pipeline = (page: Page) => page.getByRole('list', { name: 'Steps' })
 	const step = (page: Page, name: string) =>
 		pipeline(page).getByRole('link', { name: new RegExp(`^${name},`) })
+	// A page streams in after its layout, whose steps-only dock shows until the
+	// page's own dock replaces it. A click can catch the layout's just before
+	// it's hidden, and Playwright waits on that element for good; so each try
+	// finds the step afresh.
+	const clickStep = (page: Page, name: string) =>
+		expect(() => step(page, name).click({ timeout: 2_000 })).toPass({ timeout: 20_000 })
 
 	test('signed out, every step opens read-only, from the landing page', async ({ page }) => {
 		await page.goto('/')
-		await page.getByRole('link', { name: 'Try the demo' }).first().click()
+		await page.getByRole('link', { name: 'Open the demo' }).first().click()
 		await page.waitForURL((url) => url.pathname === '/sandbox')
-		await expect(page.getByRole('note', { name: 'About the demo' })).toContainText(
+		const badge = page.getByRole('note', { name: 'About the demo' })
+		await expect(badge).toHaveText('Read-only demo')
+		await expect(badge).toHaveAttribute(
+			'title',
 			/sample data · look around, nothing can be changed\. Jev’s checks were recorded/
 		)
-		await expect(page.getByRole('link', { name: 'Sign up', exact: true })).toBeVisible()
+		await expect(page.getByRole('link', { name: 'Sign up to run your own' })).toBeVisible()
 		await page.getByRole('link', { name: NAMES[0], exact: true }).first().click()
 		await page.waitForURL(RESULTS)
 
 		// Records: the saved file, Replace is for accounts.
-		await step(page, 'Records').click()
+		await clickStep(page, 'Records')
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/records`)
-		await expect(page.getByLabel('File details')).toContainText(/We matched \d+ fields? to your/)
+		await expect(page.getByLabel('File details')).toContainText(/2,000 rows · \d+ columns/)
 		await expect(page.getByLabel('Sign up to upload your own records')).toBeVisible()
 
 		// Vendors: both vendors, viewable; adding one needs an account.
-		await step(page, 'Vendors').click()
+		await clickStep(page, 'Vendors')
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/vendors`)
-		const vendors = page.getByRole('navigation', { name: 'Vendors' })
+		const vendors = page.getByRole('region', { name: 'Vendors' })
 		await expect(vendors).toContainText('List of pairs · ready')
 		await expect(vendors).toContainText('List of groups · ready')
 		await expect(page.getByLabel('Sign up to add or change vendors')).toBeVisible()
-		await expect(page.getByLabel('What’s this vendor called?')).toBeDisabled()
+		await expect(page.getByLabel('What’s this vendor called?').first()).toBeDisabled()
 
 		// What Jev checks: shown, not editable, and never saved.
-		await step(page, 'What Jev checks').click()
+		await clickStep(page, 'What Jev checks')
 		await page.waitForURL(`**/sandbox/${SANDBOX.person}/rules`)
-		await expect(page.getByLabel('When are two records the same?', { exact: true })).toBeDisabled()
+		await expect(page.getByLabel('Two records are the same when', { exact: true })).toBeDisabled()
 		await expect(
 			page
 				.getByRole('radiogroup', { name: 'How sure must Jev be?' })
 				.getByRole('radio', { name: /^Balanced/ })
 		).toBeDisabled()
-		await expect(page.getByText('Demo · changes aren’t saved')).toBeVisible()
+		await expect(page.getByText('Settings are fixed in the demo.')).toBeVisible()
 
 		// Plan: the ledger, but starting a run needs an account.
 		await page.getByRole('link', { name: 'Check and start', exact: true }).click()
@@ -100,7 +109,9 @@ test.describe('Sandbox', () => {
 		page
 	}) => {
 		await page.goto('/sandbox')
-		await expect(page.getByLabel('Summary')).toContainText(/Evaluations\s*3/)
+		await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+			/^Three finished checks\.\s*Open one and look inside\.$/
+		)
 		for (const name of NAMES) {
 			await expect(page.getByRole('link', { name, exact: true }).first()).toBeVisible()
 		}
@@ -115,23 +126,43 @@ test.describe('Sandbox', () => {
 				.getByRole('region', { name: 'How do the vendors compare?' })
 				.getByRole('link', { name: 'Meridian Match' })
 		).toBeVisible()
-		await step(page, 'What Jev checks').click()
+		await clickStep(page, 'What Jev checks')
 		await page.waitForURL(`**/sandbox/${SANDBOX.company}/rules`)
-		await expect(page.getByLabel('When are two records the same?', { exact: true })).toHaveValue(
+		await expect(page.getByLabel('Two records are the same when', { exact: true })).toHaveValue(
 			/same organisation/
 		)
 		await page.goto(`/sandbox/${SANDBOX.product}/records`)
 		await expect(page.getByText('Barcode (GTIN)').first()).toBeVisible()
 	})
 
-	test('clicking the evaluation row opens it where it is up to: its results', async ({ page }) => {
+	test('each evaluation’s card opens its results', async ({ page }) => {
 		await page.goto('/sandbox')
-		const row = page.locator('tbody tr', {
-			has: page.getByRole('link', { name: 'Customer master — vendor check' })
-		})
-		// A cell, not the name link: the whole row opens it.
-		await row.locator('td').nth(2).click()
+		await page
+			.getByRole('region', { name: 'Customer master — vendor check' })
+			.getByRole('link', { name: 'Open results' })
+			.click()
 		await page.waitForURL(RESULTS)
+	})
+
+	test('results open on the best-scoring vendor, and the switch says who the details are about', async ({
+		page
+	}) => {
+		// Meridian Match was uploaded first; Atlas Resolve scores higher.
+		await page.goto('/sandbox')
+		await page
+			.getByRole('region', { name: 'Supplier master — vendor check' })
+			.getByRole('link', { name: 'Open results' })
+			.click()
+		await page.waitForURL(RESULTS)
+		const vendorSwitch = page.getByRole('radiogroup', {
+			name: 'Which vendor everything below is about'
+		})
+		await expect(vendorSwitch.getByRole('radio', { name: /Atlas Resolve/ })).toBeChecked()
+		await expect(page.getByText('Where to look first · Atlas Resolve')).toBeVisible()
+
+		await vendorSwitch.getByRole('radio', { name: /Meridian Match/ }).click()
+		await page.waitForURL(/vendor=/)
+		await expect(page.getByText('Where to look first · Meridian Match')).toBeVisible()
 	})
 
 	test('results and pairs: filters and the threshold preview work, nothing is saved', async ({
@@ -197,10 +228,10 @@ test.describe('Sandbox', () => {
 		// The first pair shows beside the list; it opens on its own page too.
 		const panel = page.getByRole('complementary', { name: 'The selected pair' })
 		await expect(panel.getByRole('region', { name: 'Who says what' })).toContainText('JevSame')
-		await panel.getByRole('link', { name: /^See all \d+ fields on its own page/ }).click()
+		await panel.getByRole('link', { name: 'Open full comparison' }).click()
 		await page.waitForURL(/\/sandbox\/[0-9a-f-]+\/runs\/[0-9a-f-]+\/pairs\//)
 		await expect(page.getByRole('region', { name: 'Who says what', exact: true })).toContainText(
-			'JevSame'
+			'Jev says same'
 		)
 		const first = page.url()
 		await page.keyboard.press('j')
@@ -222,13 +253,13 @@ test.describe('Sandbox', () => {
 		await expect(page).not.toHaveURL(/status=/)
 		await expect(page.getByRole('button', { name: /^Remove / })).toHaveCount(0)
 
-		// ? lists every shortcut, and so does the hint under the list.
+		// ? lists every shortcut, and so does the key hint above the list.
 		await page.keyboard.press('?')
 		const shortcuts = page.getByRole('dialog', { name: 'Keyboard shortcuts' })
 		await expect(shortcuts).toContainText('Move between pairs')
 		await page.keyboard.press('Escape')
 		await expect(shortcuts).toHaveCount(0)
-		await page.getByRole('button', { name: 'Press ? for keyboard shortcuts' }).click()
+		await page.getByRole('button', { name: /\? all keys$/ }).click()
 		await expect(shortcuts).toContainText('Open the selected pair on its own page')
 		await page.keyboard.press('Escape')
 
@@ -243,7 +274,7 @@ test.describe('Sandbox', () => {
 		// The pair's full comparison, from the panel's header.
 		await page
 			.getByRole('complementary', { name: 'The selected pair' })
-			.getByRole('link', { name: 'Full comparison' })
+			.getByRole('link', { name: 'Open full comparison' })
 			.click()
 		await page.waitForURL(/\/pairs\//)
 		// Its own page answers to ? too, and Esc closes the list before leaving.
@@ -274,6 +305,9 @@ test.describe('Sandbox', () => {
 		await page.locator('[data-pairs-table] tbody a[href]').nth(1).tap()
 		const sheet = page.getByRole('dialog', { name: 'The selected pair' })
 		await expect(sheet.getByRole('complementary', { name: 'The selected pair' })).toBeVisible()
+		// Under the sheet the page is out of reach, its dock included; check
+		// once it has stepped aside (WebKit can take a frame).
+		await expect(page.locator('[data-page-dock]')).toBeHidden()
 		const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
 		expect(
 			violations.map(({ id, nodes }) => `${id}: ${nodes.map((n) => n.target).join(' | ')}`)
@@ -291,9 +325,11 @@ test.describe('Sandbox', () => {
 		page
 	}) => {
 		await page.goto('/sandbox')
-		const latest = page.getByRole('region', { name: /vendor check$/ }).first()
-		await expect(latest.getByRole('rowheader').first()).toHaveText('Atlas Resolve')
-		await expect(latest).toContainText(/Atlas Resolve: \d+ disagreements to look at/)
+		const card = page.getByRole('region', { name: /vendor check$/ }).first()
+		await expect(card.getByRole('listitem').first()).toContainText('Atlas Resolve')
+		await expect(
+			card.getByRole('link', { name: /^\d+ disagreements for Atlas Resolve$/ })
+		).toBeVisible()
 
 		await page.goto('/sandbox/does-not-exist')
 		await page.getByRole('link', { name: 'Back to the demo' }).click()
@@ -304,6 +340,8 @@ test.describe('Sandbox', () => {
 		page
 	}) => {
 		await page.goto('/sign-up')
+		// Typed before the form hydrates, a value can be reset (seen in WebKit).
+		await page.waitForLoadState('networkidle')
 		await page.getByLabel('Email').fill(`e2e+${Date.now()}-sandbox@pairsight.test`)
 		await page.getByLabel('Password', { exact: true }).fill(PASSWORD)
 		await page.getByRole('button', { name: 'Create account' }).click()
@@ -315,49 +353,62 @@ test.describe('Sandbox', () => {
 		await page.waitForURL((url) => url.pathname === '/sandbox')
 
 		await expect(page.getByRole('button', { name: 'Account: Sandbox Visitor' })).toBeVisible()
-		await expect(page.getByRole('link', { name: 'Your evaluations' })).toBeVisible()
-		// Only the prepared evaluations, and no way to rename or delete them.
-		await expect(page.getByLabel('Summary')).toContainText(/Evaluations\s*3/)
-		await page
-			.getByRole('button', { name: /^Actions for / })
-			.first()
-			.click()
-		await expect(page.getByRole('menuitem', { name: 'Open' })).toBeVisible()
-		await expect(page.getByRole('menuitem', { name: 'Delete' })).toHaveCount(0)
+		await expect(page.getByRole('link', { name: 'Evaluations', exact: true })).toBeVisible()
+		// Only the prepared evaluations, no way to rename or delete them, and
+		// the way back to your own.
+		await expect(page.getByRole('region', { name: /vendor check$/ })).toHaveCount(3)
+		await expect(page.getByRole('button', { name: /^Actions for / })).toHaveCount(0)
+		await expect(page.getByRole('link', { name: 'Go to your evaluations' })).toBeVisible()
 		await expect(page.getByLabel(SIGN_UP)).toHaveCount(0)
 	})
 
-	// Every screen, read-only, in both themes: no WCAG A/AA violations.
+	// Every screen, read-only, in both themes and on a phone: no WCAG A/AA
+	// violations.
+	const SIZES = { desktop: undefined, phone: { width: 390, height: 844 } } as const
 	for (const colorScheme of ['light', 'dark'] as const) {
-		test(`every screen passes an accessibility check, ${colorScheme}`, async ({ browser }) => {
-			const context = await browser.newContext({ colorScheme, reducedMotion: 'reduce' })
-			const page = await context.newPage()
-			const check = async (name: string) => {
-				const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
-				expect(
-					violations.map(
-						({ id, nodes }) => `${name} ${id}: ${nodes.map((n) => n.target).join(' | ')}`
-					)
-				).toEqual([])
-			}
-			await page.goto('/sandbox')
-			await check('/sandbox')
-			for (const path of ['/records', '/vendors', '/rules', '/plan', '/run']) {
-				await page.goto(`/sandbox/${SANDBOX.person}${path}`)
-				await check(path)
-			}
-			await page.goto(`/sandbox/${SANDBOX.person}/results`)
-			await page.waitForURL(/\/results/)
-			await check('results overview')
-			await page.goto(`${page.url().split('?')[0]}?tab=detailed`)
-			await check('results detailed')
-			await page
-				.getByRole('complementary', { name: 'The selected pair' })
-				.getByRole('link', { name: /^See all \d+ fields on its own page/ })
-				.click()
-			await page.waitForURL(/\/pairs\//)
-			await check('pair')
-			await context.close()
-		})
+		for (const [size, viewport] of Object.entries(SIZES)) {
+			test(`every screen passes an accessibility check, ${colorScheme}, ${size}`, async ({
+				browser
+			}) => {
+				const context = await browser.newContext({
+					colorScheme,
+					reducedMotion: 'reduce',
+					...(viewport == null ? {} : { viewport, isMobile: true, hasTouch: true })
+				})
+				const page = await context.newPage()
+				const check = async (name: string) => {
+					// At the end of the page, where the floating dock rests below the
+					// last content: mid-scroll it passes over whatever is beneath it,
+					// which axe would read as a covered target.
+					await page.evaluate(() => {
+						const main = document.querySelector('#main')
+						main?.scrollTo(0, main.scrollHeight)
+					})
+					const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
+					expect(
+						violations.map(
+							({ id, nodes }) => `${name} ${id}: ${nodes.map((n) => n.target).join(' | ')}`
+						)
+					).toEqual([])
+				}
+				await page.goto('/sandbox')
+				await check('/sandbox')
+				for (const path of ['/records', '/vendors', '/rules', '/plan', '/run']) {
+					await page.goto(`/sandbox/${SANDBOX.person}${path}`)
+					await check(path)
+				}
+				await page.goto(`/sandbox/${SANDBOX.person}/results`)
+				await page.waitForURL(/\/results/)
+				await check('results overview')
+				await page.goto(`${page.url().split('?')[0]}?tab=detailed`)
+				await check('results detailed')
+				// The full comparison, by its own link (a phone shows the pair in a sheet).
+				const pairHref = await page.locator('a[href*="/pairs/"]').first().getAttribute('href')
+				await page.goto(pairHref ?? '')
+				await page.waitForURL(/\/pairs\//)
+				await check('pair')
+				await context.close()
+			})
+		}
 	}
 })

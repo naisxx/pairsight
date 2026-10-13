@@ -1,18 +1,20 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
-import { ArrowRightIcon } from '@/components/ui/icons'
+import { Count } from '@/components/ui/count'
+import { EXACT_FORMATS } from '@/i18n/formats'
 import { PAUSED, type RunProgress } from '@/server/pairsight/runs'
 import { OpenRunsButton } from './open-runs-button'
 
 const PERCENT = 100
-const ICON_SIZE = 15
 
 // Results for a run that isn't finished: how far it got and what to do next,
 // but no numbers. Pairs are checked in no particular order, so a half-done
 // run's scores could point the wrong way; they appear once every pair is
 // checked. The page refreshes itself when the run finishes (the Runs centre
-// is watching it).
+// is watching it). Built from the system (no design): the headline where the
+// verdict will be, and the run's progress on the dark card the Check and
+// start page uses for the run.
 export async function RunNotFinished({
 	runId,
 	progress,
@@ -34,23 +36,27 @@ export async function RunNotFinished({
 				: 'stopped'
 
 	return (
-		<section
-			aria-labelledby="run-not-finished"
-			className="border-border bg-surface mt-6 max-w-2xl rounded-lg border p-6"
-		>
-			<h2 id="run-not-finished" className="type-subheading">
+		<section aria-labelledby="run-not-finished" className="mt-5">
+			<h1
+				id="run-not-finished"
+				className="rise font-display max-w-[880px] text-[2.75rem] leading-[1.05] font-semibold tracking-[-0.025em]"
+			>
 				{t(`notFinishedTitle_${state}`)}
-			</h2>
-			<p className="text-text-muted type-ui mt-1 leading-relaxed">
+			</h1>
+			<p className="rise stagger-1 text-text-body mt-3 max-w-[640px] text-base">
 				{t(`notFinishedBody_${state}`)}
 			</p>
-			<div className="mt-4">
-				<p className="type-ui">
-					{t.rich('notFinishedProgress', {
-						done,
-						total: progress.total,
-						n: (chunks) => <span className="font-mono">{chunks}</span>
-					})}
+			<div className="rise stagger-2 bg-inverse text-on-inverse border-inverse mt-9 max-w-[640px] rounded-lg border p-6 md:p-7">
+				<div className="flex items-baseline justify-between gap-4">
+					<h2 className="type-eyebrow opacity-70">{t('notFinishedProgressLabel')}</h2>
+					<span className="font-mono text-sm font-semibold">{percent}%</span>
+				</div>
+				<p className="mt-3.5">
+					<Count
+						value={done}
+						className="mr-1.5 font-mono text-[3.5rem] leading-none font-semibold tracking-[-0.03em]"
+					/>
+					{t('notFinishedOf', { total: progress.total }, EXACT_FORMATS)}
 				</p>
 				<div
 					role="progressbar"
@@ -58,19 +64,18 @@ export async function RunNotFinished({
 					aria-valuenow={done}
 					aria-valuemin={0}
 					aria-valuemax={progress.total}
-					className="bg-border mt-2 h-1.5 overflow-hidden rounded-full"
+					className="bg-on-inverse/20 mt-5 h-1.5 overflow-hidden rounded-full"
 				>
-					<div className="bg-action h-full rounded-full" style={{ width: `${percent}%` }} />
+					<div className="bg-brand h-full rounded-full" style={{ width: `${percent}%` }} />
 				</div>
+				<p className="mt-5 text-sm opacity-75">{t('notFinishedWhy')}</p>
 			</div>
-			<p className="text-text-muted mt-4 text-xs leading-relaxed">{t('notFinishedWhy')}</p>
-			<div className="mt-5 flex flex-wrap gap-2">
+			<div className="rise stagger-3 mt-6 flex flex-wrap gap-3">
 				<OpenRunsButton runId={runId} />
 				{lastFinished != null && (
-					<Button asChild variant="secondary" size="sm">
+					<Button asChild variant="secondary">
 						<Link href={lastFinished.href}>
 							{t('notFinishedLastRun', { number: lastFinished.number })}
-							<ArrowRightIcon size={ICON_SIZE} />
 						</Link>
 					</Button>
 				)}

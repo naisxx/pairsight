@@ -11,11 +11,14 @@ import { cn } from '@/lib/cn'
 
 type Vendor = { id: string; name: string; metrics: VendorMetrics }
 
-// The parts of the sentence that aren't words: the coral emphasis, a
-// vendor's overall score (counting to its new value as a preview moves) and
-// the mono counts.
-function em(chunks: React.ReactNode) {
-	return <em className="text-accent-ink not-italic md:block">{chunks}</em>
+// The parts of the sentence that aren't words: the emphasis (vermilion, or
+// the quiet second line of a two-line headline), a vendor's overall score
+// (counting to its new value as a preview moves) and the mono counts.
+const EMPHASIS = {
+	accent: (chunks: React.ReactNode) => (
+		<em className="text-accent-ink not-italic md:block">{chunks}</em>
+	),
+	quiet: (chunks: React.ReactNode) => <em className="text-text-muted block not-italic">{chunks}</em>
 }
 function percent(vendor: Vendor) {
 	return <AnimatedPercent value={vendor.metrics.f1} emptyLabel="—" className="font-mono" />
@@ -35,9 +38,14 @@ export function VerdictHeadline({
 	titleId,
 	titleClassName,
 	supportClassName,
+	emphasis = 'accent',
+	showAgreed = true,
 	children
 }: {
 	vendors: Vendor[]
+	emphasis?: keyof typeof EMPHASIS
+	// The line on how often each agreed with Jev (Results shows it in a table).
+	showAgreed?: boolean
 	as?: 'h1' | 'h2' | 'p'
 	titleId?: string
 	titleClassName?: string
@@ -48,7 +56,10 @@ export function VerdictHeadline({
 	const t = useTranslations('Results')
 	const shape = verdictOf(vendors)
 	// In ranking order, like the sentence above it.
-	const scored = rankVendors(vendors).filter((vendor) => vendor.metrics.assessed > 0)
+	const scored = showAgreed
+		? rankVendors(vendors).filter((vendor) => vendor.metrics.assessed > 0)
+		: []
+	const em = EMPHASIS[emphasis]
 
 	return (
 		<>

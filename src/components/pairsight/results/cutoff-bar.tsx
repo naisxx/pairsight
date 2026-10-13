@@ -110,13 +110,24 @@ export function CutoffBar({ rulesHref }: { rulesHref: string }) {
 	// sits in an inline-size container, so 50cqw is half of main), with its
 	// contents in line with the page column.
 	return (
-		<div className="sticky top-0 z-30 mx-[calc(50%-50cqw)] h-0">
+		// On a phone the tab would hang over the headline, so the page leaves
+		// room for it under the line.
+		<div className="sticky top-0 z-30 mx-[calc(50%-50cqw)] h-0 max-[599px]:mb-12">
 			<div
 				className={cn(
-					'grid transition-[grid-template-rows] duration-300 ease-out',
+					'relative grid transition-[grid-template-rows] duration-300 ease-out',
 					isOpen ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
 				)}
 			>
+				{/* The panel's shadow, outside the wrapper that clips it for the slide:
+				    the page beneath reads as under the panel, not cut off by it. */}
+				<div
+					aria-hidden
+					className={cn(
+						'pointer-events-none absolute inset-x-0 top-full h-8 bg-linear-to-b from-black/10 to-transparent transition-opacity duration-300 dark:from-black/70',
+						isOpen ? 'opacity-100' : 'opacity-0'
+					)}
+				/>
 				<div className="min-h-0 overflow-hidden" inert={!isOpen}>
 					<section
 						id="cutoff-panel"
@@ -126,7 +137,7 @@ export function CutoffBar({ rulesHref }: { rulesHref: string }) {
 							isPreviewing ? 'border-action bg-bg bg-brand-wash' : 'border-border bg-bg'
 						)}
 					>
-						<div className="mx-auto max-w-[1440px] px-4 py-5 md:px-8">
+						<div className="mx-auto max-w-[1280px] px-4 py-5 md:px-8">
 							{/* One row: the value on the left, what it is and the actions on the
 							    right. Reset always holds its place (hidden and disabled until
 							    there's something to reset), so nothing moves while dragging. */}
@@ -245,7 +256,7 @@ export function CutoffBar({ rulesHref }: { rulesHref: string }) {
 			</div>
 			{/* The tab: hangs from the panel's edge (or from the top bar while
 			    closed), at the right of the page column. */}
-			<div className="mx-auto flex max-w-[1440px] justify-end px-4 md:px-8">
+			<div className="mx-auto flex max-w-[1280px] justify-end px-4 md:px-8">
 				<button
 					ref={tabRef}
 					type="button"
@@ -258,7 +269,7 @@ export function CutoffBar({ rulesHref }: { rulesHref: string }) {
 						isPreviewing
 							? 'border-action bg-action text-action-ink hover:bg-action-active'
 							: 'border-border bg-bg text-text hover:bg-surface-hover',
-						isInviting && 'tab-invite border-action text-accent-ink'
+						isInviting && 'border-action text-accent-ink'
 					)}
 				>
 					<SlidersIcon size={TAB_ICON_SIZE} />

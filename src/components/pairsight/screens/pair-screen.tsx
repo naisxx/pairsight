@@ -1,13 +1,14 @@
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
-import { CheckIcon, MinusIcon, SwapIcon } from '@/components/ui/icons'
 import { FieldCompareTable } from '@/components/pairsight/pair/field-compare-table'
 import { JevPanel } from '@/components/pairsight/pair/jev-panel'
-import { PairOrigin, VendorDecisions } from '@/components/pairsight/pair/pair-context'
+import { PairOrigin } from '@/components/pairsight/pair/pair-context'
 import { PairKeyboard } from '@/components/pairsight/pair/pair-keyboard'
 import { PairNav } from '@/components/pairsight/pair/pair-nav'
-import { CategoryBadge } from '@/components/pairsight/result-parts'
 import { toQuery } from '@/components/pairsight/results/query'
+import { ResultsTabs } from '@/components/pairsight/results/results-tabs'
+import { ExportMenu } from '@/components/pairsight/results/export-menu'
+import { Dock } from '@/components/pairsight/shell/dock'
 import { compareFields } from '@/server/pairsight/compare'
 import { isPairsightMatch } from '@/server/pairsight/decisions'
 import { getPairDetail, parseResultFilters } from '@/server/pairsight/results'
@@ -15,9 +16,11 @@ import { isUuid } from '@/server/pairsight/schemas'
 import { suggestionReasons } from '@/server/pairsight/splink/picks'
 import type { loadRun } from '@/server/pairsight/evaluation-pages'
 
-// Pair detail (docs/PairSight-UX-Plan.md §4.2): the two records side by
-// side, both decisions and their agreement, Jev's judgment, and how the pair
-// came to be compared. J/K step through the list it was opened from; Esc
+const SCORE_DIGITS = 2
+
+// Pair detail (docs/PairSight-UX-Plan.md §4.2, pairsight-handoff Pair): the
+// pair named, who says what in one dark bar, the two records side by side,
+// Jev's judgment, and how the pair came to be compared. J/K step through the list it was opened from; Esc
 // goes back to it with this pair highlighted.
 export async function PairScreen({
 	loaded,
@@ -32,7 +35,11 @@ export async function PairScreen({
 	const { scope, base } = loaded
 	const runId = loaded.run.id
 	const filters = parseResultFilters(rawFilters)
-	const [t, tRules] = await Promise.all([getTranslations('Pair'), getTranslations('Rules')])
+	const [t, tRules, tCat] = await Promise.all([
+		getTranslations('Pair'),
+		getTranslations('Rules'),
+		getTranslations('Categories')
+	])
 	const detail = await getPairDetail({ scope, runId, pairId, filters })
 	if (detail == null) notFound()
 
@@ -56,24 +63,18 @@ export async function PairScreen({
 	}
 	const previousHref = detail.previousId != null ? pairHref(detail.previousId) : null
 	const nextHref = detail.nextId != null ? pairHref(detail.nextId) : null
-	const pairsightDecision =
-		assessment.status === 'succeeded' && assessment.score != null
-			? isPairsightMatch({ score: assessment.score, threshold: run.threshold })
-				? t('match')
-				: t('noMatch')
-			: t('notAssessed')
+	const isJudged = assessment.status === 'succeeded' && assessment.score != null
+	const score = assessment.score ?? 0
+	const isSame = isJudged && isPairsightMatch({ score, threshold: run.threshold })
 	const { fields, otherHeaders } = compareFields({
 		valuesA: recordA.values,
 		valuesB: recordB.values,
 		columnRoles: detail.columnRoles,
 		country: run.countryCode
 	})
-	const vendorName = detail.vendors.find((vendor) => vendor.id === detail.vendorId)?.name ?? '—'
 
 	return (
 		<>
-			{/* Widens the page column (globals.css, .page-frame). */}
-			<span data-wide-page hidden />
 			<PairKeyboard
 				previousHref={previousHref != null ? asUrl(previousHref) : null}
 				nextHref={nextHref != null ? asUrl(nextHref) : null}
@@ -88,72 +89,73 @@ export async function PairScreen({
 				isInFiltered={detail.isInFiltered}
 			/>
 
-			<header className="mt-4">
-				<p className="text-text-muted font-mono text-xs">
-					{recordA.reference} · {recordB.reference}
+			<header className="mt-7">
+				<p className="text-text-muted type-eyebrow">
+					{recordA.reference} · {recordB.reference} · {tCat(row.category)}
 				</p>
-				<h1 className="type-title mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 md:text-[1.75rem]">
-					<span>{row.recordA.label}</span>
-					<SwapIcon size={18} className="text-text-muted" />
-					<span className="sr-only">{t('comparedWith')}</span>
-					<span>{row.recordB.label}</span>
+				<h1 className="text-text font-display mt-3 text-[clamp(2rem,3.6vw,3rem)] leading-[1.05] font-semibold tracking-[-0.025em]">
+					{row.recordA.label}{' '}
+					<span className="text-text-muted">
+						<span aria-hidden>/</span>
+						<span className="sr-only">{t('comparedWith')}</span> {row.recordB.label}
+					</span>
 				</h1>
 			</header>
 
+			{/* Who says what, in one bar: Jev's score and call, then each vendor's. */}
 			<section
 				aria-label={t('decisions')}
-				className="border-border bg-surface type-ui mt-4 flex flex-wrap items-center gap-x-5 gap-y-3 rounded-lg border px-4 py-3"
+				className="bg-inverse text-on-inverse mt-7 flex flex-wrap items-center gap-x-10 gap-y-4 rounded-lg px-7 py-[22px]"
 			>
-				<span className="flex items-center gap-2">
-					<span className="text-text-muted">{vendorName}</span>
-					{row.isVendorMatch ? (
-						<span className="inline-flex items-center gap-1 font-medium">
-							<CheckIcon size={14} variant="bold" /> {t('matched')}
+				{isJudged ? (
+					<>
+						<span className="font-mono text-[3.25rem] leading-none font-semibold tracking-[-0.03em]">
+							{score.toFixed(SCORE_DIGITS)}
 						</span>
-					) : (
-						<span className="text-text-muted inline-flex items-center gap-1">
-							<MinusIcon size={14} /> {t('notMatched')}
+						<span className="flex-[1_1_220px] text-base">
+							{t.rich(isSame ? 'barSame' : 'barDifferent', {
+								value: run.threshold.toFixed(SCORE_DIGITS),
+								b: (chunks) => <strong className="font-semibold">{chunks}</strong>,
+								n: (chunks) => <span className="font-mono">{chunks}</span>
+							})}
 						</span>
-					)}
-				</span>
-				<span aria-hidden className="bg-border hidden h-4 w-px @3xl:block" />
-				<span className="flex items-center gap-2">
-					<span className="text-text-muted">{t('pairsightAi')}</span>
-					<span className={pairsightDecision === t('match') ? 'font-medium' : 'text-text-muted'}>
-						{pairsightDecision}
+					</>
+				) : (
+					<span className="flex-[1_1_220px] text-base font-semibold">
+						{assessment.status === 'failed' ? t('assessmentFailed') : t('assessmentPending')}
 					</span>
-				</span>
-				<span aria-hidden className="bg-border hidden h-4 w-px @3xl:block" />
-				<CategoryBadge category={row.category} />
-				<span className="text-text-muted text-xs">{t('agreementNote')}</span>
+				)}
+				{detail.vendors.map((vendor) => (
+					<span key={vendor.id} className="text-base">
+						{t.rich('barVendor', {
+							vendor: vendor.name,
+							decision: vendor.isMatch ? 'same' : 'different',
+							b: (chunks) => (
+								<strong
+									className={vendor.isMatch ? 'font-semibold' : 'text-inverse-brand font-semibold'}
+								>
+									{chunks}
+								</strong>
+							)
+						})}
+					</span>
+				))}
 			</section>
+			<p className="text-text-muted mt-2.5 text-sm">{t('agreementNote')}</p>
 
-			<div className="mt-4 grid grid-cols-[minmax(0,1fr)] gap-4 @5xl:grid-cols-12">
-				<div className="flex flex-col gap-4 @5xl:col-span-8">
-					<FieldCompareTable
-						fields={fields}
-						others={otherHeaders.map((header) => ({
-							header,
-							a: recordA.values[header] ?? '',
-							b: recordB.values[header] ?? ''
-						}))}
-						sentRoles={run.jevFields}
-						referenceA={recordA.reference}
-						referenceB={recordB.reference}
-					/>
-					<PairOrigin
-						isSuggested={detail.isSuggested}
-						matchingVendors={detail.vendors
-							.filter((vendor) => vendor.isMatch)
-							.map((vendor) => vendor.name)}
-						suggestedBecause={suggestedBecause.map((reason) => tRules(`reason_${reason}`))}
-					/>
-				</div>
-				{/* In one column, Jev's verdict comes before the field-by-field detail. */}
-				<aside
-					aria-label={t('judgments')}
-					className="order-first flex flex-col gap-4 @5xl:order-none @5xl:col-span-4"
-				>
+			<div className="mt-6 grid grid-cols-[minmax(0,1fr)] items-start gap-4 @5xl:grid-cols-[minmax(0,2.15fr)_minmax(0,1fr)]">
+				<FieldCompareTable
+					fields={fields}
+					others={otherHeaders.map((header) => ({
+						header,
+						a: recordA.values[header] ?? '',
+						b: recordB.values[header] ?? ''
+					}))}
+					sentRoles={run.jevFields}
+					referenceA={recordA.reference}
+					referenceB={recordB.reference}
+				/>
+				<div className="flex flex-col gap-4">
 					<JevPanel
 						runId={run.id}
 						pairId={pairId}
@@ -165,9 +167,28 @@ export async function PairScreen({
 						completedAt={assessment.completedAt}
 						threshold={run.threshold}
 					/>
-					<VendorDecisions vendors={detail.vendors} />
-				</aside>
+					<PairOrigin
+						isSuggested={detail.isSuggested}
+						matchingVendors={detail.vendors
+							.filter((vendor) => vendor.isMatch)
+							.map((vendor) => vendor.name)}
+						suggestedBecause={suggestedBecause.map((reason) => tRules(`reason_${reason}`))}
+					/>
+				</div>
 			</div>
+			{/* The dock: the steps, then Overview, Pairs (this pair's list) and the downloads. */}
+			<Dock>
+				<ResultsTabs
+					tab="detailed"
+					overviewHref={{
+						pathname: `${base}/results`,
+						query: toQuery({ vendor: detail.vendorId })
+					}}
+					detailedHref={resultsHref}
+					detailedCount={detail.listSize}
+				/>
+				<ExportMenu runId={run.id} runNumber={run.number} pairCount={run.pairCount} />
+			</Dock>
 		</>
 	)
 }

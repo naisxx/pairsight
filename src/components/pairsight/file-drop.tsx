@@ -43,8 +43,8 @@ export function FileDrop({
 				if (file != null) onFile(file)
 			}}
 			className={cn(
-				'focus-within:outline-focus flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed px-6 py-10 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-2',
-				isOver ? 'border-action bg-surface-hover' : 'border-border-input bg-surface',
+				'focus-within:outline-focus flex cursor-pointer flex-col items-center justify-center rounded-[16px] border-[1.5px] border-dashed px-7 py-10 text-center transition-[background-color,border-color] duration-150 ease-out focus-within:outline-2 focus-within:outline-offset-3',
+				isOver ? 'border-action bg-surface-hover' : 'border-border-strong',
 				isBusy && 'pointer-events-none'
 			)}
 		>

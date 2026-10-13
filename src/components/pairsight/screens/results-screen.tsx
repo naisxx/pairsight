@@ -21,19 +21,27 @@ import { CutoffBar } from '@/components/pairsight/results/cutoff-bar'
 import { CutoffPreviewProvider } from '@/components/pairsight/results/cutoff-preview'
 import { Verdict } from '@/components/pairsight/results/verdict'
 import { RunNotFinished } from '@/components/pairsight/results/run-not-finished'
-import { getPairPanel, getRunResults, parseResultFilters } from '@/server/pairsight/results'
+import { Dock } from '@/components/pairsight/shell/dock'
+import {
+	getPairPanel,
+	getRunResults,
+	parseResultFilters,
+	type ResultFilters
+} from '@/server/pairsight/results'
 import { isUuid } from '@/server/pairsight/schemas'
 import type { EvaluationScope } from '@/server/pairsight/scope'
 import { PairPanel } from '@/components/pairsight/results/pair-panel'
 import { PairSelection } from '@/components/pairsight/results/pair-selection'
 import { getRunProgress } from '@/server/pairsight/runs'
+import { rankVendors } from '@/lib/pairsight/ranking'
 import { runBase } from '@/lib/pairsight/evaluation-view'
 import { entityTypeOf } from '@/lib/pairsight/entity-types'
 import type { LoadedWorkspace, loadRun } from '@/server/pairsight/evaluation-pages'
 
-// Results (docs/PairSight-UX-Plan.md §4.1): the run's header, the vendor and
-// threshold controls, then the Overview or the Detailed analysis. Everything
-// that changes the view is in the URL, so it's shareable and Back works.
+// Results (docs/PairSight-UX-Plan.md §4.1, pairsight-handoff Results): the
+// run in one line, the cut-off preview, then the Overview or the Pairs, with
+// Overview, Pairs and Download in the dock. Everything that changes the view
+// is in the URL, so it's shareable and Back works.
 export async function ResultsScreen({
 	loaded,
 	workspace,
@@ -55,10 +63,21 @@ export async function ResultsScreen({
 		)
 		return (
 			<>
-				<header className="flex flex-wrap items-start justify-between gap-4">
-					<div className="flex flex-wrap items-center gap-2">
-						<h1 className="text-text type-title">{loaded.run.evaluation.name}</h1>
+				<header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+					<div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
 						<RunStatusChip status={loaded.run.status} />
+						<p className="text-text-muted font-mono text-sm">
+							{t.rich('notFinishedMeta', {
+								number: loaded.run.number,
+								date: format.dateTime(loaded.run.createdAt, {
+									dateStyle: 'medium',
+									timeStyle: 'short'
+								}),
+								model: loaded.run.jevModel,
+								threshold: loaded.run.threshold.toFixed(2),
+								n: (chunks) => <span className="text-text">{chunks}</span>
+							})}
+						</p>
 					</div>
 					<RunSwitcher runId={runId} runs={workspace.runs} />
 				</header>
@@ -103,8 +122,20 @@ export async function ResultsScreen({
 	const isFiltered = hasActiveFilters(filters)
 	const vendorName = results.vendors.find((vendor) => vendor.id === vendorId)?.name ?? ''
 	const incomplete = results.overview.metrics.counts.incomplete
+	// The vendor's pairs in each group, and each vendor's colour: its place in
+	// the upload order, the same on every screen (vendor-swatch.tsx).
+	const vendorCounts = results.overview.byVendor.find((vendor) => vendor.id === vendorId)?.metrics
+		.counts
+	const vendorColours = Object.fromEntries(
+		results.overview.byVendor.map((vendor, index) => [vendor.id, index])
+	)
+	// The order they're listed in: best overall first.
+	const vendorRanks = Object.fromEntries(
+		rankVendors(results.overview.byVendor).map((vendor, index) => [vendor.id, index])
+	)
 
 	const resultsPath = `${base}/results`
+	const disagreementCount = (vendorCounts?.vendor_only ?? 0) + (vendorCounts?.pairsight_only ?? 0)
 	const detailed = (query: Record<string, string>) => ({
 		pathname: resultsPath,
 		query: toQuery({ vendor: vendorId, tab: 'detailed', ...query })
@@ -146,93 +177,46 @@ export async function ResultsScreen({
 
 	return (
 		<CutoffPreviewProvider runThreshold={run.threshold}>
-			{/* Widens the page column (globals.css, .page-frame). */}
-			<span data-wide-page hidden />
 			<ResultsKeyboard />
-			<header>
-				<div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-					<div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
-						<RunStatusChip status={run.status} />
-						{incomplete > 0 && (
-							<Chip tone="outline" className="border-border-input border-dashed">
-								{t('incompleteCount', { count: incomplete })}
-							</Chip>
+			<header className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+				<div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1.5">
+					<RunStatusChip status={run.status} />
+					{incomplete > 0 && (
+						<Chip tone="outline" className="border-border-input border-dashed">
+							{t('incompleteCount', { count: incomplete })}
+						</Chip>
+					)}
+					<p className="text-text-muted font-mono text-sm">
+						{t.rich('runMetaLine', {
+							number: run.number,
+							date: format.dateTime(run.completedAt ?? run.createdAt, {
+								dateStyle: 'medium',
+								timeStyle: 'short'
+							}),
+							model: results.models.join(', ') || run.jevModel,
+							threshold: run.threshold.toFixed(2),
+							assessed: results.overview.coverage.assessed,
+							total: results.overview.coverage.total,
+							n: (chunks) => <span className="text-text">{chunks}</span>
+						})}
+						{run.initialThreshold != null && run.initialThreshold !== run.threshold && (
+							<> · {t('thresholdStartedAt', { threshold: run.initialThreshold.toFixed(2) })}</>
 						)}
-						<p className="text-text-muted type-ui">
-							{t.rich('runMeta', {
-								model: results.models.join(', ') || run.jevModel,
-								date: format.dateTime(run.completedAt ?? run.createdAt, {
-									dateStyle: 'medium',
-									timeStyle: 'short'
-								}),
-								total: results.overview.coverage.total,
-								n: (chunks) => <span className="text-text font-mono">{chunks}</span>
-							})}
-							{run.initialThreshold != null && run.initialThreshold !== run.threshold && (
-								<> · {t('thresholdStartedAt', { threshold: run.initialThreshold.toFixed(2) })}</>
-							)}
-						</p>
-					</div>
-					<div className="flex w-full items-center gap-2 sm:w-auto">
-						<ExportMenu runId={run.id} runNumber={run.number} pairCount={run.pairCount} />
-						<RunSwitcher runId={run.id} runs={workspace.runs} />
-					</div>
+					</p>
 				</div>
-
-				{/* The tabs come first: the verdict below belongs to the Overview. */}
-				<ResultsTabs
-					tab={tab}
-					overviewHref={{ pathname: resultsPath, query: toQuery({ vendor: vendorId }) }}
-					detailedHref={{
-						pathname: resultsPath,
-						query: toQuery({ ...filters, tab: 'detailed', page: undefined })
-					}}
-					detailedCount={results.matching}
-				/>
-
-				{/* The verdict leads the Overview; Detailed analysis starts at its list,
-				    so its heading is for screen readers only. */}
-				{tab === 'detailed' && (
-					<h1 className="sr-only">{t('detailedHeading', { name: run.evaluation.name })}</h1>
-				)}
+				<RunSwitcher runId={run.id} runs={workspace.runs} />
 			</header>
 
 			{/* On the Overview, the cut-off drawer: its tab hangs under the tabs here
 			    and sticks under the top bar as the page scrolls. Detailed analysis's
 			    list uses the run's own cut-off: one line says so, and links to the
 			    Overview with the drawer open to try another. */}
-			{tab === 'overview' ? (
-				<CutoffBar rulesHref={`${view.base}/rules`} />
-			) : (
-				<p className="text-text-muted type-ui mt-6 flex flex-wrap items-center gap-x-3 gap-y-1">
-					<span>
-						{t.rich('cutoffDetailedHint', {
-							value: run.threshold.toFixed(2),
-							n: (chunks) => <span className="text-text font-mono font-medium">{chunks}</span>
-						})}
-					</span>
-					<Link
-						href={{
-							pathname: resultsPath,
-							query: { ...toQuery({ vendor: vendorId }), [CUTOFF_OPEN_PARAM]: 'open' }
-						}}
-						className="text-accent-ink hit-area inline-flex items-center gap-1 font-medium hover:underline"
-					>
-						{t('cutoffDetailedLink')}
-						<ArrowRightIcon size={13} />
-					</Link>
-				</p>
-			)}
+			{tab === 'overview' && <CutoffBar rulesHref={`${view.base}/rules`} />}
 			{tab === 'overview' && (
 				<Verdict
 					statsByVendor={results.statsByVendor}
 					runThreshold={run.threshold}
 					vendors={results.overview.byVendor}
-					disagreementsHref={
-						results.overview.workload.disagreements > 0
-							? detailed({ category: 'disagreements' })
-							: null
-					}
 				/>
 			)}
 
@@ -252,7 +236,21 @@ export async function ResultsScreen({
 					/>
 				)
 			) : (
-				<div className="mt-5 flex flex-col gap-3">
+				<div className="mt-9 flex flex-col gap-5">
+					<div className="flex flex-wrap items-end justify-between gap-4">
+						<div>
+							<p className="text-text-muted type-eyebrow">
+								{t('reviewEyebrow', { vendor: vendorName })}
+							</p>
+							<h1 className="text-text font-display mt-3 text-[2.75rem] leading-[1.05] font-semibold tracking-[-0.025em]">
+								{t('reviewTitle', {
+									count: results.matching,
+									category: filters.category === 'disagreements' ? 'disagreements' : 'other'
+								})}
+							</h1>
+						</div>
+						<ShortcutsDialog set="results" showHint />
+					</div>
 					{/* Headings to jump between with a screen reader: the list, then the pair. */}
 					<h2 className="sr-only">{t('pairsHeading')}</h2>
 					<PairFilters
@@ -260,7 +258,32 @@ export async function ResultsScreen({
 						vendorId={vendorId}
 						matching={results.matching}
 						isFiltered={isFiltered}
+						viewCounts={{
+							all: CATEGORIES.reduce((sum, category) => sum + (vendorCounts?.[category] ?? 0), 0),
+							disagreements: disagreementCount
+						}}
+						vendorColours={vendorColours}
+						vendorRanks={vendorRanks}
 					/>
+					<p className="text-text-muted flex flex-wrap items-center gap-x-3 gap-y-1 text-sm">
+						<span>
+							{t.rich('cutoffDetailedHint', {
+								value: run.threshold.toFixed(2),
+								n: (chunks) => <span className="text-text font-mono font-medium">{chunks}</span>
+							})}
+						</span>
+						<Link
+							href={{
+								pathname: resultsPath,
+								query: { ...toQuery({ vendor: vendorId }), [CUTOFF_OPEN_PARAM]: 'open' }
+							}}
+							className="text-accent-ink hit-area inline-flex items-center gap-1 font-medium hover:underline"
+						>
+							{t('cutoffDetailedLink')}
+							<ArrowRightIcon size={13} />
+						</Link>
+					</p>
+
 					{results.rows.length === 0 ? (
 						<EmptyState
 							framed
@@ -280,7 +303,7 @@ export async function ResultsScreen({
 							}
 						/>
 					) : (
-						<div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 @5xl:grid-cols-12">
+						<div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 @5xl:grid-cols-[minmax(0,2.1fr)_minmax(0,1fr)]">
 							<PairSelection
 								selectedId={selected?.detail.row.id ?? null}
 								rows={results.rows.map((row) => ({
@@ -302,18 +325,20 @@ export async function ResultsScreen({
 																pathname: `${base}/pairs/${pair.detail.row.id}`,
 																query: toQuery({ ...filters, tab: 'detailed', sel: undefined })
 															}}
+															vendorColours={vendorColours}
+															vendorRanks={vendorRanks}
 														/>
 													)
 												}
 											]
 								)}
 							>
-								<div className="@5xl:col-span-7">
+								<div className="border-border bg-surface overflow-hidden rounded-lg border">
 									<PairsTable
 										base={base}
 										filters={filters}
 										rows={results.rows}
-										threshold={run.threshold}
+										groupCounts={isNarrowed(filters) ? null : (vendorCounts ?? null)}
 									/>
 									<Pagination
 										base={base}
@@ -323,14 +348,56 @@ export async function ResultsScreen({
 										pageSize={results.pageSize}
 										total={results.matching}
 									/>
-									<ShortcutsDialog set="results" showHint />
 								</div>
 							</PairSelection>
 						</div>
 					)}
 				</div>
 			)}
+			{/* The dock: the steps, then Overview, Pairs and the downloads. */}
+			<Dock>
+				<ResultsTabs
+					tab={tab}
+					overviewHref={{ pathname: resultsPath, query: toQuery({ vendor: vendorId }) }}
+					// From the Overview, Pairs opens on the vendor's disagreements, the
+					// pairs worth opening, when it has any (pairsight-handoff Review).
+					detailedHref={{
+						pathname: resultsPath,
+						query: toQuery({
+							...filters,
+							tab: 'detailed',
+							page: undefined,
+							category:
+								tab === 'overview' && filters.category == null && disagreementCount > 0
+									? 'disagreements'
+									: filters.category
+						})
+					}}
+					detailedCount={results.matching}
+				/>
+				<ExportMenu runId={run.id} runNumber={run.number} pairCount={run.pairCount} />
+			</Dock>
 		</CutoffPreviewProvider>
+	)
+}
+
+const CATEGORIES = [
+	'both_matched',
+	'pairsight_only',
+	'vendor_only',
+	'neither_matched',
+	'incomplete'
+] satisfies Array<Category | 'incomplete'>
+
+// A filter that narrows the list within a group (the search, score, source
+// or status), so a group's full size isn't what's listed.
+function isNarrowed(filters: ResultFilters): boolean {
+	return (
+		(filters.q ?? '') !== '' ||
+		filters.score != null ||
+		filters.source != null ||
+		filters.status != null ||
+		filters.lowConfidence != null
 	)
 }
 

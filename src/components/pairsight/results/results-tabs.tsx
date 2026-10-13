@@ -1,11 +1,10 @@
 import { useTranslations } from 'next-intl'
-import { Link } from '@/i18n/routing'
-import { cn } from '@/lib/cn'
 import { Count } from '@/components/ui/count'
+import { DockLink } from '../shell/dock'
 
-// Overview and Detailed analysis. They're links (the tab lives in the URL,
-// so the server renders the right one and Back works), styled as tabs; the
-// detailed tab carries the number of pairs its filters match.
+// Overview and Pairs, in the dock. They're links (the tab lives in the URL,
+// so the server renders the right one and Back works); Pairs carries the
+// number of pairs its filters match.
 export function ResultsTabs({
 	tab,
 	overviewHref,
@@ -18,40 +17,18 @@ export function ResultsTabs({
 	detailedCount: number
 }) {
 	const t = useTranslations('Results')
-	const tabs = [
-		{ key: 'overview', label: t('tabOverview'), href: overviewHref },
-		{ key: 'detailed', label: t('tabDetailed'), href: detailedHref }
-	] as const
 	return (
-		<nav aria-label={t('views')} className="border-border mt-6 flex gap-6 border-b">
-			{tabs.map((item) => {
-				const isCurrent = item.key === tab
-				return (
-					<Link
-						key={item.key}
-						href={item.href}
-						aria-current={isCurrent ? 'page' : undefined}
-						className={cn(
-							'-mb-px flex h-11 items-center gap-2 border-b-2 text-[0.9375rem] font-medium transition-colors duration-150',
-							isCurrent
-								? 'border-action text-text'
-								: 'text-text-muted hover:text-text border-transparent'
-						)}
-					>
-						{item.label}
-						{item.key === 'detailed' && (
-							<span
-								className={cn(
-									'rounded-full px-2 font-mono text-[0.6875rem]',
-									isCurrent ? 'bg-accent text-accent-ink' : 'bg-surface-muted text-text-muted'
-								)}
-							>
-								<Count value={detailedCount} />
-							</span>
-						)}
-					</Link>
-				)
-			})}
-		</nav>
+		<span role="group" aria-label={t('views')} className="flex flex-wrap items-center gap-1.5">
+			<DockLink href={overviewHref} isCurrent={tab === 'overview'}>
+				{t('tabOverview')}
+			</DockLink>
+			<DockLink
+				href={detailedHref}
+				isCurrent={tab === 'detailed'}
+				count={<Count value={detailedCount} />}
+			>
+				{t('tabDetailed')}
+			</DockLink>
+		</span>
 	)
 }

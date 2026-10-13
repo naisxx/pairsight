@@ -25,8 +25,6 @@ export function Greeting({ firstName }: { firstName: string }) {
 				? 'greetingAfternoon'
 				: 'greetingEvening'
 	return (
-		<p className={hour == null ? 'type-ui invisible' : 'type-ui text-text-muted'}>
-			{t(key, { name: firstName })}
-		</p>
+		<span className={hour == null ? 'invisible' : undefined}>{t(key, { name: firstName })}</span>
 	)
 }

@@ -2,34 +2,53 @@
 @import 'tw-animate-css';
 @import './motion.css';
 
-/* Dark mode is class-based (next-themes sets `.dark` on <html>) so the
-   Light / Dark / System menu can override the OS preference. */
-@custom-variant dark (&:where(.dark, .dark *));
+/* The theme is a data-theme attribute on <html> (next-themes sets it before
+   paint), so the theme switch can override the OS preference. A part of a
+   page can carry its own data-theme to show the other theme inside it. */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 /* Touch screens: controls grow to a 44px target (pointer-coarse:min-h-11). */
 @custom-variant pointer-coarse (@media (pointer: coarse));
 
 /* Tailwind v4 is CSS-first — no tailwind.config.js. Static tokens (nothing
    that needs to change with color scheme) live directly in @theme. The font
-   variables are set by next/font in src/app/[locale]/layout.tsx. */
-@theme {
-	--font-sans:
-		var(--font-space-grotesk), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
-	--font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
-	/* The logo's coral. Fixed in both themes (it's the mark, not an action
-	   colour), so it lives here rather than in :root/.dark. */
-	--color-brand: #e45742;
-	--radius-sm: 6px;
-	/* Buttons and inputs. */
-	--radius: 8px;
-	--radius-md: 8px;
-	/* Cards, panels and dialogs. */
-	--radius-lg: 12px;
+   variables are set by next/font in src/app/[locale]/layout.tsx.
 
+   Values follow the design handoff (pairsight-handoff/tokens.css): three
+   faces, corners that grow with the size of the thing, a 4px grid. */
+@theme {
+	/* Headlines: Bricolage Grotesque 600, tight, at its smallest optical size
+	   (the open cut the design was drawn with) whatever the font size. */
+	--font-display:
+		var(--font-bricolage), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	--font-display--font-variation-settings: 'opsz' 12;
+	/* Body and controls. */
+	--font-sans:
+		var(--font-instrument), ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+	/* Data, figures and labels: anything compared character by character. */
+	--font-mono: var(--font-jetbrains-mono), ui-monospace, 'SFMono-Regular', Menlo, monospace;
+	/* Vermilion: the mark and the vendor. Fixed in both themes (it's the
+	   mark, not an action colour), so it lives here rather than in the
+	   theme blocks. */
+	--color-brand: #ff4a1c;
+	/* Mosaic tiles. */
+	--radius-xs: 3px;
+	/* Chips, tags and glyph tiles. */
+	--radius-sm: 8px;
+	/* Buttons and inputs. */
+	--radius: 12px;
+	--radius-md: 12px;
+	/* Cards, panels and dialogs; the dock is a step rounder. */
+	--radius-lg: 20px;
+	--radius-xl: 22px;
+
+	/* Arrivals settle fast; anything that slides into place eases both ends. */
+	--ease-arrive: cubic-bezier(0.2, 0, 0, 1);
+	--ease-slide: cubic-bezier(0.3, 0, 0.1, 1);
 	/* One easing for everything that moves: fast out, gentle settle. Dialogs
 	   ease in and fade back out (a touch quicker, so closing never lags);
 	   menus and popovers animate in only. */
-	--ease-out-soft: cubic-bezier(0.23, 1, 0.32, 1);
+	--ease-out-soft: var(--ease-arrive);
 	--animate-fade-in: fade-in 150ms var(--ease-out-soft);
 	--animate-pop-in: pop-in 260ms var(--ease-out-soft);
 	--animate-fade-out: fade-out 150ms ease-in;
@@ -85,59 +104,71 @@
 	}
 }
 
-/* The PairSight palette (DESIGN.md, docs/PairSight-UX-Plan.md §6): brand
-   coral on pure neutral greys, no tint in either theme. Depth comes from the
-   surface ladder (bg → surface-muted → surface → surface-elevated) and 1px
-   hairlines, not shadows.
+/* The PairSight palette (pairsight-handoff/tokens.css, docs/PairSight-UX-Plan.md
+   §6): paper and charcoal carry the page; vermilion (the vendor, the main
+   button) and ice (the checker) are the only two colours with a job. Depth
+   comes from the surface ladder (bg → surface-muted → surface) and 1px
+   hairlines; only floating layers (the dock, menus, dialogs) cast a shadow.
 
-   The brand works the way ClickHouse uses its yellow: exactly three variants.
-   --action fills (primary buttons, the verdict's numbers, the current step,
-   the input focus edge, featured cards); --action-active is hover and press;
-   --action-disabled is a dimmed coral for a control that can't be used yet.
-   Large areas are never tinted with it otherwise.
+   The token names are the app's; the values are the design's. Where the
+   design's colour can't meet contrast in the role a token plays here, the
+   token keeps the role and a nearby value: --border-input (form fields need a
+   3:1 edge) is darker than the design's --line-2, which outline buttons use as
+   --border-strong.
 
    Every text/background and control-edge pair is contrast-checked in both
    themes by scripts/check-contrast.test.mjs: change a value here and that
    test tells you whether it still passes. */
-:root {
-	--bg: #f6f6f6;
+:root,
+[data-theme='light'] {
+	--bg: #f7f6f3;
 	--surface: #ffffff;
 	--surface-elevated: #ffffff;
-	--surface-muted: #f0f0f0;
-	--surface-hover: #f2f2f2;
-	--selected: #ebebeb;
-	--ghost: #efefef;
-	--diff: #ececec;
-	--diff-ink: #1d5fb8;
-	--border: #e3e3e3;
-	--border-input: #848484;
-	--text: #0a0a0a;
-	--text-muted: #5a5a5a;
-	--action: #c93a22;
-	--action-active: #ae2f19;
-	--action-disabled: #f3d6cf;
-	--action-ink: #ffffff;
-	--accent: #fdece8;
-	--accent-ink: #b3321c;
-	--ring: #c93a22;
-	/* Keyboard focus: blue, so a focused field never reads as an error. */
-	--focus: #1d5fb8;
+	--surface-muted: #eeede8;
+	--surface-hover: #f3f2ee;
+	--selected: #ebeae4;
+	--ghost: #eeede8;
+	--diff: #eeede8;
+	--diff-ink: #2f5c73;
+	--border: #dddbd4;
+	--border-strong: #b9b7ae;
+	--border-input: #85837b;
+	--text: #0d0d0e;
+	--text-body: #3d3d40;
+	--text-muted: #66666b;
+	--action: #ff4a1c;
+	--action-active: #ff5e33;
+	--action-disabled: #fde0d5;
+	--action-ink: #0d0d0e;
+	--accent: #fff2ed;
+	--accent-ink: #cc3a12;
+	--brand-text: #cc3a12;
+	--ice: #a9cadb;
+	--ice-text: #2f5c73;
+	--ring: #2f5c73;
+	--focus: #2f5c73;
+	--inverse: #0d0d0e;
+	--on-inverse: #f7f6f3;
+	/* Vermilion as text on the inverted ground (the pair's verdict bar). */
+	--inverse-brand: #ff6a45;
 	--success: #14773a;
 	--success-subtle: #e8f6ee;
 	--warning: #8a5a00;
 	--warning-subtle: #fcf3de;
 	--danger: #be1d4b;
 	--danger-subtle: #fcebf0;
-	--info: #1d5fb8;
-	--info-subtle: #e8f0fb;
-	--cat-both: #2f55a8;
-	--cat-both-subtle: #eaf0fb;
-	--cat-pairsight: #6a3fc0;
-	--cat-pairsight-subtle: #f1ecfb;
-	--cat-vendor: #0b6e68;
-	--cat-vendor-subtle: #e3f4f2;
-	--cat-neither: #5e5e5e;
-	--cat-neither-subtle: #efefef;
+	--info: #2f5c73;
+	--info-subtle: #e3edf2;
+	/* Who said same, as text and marks: ink for both, vermilion for only
+	   the vendor, ice for only Jev, grey for neither. */
+	--cat-both: #0d0d0e;
+	--cat-both-subtle: #eeede8;
+	--cat-pairsight: #2f5c73;
+	--cat-pairsight-subtle: #e3edf2;
+	--cat-vendor: #cc3a12;
+	--cat-vendor-subtle: #fff2ed;
+	--cat-neither: #66666b;
+	--cat-neither-subtle: #eeede8;
 	--brand-deep: #972828;
 	--brand-orange: #eb7f31;
 	--brand-amber: #fcad38;
@@ -147,61 +178,69 @@
 	--headline-via: #c93a22;
 	--headline-to: #c8561a;
 	--glow-strength: 0.22;
-	/* Two neutral-and-warm chart series for data that isn't a category
-	   (metrics, vendors side by side). */
-	--series-a: #3a3a3a;
-	--series-b: #c25a12;
-	/* Floating layers only (menus, popovers, dialogs, toasts): cards and
-	   panels have no shadow. */
-	--shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 8px 24px rgba(0, 0, 0, 0.08);
+	/* Two vendors side by side: blue and plum, so neither looks like the
+	   brand's favourite. */
+	--series-a: #2f55e0;
+	--series-b: #9a3fb5;
+	/* Floating layers only (the dock, menus, popovers, dialogs, toasts):
+	   cards and panels have no shadow. */
+	--shadow: 0 20px 48px -20px rgba(13, 13, 14, 0.35);
 	color-scheme: light;
 }
 
-.dark {
-	--bg: #0a0a0a;
-	--surface: #161616;
-	--surface-elevated: #1f1f1f;
-	--surface-muted: #111111;
-	--surface-hover: #1c1c1c;
-	--selected: #242424;
-	--ghost: #1a1a1a;
-	--diff: #262626;
-	--diff-ink: #8fb6ff;
-	--border: #2a2a2a;
-	--border-input: #6f6f6f;
-	--text: #ffffff;
-	--text-muted: #a3a3a3;
-	--action: #ff6a4d;
-	--action-active: #e8573c;
-	--action-disabled: #3a201b;
-	--action-ink: #1a0b07;
-	--accent: #2a1a24;
-	--accent-ink: #ff8f79;
-	--ring: #ff8f79;
-	--focus: #6aaeff;
+[data-theme='dark'] {
+	--bg: #0d0d0e;
+	--surface: #1a1a1c;
+	--surface-elevated: #222225;
+	--surface-muted: #141415;
+	--surface-hover: #1f1f22;
+	--selected: #232326;
+	--ghost: #1f1f22;
+	--diff: #232326;
+	--diff-ink: #bfd9e6;
+	--border: #2a2a2e;
+	--border-strong: #45454b;
+	--border-input: #75757c;
+	--text: #f4f3f0;
+	--text-body: #b9b8b4;
+	--text-muted: #8a8a90;
+	--action: #ff4a1c;
+	--action-active: #ff6a45;
+	--action-disabled: #4a2116;
+	--action-ink: #0d0d0e;
+	--accent: #2a1712;
+	--accent-ink: #ff6a45;
+	--brand-text: #ff6a45;
+	--ice: #bfd9e6;
+	--ice-text: #bfd9e6;
+	--ring: #bfd9e6;
+	--focus: #bfd9e6;
+	--inverse: #f4f3f0;
+	--on-inverse: #0d0d0e;
+	--inverse-brand: #c4360f;
 	--success: #4ade9a;
 	--success-subtle: #12221a;
-	--warning: #f7c04f;
+	--warning: #f2b84b;
 	--warning-subtle: #262011;
 	--danger: #ff6f94;
 	--danger-subtle: #2a161c;
-	--info: #6aaeff;
-	--info-subtle: #141d2a;
-	--cat-both: #86a8ff;
-	--cat-both-subtle: #181d2a;
-	--cat-pairsight: #be9cff;
-	--cat-pairsight-subtle: #1f1a2a;
-	--cat-vendor: #3dd9c5;
-	--cat-vendor-subtle: #112321;
-	--cat-neither: #a3a3a3;
-	--cat-neither-subtle: #1f1f1f;
-	--series-a: #d4d4d4;
-	--series-b: #f59e5b;
+	--info: #bfd9e6;
+	--info-subtle: #1c2427;
+	--cat-both: #f4f3f0;
+	--cat-both-subtle: #232326;
+	--cat-pairsight: #bfd9e6;
+	--cat-pairsight-subtle: #1c2427;
+	--cat-vendor: #ff6a45;
+	--cat-vendor-subtle: #2a1712;
+	--cat-neither: #8a8a90;
+	--cat-neither-subtle: #1f1f22;
+	--series-a: #7c9bff;
+	--series-b: #d08be8;
 	--headline-from: #ff6a4d;
 	--headline-via: #f59e5b;
 	--headline-to: #fcad38;
 	--glow-strength: 0.16;
-	--shadow: 0 1px 2px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.5);
+	--shadow: 0 20px 48px -16px rgba(0, 0, 0, 0.7);
 	color-scheme: dark;
 }
 
@@ -209,7 +248,7 @@
    components work unmodified. The PairSight names stay the source of truth —
    change a value above, never here. */
 :root,
-.dark {
+[data-theme] {
 	--background: var(--bg);
 	--foreground: var(--text);
 	--card: var(--surface);
@@ -243,9 +282,17 @@
 	--color-diff: var(--diff);
 	--color-diff-ink: var(--diff-ink);
 	--color-border: var(--border);
+	--color-border-strong: var(--border-strong);
 	--color-border-input: var(--border-input);
 	--color-text: var(--text);
+	--color-text-body: var(--text-body);
 	--color-text-muted: var(--text-muted);
+	--color-brand-text: var(--brand-text);
+	--color-ice: var(--ice);
+	--color-ice-text: var(--ice-text);
+	--color-inverse: var(--inverse);
+	--color-on-inverse: var(--on-inverse);
+	--color-inverse-brand: var(--inverse-brand);
 	--color-action: var(--action);
 	--color-action-active: var(--action-active);
 	--color-action-disabled: var(--action-disabled);
@@ -301,80 +348,96 @@
 	--color-chart-5: var(--chart-5);
 }
 
-/* The type scale (DESIGN.md §4). Components use these roles, never raw
-   text-sm/text-xs, so a heading or a label looks the same on every screen.
-   Colour stays separate (text-text, text-text-muted, …).
+/* The type scale (DESIGN.md §4, pairsight-handoff Foundations). Components
+   use these roles, never raw text-sm/text-xs, so a heading or a label looks
+   the same on every screen. Colour stays separate (text-text,
+   text-text-muted, …).
 
-   Two voices: Space Grotesk for the interface, JetBrains Mono for data the
-   user reads exactly — record references, raw values, scores, counts. Numbers
-   that sit in columns or change live use the mono roles so they line up and
-   don't jitter.
+   Three voices: Bricolage Grotesque for headlines, Instrument Sans for the
+   interface, JetBrains Mono for data the user reads exactly — record
+   references, raw values, scores, counts — and for the small caps labels.
+   Numbers that sit in columns or change live use the mono roles so they
+   line up and don't jitter.
 
-   Display roles are the big, tight headlines: bold, with negative tracking
-   that grows with the size. They step down a size on narrow screens. */
+   Display roles are the big, tight headlines: semibold, -2.5% tracking,
+   about 1.05 leading. They step down a size on narrow screens. */
 @utility type-display-xl {
-	font-size: 2.5rem;
-	line-height: 1.05;
-	font-weight: 700;
-	letter-spacing: -0.035em;
+	font-family: var(--font-display);
+	font-variation-settings: var(--font-display--font-variation-settings);
+	font-size: 2.75rem;
+	line-height: 1;
+	font-weight: 600;
+	letter-spacing: -0.03em;
 	@media (width >= 48rem) {
 		font-size: 4.5rem;
 	}
 }
 @utility type-display-lg {
+	font-family: var(--font-display);
+	font-variation-settings: var(--font-display--font-variation-settings);
 	font-size: 2.5rem;
-	line-height: 1.08;
-	font-weight: 700;
-	letter-spacing: -0.035em;
+	line-height: 1.02;
+	font-weight: 600;
+	letter-spacing: -0.025em;
 	@media (width >= 48rem) {
 		font-size: 3.5rem;
 	}
 }
 @utility type-display-md {
+	font-family: var(--font-display);
+	font-variation-settings: var(--font-display--font-variation-settings);
 	font-size: 1.875rem;
-	line-height: 1.15;
-	font-weight: 700;
-	letter-spacing: -0.035em;
+	line-height: 1.05;
+	font-weight: 600;
+	letter-spacing: -0.025em;
 	@media (width >= 48rem) {
 		font-size: 2.5rem;
 	}
 }
 @utility type-display-sm {
+	font-family: var(--font-display);
+	font-variation-settings: var(--font-display--font-variation-settings);
 	font-size: 1.625rem;
-	line-height: 1.2;
-	font-weight: 700;
-	letter-spacing: -0.03em;
+	line-height: 1.1;
+	font-weight: 600;
+	letter-spacing: -0.025em;
 	@media (width >= 48rem) {
 		font-size: 2rem;
 	}
 }
 @utility type-title {
+	font-family: var(--font-display);
+	font-variation-settings: var(--font-display--font-variation-settings);
 	font-size: 1.375rem;
-	line-height: 1.875rem;
-	font-weight: 700;
-	letter-spacing: -0.0125em;
+	line-height: 1.75rem;
+	font-weight: 600;
+	letter-spacing: -0.02em;
 	@media (width >= 48rem) {
-		font-size: 1.5rem;
+		font-size: 1.625rem;
 		line-height: 2rem;
 	}
 }
 @utility type-heading {
-	font-size: 1.125rem;
+	font-family: var(--font-display);
+	font-variation-settings: var(--font-display--font-variation-settings);
+	font-size: 1.25rem;
 	line-height: 1.625rem;
 	font-weight: 600;
-	letter-spacing: -0.01em;
+	letter-spacing: -0.02em;
 }
 @utility type-subheading {
 	font-size: 1rem;
 	line-height: 1.5rem;
 	font-weight: 600;
 }
-/* The small uppercase label over a section or a card ("Current evaluation"). */
+/* The small uppercase label over a section or a card ("What was checked"):
+   mono caps, 13px, +6% tracking. */
 @utility type-eyebrow {
-	font-size: 0.75rem;
-	line-height: 1rem;
-	font-weight: 600;
-	letter-spacing: 0.125em;
+	font-family: var(--font-mono);
+	font-size: 0.8125rem;
+	line-height: 1.125rem;
+	font-weight: 400;
+	letter-spacing: 0.06em;
 	text-transform: uppercase;
 }
 @utility type-body {
@@ -440,44 +503,6 @@
 		color-mix(in srgb, var(--action) 5%, var(--surface)) 45%,
 		var(--surface) 100%
 	);
-}
-
-/* ---- App shell (src/components/pairsight/shell/) ----
-   The page scrolls inside <main>; the page sits in an inline-size container
-   (shell-frame.tsx) so the action bar can span its full width from inside the
-   centred page column, and page layouts respond to the room the page has
-   rather than the window (@5xl: and friends), since the sidebar takes some. */
-@layer components {
-	/* A very faint 64px grid behind the page, strongest at the top and fading
-	   out down the page. It's drawn on a layer under the page's content (the
-	   container isolates it), so anything with a surface of its own — cards,
-	   the action bar — stays solid; the sidebar and top bar sit outside it.
-	   Two gradients, no image; the lines are the hairline token at 20%. */
-	.app-grid {
-		position: relative;
-		isolation: isolate;
-	}
-	.app-grid::before {
-		--grid-line: color-mix(in srgb, var(--border) 20%, transparent);
-		content: '';
-		position: absolute;
-		/* Only as tall as it's visible, so a long page doesn't paint (or
-		   scroll) a full-height masked layer. */
-		inset: 0 0 auto;
-		height: 760px;
-		z-index: -1;
-		pointer-events: none;
-		background-image:
-			linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-			linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-		background-size: 64px 64px;
-		mask-image: linear-gradient(to bottom, #000 0, transparent 100%);
-	}
-
-	/* Results and pair detail are wider than the setup steps. */
-	.page-frame:has([data-wide-page]) {
-		max-width: 1440px;
-	}
 }
 
 /* A table that scrolls sideways fades out at whichever edge has more to
@@ -556,10 +581,18 @@
 	}
 }
 
-/* Toasts sit above a docked action bar, never over its buttons. Unlayered, so
-   it beats the viewport's own bottom-0 utility. */
-body:has([data-action-bar]) [data-toast-viewport] {
-	bottom: 4.5rem;
+/* Toasts sit above the dock, never over its buttons. Unlayered, so it beats
+   the viewport's own bottom-0 utility. */
+body:has([data-dock]) [data-toast-viewport] {
+	bottom: 6rem;
+}
+
+/* The theme switch cross-fades the whole page (theme-toggle.tsx starts a
+   view transition where the browser has them). */
+::view-transition-old(root),
+::view-transition-new(root) {
+	animation-duration: 350ms;
+	animation-timing-function: var(--ease-arrive);
 }
 
 /* ---- Scrollbars ----
@@ -615,7 +648,7 @@ body:has([data-action-bar]) [data-toast-viewport] {
 	   drawing their own. */
 	:focus-visible {
 		outline: 2px solid var(--focus);
-		outline-offset: 2px;
+		outline-offset: 3px;
 	}
 
 	/* Numbers in the mono face line up in columns and don't jitter as they
@@ -646,4 +679,52 @@ body:has([data-action-bar]) [data-toast-viewport] {
 			scroll-behavior: auto !important;
 		}
 	}
+}
+
+/* ---- The dock (shell/dock.tsx) ----
+   A page with a next action shows its own dock (ActionBar), so the shell's
+   steps-only one steps aside, and a dialog over the page hides it. The page's buttons take the dock's look: the
+   main action is a paper-coloured pill on the dark bar, anything else is
+   quiet text on it. Unlayered, so it beats the buttons' own utilities. */
+[data-shell-root]:has([data-page-dock]) [data-shell-dock] {
+	display: none;
+}
+/* Under a dialog or a sheet the page is out of reach, the dock included.
+   Its contents are named too: WebKit doesn't always pass a `:has()`-driven
+   visibility down to children that were already drawn. */
+body:has([role='dialog'][data-state='open']) :is([data-shell-dock], [data-page-dock]),
+body:has([role='dialog'][data-state='open']) :is([data-shell-dock], [data-page-dock]) * {
+	visibility: hidden;
+}
+[data-dock-actions] [data-variant] {
+	min-height: 3rem;
+	border-radius: 14px;
+	padding-inline: 1rem;
+	box-shadow: none;
+	font-size: 0.9375rem;
+}
+/* On a phone the dock's actions close up so they share one row. */
+@media (width < 600px) {
+	[data-dock-actions] [data-variant] {
+		padding-inline: 0.75rem;
+	}
+}
+[data-dock-actions] [data-variant='primary'] {
+	background-color: var(--on-inverse);
+	color: var(--inverse);
+}
+[data-dock-actions] [data-variant='primary']:hover {
+	background-color: color-mix(in srgb, var(--on-inverse) 88%, var(--inverse));
+}
+[data-dock-actions] [data-variant='primary']:disabled,
+[data-dock-actions] [data-variant='primary'][aria-disabled='true'] {
+	background-color: color-mix(in srgb, var(--on-inverse) 40%, var(--inverse));
+	color: color-mix(in srgb, var(--inverse) 70%, var(--on-inverse));
+}
+[data-dock-actions] [data-variant]:not([data-variant='primary']) {
+	background-color: transparent;
+	color: var(--on-inverse);
+}
+[data-dock-actions] [data-variant]:not([data-variant='primary']):hover {
+	background-color: color-mix(in srgb, var(--on-inverse) 12%, transparent);
 }

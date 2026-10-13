@@ -4,6 +4,7 @@ import { ProductPreview } from '../product-preview'
 import { NewEvaluationButton } from './new-evaluation-button'
 import { Button } from '@/components/ui/button'
 import { Link } from '@/i18n/routing'
+import type { LandingVendor } from '@/server/pairsight/landing-demo'
 
 const STEPS = [
 	{ title: 'step1Title', body: 'step1Body' },
@@ -13,10 +14,10 @@ const STEPS = [
 
 // The dashboard before the first evaluation: the three steps, the way in,
 // and a picture of where they lead.
-export function EmptyEvaluations() {
+export function EmptyEvaluations({ previewVendors }: { previewVendors: LandingVendor[] }) {
 	const t = useTranslations('Evaluations')
 	return (
-		<section className="border-border bg-surface mt-6 grid grid-cols-1 items-center gap-8 rounded-lg border p-6 @3xl:p-8 @5xl:grid-cols-12">
+		<section className="border-border bg-surface mt-12 grid grid-cols-1 items-center gap-8 rounded-lg border p-7 @3xl:p-8 @5xl:grid-cols-12">
 			<div className="@5xl:col-span-5">
 				<h2 className="type-display-sm">{t('emptyTitle')}</h2>
 				<p className="text-text-muted mt-2 text-[0.9375rem] leading-relaxed">
@@ -43,7 +44,7 @@ export function EmptyEvaluations() {
 				</div>
 			</div>
 			<Reveal index={2} className="@5xl:col-span-7">
-				<ProductPreview />
+				<ProductPreview vendors={previewVendors} />
 				<p className="text-text-muted type-caption mt-2 text-center">{t('previewCaption')}</p>
 			</Reveal>
 		</section>

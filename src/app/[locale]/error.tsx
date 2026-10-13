@@ -3,7 +3,9 @@
 import { useEffect } from 'react'
 import { captureClientError } from '@/lib/observability/capture-client-error'
 import { isChunkLoadError, reloadOnceForChunkError } from '@/lib/errors/chunk-load-error'
-import { ErrorPage, errorPageActionClassName } from '@/components/error-page'
+import { ErrorPage } from '@/components/error-page'
+import { Button } from '@/components/ui/button'
+import { RetryIcon } from '@/components/ui/icons'
 import { UnpluggedScene } from '@/components/pairsight/empty/scenes'
 
 // Route-level boundary — Next renders this for any error thrown while
@@ -38,10 +40,11 @@ export default function Error({
 			title="Something went wrong"
 			description="We hit a snag loading this page. We've been notified — try again in a moment."
 			digest={error.digest}
-			action={
-				<button onClick={reset} className={errorPageActionClassName}>
+			homeLabel="PairSight home"
+			actions={
+				<Button onClick={reset} cap={<RetryIcon />}>
 					Try again
-				</button>
+				</Button>
 			}
 		/>
 	)

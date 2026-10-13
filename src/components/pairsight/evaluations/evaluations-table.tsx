@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { motion, useReducedMotion } from 'motion/react'
 import { useFormatter, useTranslations } from 'next-intl'
 import type { EntityType } from '@/lib/pairsight/entity-types'
@@ -20,17 +20,14 @@ import {
 	EditIcon,
 	FolderIcon,
 	MoreHorizontalIcon,
-	SearchIcon,
-	SpinnerIcon
+	SearchIcon
 } from '@/components/ui/icons'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/lib/toast'
 import type { EvaluationStatus, StageKey, StageState } from '@/lib/pairsight/stages'
-import {
-	deleteEvaluationAction,
-	renameEvaluationAction
-} from '@/server/actions/pairsight/evaluations'
+import { renameEvaluationAction } from '@/server/actions/pairsight/evaluations'
 import { EvaluationStatusChip } from '../shell/status-chip'
+import { usePendingDeletes } from './pending-deletes'
 import { NameDialog } from './name-dialog'
 import { StageProgress } from './stage-progress'
 import { Count } from '@/components/ui/count'
@@ -68,9 +65,11 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 	const [query, setQuery] = useState('')
 	const [renaming, setRenaming] = useState<TableRow | null>(null)
 	const [deleting, setDeleting] = useState<TableRow | null>(null)
-	const [isDeleting, startDelete] = useTransition()
+	const pendingDeletes = usePendingDeletes()
 	const needle = query.trim().toLowerCase()
-	const shown = rows.filter((row) => row.name.toLowerCase().includes(needle))
+	const shown = rows.filter(
+		(row) => !pendingDeletes.isDeleting(row.id) && row.name.toLowerCase().includes(needle)
+	)
 	const date = (value: Date) => format.dateTime(value, { dateStyle: 'medium' })
 	const th =
 		'border-border text-text-muted h-9 border-b px-4 text-left text-xs font-medium whitespace-nowrap'
@@ -271,7 +270,7 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 			<Dialog
 				open={deleting != null}
 				onOpenChange={(open) => {
-					if (!open && !isDeleting) setDeleting(null)
+					if (!open) setDeleting(null)
 				}}
 				title={t('deleteTitle')}
 				description={
@@ -286,29 +285,20 @@ export function EvaluationsTable({ rows, isReadOnly }: { rows: TableRow[]; isRea
 				width="sm"
 				footer={
 					<>
-						<Button variant="secondary" onClick={() => setDeleting(null)} disabled={isDeleting}>
+						<Button variant="secondary" onClick={() => setDeleting(null)}>
 							{t('cancel')}
 						</Button>
 						<Button
 							variant="danger"
-							disabled={isDeleting}
 							onClick={() => {
 								if (deleting == null) return
-								const { id } = deleting
-								startDelete(async () => {
-									const result = await deleteEvaluationAction({ evaluationId: id })
-									if (!result.ok) {
-										toast({ title: result.error, variant: 'destructive' })
-										return
-									}
-									setDeleting(null)
-									toast({ title: t('deleted') })
-									router.refresh()
-								})
+								// Gone at once, with Undo for a few seconds (pending-deletes.tsx).
+								pendingDeletes.remove({ id: deleting.id, name: deleting.name })
+								setDeleting(null)
 							}}
 						>
-							{isDeleting ? <SpinnerIcon size={ICON_SIZE} /> : <TrashIcon size={ICON_SIZE} />}
-							{isDeleting ? t('deleting') : t('deleteConfirm')}
+							<TrashIcon size={ICON_SIZE} />
+							{t('deleteConfirm')}
 						</Button>
 					</>
 				}

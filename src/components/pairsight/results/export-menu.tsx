@@ -14,7 +14,6 @@ import {
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
 import {
-	ChevronDownIcon,
 	CsvFileIcon,
 	DownloadIcon,
 	PdfFileIcon,
@@ -23,6 +22,7 @@ import {
 } from '@/components/ui/icons'
 
 const ICON_SIZE = 15
+const TRIGGER_ICON_SIZE = 18
 // The findings (every pair, every vendor) as a table: linked directly, so a
 // file of any size streams to disk with the browser's own progress.
 const FINDINGS = [
@@ -70,8 +70,8 @@ function saveFile(blob: Blob, fileName: string) {
 	setTimeout(() => URL.revokeObjectURL(url), RELEASE_URL_AFTER_MS)
 }
 
-// A run's downloads. The findings files are plain links; the summary report
-// is fetched by the menu: the button spins and a toast says it's being
+// A run's downloads, the dock's main action on Results. The findings files
+// are plain links; the summary report is fetched by the menu: the button spins and a toast says it's being
 // prepared until the download starts, or says why it couldn't.
 export function ExportMenu({
 	runId,
@@ -110,19 +110,19 @@ export function ExportMenu({
 		<DropdownMenu>
 			<DropdownMenuTrigger asChild>
 				<Button
-					variant="secondary"
-					size="sm"
 					aria-label={t('exportLabel', { number: runNumber })}
 					aria-busy={isPreparing}
 					disabled={isPreparing}
 				>
-					{isPreparing ? <SpinnerIcon size={ICON_SIZE} /> : <DownloadIcon size={ICON_SIZE} />}
-					{/* On a phone the icon alone, so it shares a row with the run picker. */}
-					<span className="hidden sm:inline">{isPreparing ? t('exporting') : t('export')}</span>
-					<ChevronDownIcon size={ICON_SIZE} />
+					{isPreparing ? t('exporting') : t('export')}
+					{isPreparing ? (
+						<SpinnerIcon size={TRIGGER_ICON_SIZE} />
+					) : (
+						<DownloadIcon size={TRIGGER_ICON_SIZE} />
+					)}
 				</Button>
 			</DropdownMenuTrigger>
-			<DropdownMenuContent align="end" className="min-w-52">
+			<DropdownMenuContent align="end" side="top" className="min-w-52">
 				{FINDINGS.map(({ key, format, Icon }) => {
 					const isDisabled = format === 'xlsx' && isTooBigForExcel
 					return (

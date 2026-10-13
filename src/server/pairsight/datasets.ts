@@ -6,7 +6,8 @@ import { defaultIdentity } from './judgment'
 import type { SourceRecordInput } from './source-records'
 import { isIdentityRole, mapRecordFields, type FieldRole } from './fields'
 import type { MappedFields } from './normalize'
-import { profileRecords } from './profile/profile'
+import { guessCountry } from './profile/country-guess'
+import { parseProfile, profileRecords, type DatasetProfile } from './profile/profile'
 import { getOwnedEvaluation } from './evaluations'
 import { recordKeys } from './record-keys'
 import { chunks } from './chunks'
@@ -31,6 +32,29 @@ export async function getCurrentDataset(evaluationId: string) {
 			createdAt: true
 		}
 	})
+}
+
+// The evaluation's country for a newly saved file: where the file looks to
+// be from (country-guess.ts) if the country is still PairSight's to set,
+// else the one it has. It's PairSight's on a first save (the step that
+// changes it is locked until then) and while it's still the guess the last
+// file applied; once the user picks another, a new file never overwrites it.
+async function countryFor({
+	evaluationId,
+	current,
+	mapped
+}: {
+	evaluationId: string
+	current: string
+	mapped: MappedFields[]
+}): Promise<{ code: string; guess: NonNullable<DatasetProfile['countryGuess']> | null }> {
+	const guess = guessCountry(mapped)
+	const previous = await getCurrentDataset(evaluationId)
+	const previousGuess = previous == null ? null : parseProfile(previous.profile)?.countryGuess
+	const isOurs =
+		previous == null || (previousGuess?.applied === true && previousGuess.code === current)
+	if (guess == null) return { code: current, guess: null }
+	return { code: isOurs ? guess.code : current, guess: { ...guess, applied: isOurs } }
 }
 
 // Saves a file's records as the evaluation's new dataset. `readRecords`
@@ -105,7 +129,11 @@ export async function saveSourceDataset({
 	}
 	try {
 		await readRecords(write)
-		const profile = profileRecords(mapped, { type: entityType, country: evaluation.countryCode })
+		const country = await countryFor({ evaluationId, current: evaluation.countryCode, mapped })
+		const profile = {
+			...profileRecords(mapped, { type: entityType, country: country.code }),
+			countryGuess: country.guess
+		}
 		await db.$transaction([
 			// Current now, profiled, and queued for Splink (splink/score-dataset.ts).
 			db.sourceDataset.update({
@@ -117,7 +145,10 @@ export async function saveSourceDataset({
 					scorePool: env.RUN_WORKER_POOL
 				}
 			}),
-			db.evaluation.update({ where: { id: evaluationId }, data: { jevFields, ...typeDefaults } })
+			db.evaluation.update({
+				where: { id: evaluationId },
+				data: { jevFields, countryCode: country.code, ...typeDefaults }
+			})
 		])
 	} catch (error) {
 		// Its records go with it (cascade).

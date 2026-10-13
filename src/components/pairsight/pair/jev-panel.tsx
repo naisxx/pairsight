@@ -1,15 +1,18 @@
 import { useFormatter, useTranslations } from 'next-intl'
-import { AiIcon, WarningCircleIcon } from '@/components/ui/icons'
+import { WarningCircleIcon } from '@/components/ui/icons'
 import { failureReason } from '@/lib/pairsight/failure-reasons'
-import { cn } from '@/lib/cn'
 import type { AssessmentStatus } from '@/server/pairsight/decisions'
 import { ReadOnlyGate } from '../read-only'
 import { RetryPairButton } from './retry-pair-button'
-import { ScoreBar } from '../result-parts'
 
-// Jev's judgment of this pair: the score against the threshold, the model and
-// when — or, when there isn't one yet or it failed, that state explicitly,
-// with a retry for a failure (never a "no match").
+const PERCENT = 100
+const SCORE_DIGITS = 2
+
+// What Jev says about this pair (pairsight-handoff Pair): its call against the
+// cut-off in a sentence, the score as a mark on a 0 to 1 track with the
+// cut-off ticked, that Jev can be wrong, and which version checked it when.
+// When there's no score yet, or Jev couldn't give one, it says so, with a
+// retry for a failure (never "different").
 export function JevPanel({
 	runId,
 	pairId,
@@ -34,9 +37,9 @@ export function JevPanel({
 	const t = useTranslations('Pair')
 	const tFailures = useTranslations('Failures')
 	const format = useFormatter()
+	const card = 'bg-surface border-border rounded-lg border p-6 md:p-7'
 	const title = (
-		<h2 id="jev-title" className="type-subheading flex items-center gap-2">
-			<AiIcon className="text-text-muted" />
+		<h2 id="jev-title" className="text-text-muted type-eyebrow">
 			{t('jevTitle')}
 		</h2>
 	)
@@ -44,21 +47,18 @@ export function JevPanel({
 	if (status !== 'succeeded' || score == null) {
 		const isFailed = status === 'failed'
 		return (
-			<section
-				aria-labelledby="jev-title"
-				className="border-border-input bg-surface rounded-lg border border-dashed p-4"
-			>
+			<section aria-labelledby="jev-title" className={card}>
 				{title}
-				<p className="type-ui mt-3 flex items-center gap-2 font-medium">
+				<p className="mt-3 flex items-center gap-2 text-base font-medium">
 					<WarningCircleIcon className={isFailed ? 'text-danger' : 'text-text-muted'} />
 					{isFailed ? t('assessmentFailed') : t('assessmentPending')}
 				</p>
 				{isFailed && (
-					<p className="text-text-muted type-ui mt-1" title={errorCode ?? undefined}>
+					<p className="text-text-muted mt-1 text-sm" title={errorCode ?? undefined}>
 						{tFailures(failureReason(errorCode))}
 					</p>
 				)}
-				<p className="text-text-muted mt-2 text-xs">{t('incompleteNote')}</p>
+				<p className="text-text-muted mt-3 text-sm">{t('incompleteNote')}</p>
 				{isFailed && (
 					<div className="mt-3">
 						<ReadOnlyGate action="retry">
@@ -71,49 +71,51 @@ export function JevPanel({
 	}
 
 	const isMatch = score >= threshold
+	const cutoff = threshold.toFixed(SCORE_DIGITS)
 	return (
-		<section aria-labelledby="jev-title" className="border-border bg-surface rounded-lg border p-4">
-			<div className="flex items-start justify-between gap-3">
-				{title}
-				<span className={cn('type-ui font-medium', isMatch ? 'text-text' : 'text-text-muted')}>
-					{isMatch ? t('match') : t('noMatch')}
-				</span>
-			</div>
-			<div className="mt-3 flex items-end gap-3">
-				<span className="font-mono text-[32px] leading-none font-medium">{score.toFixed(2)}</span>
-				<span className="text-text-muted pb-1 text-xs">
-					{t.rich(isMatch ? 'atOrAboveThreshold' : 'belowThreshold', {
-						value: threshold.toFixed(2),
-						n: (chunks) => <span className="text-text font-mono">{chunks}</span>
-					})}
-				</span>
-			</div>
-			<span
-				role="img"
-				aria-label={t('scoreBarLabel', {
-					score: score.toFixed(2),
-					threshold: threshold.toFixed(2)
+		<section aria-labelledby="jev-title" className={card}>
+			{title}
+			<p className="text-text-body mt-3 text-base">
+				{t.rich(isMatch ? 'jevSame' : 'jevDifferent', {
+					value: cutoff,
+					b: (chunks) => <strong className="text-text font-semibold">{chunks}</strong>,
+					n: (chunks) => <span className="font-mono">{chunks}</span>
 				})}
-				className="mt-3 flex"
+			</p>
+			<div
+				role="img"
+				aria-label={t('scoreBarLabel', { score: score.toFixed(SCORE_DIGITS), threshold: cutoff })}
+				className="mt-7"
 			>
-				<ScoreBar score={score} threshold={threshold} size="lg" showValue={false} />
-			</span>
-			<div className="text-text-muted mt-1 flex justify-between font-mono text-[0.6875rem]">
-				<span>0</span>
-				<span>1</span>
+				<div className="bg-border relative h-2.5 rounded-full">
+					<span
+						aria-hidden
+						className="bg-text-muted absolute -top-1.5 h-[22px] w-0.5"
+						style={{ left: `${threshold * PERCENT}%` }}
+					/>
+					<span
+						aria-hidden
+						className="bg-brand absolute -top-2 -ml-[3px] h-[26px] w-1.5 rounded-[3px]"
+						style={{ left: `${score * PERCENT}%` }}
+					/>
+				</div>
+				<div aria-hidden className="text-text-muted relative mt-2.5 h-5 font-mono text-sm">
+					<span className="absolute left-0">0</span>
+					<span className="absolute -translate-x-1/2" style={{ left: `${threshold * PERCENT}%` }}>
+						{cutoff}
+					</span>
+					<span className="absolute right-0">1</span>
+				</div>
 			</div>
-			<dl className="mt-3 grid grid-cols-[80px_1fr] gap-y-1 text-xs">
-				<dt className="text-text-muted">{t('model')}</dt>
-				<dd className="font-mono">{modelReported ?? fallbackModel}</dd>
-				<dt className="text-text-muted">{t('assessed')}</dt>
-				<dd>
-					{completedAt == null
-						? '—'
-						: format.dateTime(completedAt, { dateStyle: 'medium', timeStyle: 'short' })}
-				</dd>
-			</dl>
-			<p className="border-border text-text-muted mt-3 border-t pt-3 text-xs leading-relaxed">
-				{t('aiNote')}
+			<p className="text-text-muted mt-4 text-sm">{t('aiNote')}</p>
+			<p className="border-border text-text-muted mt-3 border-t pt-3 font-mono text-sm">
+				{t('jevMeta', {
+					model: modelReported ?? fallbackModel,
+					date:
+						completedAt == null
+							? '—'
+							: format.dateTime(completedAt, { dateStyle: 'medium', timeStyle: 'short' })
+				})}
 			</p>
 		</section>
 	)

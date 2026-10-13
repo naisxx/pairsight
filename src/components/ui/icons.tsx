@@ -38,6 +38,7 @@ import {
 	CheckCircle,
 	Circle,
 	CircleDashed,
+	CircleHalf,
 	CircleNotch,
 	Compass,
 	Copy,
@@ -208,6 +209,7 @@ export const NotEqualIcon = (props: IconProps) => <Glyph source={NotEquals} {...
 export const PlayIcon = (props: IconProps) => <Glyph source={Play} {...props} />
 export const RetryIcon = (props: IconProps) => <Glyph source={ArrowClockwise} {...props} />
 export const SunIcon = (props: IconProps) => <Glyph source={Sun} {...props} />
+export const ThemeIcon = (props: IconProps) => <Glyph source={CircleHalf} {...props} />
 export const UploadIcon = (props: IconProps) => <Glyph source={UploadSimple} {...props} />
 export const UserIcon = (props: IconProps) => <Glyph source={User} {...props} />
 

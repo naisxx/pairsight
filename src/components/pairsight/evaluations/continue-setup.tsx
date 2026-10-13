@@ -1,6 +1,7 @@
 import { useFormatter, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Reveal } from '@/components/ui/reveal'
+import { HideIfDeleting } from './pending-deletes'
 import { Button } from '@/components/ui/button'
 import { ArrowRightIcon } from '@/components/ui/icons'
 import { EmptyState } from '../empty-state'
@@ -66,36 +67,38 @@ export function ContinueSetup({
 			) : (
 				<ul className="flex-1 px-2 pb-2">
 					{rows.map((row, index) => (
-						<Reveal as="li" key={row.id} index={index + 1}>
-							<Link
-								href={row.next?.href ?? row.href}
-								className="group hover:bg-surface-hover flex items-center gap-3 rounded-sm px-2 py-2.5 transition-colors duration-150"
-							>
-								<span className="min-w-0 flex-1">
-									<span className="type-ui text-text block truncate font-medium">{row.name}</span>
-									<span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-										<StageProgress stages={row.stages} />
-										{row.next != null && (
-											<span className="text-text-muted type-caption">
-												{t.rich('next', {
-													stage: tSteps(row.next.key),
-													strong: (chunks) => <span className="text-text">{chunks}</span>
-												})}
-											</span>
-										)}
+						<HideIfDeleting key={row.id} id={row.id}>
+							<Reveal as="li" index={index + 1}>
+								<Link
+									href={row.next?.href ?? row.href}
+									className="group hover:bg-surface-hover flex items-center gap-3 rounded-sm px-2 py-2.5 transition-colors duration-150"
+								>
+									<span className="min-w-0 flex-1">
+										<span className="type-ui text-text block truncate font-medium">{row.name}</span>
+										<span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+											<StageProgress stages={row.stages} />
+											{row.next != null && (
+												<span className="text-text-muted type-caption">
+													{t.rich('next', {
+														stage: tSteps(row.next.key),
+														strong: (chunks) => <span className="text-text">{chunks}</span>
+													})}
+												</span>
+											)}
+										</span>
+										<span className="text-text-muted type-caption mt-1 block">
+											{t('updated', {
+												date: format.dateTime(row.updatedAt, { dateStyle: 'medium' })
+											})}
+										</span>
 									</span>
-									<span className="text-text-muted type-caption mt-1 block">
-										{t('updated', {
-											date: format.dateTime(row.updatedAt, { dateStyle: 'medium' })
-										})}
-									</span>
-								</span>
-								<ArrowRightIcon
-									size={ARROW_SIZE}
-									className="text-text-muted shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
-								/>
-							</Link>
-						</Reveal>
+									<ArrowRightIcon
+										size={ARROW_SIZE}
+										className="text-text-muted shrink-0 transition-transform duration-150 group-hover:translate-x-0.5"
+									/>
+								</Link>
+							</Reveal>
+						</HideIfDeleting>
 					))}
 				</ul>
 			)}

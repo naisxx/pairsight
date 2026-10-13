@@ -29,9 +29,7 @@ export default async function WelcomePage({
 	return (
 		<AuthShell title={t('title')} description={t('description')} homeHref="/evaluations">
 			<WelcomeForm next={next} />
-			<p className="text-text-muted type-ui mt-5 text-center">
-				{t('signedInAs', { email: user.email })}
-			</p>
+			<p className="text-text-muted mt-5 text-sm">{t('signedInAs', { email: user.email })}</p>
 		</AuthShell>
 	)
 }

@@ -4,12 +4,14 @@ import { RecordsUploader } from '@/components/pairsight/records/records-uploader
 import { SavedRecords } from '@/components/pairsight/records/saved-records'
 import { StepHeader } from '@/components/pairsight/step-layout'
 import { getDatasetPreview } from '@/server/pairsight/datasets'
+import { LIMITS } from '@/server/pairsight/limits'
 import { entityTypeOf, rolesFor } from '@/lib/pairsight/entity-types'
 import { parseColumnRoles, parseRecordValues } from '@/server/pairsight/json'
 import { parseProfile } from '@/server/pairsight/profile/profile'
 import type { LoadedWorkspace } from '@/server/pairsight/evaluation-pages'
 
-const PREVIEW_ROWS = 10
+// A sample to show what was read, not the file: enough to check the columns.
+const PREVIEW_ROWS = 5
 
 // Records: the uploader before a file is saved, the saved file read-only after.
 export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
@@ -17,7 +19,7 @@ export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 	const id = view.evaluationId
 	const t = await getTranslations('Records')
 	const { dataset } = workspace
-	const header = <StepHeader title={t('title')} description={t('description')} />
+	const header = <StepHeader step="records" title={t('title')} description={t('description')} />
 	if (dataset == null) {
 		return (
 			<>
@@ -47,14 +49,20 @@ export async function RecordsScreen({ loaded }: { loaded: LoadedWorkspace }) {
 			{header}
 			<SavedRecords
 				evaluationId={id}
-				roles={roles}
+				entityType={type}
 				fileName={dataset.fileName}
 				savedAt={dataset.createdAt}
 				rowCount={dataset.rowCount}
 				headers={headers}
 				referenceColumn={dataset.referenceColumn}
 				columnRoles={columnRoles}
-				health={profile == null ? null : <DataHealth profile={profile} type={type} />}
+				mappedCount={mapped.length}
+				limits={{ records: LIMITS.maxSourceRecords, bytes: LIMITS.maxFileBytes }}
+				health={
+					profile == null ? null : (
+						<DataHealth profile={profile} type={type} isReadOnly={view.isReadOnly} />
+					)
+				}
 				rows={records.map((record) => {
 					const values = parseRecordValues(record.values)
 					return {

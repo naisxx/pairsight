@@ -5,8 +5,15 @@ import { cn } from '@/lib/cn'
 import { CheckIcon, ChevronRightIcon, DotIcon } from '@/components/ui/icons'
 import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui'
 
-function DropdownMenu({ ...props }: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
-	return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" {...props} />
+// Not modal by default: a modal menu marks the rest of the page aria-hidden
+// outside React, and a part of the page still waiting to hydrate (a streamed
+// screen under the dock's menu) then fails hydration. Focus still moves into
+// the menu and back, and Esc and a click outside still close it.
+function DropdownMenu({
+	modal = false,
+	...props
+}: React.ComponentProps<typeof DropdownMenuPrimitive.Root>) {
+	return <DropdownMenuPrimitive.Root data-slot="dropdown-menu" modal={modal} {...props} />
 }
 
 function DropdownMenuPortal({

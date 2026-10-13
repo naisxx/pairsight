@@ -24,20 +24,20 @@ export function EmptyState({
 	return (
 		<div
 			className={cn(
-				'flex flex-col items-center px-6 py-10 text-center',
+				'flex flex-col items-center px-6 py-12 text-center',
 				framed && 'border-border bg-surface rounded-lg border',
 				className
 			)}
 		>
 			{scene}
-			<Title className="text-text type-heading rise stagger-3 mt-5">{title}</Title>
+			<Title className="text-text font-display rise stagger-3 mt-6 text-[1.625rem] leading-[1.1] font-semibold tracking-[-0.025em]">
+				{title}
+			</Title>
 			{description != null && (
-				<p className="text-text-muted type-ui rise stagger-4 mt-1.5 max-w-sm leading-relaxed">
-					{description}
-				</p>
+				<p className="text-text-body rise stagger-4 mt-2 max-w-md text-base">{description}</p>
 			)}
 			{actions != null && (
-				<div className="rise stagger-5 mt-5 flex flex-wrap justify-center gap-2">{actions}</div>
+				<div className="rise stagger-5 mt-6 flex flex-wrap justify-center gap-3">{actions}</div>
 			)}
 		</div>
 	)

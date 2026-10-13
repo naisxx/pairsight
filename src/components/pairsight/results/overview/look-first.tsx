@@ -1,66 +1,74 @@
 import { LOW_CONFIDENCE_BAND } from '@/lib/pairsight/decisions'
 import { useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
+import { Button } from '@/components/ui/button'
 import { ArrowRightIcon } from '@/components/ui/icons'
-import { Panel } from '@/components/ui/panel'
 import { PreviewNote } from '../preview-note'
-import type { Category } from '@/lib/pairsight/decisions'
 import type { Workload } from '@/lib/pairsight/metrics'
-import { Count } from '@/components/ui/count'
 import type { ResultRow } from '@/server/pairsight/results'
-import { CategoryDot, ScoreBar } from '../../result-parts'
+import { cn } from '@/lib/cn'
+import { Glyph, type GlyphKind } from '../../glyph'
 
-const MINI_BAR_WIDTH_PX = 44
+const ARROW_SIZE = 18
+const SCORE_DIGITS = 2
 
-function DisagreementGroup({
+type Href = { pathname: string; query: Record<string, string> }
+
+function mono(chunks: React.ReactNode) {
+	return <strong className="text-text font-mono font-semibold">{chunks}</strong>
+}
+
+// A few pairs of one kind, surest first: each row its tile, its name, the two
+// record IDs and Jev's score, opening the pair.
+function PairGroup({
 	title,
 	hint,
 	rows,
-	category,
-	threshold,
-	pairHref
+	kind,
+	pairHref,
+	className
 }: {
 	title: string
 	hint: string
 	rows: ResultRow[]
-	category: Category
-	threshold: number
-	pairHref: (pairId: string) => { pathname: string; query: Record<string, string> }
+	kind: GlyphKind
+	pairHref: (pairId: string) => Href
+	className?: string
 }) {
 	const t = useTranslations('Overview')
 	return (
-		<div>
-			<h3 className="text-text flex items-center gap-1.5 text-xs font-medium">
-				<CategoryDot category={category} className="size-2" />
+		<div className={className}>
+			<h3 className="text-text font-display text-[1.375rem] leading-tight font-semibold tracking-[-0.02em]">
 				{title}
 			</h3>
-			<p className="text-text-muted type-caption">{hint}</p>
+			<p className="text-text-muted mt-1 mb-2 text-sm">{hint}</p>
 			{rows.length === 0 ? (
-				<p className="text-text-muted mt-2 text-xs">{t('noneAtThreshold')}</p>
+				<p className="border-border text-text-muted border-t py-3.5 text-sm">
+					{t('noneAtThreshold')}
+				</p>
 			) : (
-				<ul className="-mx-2 mt-1.5">
+				<ul>
 					{rows.map((row) => (
-						<li key={row.id}>
+						<li key={row.id} className="border-border border-t py-0.5">
+							{/* The hover fill reaches 12px past the text on each side, so
+							    the row reads as padded while it lines up with the heading. */}
 							<Link
 								href={pairHref(row.id)}
-								className="group hover:bg-surface-hover flex items-center gap-3 rounded-sm px-2 py-1.5 transition-colors duration-150"
+								className="hover:bg-surface-muted -mx-3 grid min-h-[52px] grid-cols-[36px_minmax(0,1fr)_auto_56px] items-center gap-4 rounded-md px-3 font-mono text-sm transition-[background-color] duration-150"
 							>
-								<span className="min-w-0 flex-1">
-									<span className="text-text type-ui block truncate">
-										{row.recordA.label} <span className="text-text-muted">↔</span>{' '}
-										{row.recordB.label}
-									</span>
-									<span className="text-text-muted block font-mono text-[0.6875rem]">
-										{row.recordA.reference} · {row.recordB.reference}
-									</span>
+								<Glyph kind={kind} />
+								<span className="text-text truncate font-sans text-base">
+									{row.recordA.label}
+									{row.recordB.label !== row.recordA.label && (
+										<span className="sr-only"> ↔ {row.recordB.label}</span>
+									)}
 								</span>
-								{row.score != null && (
-									<ScoreBar score={row.score} threshold={threshold} width={MINI_BAR_WIDTH_PX} />
-								)}
-								<ArrowRightIcon
-									size={13}
-									className="text-text-muted transition-transform duration-150 group-hover:translate-x-0.5"
-								/>
+								<span className="text-text-muted hidden truncate sm:block">
+									{row.recordA.reference} · {row.recordB.reference}
+								</span>
+								<span className="text-text text-right font-semibold tracking-[-0.03em]">
+									{row.score?.toFixed(SCORE_DIGITS)}
+								</span>
 							</Link>
 						</li>
 					))}
@@ -70,10 +78,10 @@ function DisagreementGroup({
 	)
 }
 
-// Where to start (merges what used to be "What's left to look at?"): the
-// close calls as the headline, the disagreements and unchecked pairs as
-// links, then the duplicates the vendor missed that Jev is surest about and
-// the vendor's merges Jev is least sure of.
+// Where to start, for the vendor the page describes: the duplicates it missed
+// that Jev is surest about, its merges Jev doubts most, the close calls a
+// small change of cut-off would flip (and any pairs Jev couldn't check), then
+// the way into every disagreement.
 export function LookFirst({
 	vendorName,
 	threshold,
@@ -90,107 +98,64 @@ export function LookFirst({
 	merges: ResultRow[]
 	workload: Workload
 	hrefs: { disagreements: string; near: string; incomplete: string }
-	pairHref: (pairId: string) => { pathname: string; query: Record<string, string> }
+	pairHref: (pairId: string) => Href
 	className?: string
 }) {
 	const t = useTranslations('Overview')
+	const lineLink =
+		'decoration-border-strong hover:decoration-text underline-offset-[3px] hover:underline'
 
 	return (
-		<Panel id="top" title={t('topTitle')} description={t('topDescription')} className={className}>
-			<PreviewNote runThreshold={threshold} message="panel" className="-mt-2 mb-4" />
-			<div className="border-border grid grid-cols-1 gap-4 border-b pb-5 @xl:grid-cols-2">
-				<Link
-					href={hrefs.near}
-					className="group hover:bg-surface-hover -m-2 flex flex-col rounded-md p-2 transition-colors duration-150"
-				>
-					<Count
-						value={workload.nearThreshold}
-						className="text-accent-ink font-mono text-4xl leading-none font-medium tracking-[-0.03em]"
-					/>
-					<span className="text-text type-ui mt-1.5 flex items-center gap-1 font-medium">
-						{t('workloadNear')}
-						<ArrowRightIcon
-							size={13}
-							className="text-text-muted transition-transform duration-150 group-hover:translate-x-0.5"
-						/>
-					</span>
-					<span className="text-text-muted text-xs">
-						{t('workloadNearDetail', { band: LOW_CONFIDENCE_BAND.toFixed(2) })}
-					</span>
-				</Link>
-				<ul className="@xl:border-border flex flex-col justify-center gap-0.5 @xl:border-l @xl:pl-4">
-					<li>
-						<Link
-							href={hrefs.disagreements}
-							className="group hover:bg-surface-hover flex items-center gap-3 rounded-sm px-2 py-1.5 transition-colors duration-150"
-						>
-							<Count
-								value={workload.disagreements}
-								className="w-12 shrink-0 font-mono font-medium"
-							/>
-							<span className="min-w-0 flex-1">
-								<span className="text-text type-ui block font-medium">
-									{t('workloadDisagreements')}
-								</span>
-								<span className="text-text-muted block text-xs">
-									{t('workloadDisagreementsDetail', {
-										pairsight: workload.pairsightOnly,
-										vendor: workload.vendorOnly
-									})}
-								</span>
-							</span>
+		<section
+			id="top"
+			aria-labelledby="top-title"
+			className={cn('bg-surface border-border rounded-lg border p-6 md:p-7', className)}
+		>
+			<h2 id="top-title" className="text-text-muted type-eyebrow">
+				{t('lookFirstLabel', { vendor: vendorName })}
+			</h2>
+			<PreviewNote runThreshold={threshold} message="panel" className="mt-2" />
+			<PairGroup
+				title={t('missedTitle')}
+				hint={t('missedHint')}
+				rows={missed}
+				kind="same"
+				pairHref={pairHref}
+				className="mt-4"
+			/>
+			<PairGroup
+				title={t('mergesTitle')}
+				hint={t('mergesHint')}
+				rows={merges}
+				kind="different"
+				pairHref={pairHref}
+				className="mt-7"
+			/>
+			<div className="border-border text-text-body mt-5 flex flex-col gap-1.5 border-t pt-4 text-base">
+				<p>
+					<Link href={hrefs.near} className={lineLink}>
+						{t.rich('closeCalls', {
+							count: workload.nearThreshold,
+							band: LOW_CONFIDENCE_BAND.toFixed(SCORE_DIGITS),
+							n: mono
+						})}
+					</Link>
+				</p>
+				{workload.incomplete > 0 && (
+					<p>
+						<Link href={hrefs.incomplete} className={lineLink}>
+							{t.rich('incompleteLine', { count: workload.incomplete, n: mono })}
 						</Link>
-					</li>
-					{workload.incomplete > 0 && (
-						<li>
-							<Link
-								href={hrefs.incomplete}
-								className="group hover:bg-surface-hover flex items-center gap-3 rounded-sm px-2 py-1.5 transition-colors duration-150"
-							>
-								<Count
-									value={workload.incomplete}
-									className="w-12 shrink-0 font-mono font-medium"
-								/>
-								<span className="min-w-0 flex-1">
-									<span className="text-text type-ui block font-medium">
-										{t('workloadIncomplete')}
-									</span>
-									<span className="text-text-muted block text-xs">
-										{t('workloadIncompleteDetail')}
-									</span>
-								</span>
-							</Link>
-						</li>
-					)}
-				</ul>
-			</div>
-			<div className="mt-5 grid grid-cols-1 gap-5 @2xl:grid-cols-2">
-				<DisagreementGroup
-					threshold={threshold}
-					pairHref={pairHref}
-					title={t('topMissed', { vendor: vendorName })}
-					hint={t('topMissedHint')}
-					rows={missed}
-					category="pairsight_only"
-				/>
-				<DisagreementGroup
-					threshold={threshold}
-					pairHref={pairHref}
-					title={t('topMerges', { vendor: vendorName })}
-					hint={t('topMergesHint')}
-					rows={merges}
-					category="vendor_only"
-				/>
+					</p>
+				)}
 			</div>
 			{workload.disagreements > 0 && (
-				<Link
-					href={hrefs.disagreements}
-					className="text-accent-ink type-ui hit-area mt-5 inline-flex items-center gap-1.5 font-medium hover:underline"
-				>
-					{t('lookAtAll', { count: workload.disagreements })}
-					<ArrowRightIcon size={13} />
-				</Link>
+				<Button asChild cap={<ArrowRightIcon size={ARROW_SIZE} />} className="mt-5">
+					<Link href={hrefs.disagreements}>
+						{t('reviewAll', { count: workload.disagreements })}
+					</Link>
+				</Button>
 			)}
-		</Panel>
+		</section>
 	)
 }

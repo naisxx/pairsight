@@ -4,14 +4,16 @@ import { motion, useReducedMotion } from 'motion/react'
 
 const STAGGER_S = 0.07
 const MAX_DELAY_S = 0.56
-const DURATION_S = 0.5
+// Nothing in the product runs longer than 240ms (pairsight-handoff Motion).
+const DURATION_S = 0.24
 const LIFT_PX = 10
-// The motion curve everywhere: fast out, gentle settle (globals.css
-// --ease-out-soft is the CSS twin).
-export const EASE_OUT_SOFT = [0.23, 1, 0.32, 1] as const
+// The motion curve everywhere: the design's arrival, fast out, gentle
+// settle (globals.css --ease-arrive is the CSS twin).
+export const EASE_OUT_SOFT = [0.2, 0, 0, 1] as const
 
 // A one-time entrance: a short fade and lift, staggered per item and capped
-// so the last one never feels late. Skipped entirely under reduced motion.
+// so the last one never feels late. Under reduced motion it's instant, from
+// the same first frame the server rendered, so hydration matches.
 export function Reveal({
 	index = 0,
 	as = 'div',
@@ -28,13 +30,17 @@ export function Reveal({
 	return (
 		<Component
 			className={className}
-			initial={isReduced ? false : { opacity: 0, y: LIFT_PX }}
+			initial={{ opacity: 0, y: LIFT_PX }}
 			animate={{ opacity: 1, y: 0 }}
-			transition={{
-				duration: DURATION_S,
-				ease: EASE_OUT_SOFT,
-				delay: Math.min(index * STAGGER_S, MAX_DELAY_S)
-			}}
+			transition={
+				isReduced
+					? { duration: 0 }
+					: {
+							duration: DURATION_S,
+							ease: EASE_OUT_SOFT,
+							delay: Math.min(index * STAGGER_S, MAX_DELAY_S)
+						}
+			}
 		>
 			{children}
 		</Component>
