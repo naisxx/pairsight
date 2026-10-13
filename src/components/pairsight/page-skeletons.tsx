@@ -3,10 +3,15 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 // Loading states shaped like the page that's coming (docs/PairSight-UX-Plan.md
 // §5): no spinner over a blank page, and no layout jump when it arrives.
+// Still grey shapes: inside the product nothing loops.
 
-const TILE_COUNT = 5
-const TABLE_ROWS = 8
-const FIELD_ROWS = 6
+const VENDOR_CARDS = 2
+// The mosaic's 22 columns (mosaic.tsx), a dozen rows deep.
+const MOSAIC_TILES = 22 * 12
+const MEASURE_ROWS = 5
+const FIELD_ROWS = 8
+
+const CARD = 'bg-surface border-border min-w-0 rounded-lg border'
 
 async function Loading({ children }: { children: React.ReactNode }) {
 	const t = await getTranslations('Shell')
@@ -17,63 +22,43 @@ async function Loading({ children }: { children: React.ReactNode }) {
 	)
 }
 
-function HeaderSkeleton() {
-	return (
-		<div className="mb-6 flex flex-col gap-2">
-			<Skeleton className="h-8 w-56" />
-			<Skeleton className="h-5 w-full max-w-xl" />
-		</div>
-	)
-}
-
-export function RunSkeleton() {
-	return (
-		<Loading>
-			<HeaderSkeleton />
-			<div className="border-border bg-surface max-w-4xl rounded-lg border">
-				<div className="flex flex-col gap-2 px-5 pt-5">
-					<Skeleton className="h-5 w-48" />
-					<Skeleton className="h-4 w-72" />
-				</div>
-				<div className="flex flex-col gap-2 px-5 pt-4">
-					<Skeleton className="h-4 w-full" />
-					<Skeleton className="h-2 w-full" />
-				</div>
-				<div className="border-border mt-4 grid grid-cols-2 border-t @2xl:grid-cols-4">
-					{Array.from({ length: 4 }, (_, index) => (
-						<div key={index} className="flex flex-col gap-2 px-5 py-3">
-							<Skeleton className="h-3 w-16" />
-							<Skeleton className="h-6 w-10" />
-						</div>
-					))}
-				</div>
-			</div>
-		</Loading>
-	)
-}
-
+// Results: the run's line, the two-line verdict, each vendor's mosaic, and
+// the measures under them.
 export function ResultsSkeleton() {
 	return (
 		<Loading>
-			<HeaderSkeleton />
-			<div className="grid grid-cols-2 gap-3 @3xl:grid-cols-3 @6xl:grid-cols-5">
-				{Array.from({ length: TILE_COUNT }, (_, index) => (
-					<Skeleton key={index} className="h-24 rounded-lg" />
+			<Skeleton className="h-4 w-full max-w-[520px]" />
+			<Skeleton className="mt-5 h-11 w-full max-w-[720px]" />
+			<Skeleton className="mt-2 h-11 w-full max-w-[600px]" />
+			<Skeleton className="mt-5 h-4 w-full max-w-[480px]" />
+			<div className="mt-9 flex flex-wrap gap-4">
+				{Array.from({ length: VENDOR_CARDS }, (_, card) => (
+					<div key={card} className={`${CARD} flex-[1_1_420px] p-6`}>
+						<div className="flex items-center justify-between gap-4">
+							<Skeleton className="h-6 w-40" />
+							<Skeleton className="h-9 w-28" />
+						</div>
+						<div className="mt-6 grid grid-cols-22 gap-[3px]">
+							{Array.from({ length: MOSAIC_TILES }, (_, tile) => (
+								<Skeleton key={tile} className="aspect-square rounded-xs" />
+							))}
+						</div>
+						<Skeleton className="mt-4 h-4 w-3/4" />
+					</div>
 				))}
 			</div>
-			<Skeleton className="mt-4 h-5 w-full max-w-2xl" />
-			<div className="mt-6 flex gap-2">
-				<Skeleton className="h-8 w-72" />
-				<Skeleton className="h-8 w-32" />
-				<Skeleton className="h-8 w-32" />
-			</div>
-			<div className="border-border bg-surface mt-6 flex flex-col rounded-lg border">
-				{Array.from({ length: TABLE_ROWS }, (_, index) => (
-					<div key={index} className="border-border flex h-10 items-center gap-6 border-b px-4">
-						<Skeleton className="h-4 w-24" />
-						<Skeleton className="h-4 flex-1" />
-						<Skeleton className="h-4 flex-1" />
-						<Skeleton className="h-4 w-20" />
+			<div className={`${CARD} mt-4 px-6 py-3`}>
+				{Array.from({ length: MEASURE_ROWS }, (_, row) => (
+					<div
+						key={row}
+						className="border-border flex items-center gap-6 border-b py-4 last:border-b-0"
+					>
+						<div className="flex flex-1 flex-col gap-2">
+							<Skeleton className="h-4 w-36" />
+							<Skeleton className="h-3 w-64 max-w-full" />
+						</div>
+						<Skeleton className="h-5 w-20" />
+						<Skeleton className="h-5 w-20" />
 					</div>
 				))}
 			</div>
@@ -81,24 +66,47 @@ export function ResultsSkeleton() {
 	)
 }
 
+// A pair: the way back and the steppers, the pair's references and names,
+// the verdict bar, the field-by-field table and the two cards beside it.
 export function PairSkeleton() {
 	return (
 		<Loading>
-			<Skeleton className="mb-4 h-8 w-64" />
-			<Skeleton className="mb-6 h-16 w-full rounded-lg" />
-			<div className="grid grid-cols-[minmax(0,1fr)] gap-6 @6xl:grid-cols-[minmax(0,1fr)_22rem]">
-				<div className="border-border bg-surface flex flex-col rounded-lg border">
-					{Array.from({ length: FIELD_ROWS }, (_, index) => (
-						<div key={index} className="border-border flex h-11 items-center gap-6 border-b px-4">
-							<Skeleton className="h-4 w-24" />
-							<Skeleton className="h-4 flex-1" />
-							<Skeleton className="h-4 flex-1" />
-						</div>
-					))}
+			<div className="flex items-center justify-between gap-4">
+				<Skeleton className="h-6 w-32" />
+				<div className="flex gap-3">
+					<Skeleton className="h-11 w-28 rounded-md" />
+					<Skeleton className="h-11 w-24 rounded-md" />
 				</div>
-				<div className="flex flex-col gap-4">
-					<Skeleton className="h-40 rounded-lg" />
-					<Skeleton className="h-24 rounded-lg" />
+			</div>
+			<Skeleton className="mt-9 h-4 w-64" />
+			<Skeleton className="mt-4 h-12 w-full max-w-[720px]" />
+			<Skeleton className="mt-7 h-24 w-full rounded-lg" />
+			<div className="mt-9 flex flex-wrap items-start gap-4">
+				<div className={`${CARD} flex-[2_1_560px] px-7 py-6`}>
+					<Skeleton className="h-7 w-72 max-w-full" />
+					<div className="mt-6">
+						{Array.from({ length: FIELD_ROWS }, (_, row) => (
+							<div key={row} className="border-border flex h-14 items-center gap-6 border-t">
+								<Skeleton className="h-4 w-28" />
+								<Skeleton className="h-4 flex-1" />
+								<Skeleton className="size-6" />
+								<Skeleton className="h-4 flex-1" />
+							</div>
+						))}
+					</div>
+				</div>
+				<div className="flex min-w-0 flex-[1_1_320px] flex-col gap-4">
+					<div className={`${CARD} flex flex-col gap-3 p-7`}>
+						<Skeleton className="h-3 w-28" />
+						<Skeleton className="h-5 w-full" />
+						<Skeleton className="mt-3 h-2 w-full rounded-full" />
+						<Skeleton className="mt-3 h-4 w-4/5" />
+					</div>
+					<div className={`${CARD} flex flex-col gap-3 p-7`}>
+						<Skeleton className="h-3 w-40" />
+						<Skeleton className="h-5 w-full" />
+						<Skeleton className="h-5 w-3/4" />
+					</div>
 				</div>
 			</div>
 		</Loading>

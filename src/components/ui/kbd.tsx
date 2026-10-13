@@ -4,7 +4,7 @@ export function Kbd({ className, children }: { className?: string; children: Rea
 	return (
 		<kbd
 			className={cn(
-				'border-border bg-surface-muted text-text-muted inline-flex h-5 min-w-5 items-center justify-center rounded-[4px] border px-1 font-mono text-[0.6875rem]',
+				'border-border-strong text-text-body inline-flex h-[26px] min-w-[26px] items-center justify-center rounded-[7px] border border-b-2 px-1.5 font-mono text-xs',
 				className
 			)}
 		>

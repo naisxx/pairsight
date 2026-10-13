@@ -4,7 +4,7 @@ export type ChipTone =
 	'neutral' | 'success' | 'warning' | 'danger' | 'info' | 'accent' | 'brand' | 'outline'
 
 const TONES: Record<ChipTone, string> = {
-	neutral: 'bg-surface-muted text-text-muted',
+	neutral: 'border border-border bg-surface text-text-muted',
 	success: 'bg-success-subtle text-success',
 	warning: 'bg-warning-subtle text-warning',
 	danger: 'bg-danger-subtle text-danger',
@@ -15,9 +15,9 @@ const TONES: Record<ChipTone, string> = {
 	outline: 'border border-border text-text-muted'
 }
 
-// A small status or label: a pill, tinted by tone, with an optional
-// leading icon. Status tones are tints with the token as text, so they hold
-// contrast in both themes by construction.
+// A small status or label: a tag with 8px corners in the mono face, tinted
+// by tone, with an optional leading icon. Status tones are tints with the
+// token as text, so they hold contrast in both themes by construction.
 export function Chip({
 	tone = 'neutral',
 	icon,
@@ -36,7 +36,7 @@ export function Chip({
 		<span
 			title={title}
 			className={cn(
-				'inline-flex h-6 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap',
+				'inline-flex min-h-7 items-center gap-2 rounded-sm px-2.5 font-mono text-xs whitespace-nowrap',
 				TONES[tone],
 				className
 			)}

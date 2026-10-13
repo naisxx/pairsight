@@ -30,7 +30,7 @@ export function Panel({
 			className={cn('border-border bg-surface rounded-lg border', className)}
 		>
 			{(title != null || actions != null) && (
-				<header className="flex items-start justify-between gap-3 px-5 pt-5 pb-1 md:px-6">
+				<header className="flex items-start justify-between gap-3 px-5 pt-5 pb-1 md:px-7 md:pt-7">
 					<div className="min-w-0">
 						{title != null && (
 							<h2 id={titleId} className="text-text type-heading">
@@ -42,7 +42,7 @@ export function Panel({
 					{actions != null && <div className="flex shrink-0 items-center gap-1.5">{actions}</div>}
 				</header>
 			)}
-			<div className={cn('p-5 md:p-6', bodyClassName)}>{children}</div>
+			<div className={cn('p-5 md:p-7', bodyClassName)}>{children}</div>
 		</Tag>
 	)
 }

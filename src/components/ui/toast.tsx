@@ -24,7 +24,7 @@ export function ToastViewport({
 }
 
 const toastVariants = cva(
-	'type-ui bg-surface-elevated text-text shadow-elevated data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-2 pointer-events-auto relative flex w-full items-start justify-between gap-3 rounded-[8px] border p-4 transition-opacity duration-200 data-[state=closed]:opacity-0',
+	'type-ui bg-surface-elevated text-text shadow-elevated data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:slide-in-from-bottom-2 pointer-events-auto relative flex w-full items-start justify-between gap-3 rounded-md border p-4 transition-opacity duration-200 data-[state=closed]:opacity-0',
 	{
 		variants: {
 			variant: {
@@ -53,7 +53,7 @@ export function ToastAction({
 	return (
 		<ToastPrimitives.Action
 			className={cn(
-				'border-border-input hover:bg-surface-hover type-ui mt-2 inline-flex h-8 items-center rounded-sm border px-3 font-medium transition-colors duration-150',
+				'border-border-input hover:bg-surface-hover type-ui mt-2 inline-flex h-9 items-center rounded-md border px-3 font-semibold transition-colors duration-150',
 				className
 			)}
 			{...props}
