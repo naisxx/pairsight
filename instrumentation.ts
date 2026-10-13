@@ -21,6 +21,11 @@ export async function register() {
 		// an obscure runtime error three requests later.
 		await import('./src/lib/env')
 
+		// One line naming every service outside this machine the server will
+		// contact: on-prem, that should be Jev alone (docs/PairSight-OnPrem.md).
+		const { logOutboundServices } = await import('./src/server/outbound')
+		logOutboundServices()
+
 		// PairSight's background run worker: runs keep going with no page
 		// open. Started without waiting, since register() has to finish before
 		// the server takes requests, and never during `next build`, which
