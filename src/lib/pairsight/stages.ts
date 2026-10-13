@@ -7,6 +7,14 @@
 export const STAGE_KEYS = ['records', 'vendors', 'rules', 'plan', 'results'] as const
 export type StageKey = (typeof STAGE_KEYS)[number]
 
+const STEP_NUMBER_DIGITS = 2
+
+// A step's number as the dock and the step headers show it: 01 to 05.
+export function stepNumber(stage: StageKey | number): string {
+	const number = typeof stage === 'number' ? stage : STAGE_KEYS.indexOf(stage) + 1
+	return String(number).padStart(STEP_NUMBER_DIGITS, '0')
+}
+
 // complete: its work is saved · available: you can open it · locked: an
 // earlier stage comes first.
 export type StageAccess = 'complete' | 'available' | 'locked'

@@ -9,12 +9,12 @@ import { workspacePipeline, type LoadedWorkspace } from '@/server/pairsight/eval
 export async function EvaluationLayout({
 	loaded,
 	home,
-	banner,
+	badge,
 	children
 }: {
 	loaded: LoadedWorkspace
 	home: ShellHome
-	banner?: React.ReactNode
+	badge?: React.ReactNode
 	children: React.ReactNode
 }) {
 	const { viewer, view, workspace } = loaded
@@ -30,7 +30,7 @@ export async function EvaluationLayout({
 			home={home}
 			pipeline={pipeline}
 			crumbs={crumbs}
-			banner={banner}
+			badge={badge}
 		>
 			<EvaluationViewProvider value={view}>{children}</EvaluationViewProvider>
 		</AppShell>

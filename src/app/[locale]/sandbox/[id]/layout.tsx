@@ -1,7 +1,7 @@
 import { notFound } from 'next/navigation'
 import { getTranslations } from 'next-intl/server'
 import { EvaluationLayout } from '@/components/pairsight/screens/evaluation-layout'
-import { SandboxBanner } from '@/components/pairsight/shell/sandbox-banner'
+import { SandboxBadge } from '@/components/pairsight/shell/sandbox-badge'
 import { SANDBOX_BASE } from '@/lib/pairsight/sandbox'
 import {
 	getSandboxRecording,
@@ -32,7 +32,7 @@ export default async function SandboxEvaluationLayout({
 		<EvaluationLayout
 			loaded={loaded}
 			home={{ href: SANDBOX_BASE, label: tShell('sandbox') }}
-			banner={<SandboxBanner recording={recording} isSignedIn={loaded.viewer != null} />}
+			badge={<SandboxBadge recording={recording} />}
 		>
 			{children}
 		</EvaluationLayout>

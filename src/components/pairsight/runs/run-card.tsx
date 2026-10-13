@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useMutation } from '@tanstack/react-query'
-import { useFormatter, useTranslations } from 'next-intl'
+import { useFormatter, useLocale, useTranslations } from 'next-intl'
 import { Link } from '@/i18n/routing'
 import { Button } from '@/components/ui/button'
 import { Chip } from '@/components/ui/chip'
@@ -23,6 +23,7 @@ import { pauseRunAction, resumeRunAction, retryFailedAction } from '@/server/act
 import type { ActionResult } from '@/server/actions/validated-action'
 import type { RunCard as RunCardData } from '@/server/pairsight/run-centre'
 import { ReadOnlyGate } from '../read-only'
+import { CopyId } from './copy-id'
 import { RunElapsed } from './run-elapsed'
 import { useRunsCentre } from './runs-centre'
 import { Count } from '@/components/ui/count'
@@ -57,6 +58,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 	const tRoles = useTranslations('Roles')
 	const tFailures = useTranslations('Failures')
 	const format = useFormatter()
+	const regions = new Intl.DisplayNames([useLocale()], { type: 'region' })
 	const { track } = useRunsCentre()
 	const [isExpanded, setIsExpanded] = useState(isFocused)
 	const look = lookOf(card)
@@ -92,9 +94,9 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 				isFocused && look !== 'stopped' && 'border-border-input'
 			)}
 		>
-			<div className="flex flex-wrap items-start justify-between gap-3 p-4">
+			<div className="flex flex-wrap items-start justify-between gap-3 px-5 pt-5 pb-4">
 				<div className="min-w-0">
-					<h3 id={`run-${card.id}`} className="flex items-center gap-2 text-sm font-semibold">
+					<h3 id={`run-${card.id}`} className="flex items-center gap-2 text-base font-semibold">
 						{look === 'running' && <SpinnerIcon size={ICON_SIZE} className="text-info" />}
 						{look === 'complete' && (
 							<SuccessIcon size={ICON_SIZE} variant="solid" className="text-success" />
@@ -106,7 +108,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 						{look === 'paused' && <PauseIcon size={ICON_SIZE} className="text-text-muted" />}
 						{t('runOf', { number: card.number, evaluation: card.evaluation.name })}
 					</h3>
-					<p className="type-ui text-text-muted mt-0.5">
+					<p className="text-text-muted mt-1 font-mono text-sm">
 						{look === 'running'
 							? // Every pair checked; the results are being worked out.
 								card.completedAt != null
@@ -129,11 +131,12 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 			</div>
 
 			{look === 'running' ? (
-				<div className="px-4 pb-3">
-					<div className="type-ui flex justify-between">
-						<span className="text-text-muted">{t('judged')}</span>
-						<span className="font-mono">
-							<Count value={done} /> / <Count value={progress.total} />
+				<div className="px-5 pb-4">
+					<div className="flex items-baseline justify-between gap-3">
+						<span className="text-text-muted type-eyebrow">{t('judged')}</span>
+						<span className="font-mono text-sm">
+							<Count value={done} className="text-text text-2xl font-semibold tracking-[-0.03em]" />{' '}
+							/ <Count value={progress.total} />
 						</span>
 					</div>
 					<div
@@ -142,16 +145,16 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 						aria-valuenow={done}
 						aria-valuemin={0}
 						aria-valuemax={progress.total}
-						className="bg-border mt-1.5 h-1.5 overflow-hidden rounded-full"
+						className="bg-border mt-2.5 h-1.5 overflow-hidden rounded-full"
 					>
 						<div
-							className="bg-action h-full rounded-full transition-[width] duration-300 ease-out"
+							className="bg-brand h-full rounded-full transition-[width] duration-200 ease-out"
 							style={{ width: `${percent}%` }}
 						/>
 					</div>
 				</div>
 			) : (
-				<ul className="flex flex-wrap gap-1.5 px-4 pb-3">
+				<ul className="flex flex-wrap gap-1.5 px-5 pb-4">
 					<li>
 						<Chip tone="outline">{t('pairs', { count: progress.total })}</Chip>
 					</li>
@@ -173,10 +176,10 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 			{look === 'running' && progress.waitingSince != null && (
 				<div
 					role="status"
-					className="border-border bg-surface-muted mx-4 mb-3 rounded-sm border px-3 py-2"
+					className="border-border bg-surface-muted mx-5 mb-4 rounded-md border px-4 py-3"
 				>
 					<p className="type-ui font-medium">{t('waitingTitle')}</p>
-					<p className="text-text-muted mt-0.5 text-xs">
+					<p className="text-text-muted mt-0.5 text-sm">
 						{t('waitingBody', {
 							since: format.dateTime(progress.waitingSince, { timeStyle: 'short' })
 						})}
@@ -185,22 +188,22 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 			)}
 
 			{look === 'paused' && (
-				<div className="border-border bg-surface-muted mx-4 mb-3 rounded-sm border px-3 py-2">
+				<div className="border-border bg-surface-muted mx-5 mb-4 rounded-md border px-4 py-3">
 					<p className="type-ui font-medium">{t('pausedTitle')}</p>
-					<p className="text-text-muted mt-0.5 text-xs">{t('pausedBody')}</p>
+					<p className="text-text-muted mt-0.5 text-sm">{t('pausedBody')}</p>
 				</div>
 			)}
 
 			{look === 'stopped' && (
-				<div role="alert" className="border-danger/40 mx-4 mb-3 rounded-sm border px-3 py-2">
+				<div role="alert" className="border-danger/40 mx-5 mb-4 rounded-md border px-4 py-3">
 					<p className="type-ui text-danger font-medium">
 						{card.stopReason === 'invalid_key' ? tRun('invalid_key') : tRun('missing_key')}
 					</p>
-					<p className="text-text-muted mt-0.5 text-xs">{t('stoppedFix')}</p>
+					<p className="text-text-muted mt-0.5 text-sm">{t('stoppedFix')}</p>
 				</div>
 			)}
 
-			<div className="border-border flex flex-wrap items-center justify-between gap-2 border-t px-4 py-2.5">
+			<div className="border-border flex flex-wrap items-center justify-between gap-2 border-t px-5 py-3">
 				<Button
 					variant="quiet"
 					size="sm"
@@ -216,7 +219,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 				</Button>
 				<div className="flex flex-wrap items-center gap-2">
 					{actionError != null && (
-						<p role="alert" className="text-danger text-xs">
+						<p role="alert" className="text-danger text-sm">
 							{actionError.message}
 						</p>
 					)}
@@ -224,7 +227,6 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 						<ReadOnlyGate action="run">
 							<Button
 								variant="secondary"
-								size="sm"
 								onClick={() => pause.mutate()}
 								disabled={pause.isPending || pause.isSuccess}
 							>
@@ -235,7 +237,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 					)}
 					{(look === 'stopped' || look === 'paused') && (
 						<ReadOnlyGate action="run">
-							<Button size="sm" onClick={() => resume.mutate()} disabled={resume.isPending}>
+							<Button onClick={() => resume.mutate()} disabled={resume.isPending}>
 								{resume.isPending ? <SpinnerIcon /> : <PlayIcon size={ICON_SIZE} />}
 								{t('resume')}
 							</Button>
@@ -243,23 +245,15 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 					)}
 					{look === 'incomplete' && (
 						<ReadOnlyGate action="retry">
-							<Button
-								variant="secondary"
-								size="sm"
-								onClick={() => retry.mutate()}
-								disabled={retry.isPending}
-							>
+							<Button variant="secondary" onClick={() => retry.mutate()} disabled={retry.isPending}>
 								{retry.isPending ? <SpinnerIcon /> : <RetryIcon size={ICON_SIZE} />}
 								{t('retryFailed', { count: progress.failed })}
 							</Button>
 						</ReadOnlyGate>
 					)}
 					{(look === 'complete' || look === 'incomplete') && (
-						<Button size="sm" asChild>
-							<Link href={card.resultsHref}>
-								{t('viewResults')}
-								<ArrowRightIcon size={ICON_SIZE} />
-							</Link>
+						<Button asChild cap={<ArrowRightIcon />}>
+							<Link href={card.resultsHref}>{t('viewResults')}</Link>
 						</Button>
 					)}
 				</div>
@@ -276,7 +270,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 				)}
 			>
 				<div className="min-h-0 overflow-hidden">
-					<dl className="border-border grid grid-cols-1 gap-x-6 gap-y-3 border-t p-4 text-xs sm:grid-cols-[10rem_1fr]">
+					<dl className="border-border grid grid-cols-1 gap-x-6 gap-y-3 border-t px-5 py-4 text-sm sm:grid-cols-[11rem_1fr]">
 						<dt className="text-text-muted">{t('detailThreshold')}</dt>
 						<dd>
 							<span className="font-mono">{card.threshold.toFixed(2)}</span> · {thresholdName}
@@ -319,7 +313,7 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 						<dt className="text-text-muted">{t('detailFields')}</dt>
 						<dd>{card.settings.jevFields.map((field) => tRoles(field)).join(', ')}</dd>
 						<dt className="text-text-muted">{t('detailCountry')}</dt>
-						<dd className="font-mono">{card.settings.countryCode}</dd>
+						<dd>{regions.of(card.settings.countryCode) ?? card.settings.countryCode}</dd>
 						<dt className="text-text-muted">{t('detailSame')}</dt>
 						<dd className="whitespace-pre-line">{card.settings.identitySame}</dd>
 						<dt className="text-text-muted">{t('detailDifferent')}</dt>
@@ -332,7 +326,9 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 							)}
 						</dd>
 						<dt className="text-text-muted">{t('detailId')}</dt>
-						<dd className="font-mono break-all">{card.id}</dd>
+						<dd>
+							<CopyId id={card.id} />
+						</dd>
 					</dl>
 				</div>
 			</div>

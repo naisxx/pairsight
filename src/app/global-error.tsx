@@ -24,48 +24,51 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
 	if (isChunkLoadError(error)) return null
 
 	return (
-		<html>
+		<html lang="en">
 			<body
-				style={{ margin: 0, fontFamily: 'ui-sans-serif, system-ui, -apple-system, sans-serif' }}
+				style={{
+					margin: 0,
+					backgroundColor: '#f7f6f3',
+					color: '#0d0d0e',
+					fontFamily: 'ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif'
+				}}
 			>
-				<div
+				<main
 					style={{
 						display: 'flex',
 						minHeight: '100vh',
 						flexDirection: 'column',
-						alignItems: 'center',
 						justifyContent: 'center',
-						gap: '1rem',
-						padding: '1.5rem',
-						textAlign: 'center'
+						boxSizing: 'border-box',
+						maxWidth: '36rem',
+						margin: '0 auto',
+						padding: '4rem 1rem'
 					}}
 				>
-					<div
+					<h1
 						style={{
-							display: 'flex',
-							maxWidth: '28rem',
-							flexDirection: 'column',
-							alignItems: 'center',
-							gap: '1rem',
-							borderRadius: '12px',
-							border: '1px solid #e3e3e3',
-							padding: '2rem'
+							fontSize: '2.75rem',
+							lineHeight: 1.05,
+							fontWeight: 600,
+							letterSpacing: '-0.025em',
+							margin: 0
 						}}
 					>
-						<h1 style={{ fontSize: '1.5rem', fontWeight: 700, margin: 0, color: '#0a0a0a' }}>
-							Something went wrong
-						</h1>
-						<p style={{ fontSize: '0.875rem', color: '#5a5a5a', margin: 0 }}>
-							We hit a snag loading the app. We&apos;ve been notified — reloading usually fixes it.
-						</p>
+						Something went wrong
+					</h1>
+					<p style={{ fontSize: '1rem', lineHeight: 1.5, color: '#3d3d40', margin: '0.75rem 0 0' }}>
+						We hit a snag loading the app. We&apos;ve been notified — reloading usually fixes it.
+					</p>
+					<div style={{ marginTop: '2rem' }}>
 						<button
 							onClick={() => window.location.reload()}
 							style={{
-								borderRadius: '8px',
-								backgroundColor: '#c93a22',
-								color: '#ffffff',
-								padding: '0.5rem 1rem',
-								fontSize: '0.875rem',
+								height: '2.75rem',
+								borderRadius: '12px',
+								backgroundColor: '#ff4a1c',
+								color: '#0d0d0e',
+								padding: '0 1.125rem',
+								fontSize: '0.9375rem',
 								fontWeight: 600,
 								border: 'none',
 								cursor: 'pointer'
@@ -73,13 +76,20 @@ export default function GlobalError({ error }: { error: Error & { digest?: strin
 						>
 							Reload
 						</button>
-						{error.digest && (
-							<p style={{ fontSize: '0.75rem', color: '#5a5a5a', margin: 0 }}>
-								Reference: <code>{error.digest}</code>
-							</p>
-						)}
 					</div>
-				</div>
+					{error.digest && (
+						<p
+							style={{
+								fontFamily: 'ui-monospace, Menlo, monospace',
+								fontSize: '0.875rem',
+								color: '#66666b',
+								margin: '1.5rem 0 0'
+							}}
+						>
+							Reference: <code>{error.digest}</code>
+						</p>
+					)}
+				</main>
 			</body>
 		</html>
 	)

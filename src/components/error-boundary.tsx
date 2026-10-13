@@ -4,7 +4,9 @@ import type { ReactNode } from 'react'
 import { unstable_rethrow } from 'next/navigation'
 import { ErrorBoundary as ReactErrorBoundary, type FallbackProps } from 'react-error-boundary'
 import { captureClientError } from '@/lib/observability/capture-client-error'
-import { ErrorPage, errorPageActionClassName } from '@/components/error-page'
+import { ErrorPage } from '@/components/error-page'
+import { Button } from '@/components/ui/button'
+import { RetryIcon } from '@/components/ui/icons'
 import { UnpluggedScene } from '@/components/pairsight/empty/scenes'
 
 function Fallback({ resetErrorBoundary }: FallbackProps) {
@@ -13,10 +15,11 @@ function Fallback({ resetErrorBoundary }: FallbackProps) {
 			scene={<UnpluggedScene />}
 			title="This section couldn't load"
 			description="Try again, or refresh the page if it keeps happening."
-			action={
-				<button onClick={resetErrorBoundary} className={errorPageActionClassName}>
+			homeLabel="PairSight home"
+			actions={
+				<Button onClick={resetErrorBoundary} cap={<RetryIcon />}>
 					Try again
-				</button>
+				</Button>
 			}
 		/>
 	)

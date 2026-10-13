@@ -73,14 +73,14 @@ export function RunsDialog({
 				]}
 			/>
 			{/* Keyed by tab, so switching tabs plays the cards in again. */}
-			<div key={tab} className="rise-gentle mt-4 min-h-64 space-y-3 pb-2">
+			<div key={tab} className="rise-gentle mt-5 min-h-64 space-y-3 pb-2">
 				{hasError ? (
 					<p role="alert" className="text-danger type-ui">
 						{t('loadError')}
 					</p>
 				) : isLoading && cards == null ? (
 					Array.from({ length: SKELETON_CARDS }, (_, index) => (
-						<Skeleton key={index} className="h-28 w-full rounded-md" />
+						<Skeleton key={index} className="h-32 w-full rounded-lg" />
 					))
 				) : shown.length === 0 ? (
 					<EmptyTab tab={tab} />

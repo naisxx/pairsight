@@ -16,7 +16,6 @@ export function RunsTrigger() {
 	return (
 		<Button
 			variant="quiet"
-			size="sm"
 			onClick={() => open()}
 			aria-label={isActive ? t('triggerActive', { count: activeCount }) : t('trigger')}
 		>
