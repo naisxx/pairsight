@@ -63,7 +63,10 @@ export default defineConfig({
 			? []
 			: [
 					{
-						command: 'pnpm dev',
+						// CI tests what ships: its e2e job builds first, then serves that
+						// build. A dev server compiles each page on its first visit and
+						// hydrates late, so clicks and timed waits race it.
+						command: process.env.CI ? 'pnpm start' : 'pnpm dev',
 						url: 'http://localhost:3000',
 						// PairSight specs need this server's stub env. Reusing whatever
 						// already listens on 3000 (often a dev server Playwright left
