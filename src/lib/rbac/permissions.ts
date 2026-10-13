@@ -81,6 +81,17 @@ export const PERMISSION_GROUPS = [
 		]
 	},
 	{
+		// This server's setup: today the Jev key and address runs use.
+		lane: 'settings',
+		label: 'Settings',
+		navHref: '/settings',
+		readPermission: 'settings.read',
+		permissions: [
+			{ key: 'settings.read', label: 'View settings', kind: 'read' },
+			{ key: 'settings.manage', label: 'Change the Jev key and address', kind: 'write' }
+		]
+	},
+	{
 		lane: 'access',
 		label: 'Access',
 		navHref: '/admin/access',

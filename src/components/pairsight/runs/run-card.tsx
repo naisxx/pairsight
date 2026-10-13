@@ -199,7 +199,15 @@ export function RunCard({ card, isFocused }: { card: RunCardData; isFocused: boo
 					<p className="type-ui text-danger font-medium">
 						{card.stopReason === 'invalid_key' ? tRun('invalid_key') : tRun('missing_key')}
 					</p>
-					<p className="text-text-muted mt-0.5 text-sm">{t('stoppedFix')}</p>
+					<p className="text-text-muted mt-0.5 text-sm">
+						{t('stoppedFix')}{' '}
+						<Link
+							href="/settings"
+							className="text-text decoration-border-strong hover:decoration-text underline underline-offset-[3px]"
+						>
+							{t('stoppedSettings')}
+						</Link>
+					</p>
 				</div>
 			)}
 

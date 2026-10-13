@@ -9,14 +9,15 @@ import {
 	DropdownMenuLabel,
 	DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu'
-import { SignOutIcon } from '@/components/ui/icons'
+import { SettingsIcon, SignOutIcon } from '@/components/ui/icons'
+import { Link } from '@/i18n/routing'
 import { initialsOf } from '@/lib/auth/profile'
 import { signOut } from '@/server/actions/auth'
 
 const ICON_SIZE = 15
 
 // The signed-in person, at the end of the top bar: their initials, and a
-// menu with who they're signed in as and Sign out.
+// menu with who they're signed in as, Settings and Sign out.
 export function AccountMenu({ email, name }: { email: string; name: string }) {
 	const t = useTranslations('Shell')
 	const [isPending, startTransition] = useTransition()
@@ -36,6 +37,12 @@ export function AccountMenu({ email, name }: { email: string; name: string }) {
 					<span className="text-text block truncate font-semibold">{name}</span>
 					<span className="text-text-muted block truncate font-normal">{email}</span>
 				</DropdownMenuLabel>
+				<DropdownMenuItem asChild>
+					<Link href="/settings">
+						<SettingsIcon size={ICON_SIZE} />
+						{t('settings')}
+					</Link>
+				</DropdownMenuItem>
 				<DropdownMenuItem
 					disabled={isPending}
 					onSelect={() => startTransition(async () => void (await signOut({})))}
