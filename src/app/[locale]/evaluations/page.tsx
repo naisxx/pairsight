@@ -1,7 +1,11 @@
 import { getTranslations } from 'next-intl/server'
 import { Greeting } from '@/components/pairsight/evaluations/greeting'
 import { NewEvaluationButton } from '@/components/pairsight/evaluations/new-evaluation-button'
-import { DashboardScreen } from '@/components/pairsight/screens/dashboard-screen'
+import {
+	DashboardHeader,
+	DashboardScreen,
+	DashboardStats
+} from '@/components/pairsight/screens/dashboard-screen'
 import { AppShell } from '@/components/pairsight/shell/app-shell'
 import { ownerView } from '@/lib/pairsight/evaluation-view'
 import { requireUserOrRedirect } from '@/server/auth/session'
@@ -30,15 +34,23 @@ export default async function EvaluationsPage() {
 				dashboard={dashboard}
 				isReadOnly={false}
 				header={
-					<header className="flex flex-wrap items-end justify-between gap-4">
-						<div>
-							<Greeting firstName={firstName} />
-							<h1 className="type-display-sm mt-0.5">{t('title')}</h1>
-						</div>
-						{dashboard.rows.length > 0 && (
-							<NewEvaluationButton takenNames={dashboard.rows.map((row) => row.name)} />
-						)}
-					</header>
+					<DashboardHeader
+						eyebrow={<Greeting firstName={firstName} />}
+						title={t('headlineDone', { count: dashboard.stats.withResults })}
+						subtitle={
+							dashboard.rows.length === 0
+								? t('headlineEmpty')
+								: dashboard.stats.inSetup > 0
+									? t('headlineSetup', { count: dashboard.stats.inSetup })
+									: t('headlineOpen')
+						}
+						lead={dashboard.rows.length > 0 && <DashboardStats stats={dashboard.stats} />}
+						action={
+							dashboard.rows.length > 0 && (
+								<NewEvaluationButton takenNames={dashboard.rows.map((row) => row.name)} />
+							)
+						}
+					/>
 				}
 			/>
 		</AppShell>

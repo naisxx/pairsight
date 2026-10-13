@@ -20,9 +20,13 @@ import {
 } from '@/lib/pairsight/stages'
 
 // The Evaluations dashboard: every live evaluation with where it is in its
-// pipeline, the headline counts, and the latest finished run's metrics per
-// vendor. One query for the list (relation counts ride along), then one run
-// summary.
+// pipeline, the headline counts, and the newest finished evaluations' scores
+// per vendor. One query for the list (relation counts ride along), then one
+// run summary per finished evaluation shown.
+
+// Finished evaluations shown as cards: the newest few, so the row stays one
+// row at full width.
+const FINISHED_SHOWN = 3
 
 export type DashboardRow = {
 	id: string
@@ -42,9 +46,11 @@ export type DashboardRow = {
 	lastRun: { id: string; number: number; createdAt: Date } | null
 }
 
-export type LatestResults = {
+export type FinishedEvaluation = {
 	evaluationId: string
 	evaluationName: string
+	entityType: EntityType | null
+	recordCount: number | null
 	// The run's results page.
 	resultsHref: string
 	run: { id: string; number: number; completedAt: Date | null; threshold: number }
@@ -54,7 +60,8 @@ export type LatestResults = {
 export type Dashboard = {
 	rows: DashboardRow[]
 	stats: { evaluations: number; withResults: number; inSetup: number; pairsAssessed: number }
-	latest: LatestResults | null
+	// Newest first, up to FINISHED_SHOWN.
+	finished: FinishedEvaluation[]
 }
 
 // `viewOf` gives each evaluation's pages: /evaluations/<id> for an owner,
@@ -149,7 +156,23 @@ export async function getDashboard({
 			return run?.status === 'completed' ? [{ evaluation, run }] : []
 		})
 		.sort((a, b) => (b.run.completedAt?.getTime() ?? 0) - (a.run.completedAt?.getTime() ?? 0))
-	const newest = finished[0]
+
+	const [assessed, cards] = await Promise.all([
+		pairsAssessed(evaluations.map((evaluation) => evaluation.runs[0])),
+		Promise.all(
+			finished.slice(0, FINISHED_SHOWN).map(({ evaluation, run }) => {
+				const row = rows.find((candidate) => candidate.id === evaluation.id)
+				return finishedEvaluation({
+					evaluationId: evaluation.id,
+					evaluationName: evaluation.name,
+					entityType: row?.entityType ?? null,
+					recordCount: row?.recordCount ?? null,
+					runId: run.id,
+					resultsHref: `${runBase(viewOf(evaluation.id), run.id)}/results`
+				})
+			})
+		)
+	])
 
 	return {
 		rows,
@@ -157,33 +180,29 @@ export async function getDashboard({
 			evaluations: rows.length,
 			withResults: finished.length,
 			inSetup: rows.length - finished.length,
-			pairsAssessed: await pairsAssessed(evaluations.map((evaluation) => evaluation.runs[0]))
+			pairsAssessed: assessed
 		},
-		latest:
-			newest == null
-				? null
-				: await latestResults({
-						evaluationId: newest.evaluation.id,
-						evaluationName: newest.evaluation.name,
-						runId: newest.run.id,
-						resultsHref: `${runBase(viewOf(newest.evaluation.id), newest.run.id)}/results`
-					})
+		finished: cards
 	}
 }
 
 // A finished run's metrics per vendor, from its summary (run-summary.ts):
 // nothing loaded pair by pair.
-async function latestResults({
+async function finishedEvaluation({
 	evaluationId,
 	evaluationName,
+	entityType,
+	recordCount,
 	runId,
 	resultsHref
 }: {
 	evaluationId: string
 	evaluationName: string
+	entityType: EntityType | null
+	recordCount: number | null
 	runId: string
 	resultsHref: string
-}): Promise<LatestResults> {
+}): Promise<FinishedEvaluation> {
 	const run = await db.run.findUniqueOrThrow({
 		where: { id: runId },
 		select: {
@@ -198,6 +217,8 @@ async function latestResults({
 	return {
 		evaluationId,
 		evaluationName,
+		entityType,
+		recordCount,
 		resultsHref,
 		run: { id: run.id, number: run.number, completedAt: run.completedAt, threshold: run.threshold },
 		vendors: vendors.map((vendor) => ({
