@@ -13,8 +13,9 @@ import { Input } from '@/components/ui/input'
 import { Kbd } from '@/components/ui/kbd'
 import { OptionSelect, type SelectOption } from '@/components/ui/select'
 import { SEARCH_MAX_LENGTH } from '@/lib/pairsight/input-limits'
-import { exactTitle } from '@/components/ui/count'
+import { Count, exactTitle } from '@/components/ui/count'
 import { EXACT_FORMATS } from '@/i18n/formats'
+import { VendorSwatch } from '../vendor-swatch'
 
 const SEARCH_DEBOUNCE_MS = 200
 // Params a filter change keeps: where you are, not what you're filtering.
@@ -29,12 +30,21 @@ export function PairFilters({
 	vendors,
 	vendorId,
 	matching,
-	isFiltered
+	isFiltered,
+	viewCounts,
+	vendorColours,
+	vendorRanks
 }: {
 	vendors: Array<{ id: string; name: string }>
 	vendorId: string | undefined
 	matching: number
 	isFiltered: boolean
+	// The vendor's pairs, all and just the disagreements, beside those choices.
+	viewCounts: { all: number; disagreements: number }
+	// Each vendor's colour, in the order Results ranks them (vendor-swatch.tsx).
+	vendorColours: Record<string, number>
+	// Best overall first, as Results ranks them (ranking.ts).
+	vendorRanks: Record<string, number>
 }) {
 	const t = useTranslations('Filters')
 	const tCat = useTranslations('Categories')
@@ -119,9 +129,15 @@ export function PairFilters({
 	const category = searchParams.get('category') ?? ''
 	// The groups the toggle doesn't cover (a tile on the Overview picks one)
 	// show as a third option while they're chosen.
+	const counted = (label: string, count: number) => (
+		<>
+			{label}
+			<Count value={count} className="font-mono" />
+		</>
+	)
 	const viewOptions = [
-		{ value: 'all', label: t('allPairs') },
-		{ value: 'disagreements', label: t('disagreements') },
+		{ value: 'all', label: counted(t('all'), viewCounts.all) },
+		{ value: 'disagreements', label: counted(t('disagreements'), viewCounts.disagreements) },
 		...(category !== '' && category !== 'disagreements' && isCategory(category)
 			? [{ value: category, label: tCat(category) }]
 			: [])
@@ -165,7 +181,7 @@ export function PairFilters({
 
 	return (
 		<div className="flex flex-col gap-3">
-			<div className="flex flex-wrap items-center gap-2">
+			<div className="flex flex-wrap items-center gap-3">
 				<Segmented
 					label={t('category')}
 					value={category === '' ? 'all' : category}
@@ -177,13 +193,24 @@ export function PairFilters({
 						label={t('vendor')}
 						value={vendorId}
 						onChange={(value) => update({ vendor: value })}
-						options={vendors.map((vendor) => ({ value: vendor.id, label: vendor.name }))}
+						// Best first, as the Overview's cards are.
+						options={[...vendors]
+							.sort((a, b) => (vendorRanks[a.id] ?? 0) - (vendorRanks[b.id] ?? 0))
+							.map((vendor) => ({
+								value: vendor.id,
+								label: (
+									<>
+										<VendorSwatch index={vendorColours[vendor.id] ?? 0} />
+										{vendor.name}
+									</>
+								)
+							}))}
 					/>
 				)}
-				<div className="relative w-full @2xl:ml-auto @2xl:w-[240px]">
+				<div className="relative w-full @2xl:w-auto @2xl:max-w-[360px] @2xl:flex-[1_1_240px]">
 					<SearchIcon
-						size={15}
-						className="text-text-muted pointer-events-none absolute top-1/2 left-2.5 -translate-y-1/2"
+						size={16}
+						className="text-text-muted pointer-events-none absolute top-1/2 left-3 -translate-y-1/2"
 					/>
 					<Input
 						type="search"
@@ -194,7 +221,7 @@ export function PairFilters({
 						onChange={(event) => onSearchChange(event.target.value)}
 						placeholder={t('searchPlaceholder')}
 						aria-label={t('search')}
-						className="type-ui h-9 pr-9 pl-8"
+						className="pr-10 pl-9"
 					/>
 					<span className="pointer-events-none absolute top-1/2 right-2 hidden -translate-y-1/2 @2xl:block">
 						<Kbd>/</Kbd>
@@ -202,8 +229,8 @@ export function PairFilters({
 				</div>
 				<Popover>
 					<PopoverTrigger asChild>
-						<Button variant="secondary" size="sm" className="h-9">
-							<FilterIcon size={14} />
+						<Button variant="secondary">
+							<FilterIcon size={16} />
 							{t('more')}
 							{active.length > 0 && (
 								<span className="bg-action text-action-ink rounded-full px-1.5 font-mono text-[0.6875rem]">
@@ -223,9 +250,11 @@ export function PairFilters({
 				</Popover>
 			</div>
 			<div className="type-ui flex flex-wrap items-center gap-2">
+				{/* The heading above says how many; this tells a screen reader when
+				    a filter changes it. */}
 				<p
 					aria-live="polite"
-					className="text-text-muted"
+					className="sr-only"
 					title={exactTitle([matching], () =>
 						t.markup('matching', { count: matching, n: (chunks) => chunks }, EXACT_FORMATS)
 					)}

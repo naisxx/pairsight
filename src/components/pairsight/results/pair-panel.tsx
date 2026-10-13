@@ -1,39 +1,62 @@
 import { getTranslations } from 'next-intl/server'
 import { Link } from '@/i18n/routing'
 import { AnimatedScore } from '@/components/ui/animated-number'
+import { Button } from '@/components/ui/button'
+import { Chip } from '@/components/ui/chip'
 import { ArrowRightIcon, WarningCircleIcon } from '@/components/ui/icons'
 import { failureReason } from '@/lib/pairsight/failure-reasons'
 import { cn } from '@/lib/cn'
 import { compareFields } from '@/server/pairsight/compare'
-import { keyFields } from '@/server/pairsight/key-fields'
 import type { getPairPanel } from '@/server/pairsight/results'
-import { DiffText } from '../pair/field-compare-table'
 import { RetryPairButton } from '../pair/retry-pair-button'
 import { ReadOnlyGate } from '../read-only'
-import { CategoryBadge, ScoreBar } from '../result-parts'
+import { VendorSwatch } from '../vendor-swatch'
 
-const ARROW_SIZE = 13
-// Fields shown beside the list; the pair's own page has every one.
-const KEY_FIELDS = 3
+const ARROW_SIZE = 18
 
 type Detail = NonNullable<Awaited<ReturnType<typeof getPairPanel>>>
+type Decision = 'same' | 'different' | 'notChecked'
 
-// The pair selected in Detailed analysis, beside the list: Jev's score
-// against the cut-off, who says what, and the few fields that say most about
-// it (key-fields.ts), what differs marked. Every field, why it was checked
-// and J/K through the list are on its own page, a link away
-// (pair-screen.tsx).
+// Same, different or not checked, as a tag. The = and ≠ are drawn by CSS, so
+// the tag reads as its word alone (to a screen reader, and as text).
+function DecisionChip({ decision, label }: { decision: Decision; label: string }) {
+	return (
+		<Chip className="gap-1.5">
+			{decision !== 'notChecked' && (
+				<span
+					aria-hidden
+					className={cn(
+						decision === 'same'
+							? "text-ice-text before:content-['=']"
+							: "text-brand-text before:content-['≠']"
+					)}
+				/>
+			)}
+			{label}
+		</Chip>
+	)
+}
+
+// The pair selected in Pairs, beside the list (pairsight-handoff Review): its
+// two record IDs, Jev's score against the cut-off, who says what (Jev, then
+// each vendor). The fields side by side, why it was checked and J/K through
+// the list are on its own page, a button away (pair-screen.tsx).
 export async function PairPanel({
 	detail,
-	fullHref
+	fullHref,
+	vendorColours,
+	vendorRanks
 }: {
 	detail: Detail
 	fullHref: { pathname: string; query: Record<string, string> }
+	// Each vendor's colour, in the order Results ranks them (vendor-swatch.tsx).
+	vendorColours: Record<string, number>
+	// Best overall first, as Results ranks them (ranking.ts).
+	vendorRanks: Record<string, number>
 }) {
-	const [t, tResults, tRoles, tFailures] = await Promise.all([
+	const [t, tResults, tFailures] = await Promise.all([
 		getTranslations('Pair'),
 		getTranslations('Results'),
-		getTranslations('Roles'),
 		getTranslations('Failures')
 	])
 	const { run, row, recordA, recordB, assessment } = detail
@@ -46,60 +69,40 @@ export async function PairPanel({
 		columnRoles: detail.columnRoles,
 		country: run.countryCode
 	})
-	const fields = keyFields(allFields, run.jevFields, KEY_FIELDS)
+	const mono = (chunks: React.ReactNode) => <span className="text-text font-mono">{chunks}</span>
+	const rowClass =
+		'border-border flex items-center justify-between gap-3 border-b py-2.5 last:border-0'
 
 	return (
 		<aside
 			aria-label={tResults('panelLabel')}
-			className="border-border bg-surface rounded-lg border p-5 md:p-6"
+			className="border-border bg-surface flex min-h-0 flex-col rounded-lg border p-6 md:p-7 [&>*]:shrink-0"
 		>
 			<h2 className="sr-only">
 				{tResults('panelHeading', { a: row.recordA.label, b: row.recordB.label })}
 			</h2>
-			<div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-				<div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-					<p className="text-text-muted font-mono text-xs">
-						{recordA.reference} · {recordB.reference}
-					</p>
-					<CategoryBadge category={row.category} />
-				</div>
-				<Link
-					href={fullHref}
-					className="text-accent-ink type-ui hit-area inline-flex shrink-0 items-center gap-1 font-medium hover:underline"
-				>
-					{tResults('panelFullComparison')}
-					<ArrowRightIcon size={ARROW_SIZE} />
-				</Link>
-			</div>
+			<p className="text-text-muted type-eyebrow">
+				{recordA.reference} · {recordB.reference}
+			</p>
 
 			{isJudged ? (
-				<div className="mt-5">
-					<p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+				<>
+					<p className="mt-3.5">
 						<AnimatedScore
 							value={score}
-							className="font-mono text-5xl leading-none font-medium tracking-[-0.04em]"
+							className="text-text font-mono text-5xl leading-none font-semibold tracking-[-0.03em]"
 						/>
-						<span className="text-text-muted type-ui">
-							{tResults.rich(isSame ? 'panelSaysSame' : 'panelSaysDifferent', {
-								value: run.threshold.toFixed(2),
-								n: (chunks) => <span className="text-text font-mono">{chunks}</span>
-							})}
-						</span>
 					</p>
-					<span
-						role="img"
-						aria-label={t('scoreBarLabel', {
-							score: score.toFixed(2),
-							threshold: run.threshold.toFixed(2)
+					<p className="text-text-body mt-2 text-base">
+						{tResults.rich(isSame ? 'panelVerdictSame' : 'panelVerdictDifferent', {
+							value: run.threshold.toFixed(2),
+							n: mono
 						})}
-						className="mt-3 flex"
-					>
-						<ScoreBar score={score} threshold={run.threshold} size="lg" showValue={false} />
-					</span>
-				</div>
+					</p>
+				</>
 			) : (
-				<div className="border-border-input mt-5 rounded-md border border-dashed p-4">
-					<p className="type-ui flex items-center gap-2 font-medium">
+				<div className="border-border-input mt-4 rounded-md border border-dashed p-4">
+					<p className="flex items-center gap-2 text-base font-medium">
 						<WarningCircleIcon
 							className={assessment.status === 'failed' ? 'text-danger' : 'text-text-muted'}
 						/>
@@ -107,7 +110,7 @@ export async function PairPanel({
 					</p>
 					{assessment.status === 'failed' && (
 						<>
-							<p className="text-text-muted type-ui mt-1" title={assessment.errorCode ?? undefined}>
+							<p className="text-text-muted mt-1 text-sm" title={assessment.errorCode ?? undefined}>
 								{tFailures(failureReason(assessment.errorCode))}
 							</p>
 							<div className="mt-3">
@@ -120,82 +123,44 @@ export async function PairPanel({
 				</div>
 			)}
 
-			{/* Who says what: every vendor, then Jev. */}
-			<section aria-label={t('decisions')} className="border-border mt-5 border-t pt-4">
-				<dl className="type-ui grid grid-cols-[minmax(0,1fr)_auto] gap-x-4 gap-y-2">
-					{detail.vendors.map((vendor) => (
-						<div key={vendor.id} className="contents">
-							<dt className="text-text-muted truncate">{vendor.name}</dt>
-							<dd className={vendor.isMatch ? 'font-medium' : 'text-text-muted'}>
-								{vendor.isMatch ? t('matched') : t('notMatched')}
-							</dd>
-						</div>
-					))}
-					<div className="contents">
-						<dt className="text-text-muted">{t('pairsightAi')}</dt>
-						<dd className={isSame ? 'font-medium' : 'text-text-muted'}>
-							{isJudged ? (isSame ? t('match') : t('noMatch')) : t('notAssessed')}
+			{/* Who says what: Jev, then every vendor. */}
+			<section aria-label={t('decisions')} className="border-border mt-4 border-t">
+				<dl className="text-base">
+					<div className={rowClass}>
+						<dt>{t('pairsightAi')}</dt>
+						<dd>
+							<DecisionChip
+								decision={isJudged ? (isSame ? 'same' : 'different') : 'notChecked'}
+								label={isJudged ? (isSame ? t('match') : t('noMatch')) : t('notAssessed')}
+							/>
 						</dd>
 					</div>
+					{/* Best first, as the Overview's cards are. */}
+					{[...detail.vendors]
+						.sort((a, b) => (vendorRanks[a.id] ?? 0) - (vendorRanks[b.id] ?? 0))
+						.map((vendor) => (
+							<div key={vendor.id} className={rowClass}>
+								<dt className="flex min-w-0 items-center gap-2">
+									<VendorSwatch index={vendorColours[vendor.id] ?? 0} />
+									<span className="truncate">{vendor.name}</span>
+								</dt>
+								<dd>
+									<DecisionChip
+										decision={vendor.isMatch ? 'same' : 'different'}
+										label={vendor.isMatch ? t('matched') : t('notMatched')}
+									/>
+								</dd>
+							</div>
+						))}
 				</dl>
 			</section>
 
-			{/* The two records, field by field. */}
-			<section aria-label={t('fieldsTitle')} className="border-border mt-5 border-t pt-4">
-				<div className="text-text-muted grid grid-cols-[6.5rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-3 pb-2 text-xs font-medium">
-					<span>{t('field')}</span>
-					<span className="truncate">
-						{t('recordA')} · <span className="font-mono">{recordA.reference}</span>
-					</span>
-					<span className="truncate">
-						{t('recordB')} · <span className="font-mono">{recordB.reference}</span>
-					</span>
-				</div>
-				<ul className="divide-border divide-y">
-					{fields.map((field) => {
-						const isDifferent = field.comparison === 'different'
-						return (
-							<li
-								key={field.role}
-								className={cn(
-									'type-ui grid grid-cols-[6.5rem_minmax(0,1fr)_minmax(0,1fr)] gap-x-3 py-2',
-									isDifferent && 'bg-diff -mx-2 rounded-sm px-2'
-								)}
-							>
-								<span className="text-text-muted truncate">{tRoles(field.role)}</span>
-								{[
-									[field.a, field.b],
-									[field.b, field.a]
-								].map(([value, other], index) =>
-									value == null || other == null ? null : (
-										<span key={index} className="min-w-0 break-words">
-											{value.trim() === '' ? (
-												<span className="text-text-muted text-xs italic">{t('missing')}</span>
-											) : isDifferent ? (
-												<DiffText value={value} other={other} />
-											) : (
-												value
-											)}
-											{/* Same once normalised: said, so it doesn't read as a difference. */}
-											{index === 1 && field.isFormatOnly && (
-												<span className="text-text-muted ml-1.5 text-xs">{t('formatDiffers')}</span>
-											)}
-										</span>
-									)
-								)}
-							</li>
-						)
-					})}
-				</ul>
-			</section>
-
-			<Link
-				href={fullHref}
-				className="text-accent-ink type-ui hit-area mt-4 inline-flex items-center gap-1.5 font-medium hover:underline"
-			>
-				{tResults('panelSeeAll', { count: allFields.length })}
-				<ArrowRightIcon size={ARROW_SIZE} />
-			</Link>
+			<Button asChild cap={<ArrowRightIcon size={ARROW_SIZE} />} className="mt-6 self-start">
+				<Link href={fullHref}>{tResults('openFullComparison')}</Link>
+			</Button>
+			<p className="text-text-muted mt-2.5 text-sm">
+				{tResults('allFieldsNote', { count: allFields.length })}
+			</p>
 		</aside>
 	)
 }

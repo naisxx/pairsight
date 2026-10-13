@@ -71,7 +71,7 @@ export function PairSelection({
 	const isWaiting = isPending && shown?.id !== shownId
 	const panel =
 		shown == null ? null : (
-			<div key={shown.id} className="animate-fade-in">
+			<div key={shown.id} className="animate-fade-in flex min-h-0 flex-col">
 				{shown.node}
 			</div>
 		)
@@ -79,12 +79,15 @@ export function PairSelection({
 	return (
 		<SelectionContext value={{ selectedId: shownId, isPending, select }}>
 			{children}
-			{/* Wide: beside the list, kept in view as the list scrolls. */}
+			{/* Wide: beside the list, kept in view as the list scrolls, and short
+			    enough to end above the dock (top bar 4rem, 1rem gap, dock 6.5rem
+			    with its margin): the score, verdicts and the way to the full
+			    comparison always show; only the fields give way. */}
 			<div
 				data-pair-side
 				aria-busy={isWaiting}
 				className={cn(
-					'hidden transition-opacity duration-150 @5xl:sticky @5xl:top-4 @5xl:col-span-5 @5xl:block @5xl:max-h-[calc(100dvh-8rem)] @5xl:overflow-y-auto @5xl:rounded-lg',
+					'hidden transition-opacity duration-150 @5xl:sticky @5xl:top-4 @5xl:flex @5xl:max-h-[calc(100dvh-12rem)] @5xl:flex-col @5xl:overflow-y-auto @5xl:rounded-lg',
 					isWaiting && 'opacity-60'
 				)}
 			>

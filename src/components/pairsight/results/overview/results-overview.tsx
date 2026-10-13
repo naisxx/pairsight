@@ -1,22 +1,26 @@
 import { Reveal } from '@/components/ui/reveal'
 import type { Category } from '@/lib/pairsight/decisions'
 import type { EntityType } from '@/lib/pairsight/entity-types'
+import { rankVendors } from '@/lib/pairsight/ranking'
 import type { StatsRow } from '@/lib/pairsight/stats'
 import type { ResultsOverview as OverviewData } from '@/server/pairsight/result-overview'
 import { CoveragePanel } from './coverage-panel'
 import { HeadToHead } from './head-to-head'
 import { LookFirst } from './look-first'
 import { ThresholdSensitivity } from './threshold-sensitivity'
+import { VendorSwitch } from './vendor-switch'
 import { WhyTheyDisagree } from './why-they-disagree'
 
 type Href = { pathname: string; query: Record<string, string> }
 
 const asString = (href: Href) => `${href.pathname}?${new URLSearchParams(href.query)}`
 
-// The Overview tab (docs/PairSight-UX-Plan.md §4.1), kept to what answers
-// "which vendor, and where do I look?": the vendors head to head, where to
-// look first, what Jev checked, how the cut-off holds, and why they disagree.
-// Panels enter in a short stagger.
+// The Overview tab (docs/PairSight-UX-Plan.md §4.1, pairsight-handoff
+// Results), kept to what answers "which vendor, and where do I look?": the
+// vendors head to head, then where to look first beside how the cut-off
+// holds and what Jev checked, and why they disagree. With more than one
+// vendor, a switch between the two says which vendor the panels below are
+// about. Panels enter in a short stagger.
 export function ResultsOverview({
 	overview,
 	vendorName,
@@ -44,9 +48,18 @@ export function ResultsOverview({
 	vendorHrefs: Record<string, string>
 }) {
 	let index = 0
+	// Colours follow the upload order; the switch lists the best first.
+	const switchVendors = rankVendors(overview.byVendor).map((vendor) => ({
+		id: vendor.id,
+		name: vendor.name,
+		colour: Math.max(
+			0,
+			overview.byVendor.findIndex((each) => each.id === vendor.id)
+		)
+	}))
 
 	return (
-		<div className="mt-6 flex flex-col gap-4">
+		<div className="mt-10 flex flex-col gap-4">
 			<Reveal index={index++}>
 				<HeadToHead
 					vendors={overview.byVendor}
@@ -58,8 +71,14 @@ export function ResultsOverview({
 				/>
 			</Reveal>
 
-			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<Reveal index={index++} className="@5xl:col-span-7">
+			{switchVendors.length > 1 && (
+				<Reveal index={index++}>
+					<VendorSwitch vendors={switchVendors} selectedId={vendorId} hrefs={vendorHrefs} />
+				</Reveal>
+			)}
+
+			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)]">
+				<Reveal index={index++}>
 					<LookFirst
 						vendorName={vendorName}
 						threshold={threshold}
@@ -75,34 +94,28 @@ export function ResultsOverview({
 						className="h-full"
 					/>
 				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-5">
-					<CoveragePanel
-						coverage={overview.coverage}
-						suggestedType={overview.coverage.suggested > 0 ? entityType : null}
-						className="h-full"
-					/>
-				</Reveal>
+				<div className="flex flex-col gap-4">
+					<Reveal index={index++}>
+						<ThresholdSensitivity
+							vendorName={vendorName}
+							threshold={threshold}
+							metrics={overview.metrics}
+							points={overview.sensitivity}
+							stableRange={overview.stableRange}
+						/>
+					</Reveal>
+					<Reveal index={index++}>
+						<CoveragePanel
+							coverage={overview.coverage}
+							suggestedType={overview.coverage.suggested > 0 ? entityType : null}
+						/>
+					</Reveal>
+				</div>
 			</div>
 
-			<div className="grid grid-cols-1 gap-4 @5xl:grid-cols-12">
-				<Reveal index={index++} className="@5xl:col-span-7">
-					<ThresholdSensitivity
-						vendorName={vendorName}
-						threshold={threshold}
-						metrics={overview.metrics}
-						points={overview.sensitivity}
-						stableRange={overview.stableRange}
-						className="h-full"
-					/>
-				</Reveal>
-				<Reveal index={index++} className="@5xl:col-span-5">
-					<WhyTheyDisagree
-						vendorName={vendorName}
-						patterns={overview.fieldPatterns}
-						className="h-full"
-					/>
-				</Reveal>
-			</div>
+			<Reveal index={index++}>
+				<WhyTheyDisagree vendorName={vendorName} patterns={overview.fieldPatterns} />
+			</Reveal>
 		</div>
 	)
 }

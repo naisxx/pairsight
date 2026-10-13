@@ -35,8 +35,9 @@ function isTyping(target: EventTarget | null) {
 }
 
 // Every keyboard shortcut on the page, in a small dialog: `?` opens it from
-// anywhere but a field, and so does the hint under the list for anyone who
-// hasn't learned the `?` yet. Hidden on touch screens, where there are no keys.
+// anywhere but a field, and so does the hint (on Pairs, the main keys and
+// `?` for the rest) for anyone who hasn't learned the `?` yet. Hidden on
+// touch screens, where there are no keys.
 export function ShortcutsDialog({
 	set,
 	showHint = false
@@ -65,9 +66,12 @@ export function ShortcutsDialog({
 					type="button"
 					onClick={() => setIsOpen(true)}
 					aria-keyshortcuts="?"
-					className="text-text-muted hover:text-text mt-3 inline-flex items-center gap-1 text-xs transition-colors duration-150 pointer-coarse:hidden"
+					className="text-text-muted hover:text-text inline-flex flex-wrap items-center gap-1 text-sm transition-colors duration-150 pointer-coarse:hidden"
 				>
-					{t.rich('hint', { key: (chunks) => <Kbd>{chunks}</Kbd> })}
+					{t.rich(set === 'results' ? 'hintKeys' : 'hint', {
+						k: (chunks) => <Kbd>{chunks}</Kbd>,
+						key: (chunks) => <Kbd>{chunks}</Kbd>
+					})}
 				</button>
 			)}
 			<Dialog

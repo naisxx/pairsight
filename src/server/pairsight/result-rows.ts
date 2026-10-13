@@ -258,10 +258,21 @@ export function countCategories(rows: ResultRow[]): CategoryCounts {
 	return counts
 }
 
-// The requested vendor if it's part of this run, else the first one.
+// The requested vendor if it's part of this run, else the first one: callers
+// pass the vendors best first (byOrder), so that's the best-scoring vendor.
 export function pickVendorId(
 	vendors: Array<{ id: string }>,
 	requested: string | undefined
 ): string | undefined {
 	return vendors.some((vendor) => vendor.id === requested) ? requested : vendors[0]?.id
+}
+
+// The vendors in the given order of IDs (best first, from ranking.ts); any
+// not in it keep their place after those that are.
+export function byOrder<T extends { id: string }>(vendors: T[], ids: string[]): T[] {
+	const place = (id: string) => {
+		const index = ids.indexOf(id)
+		return index === -1 ? ids.length : index
+	}
+	return [...vendors].sort((a, b) => place(a.id) - place(b.id))
 }
