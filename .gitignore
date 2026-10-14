@@ -27,6 +27,9 @@ prisma/generated/
 supabase/.branches/
 supabase/.temp/
 
+# the Windows installer's build output (deploy/windows/pairsight.iss)
+deploy/windows/Output/
+
 # misc
 .DS_Store
 *.pem

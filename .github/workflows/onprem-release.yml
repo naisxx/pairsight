@@ -1,0 +1,89 @@
+name: On-prem release
+
+# A tag `onprem-v<version>` (e.g. onprem-v1.0.0) publishes PairSight for
+# customers' own machines (docs/PairSight-OnPrem.md): the image to GHCR, then
+# PairSight-Setup-<version>.exe, pinned to that image's digest, on a GitHub
+# Release. The installer is signed when the signing certificate's secrets
+# exist; until then it's published unsigned and the notes say so.
+
+on:
+  push:
+    tags: ['onprem-v*']
+
+permissions:
+  contents: write
+  packages: write
+
+env:
+  IMAGE: ghcr.io/8xplays/pairsight-onprem
+
+jobs:
+  image:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      digest: ${{ steps.build.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: version
+        run: echo "version=${GITHUB_REF_NAME#onprem-v}" >> "$GITHUB_OUTPUT"
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/onprem/Dockerfile
+          platforms: linux/amd64
+          push: true
+          tags: |
+            ${{ env.IMAGE }}:${{ steps.version.outputs.version }}
+            ${{ env.IMAGE }}:latest
+          build-args: PAIRSIGHT_VERSION=${{ steps.version.outputs.version }}
+          cache-from: type=gha,scope=onprem
+          cache-to: type=gha,scope=onprem,mode=max
+
+  installer:
+    needs: image
+    runs-on: windows-latest
+    env:
+      VERSION: ${{ needs.image.outputs.version }}
+      IMAGE_REF: ghcr.io/8xplays/pairsight-onprem@${{ needs.image.outputs.digest }}
+      SIGNING_CERT: ${{ secrets.WINDOWS_SIGNING_CERT }}
+      SIGNING_PASSWORD: ${{ secrets.WINDOWS_SIGNING_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          # Pinned, as in onprem.yml: the theme needs 6.7.
+          choco upgrade innosetup --version=6.7.1 --allow-downgrade --no-progress -y
+          if ($LASTEXITCODE -notin 0, 3010) { exit $LASTEXITCODE }
+          $iscc = 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+          $arguments = @("/DAppVersion=$env:VERSION", "/DImageRef=$env:IMAGE_REF")
+          if ($env:SIGNING_CERT) {
+            [IO.File]::WriteAllBytes("$env:RUNNER_TEMP\signing.pfx", [Convert]::FromBase64String($env:SIGNING_CERT))
+            $signtool = Get-ChildItem 'C:\Program Files (x86)\Windows Kits\10\bin\*\x64\signtool.exe' |
+              Sort-Object FullName -Descending | Select-Object -First 1
+            $arguments += '/DSign'
+            $arguments += "/Spairsight=`"$($signtool.FullName)`" sign /f `"$env:RUNNER_TEMP\signing.pfx`" /p $env:SIGNING_PASSWORD /fd sha256 /tr http://timestamp.digicert.com /td sha256 `$f"
+          }
+          & $iscc @arguments deploy/windows/pairsight.iss
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Publish the release
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          $signed = if ($env:SIGNING_CERT) { 'Signed.' } else { 'Not signed yet: Windows SmartScreen will warn before it runs.' }
+          $notes = @"
+          PairSight $env:VERSION for your own Windows machine. Needs Docker Desktop running, 8 GB of memory and 10 GB free.
+
+          Runs image ``$env:IMAGE_REF``. $signed
+          "@
+          gh release create $env:GITHUB_REF_NAME "deploy/windows/Output/PairSight-Setup-$env:VERSION.exe" `
+            --title "PairSight $env:VERSION (on-prem)" --notes $notes
