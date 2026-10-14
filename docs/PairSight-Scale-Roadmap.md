@@ -440,9 +440,8 @@ are noted; the later items assume the earlier ones exist.
     local-review gate. `check:standards` requires it whenever a
     `pyproject.toml` is tracked. ESLint keeps `node:child_process` to the
     one runner (`src/server/pairsight/splink/service.ts`).
-  - **On-prem:** `services/splink/Dockerfile`; `SPLINK_PYTHON` points the
-    worker at a wrapper that runs it. Full on-prem packaging stays under
-    "Later".
+  - **On-prem:** the app's image (`deploy/onprem/Dockerfile`) carries the
+    service and its Python; see `docs/PairSight-OnPrem.md`.
   - **Benchmark:** `scripts/splink-spike/` now scores the service's own
     model, for any later change to it.
 
@@ -786,8 +785,8 @@ The plan as first written:
 ### Later
 
 - **On-prem packaging:** web, worker, Splink service and Postgres as
-  containers, with the customer's own Jev key. In progress, Windows first:
-  see `docs/PairSight-OnPrem.md`.
+  containers, with the customer's own Jev key. Done for Windows (Docker
+  Desktop and an installer): see `docs/PairSight-OnPrem.md`.
 - **Rerun item 0's scale files** at 100k and 1M once items 1–6 exist.
 - Human review, analytics events, the prompt-audit fixes, vendor-specific
   file formats and legacy `.xls`, verified ground-truth uploads and an

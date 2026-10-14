@@ -76,8 +76,8 @@ rules.
 
 `SPLINK_PYTHON` (which Python runs it; unset means the local venv, and with
 neither Splink is off), `SPLINK_MEMORY_LIMIT` (DuckDB's cap; it spills to
-disk past it) and `SPLINK_TIMEOUT_MS`. On-prem, `services/splink/Dockerfile`
-builds the service; point `SPLINK_PYTHON` at a wrapper that runs the image
-with the job's temp folder mounted. Memory: about 0.4 GB at 10K records (the
+disk past it) and `SPLINK_TIMEOUT_MS`. On-prem, the app's own image
+(`deploy/onprem/Dockerfile`) carries the service and its Python, with
+`SPLINK_PYTHON` set to it. Memory: about 0.4 GB at 10K records (the
 app's limit) for every type; at 100K about 5 GB for people, 1.9 GB for
 organisations and 2.4 GB for products.
