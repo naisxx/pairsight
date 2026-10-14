@@ -12,6 +12,11 @@ const envSchema = z.object({
 	// priced from the bundled rate card), the first account becomes the
 	// admin, and admins manage people in Settings.
 	PAIRSIGHT_DEPLOYMENT: z.enum(['hosted', 'onprem']).default('hosted'),
+	// Whether this build has the marketing site, the landing page and the
+	// demo. Set by next.config.ts at build from PAIRSIGHT_DEPLOYMENT (`off`
+	// on-prem) and fixed into the bundle; never set it yourself. Code reads
+	// process.env.PAIRSIGHT_MARKETING directly, so the build can drop it.
+	PAIRSIGHT_MARKETING: z.enum(['on', 'off']).default('on'),
 	// Only read by the Prisma CLI (`migrate dev`/`migrate deploy`), never by
 	// the running app — so it's required in CI/local dev (where migrations
 	// run) but optional here, or every Vercel deployment would be forced to

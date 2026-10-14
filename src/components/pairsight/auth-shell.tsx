@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { EXACT_FORMATS } from '@/i18n/formats'
 import { Link } from '@/i18n/routing'
 import { mosaicOf } from '@/lib/pairsight/mosaic'
-import { landingDemo } from '@/server/pairsight/landing-demo'
+import { demoPreview } from '@/server/pairsight/demo-preview'
 import { Glyph } from './glyph'
 import { Mosaic } from './mosaic'
 import { SlimBar } from './slim-bar'
@@ -16,7 +16,8 @@ const PROMISES = [
 // The page sign-in, sign-up and onboarding share (pairsight-handoff Auth): a
 // slim bar with the mark, the way to the demo and the theme switch; the
 // title, one sentence and the form; and beside them the demo's run as a
-// mosaic and what happens to your records before you upload anything.
+// mosaic and what happens to your records before you upload anything. A
+// build without the demo (on-prem) leaves out its link and mosaic.
 export async function AuthShell({
 	title,
 	description,
@@ -32,17 +33,20 @@ export async function AuthShell({
 	const t = await getTranslations('Auth')
 	// The products demo's best vendor, from its recorded run: the same mosaic
 	// the landing page leads with, and nothing here waits on the database.
-	const [leader] = landingDemo().vendors
+	const vendors = await demoPreview()
+	const leader = vendors?.[0]
 	const mosaic = leader == null ? null : mosaicOf(leader.counts)
 	return (
 		<div className="bg-bg text-text flex min-h-dvh flex-col text-base">
 			<SlimBar homeHref={homeHref} homeLabel={t('home')} className="drop">
-				<Link
-					href="/sandbox"
-					className="text-text decoration-border-strong hover:decoration-text inline-flex min-h-11 items-center underline underline-offset-[3px] transition-[text-decoration-color] duration-150"
-				>
-					{t('demoFirst')}
-				</Link>
+				{vendors != null && (
+					<Link
+						href="/sandbox"
+						className="text-text decoration-border-strong hover:decoration-text inline-flex min-h-11 items-center underline underline-offset-[3px] transition-[text-decoration-color] duration-150"
+					>
+						{t('demoFirst')}
+					</Link>
+				)}
 			</SlimBar>
 			<div className="mx-auto flex w-full max-w-[1280px] flex-1 flex-wrap items-stretch gap-x-20 gap-y-12 px-4 py-16 md:px-8">
 				<main id="main" className="min-w-0 flex-[1_1_360px] md:max-w-[440px]">

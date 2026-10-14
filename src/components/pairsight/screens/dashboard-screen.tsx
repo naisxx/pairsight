@@ -11,7 +11,7 @@ import { Glyph } from '@/components/pairsight/glyph'
 import { AnimatedCount } from '@/components/ui/animated-number'
 import { Reveal } from '@/components/ui/reveal'
 import type { Dashboard } from '@/server/pairsight/dashboard'
-import { landingDemo } from '@/server/pairsight/landing-demo'
+import { demoPreview } from '@/server/pairsight/demo-preview'
 
 // Evaluations still in setup shown to pick up: the newest few.
 const CONTINUE_SHOWN = 3
@@ -79,7 +79,7 @@ export async function DashboardScreen({
 			{header}
 			{rows.length === 0 ? (
 				// What Results looks like, from the demo's real run (built once, at load).
-				<EmptyEvaluations previewVendors={landingDemo().vendors} />
+				<EmptyEvaluations previewVendors={await demoPreview()} />
 			) : (
 				// One evaluation being deleted leaves every card and row at once.
 				<PendingDeletesProvider>

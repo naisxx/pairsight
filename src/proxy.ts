@@ -67,6 +67,16 @@ export default async function proxy(request: NextRequest) {
 		}
 	}
 
+	// A build without the landing page (on-prem, next.config.ts) opens on
+	// evaluations, which sends anyone signed out to sign in.
+	if (process.env.PAIRSIGHT_MARKETING === 'off' && LANDING_PATH.test(request.nextUrl.pathname)) {
+		const toEvaluations = NextResponse.redirect(new URL('/evaluations', request.url))
+		supabaseResponse.cookies.getAll().forEach((cookie) => {
+			toEvaluations.cookies.set(cookie)
+		})
+		return toEvaluations
+	}
+
 	// A fresh nonce per page view: a guessable one would let a script in.
 	// Built after Supabase so its cookie writes on `request` come along.
 	const nonce = Buffer.from(crypto.randomUUID()).toString('base64')

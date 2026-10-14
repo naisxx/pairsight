@@ -13,12 +13,13 @@ const STEPS = [
 ] as const
 
 // The dashboard before the first evaluation: the three steps, the way in,
-// and a picture of where they lead.
-export function EmptyEvaluations({ previewVendors }: { previewVendors: LandingVendor[] }) {
+// and a picture of where they lead. A build without the demo (on-prem,
+// previewVendors null) has the steps and the way in only.
+export function EmptyEvaluations({ previewVendors }: { previewVendors: LandingVendor[] | null }) {
 	const t = useTranslations('Evaluations')
 	return (
 		<section className="border-border bg-surface mt-12 grid grid-cols-1 items-center gap-8 rounded-lg border p-7 @3xl:p-8 @5xl:grid-cols-12">
-			<div className="@5xl:col-span-5">
+			<div className={previewVendors == null ? '@5xl:col-span-12' : '@5xl:col-span-5'}>
 				<h2 className="type-display-sm">{t('emptyTitle')}</h2>
 				<p className="text-text-muted mt-2 text-[0.9375rem] leading-relaxed">
 					{t('emptyDescription')}
@@ -38,15 +39,19 @@ export function EmptyEvaluations({ previewVendors }: { previewVendors: LandingVe
 				</ol>
 				<div className="mt-6 flex flex-wrap gap-2">
 					<NewEvaluationButton />
-					<Button variant="secondary" asChild>
-						<Link href="/sandbox">{t('exploreSandbox')}</Link>
-					</Button>
+					{previewVendors != null && (
+						<Button variant="secondary" asChild>
+							<Link href="/sandbox">{t('exploreSandbox')}</Link>
+						</Button>
+					)}
 				</div>
 			</div>
-			<Reveal index={2} className="@5xl:col-span-7">
-				<ProductPreview vendors={previewVendors} />
-				<p className="text-text-muted type-caption mt-2 text-center">{t('previewCaption')}</p>
-			</Reveal>
+			{previewVendors != null && (
+				<Reveal index={2} className="@5xl:col-span-7">
+					<ProductPreview vendors={previewVendors} />
+					<p className="text-text-muted type-caption mt-2 text-center">{t('previewCaption')}</p>
+				</Reveal>
+			)}
 		</section>
 	)
 }

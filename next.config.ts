@@ -28,8 +28,20 @@ const SECURITY_HEADERS = [
 	{ key: 'Cross-Origin-Opener-Policy', value: 'same-origin' }
 ]
 
+const isOnPremBuild = process.env.PAIRSIGHT_DEPLOYMENT === 'onprem'
+
 const nextConfig: NextConfig = {
 	reactStrictMode: true,
+	// The on-prem image (deploy/onprem/Dockerfile) ships only the files the
+	// server loads, traced by the build; hosted builds stay as they are.
+	output: isOnPremBuild ? 'standalone' : undefined,
+	// Fixed into the bundle at build. The landing page and the demo are the
+	// marketing site: hosted and local dev have them, the on-prem build
+	// doesn't (docs/PairSight-OnPrem.md, "What the image ships"). Code
+	// behind `process.env.PAIRSIGHT_MARKETING !== 'off'` is dropped from it.
+	env: {
+		PAIRSIGHT_MARKETING: isOnPremBuild ? 'off' : 'on'
+	},
 	// Don't announce the framework (and its version range) on every response.
 	poweredByHeader: false,
 	async headers() {
