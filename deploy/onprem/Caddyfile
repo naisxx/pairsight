@@ -1,0 +1,21 @@
+# PairSight's gateway (compose.yaml). Plain HTTP: only this machine reaches it
+# (the port is published on 127.0.0.1). Team access later adds a hostname
+# here, and Caddy then serves HTTPS with its own certificate.
+{
+	admin off
+	auto_https off
+}
+
+# The app, on the one published port.
+:8080 {
+	reverse_proxy app:3000
+}
+
+# Sign-in, for the app server only: this port is never published. The app
+# calls {NEXT_PUBLIC_SUPABASE_URL}/auth/v1/..., and GoTrue serves from /.
+:9999 {
+	handle_path /auth/v1/* {
+		reverse_proxy auth:9999
+	}
+	respond 404
+}

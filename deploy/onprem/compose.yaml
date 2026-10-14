@@ -1,0 +1,114 @@
+# PairSight on a customer's own machine (docs/PairSight-OnPrem.md). Every
+# value that differs per install comes from .env beside this file (made by
+# `node scripts/onprem-env.mjs` or the installer), and nothing is published
+# beyond 127.0.0.1.
+#
+#   docker compose -f deploy/onprem/compose.yaml up -d
+#
+# Then open http://localhost:3080: the first account made is the admin.
+
+# Not just `pairsight`: a developer's local Supabase uses that project name,
+# and the two must never manage each other's containers.
+name: pairsight-onprem
+
+services:
+  db:
+    image: postgres:17.6-bookworm
+    restart: unless-stopped
+    environment:
+      # The superuser only sets up the two roles (initdb/01-roles.sh).
+      POSTGRES_DB: pairsight
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?run scripts/onprem-env.mjs first}
+      APP_DB_PASSWORD: ${APP_DB_PASSWORD:?run scripts/onprem-env.mjs first}
+      AUTH_DB_PASSWORD: ${AUTH_DB_PASSWORD:?run scripts/onprem-env.mjs first}
+    volumes:
+      - pairsight-db:/var/lib/postgresql/data
+      - ./initdb:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD', 'pg_isready', '--username', 'postgres', '--dbname', 'pairsight']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  auth:
+    image: public.ecr.aws/supabase/gotrue:v2.197.0
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      GOTRUE_DB_DRIVER: postgres
+      GOTRUE_DB_DATABASE_URL: postgres://pairsight_auth:${AUTH_DB_PASSWORD}@db:5432/pairsight?search_path=auth
+      GOTRUE_API_HOST: 0.0.0.0
+      GOTRUE_API_PORT: '9999'
+      API_EXTERNAL_URL: http://localhost:${PAIRSIGHT_PORT:-3080}/auth/v1
+      GOTRUE_SITE_URL: http://localhost:${PAIRSIGHT_PORT:-3080}
+      GOTRUE_JWT_SECRET: ${GOTRUE_JWT_SECRET:?run scripts/onprem-env.mjs first}
+      GOTRUE_JWT_EXP: '3600'
+      GOTRUE_JWT_AUD: authenticated
+      GOTRUE_JWT_DEFAULT_GROUP_NAME: authenticated
+      GOTRUE_JWT_ADMIN_ROLES: service_role
+      # Email and password only, with no email server: accounts are confirmed
+      # as they're made, and nothing else signs anyone in.
+      GOTRUE_EXTERNAL_EMAIL_ENABLED: 'true'
+      GOTRUE_MAILER_AUTOCONFIRM: 'true'
+      GOTRUE_DISABLE_SIGNUP: 'false'
+      GOTRUE_EXTERNAL_PHONE_ENABLED: 'false'
+      GOTRUE_EXTERNAL_ANONYMOUS_USERS_ENABLED: 'false'
+      GOTRUE_PASSWORD_MIN_LENGTH: '8'
+      GOTRUE_SECURITY_REFRESH_TOKEN_ROTATION_ENABLED: 'true'
+    healthcheck:
+      test: ['CMD', 'wget', '--quiet', '--spider', 'http://127.0.0.1:9999/health']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  gateway:
+    image: caddy:2.10.2-alpine
+    restart: unless-stopped
+    ports:
+      - 127.0.0.1:${PAIRSIGHT_PORT:-3080}:8080
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - pairsight-caddy:/data
+
+  app:
+    image: ${PAIRSIGHT_IMAGE:-ghcr.io/8xplays/pairsight-onprem:latest}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      auth:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://pairsight:${APP_DB_PASSWORD}@db:5432/pairsight
+      DIRECT_URL: postgresql://pairsight:${APP_DB_PASSWORD}@db:5432/pairsight
+      PAIRSIGHT_SECRET_KEY: ${PAIRSIGHT_SECRET_KEY:?run scripts/onprem-env.mjs first}
+      # Sign-in, through the gateway's unpublished port (Caddyfile). Only the
+      # server calls it; GoTrue ignores the key, which the client requires.
+      NEXT_PUBLIC_SUPABASE_URL: http://gateway:9999
+      NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: onprem
+      NEXT_PUBLIC_APP_URL: http://localhost:${PAIRSIGHT_PORT:-3080}
+      RUN_WORKER_POOL: onprem
+      # Lower than hosted: a laptop shares its cores with everything else.
+      RUN_WORKER_CONCURRENCY: ${RUN_WORKER_CONCURRENCY:-50}
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000/sign-in').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+
+# Named outright, not after the project: backups, restores and uninstall
+# (deploy/windows/pairsight.ps1) find the data by this name.
+volumes:
+  pairsight-db:
+    name: pairsight-onprem-db
+  pairsight-caddy:
+    name: pairsight-onprem-caddy

@@ -1,0 +1,29 @@
+# The build context for deploy/onprem/Dockerfile is the repo root: send it
+# the source, never local installs, builds, env files or personal folders.
+**/node_modules
+.next
+.git
+.github
+.claude
+.claude-logs
+.codex
+.cursor
+.vscode
+e2e
+playwright-report
+test-results
+coverage
+docs
+pairsight-handoff
+services/splink/.venv
+services/splink/tests
+scripts/splink-spike/out
+**/*.map
+**/__pycache__
+**/.pytest_cache
+**/.ruff_cache
+**/.env
+**/.env.*
+!.env.example
+*.md
+*.html

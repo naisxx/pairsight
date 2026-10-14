@@ -42,11 +42,13 @@
 //   POST /hang?marker=&count=1   the next `count` calls never get an answer
 //   POST /garbage?marker=&count=1   a 200 whose body isn't JSON
 //
-// Usage: node scripts/jev-stub.mjs   (JEV_STUB_PORT, default 4010)
+// Usage: node scripts/jev-stub.mjs   (JEV_STUB_PORT, default 4010;
+// JEV_STUB_HOST, default 127.0.0.1, set to 0.0.0.0 inside a container)
 
 import { createServer } from 'node:http'
 
 const PORT = Number(process.env.JEV_STUB_PORT ?? 4010)
+const HOST = process.env.JEV_STUB_HOST ?? '127.0.0.1'
 const flakySeen = new Set()
 const retrySeen = new Set()
 // Recent request bodies for /calls; capped so a long dev session can't grow it forever.
@@ -301,6 +303,6 @@ function answer(raw, key, response) {
 	})
 }
 
-server.listen(PORT, '127.0.0.1', () => {
-	console.log(`Jev stub listening on http://127.0.0.1:${PORT}/v1/systemone`)
+server.listen(PORT, HOST, () => {
+	console.log(`Jev stub listening on http://${HOST}:${PORT}/v1/systemone`)
 })

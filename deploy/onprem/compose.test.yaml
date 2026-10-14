@@ -1,0 +1,27 @@
+# Testing only: the Jev stub (scripts/jev-stub.mjs) beside the stack, so a
+# run never reaches real Jev. Layer it over compose.yaml:
+#
+#   docker compose -f deploy/onprem/compose.yaml -f deploy/onprem/compose.test.yaml up -d --wait
+#
+# The admin then saves any key with Jev's address http://jev-stub:4010/v1
+# (e2e/onprem.spec.ts, E2E_JEV_ADDRESS).
+
+services:
+  jev-stub:
+    image: node:22.22-bookworm-slim
+    command: ['node', '/stub/jev-stub.mjs']
+    environment:
+      JEV_STUB_HOST: 0.0.0.0
+    volumes:
+      - ../../scripts/jev-stub.mjs:/stub/jev-stub.mjs:ro
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:4010/health').then((r) => process.exit(r.ok ? 0 : 1), () => process.exit(1))"
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 15
