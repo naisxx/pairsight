@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Motion</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.ps{--bg:#F7F6F3;--sf:#FFFFFF;--line:#DDDBD4;--tx:#0D0D0E;--tx2:#3D3D40;--tx3:#66666B;background:var(--bg);color:var(--tx);font-family:'Instrument Sans',system-ui,sans-serif;font-size:16px;line-height:1.5;padding:72px 64px 96px}
+.ps *{box-sizing:border-box}
+.h{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;letter-spacing:-.03em;line-height:.98;margin:0}
+.lab{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px}
+.sec{margin-top:80px;padding-top:32px;border-top:2px solid var(--tx)}
+.sec h2{font-size:44px}
+.sec > p{max-width:720px;color:var(--tx2);margin:14px 0 0;font-size:17px}
+table{width:100%;border-collapse:collapse;margin-top:28px;font-size:15px}
+th,td{text-align:left;padding:12px 20px 12px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:500}
+td:first-child{font-weight:600;width:19%}td:nth-child(3){width:17%;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px}td:nth-child(4){width:15%;color:var(--tx2)}
+.note{background:var(--sf);border:1px solid var(--line);border-radius:20px;padding:24px 28px;margin-top:28px;max-width:900px}
+.note h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;letter-spacing:-.02em;margin:0 0 8px}
+.note p{margin:0;color:var(--tx2)}
+</style>
+</helmet>
+<div class="ps">
+<p class="lab">Design system · 03 · Motion</p>
+<h1 class="h" style="font-size: 96px; margin-top: 20px">Light follows<br><span style="color: var(--tx3)">attention.</span></h1>
+<p style="max-width: 720px; font-size: 19px; line-height: 30px; color: var(--tx2); margin: 28px 0 0">Three things move on the landing page: the ground lights where the pointer is, the mosaic recolours when the vendor changes, and the how-it-works story plays as you scroll. Everything else is a small arrival or a hover. Inside the product nothing loops and nothing runs longer than 240ms.</p>
+
+<div class="sec">
+<h2 class="h">Every animation on the landing page</h2>
+<table>
+<tr><th>Element</th><th>What it does</th><th>Timing</th><th>Runs</th></tr>
+<tr><td>Grid ground</td><td>A 48px grid of hairlines and dots. Two masked copies sit on top: vermilion within 240px of the pointer at 60% strength, ice within 480px at 35%. Both breathe between 70% and 100% of that strength. Hidden behind the header, the pair ticker and the footer. With no pointer the glow rests at 72% across, 380px down.</td><td>follows pointer · 5s breath</td><td>On pointer move</td></tr>
+<tr><td>Hero text</td><td>Label, headline, lead and buttons rise 18px and fade in, 80ms apart</td><td>800ms</td><td>Once, on load</td></tr>
+<tr><td>Doubled word</td><td>The ice outline travels in from the lower right and stops slightly off the solid word</td><td>1.3s, after 500ms</td><td>Once</td></tr>
+<tr><td>Mosaic, vendor switch</td><td>286 tiles change colour in a ripple from the centre outwards; each tile waits 40ms per tile of distance. Counts and the sentence update at once.</td><td>500ms per tile</td><td>On switch</td></tr>
+<tr><td>Vendor auto-switch</td><td>The hero changes vendor on a timer; a vermilion bar fills along the active button. Stops for good once a visitor picks one.</td><td>5.2s</td><td>Loop until clicked</td></tr>
+<tr><td>Mosaic tile</td><td>Grows to 150% under the pointer</td><td>200ms</td><td>On hover</td></tr>
+<tr><td>Hero panel</td><td>Tilts up to 7° toward the pointer; a soft light follows the cursor across the hero. Two floating chips bob 9px.</td><td>300ms · 6s</td><td>On pointer move · loop</td></tr>
+<tr><td>Pair ticker</td><td>Two rows of real pairs moving in opposite directions; pauses on hover</td><td>60s and 70s, linear</td><td>Loop</td></tr>
+<tr><td>How it works: three chained scenes</td><td>The section pins for 6,200px of scroll; three words (Narrow, Blind, Open) swap in turn. <b>Narrow:</b> two layers of dots zoom past and fade, 18 vermilion dots light one by one, 5 ice dots fly in from the vendors' side, and a counter runs from 1,999,000 down to 286. <b>Blind:</b> a record card travels through three glass panes; the vendor name, vendor decision and record ID chips ride with the card to their pane, then drop back to where they started, struck through and dimmed, and the card reaches Jev, whose score pops. <b>Open:</b> two record cards start overlapped and pull apart, six field rows rise in one at a time with their tiles, and the verdict bar rises last. Six loose tiles and outlines drift at different speeds (360px to 2,600px of travel) for depth. A vermilion rail fills on the left. A "Skip the walkthrough" link sits above it.</td><td>with scroll</td><td>Scroll-linked</td></tr>
+<tr><td>Outlined rings</td><td>Drift 220px against the scroll beside two sections</td><td>with scroll</td><td>Scroll-linked</td></tr>
+<tr><td>Pair inspector</td><td>The two record columns dock from each side with a 3° turn; centre tiles pop one row at a time; the verdict bar rises last</td><td>with scroll</td><td>Scroll-linked</td></tr>
+<tr><td>Bento cards</td><td>Rise as they enter; lift 4px on hover. The chart lines draw, the cut-off knob sways between 0.45 and 0.55, the run cards fan out on hover.</td><td>300ms · 4.5s</td><td>Scroll, hover, loop</td></tr>
+<tr><td>Agreement bars</td><td>Grow from the left as they enter</td><td>with scroll</td><td>Scroll-linked</td></tr>
+<tr><td>Figures</td><td>Hover or focus turns the figure vermilion and unfolds the pairs behind it</td><td>450ms</td><td>On hover</td></tr>
+<tr><td>Caveat list</td><td>Hovering one line dims the others to 35%</td><td>240ms</td><td>On hover</td></tr>
+<tr><td>Question rows</td><td>The equals tile turns 90° and fills with ink</td><td>240ms</td><td>On open</td></tr>
+<tr><td>Main button</td><td>A sheen sweeps across, a vermilion glow appears, the arrow moves 4px; press scales to 98%</td><td>600ms / 240ms</td><td>On hover</td></tr>
+<tr><td>Theme switch</td><td>Grounds and text cross-fade</td><td>350ms</td><td>On click</td></tr>
+</table>
+<p>Easing is <span class="mono">cubic-bezier(0.2, 0, 0, 1)</span> for arrivals and <span class="mono">cubic-bezier(0.3, 0, 0.1, 1)</span> for anything that slides into place.</p>
+</div>
+
+<div class="sec">
+<h2 class="h">Notes for the build</h2>
+<div class="note"><h3>Scroll-linked effects need a fallback</h3><p>The design uses CSS scroll timelines, which today run in Chrome and Edge only. Every element's resting style is its final, visible state, so other browsers show the three how-it-works steps stacked and static. For Safari and Firefox, drive the same keyframes from scroll position in script.</p></div>
+<div class="note"><h3>The grid glow is two CSS variables</h3><p>A single pointer listener on the document writes the pointer's x and y, relative to the page, onto the grid layer. The masks read them. Do not route it through component state: it must not re-render the page.</p></div>
+<div class="note"><h3>Reduced motion</h3><p>When the system asks for less motion, all animation and transitions are off and the page shows its settled state. The grid stays, with its glow at the rest position.</p></div>
+<div class="note"><h3>Small screens</h3><p>Below 900px the how-it-works section does not pin: the three steps stack. The floating chips are hidden and the bento becomes one column.</p></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2600}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

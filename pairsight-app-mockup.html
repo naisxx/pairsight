@@ -1,0 +1,2378 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width,initial-scale=1" />
+		<title>PairSight — app mockup</title>
+		<link rel="preconnect" href="https://fonts.googleapis.com" />
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+		<link
+			href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap"
+			rel="stylesheet"
+		/>
+		<style>
+			:root {
+				--bg: #0b0d10;
+				--surface: #12151a;
+				--surface2: #181c22;
+				--line: #232830;
+				--line2: #333a45;
+				--text: #f2f4f7;
+				--muted: #9ba5b3;
+				--dim: #6b7583;
+				--accent: #ff7a5c;
+				--accent-ink: #1a0b07;
+				--jev: #b79cff;
+				--jev-bg: #1e1a2e;
+				--vendor: #3dd9c5;
+				--vendor-bg: #10262a;
+				--sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+				--mono: 'JetBrains Mono', ui-monospace, Menlo, monospace;
+			}
+			* {
+				box-sizing: border-box;
+				margin: 0;
+				padding: 0;
+			}
+			body {
+				background: var(--bg);
+				color: var(--text);
+				font-family: var(--sans);
+				font-size: 15px;
+				line-height: 1.5;
+				-webkit-font-smoothing: antialiased;
+			}
+			button {
+				font: inherit;
+				color: inherit;
+				background: none;
+				border: 0;
+				cursor: pointer;
+			}
+			.mono {
+				font-family: var(--mono);
+				font-variant-numeric: tabular-nums;
+			}
+			:focus-visible {
+				outline: 2px solid var(--accent);
+				outline-offset: 2px;
+				border-radius: 6px;
+			}
+
+			/* top bar: solid, never translucent */
+			.top {
+				position: sticky;
+				top: 0;
+				z-index: 20;
+				background: var(--bg);
+				border-bottom: 1px solid var(--line);
+				height: 52px;
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+				padding: 0 24px;
+				gap: 16px;
+			}
+			.crumbs {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				color: var(--muted);
+				font-size: 14px;
+				min-width: 0;
+				white-space: nowrap;
+				overflow: hidden;
+			}
+			.crumbs b {
+				color: var(--text);
+				font-weight: 500;
+			}
+			.logo {
+				display: flex;
+				gap: 2px;
+				margin-right: 6px;
+				flex: none;
+			}
+			.logo i {
+				width: 7px;
+				height: 14px;
+				border-radius: 2px;
+				background: var(--accent);
+			}
+			.logo i + i {
+				background: none;
+				border: 1.5px solid var(--accent);
+			}
+			.demo {
+				display: flex;
+				align-items: center;
+				gap: 12px;
+				font-size: 13px;
+				color: var(--muted);
+				flex: none;
+			}
+			.demo span {
+				border: 1px solid var(--line2);
+				border-radius: 999px;
+				padding: 2px 10px;
+				font-family: var(--mono);
+				font-size: 11px;
+				letter-spacing: 0.06em;
+				text-transform: uppercase;
+			}
+			.btn {
+				height: 34px;
+				padding: 0 14px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-weight: 500;
+				background: var(--accent);
+				color: var(--accent-ink);
+				transition: background 0.15s;
+			}
+			.btn:hover {
+				background: #ff8f75;
+			}
+
+			main {
+				max-width: 1280px;
+				margin: 0 auto;
+				padding: 40px 24px 80px;
+			}
+			.meta {
+				font-size: 13px;
+				color: var(--muted);
+				display: flex;
+				gap: 8px 16px;
+				flex-wrap: wrap;
+				align-items: center;
+			}
+			.meta .ok {
+				color: var(--text);
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.meta .ok:before {
+				content: '';
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: #4ade80;
+			}
+
+			/* verdict */
+			.verdict {
+				margin: 20px 0 8px;
+				font-size: clamp(30px, 4.4vw, 54px);
+				font-weight: 600;
+				letter-spacing: -0.035em;
+				line-height: 1.06;
+				max-width: 980px;
+				text-wrap: balance;
+			}
+			.verdict em {
+				font-style: normal;
+				color: var(--accent);
+			}
+			.verdict span {
+				color: var(--dim);
+			}
+			.caveat {
+				color: var(--muted);
+				font-size: 14px;
+				max-width: 640px;
+			}
+
+			/* cut-off */
+			.cut {
+				margin: 36px 0 0;
+				display: flex;
+				align-items: center;
+				gap: 16px;
+				flex-wrap: wrap;
+				padding: 14px 18px;
+				border: 1px solid var(--line);
+				border-radius: 12px;
+				background: var(--surface);
+			}
+			.cut label {
+				font-size: 13px;
+				color: var(--muted);
+			}
+			.cut output {
+				font-family: var(--mono);
+				font-size: 22px;
+				min-width: 56px;
+			}
+			.cut input {
+				flex: 1;
+				min-width: 180px;
+				appearance: none;
+				height: 4px;
+				border-radius: 4px;
+				background: var(--line2);
+			}
+			.cut input::-webkit-slider-thumb {
+				appearance: none;
+				width: 18px;
+				height: 18px;
+				border-radius: 50%;
+				background: var(--accent);
+				border: 3px solid var(--surface);
+				box-shadow: 0 0 0 1px var(--accent);
+				cursor: grab;
+			}
+			.cut input::-moz-range-thumb {
+				width: 14px;
+				height: 14px;
+				border-radius: 50%;
+				background: var(--accent);
+				border: 3px solid var(--surface);
+				cursor: grab;
+			}
+			.cut small {
+				font-size: 12px;
+				color: var(--dim);
+			}
+			.cut button {
+				font-size: 12px;
+				color: var(--muted);
+				border: 1px solid var(--line2);
+				border-radius: 6px;
+				padding: 4px 10px;
+			}
+			.cut button:hover {
+				color: var(--text);
+			}
+
+			/* head to head */
+			.h2h {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 16px;
+				margin-top: 16px;
+			}
+			.vend {
+				text-align: left;
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				background: var(--surface);
+				padding: 22px;
+				transition: border-color 0.15s;
+			}
+			.vend:hover {
+				border-color: var(--line2);
+			}
+			.vend[aria-pressed='true'] {
+				border-color: var(--accent);
+			}
+			.vend-top {
+				display: flex;
+				justify-content: space-between;
+				align-items: baseline;
+				gap: 12px;
+			}
+			.vend h3 {
+				font-size: 17px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.vend .lead {
+				font-family: var(--mono);
+				font-size: 11px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--accent);
+			}
+			.big {
+				font-family: var(--mono);
+				font-size: clamp(44px, 6vw, 72px);
+				font-weight: 500;
+				letter-spacing: -0.05em;
+				line-height: 1;
+				margin: 14px 0 4px;
+				font-variant-numeric: tabular-nums;
+			}
+			.big small {
+				font-size: 0.35em;
+				color: var(--muted);
+				letter-spacing: 0;
+				font-family: var(--sans);
+				margin-left: 8px;
+			}
+			.sub {
+				display: grid;
+				grid-template-columns: 1fr 1fr;
+				gap: 16px;
+				margin-top: 20px;
+			}
+			.sub div span {
+				font-size: 12.5px;
+				color: var(--muted);
+				display: block;
+			}
+			.sub div b {
+				font-family: var(--mono);
+				font-size: 20px;
+				font-weight: 500;
+				font-variant-numeric: tabular-nums;
+			}
+			.track {
+				height: 6px;
+				border-radius: 6px;
+				background: var(--line);
+				margin-top: 6px;
+				overflow: hidden;
+			}
+			.track i {
+				display: block;
+				height: 100%;
+				border-radius: 6px;
+				background: var(--text);
+				transition: width 0.25s ease;
+			}
+			.seg {
+				display: flex;
+				height: 10px;
+				border-radius: 10px;
+				overflow: hidden;
+				margin-top: 22px;
+				gap: 2px;
+			}
+			.seg i {
+				transition: flex-grow 0.25s ease;
+				min-width: 0;
+			}
+			.seg .s1 {
+				background: var(--text);
+			}
+			.seg .s2 {
+				background: var(--jev);
+			}
+			.seg .s3 {
+				background: var(--vendor);
+			}
+			.seg .s4 {
+				background: var(--line2);
+			}
+			.legend {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px 16px;
+				margin-top: 10px;
+				font-size: 12.5px;
+				color: var(--muted);
+			}
+			.legend b {
+				font-family: var(--mono);
+				color: var(--text);
+				font-weight: 500;
+				margin-left: 4px;
+			}
+			.legend span:before {
+				content: '';
+				display: inline-block;
+				width: 8px;
+				height: 8px;
+				border-radius: 2px;
+				margin-right: 6px;
+				background: var(--c);
+			}
+
+			/* view tabs */
+			.views {
+				scroll-margin-top: 60px;
+				display: flex;
+				gap: 24px;
+				border-bottom: 1px solid var(--line);
+				margin-top: 36px;
+			}
+			.views button {
+				padding: 10px 0;
+				font-size: 15px;
+				color: var(--muted);
+				border-bottom: 2px solid transparent;
+				margin-bottom: -1px;
+				display: flex;
+				align-items: center;
+				gap: 8px;
+			}
+			.views button:hover {
+				color: var(--text);
+			}
+			.views button[aria-selected='true'] {
+				color: var(--text);
+				border-color: var(--accent);
+			}
+			.views .n {
+				font-family: var(--mono);
+				font-size: 12px;
+				background: var(--surface2);
+				border-radius: 999px;
+				padding: 1px 8px;
+				color: var(--muted);
+			}
+			[hidden] {
+				display: none !important;
+			}
+			.ov {
+				display: grid;
+				grid-template-columns: minmax(0, 1fr) minmax(0, 1.3fr);
+				gap: 16px;
+				margin-top: 16px;
+			}
+			.card {
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				background: var(--surface);
+				padding: 22px;
+			}
+			.card h2 {
+				font-size: 16px;
+				font-weight: 600;
+				letter-spacing: -0.01em;
+			}
+			.card > p {
+				font-size: 13px;
+				color: var(--muted);
+				margin-top: 2px;
+			}
+			.kv {
+				margin-top: 16px;
+			}
+			.kv div {
+				display: flex;
+				justify-content: space-between;
+				padding: 9px 0;
+				border-top: 1px solid var(--line);
+				font-size: 14px;
+			}
+			.kv span {
+				color: var(--muted);
+			}
+			.chart {
+				width: 100%;
+				height: auto;
+				margin-top: 12px;
+				display: block;
+			}
+			.chart text {
+				font-family: var(--mono);
+				font-size: 10px;
+				fill: var(--dim);
+			}
+			.lg {
+				display: flex;
+				gap: 18px;
+				flex-wrap: wrap;
+				font-size: 12.5px;
+				color: var(--muted);
+				margin-top: 14px;
+			}
+			.lg span:before {
+				content: '';
+				display: inline-block;
+				width: 16px;
+				height: 2px;
+				background: var(--c);
+				vertical-align: middle;
+				margin-right: 7px;
+			}
+			.go {
+				margin-top: 16px;
+				display: inline-flex;
+				gap: 8px;
+				align-items: center;
+				font-size: 14px;
+				font-weight: 500;
+				color: var(--accent);
+			}
+			.go:hover {
+				text-decoration: underline;
+			}
+			@media (max-width: 960px) {
+				.ov {
+					grid-template-columns: 1fr;
+				}
+			}
+
+			/* work area */
+			.work {
+				display: grid;
+				grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+				gap: 16px;
+				margin-top: 24px;
+				align-items: start;
+			}
+			.work h2 {
+				font-size: 20px;
+				font-weight: 600;
+				letter-spacing: -0.02em;
+			}
+			.bar {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+				margin-bottom: 12px;
+				flex-wrap: wrap;
+			}
+			.tabs {
+				display: flex;
+				gap: 4px;
+				border: 1px solid var(--line);
+				border-radius: 8px;
+				padding: 3px;
+				background: var(--surface);
+			}
+			.tabs button {
+				font-size: 13px;
+				padding: 4px 10px;
+				border-radius: 5px;
+				color: var(--muted);
+			}
+			.tabs button[aria-pressed='true'] {
+				background: var(--surface2);
+				color: var(--text);
+			}
+			.table {
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				background: var(--surface);
+				overflow: hidden;
+			}
+			.row {
+				display: grid;
+				grid-template-columns: 160px minmax(0, 1fr) 120px;
+				gap: 14px;
+				align-items: center;
+				width: 100%;
+				text-align: left;
+				padding: 12px 16px;
+				border-top: 1px solid var(--line);
+				transition: background 0.12s;
+			}
+			.row:first-child {
+				border-top: 0;
+			}
+			.row:hover {
+				background: var(--surface2);
+			}
+			.row[aria-selected='true'] {
+				background: var(--surface2);
+				box-shadow: inset 2px 0 0 var(--accent);
+			}
+			.names {
+				min-width: 0;
+				font-size: 14px;
+				line-height: 1.45;
+			}
+			.names div {
+				display: flex;
+				gap: 10px;
+			}
+			.names .id {
+				font-family: var(--mono);
+				font-size: 11.5px;
+				color: var(--dim);
+				flex: none;
+				width: 28px;
+				padding-top: 2px;
+			}
+			mark {
+				background: none;
+				color: var(--accent);
+				font-weight: 500;
+			}
+			.tag {
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+				font-size: 12px;
+				padding: 3px 9px;
+				border-radius: 999px;
+				background: var(--surface2);
+				color: var(--muted);
+				white-space: nowrap;
+				border: 1px solid var(--line);
+			}
+			.tag:before {
+				content: '';
+				width: 6px;
+				height: 6px;
+				border-radius: 50%;
+				background: currentColor;
+			}
+			.tag.j {
+				background: var(--jev-bg);
+				color: var(--jev);
+				border-color: transparent;
+			}
+			.tag.v {
+				background: var(--vendor-bg);
+				color: var(--vendor);
+				border-color: transparent;
+			}
+			.sc {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				justify-content: flex-end;
+				font-family: var(--mono);
+				font-size: 13.5px;
+				font-variant-numeric: tabular-nums;
+			}
+			.meter {
+				position: relative;
+				flex: 1;
+				height: 6px;
+				border-radius: 6px;
+				background: var(--line);
+			}
+			.meter i {
+				position: absolute;
+				inset: 0 auto 0 0;
+				border-radius: 6px;
+				background: var(--text);
+			}
+			.meter u {
+				position: absolute;
+				top: -4px;
+				bottom: -4px;
+				width: 2px;
+				background: var(--accent);
+				transition: left 0.15s;
+			}
+			.empty {
+				padding: 28px 16px;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			.keys {
+				margin-top: 10px;
+				font-size: 12px;
+				color: var(--dim);
+			}
+			kbd {
+				font-family: var(--mono);
+				font-size: 11px;
+				border: 1px solid var(--line2);
+				border-radius: 4px;
+				padding: 1px 5px;
+				color: var(--muted);
+			}
+
+			/* pair panel */
+			.pair {
+				position: sticky;
+				top: 68px;
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				background: var(--surface);
+				padding: 22px;
+			}
+			.pair-top {
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+			}
+			.score {
+				font-family: var(--mono);
+				font-size: 64px;
+				font-weight: 500;
+				letter-spacing: -0.05em;
+				line-height: 1;
+				margin: 18px 0 6px;
+				font-variant-numeric: tabular-nums;
+			}
+			.score small {
+				font-family: var(--sans);
+				font-size: 14px;
+				color: var(--muted);
+				letter-spacing: 0;
+				margin-left: 10px;
+			}
+			.pair .meter {
+				height: 8px;
+				margin: 12px 0 22px;
+				flex: none;
+			}
+			.cols {
+				display: grid;
+				grid-template-columns: 86px 1fr 1fr;
+				border-top: 1px solid var(--line);
+			}
+			.cols > * {
+				padding: 11px 10px 11px 0;
+				border-bottom: 1px solid var(--line);
+				font-size: 14px;
+				min-width: 0;
+				overflow-wrap: anywhere;
+			}
+			.cols .h {
+				font-family: var(--mono);
+				font-size: 11px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--dim);
+			}
+			.cols .k {
+				color: var(--muted);
+				font-size: 13px;
+			}
+			.says {
+				display: grid;
+				gap: 8px;
+				margin-top: 18px;
+			}
+			.says div {
+				display: flex;
+				justify-content: space-between;
+				font-size: 14px;
+			}
+			.says span {
+				color: var(--muted);
+			}
+			.note {
+				margin-top: 16px;
+				font-size: 12.5px;
+				color: var(--dim);
+			}
+			.fade {
+				animation: fade 0.15s ease;
+			}
+			@keyframes fade {
+				from {
+					opacity: 0;
+				}
+				to {
+					opacity: 1;
+				}
+			}
+
+			@media (max-width: 960px) {
+				.h2h,
+				.work {
+					grid-template-columns: 1fr;
+				}
+				.pair {
+					position: static;
+				}
+				.demo em {
+					display: none;
+				}
+			}
+			@media (max-width: 560px) {
+				.row {
+					grid-template-columns: 1fr 84px;
+				}
+				.row .tag {
+					grid-column: 1/-1;
+					justify-self: start;
+				}
+				.cols {
+					grid-template-columns: 64px 1fr 1fr;
+				}
+				main {
+					padding: 28px 16px 60px;
+				}
+				.top {
+					padding: 0 16px;
+				}
+			}
+			@media (prefers-reduced-motion: reduce) {
+				* {
+					animation: none !important;
+					transition: none !important;
+				}
+			}
+
+			/* ---------- app shell ---------- */
+			main {
+				max-width: none;
+				margin: 0;
+				padding: 0;
+				min-width: 0;
+			}
+			.app {
+				display: grid;
+				grid-template-columns: 256px minmax(0, 1fr);
+				min-height: 100vh;
+			}
+			.side {
+				position: sticky;
+				top: 0;
+				height: 100vh;
+				background: var(--bg);
+				border-right: 1px solid var(--line);
+				display: flex;
+				flex-direction: column;
+				padding: 14px 12px;
+			}
+			.brand {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+				font-weight: 600;
+				letter-spacing: -0.02em;
+				padding: 6px 8px 18px;
+				font-size: 16px;
+			}
+			.side a {
+				color: inherit;
+				text-decoration: none;
+			}
+			.home {
+				display: block;
+				padding: 8px 10px;
+				border-radius: 8px;
+				color: var(--muted);
+				font-size: 14px;
+			}
+			.home:hover,
+			.home.on {
+				background: var(--surface);
+				color: var(--text);
+			}
+			.side h6 {
+				font-family: var(--mono);
+				font-size: 10.5px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--dim);
+				font-weight: 500;
+				margin: 22px 10px 4px;
+			}
+			.side .ev {
+				font-size: 14px;
+				font-weight: 500;
+				padding: 0 10px 10px;
+				white-space: nowrap;
+				overflow: hidden;
+				text-overflow: ellipsis;
+			}
+			.steps {
+				display: grid;
+				gap: 2px;
+			}
+			.steps a {
+				display: grid;
+				grid-template-columns: 22px 1fr;
+				gap: 10px;
+				align-items: center;
+				padding: 8px 10px;
+				border-radius: 8px;
+				font-size: 14px;
+			}
+			.steps a:hover {
+				background: var(--surface);
+			}
+			.steps a.on {
+				background: var(--surface2);
+				box-shadow: inset 2px 0 0 var(--accent);
+			}
+			.steps i {
+				width: 20px;
+				height: 20px;
+				border-radius: 50%;
+				border: 1.5px solid var(--line2);
+				display: grid;
+				place-items: center;
+				font-style: normal;
+				font-family: var(--mono);
+				font-size: 10.5px;
+				color: var(--muted);
+			}
+			.steps a.on i {
+				border-color: var(--accent);
+				color: var(--accent);
+			}
+			.steps small {
+				display: block;
+				color: var(--dim);
+				font-size: 12px;
+				line-height: 1.3;
+			}
+			.side-foot {
+				margin-top: auto;
+				display: grid;
+				gap: 8px;
+			}
+			.side-foot .btn {
+				width: 100%;
+			}
+			.ghost {
+				height: 34px;
+				padding: 0 14px;
+				border-radius: 8px;
+				font-size: 14px;
+				font-weight: 500;
+				border: 1px solid var(--line2);
+				display: inline-flex;
+				align-items: center;
+				gap: 8px;
+				color: var(--text);
+				text-decoration: none;
+			}
+			.ghost:hover {
+				background: var(--surface);
+			}
+			.ghost[disabled] {
+				opacity: 0.45;
+				cursor: not-allowed;
+			}
+			a.btn {
+				display: inline-flex;
+				align-items: center;
+				text-decoration: none;
+				gap: 8px;
+			}
+			.page {
+				max-width: 1180px;
+				margin: 0 auto;
+				padding: 40px 28px 110px;
+			}
+			.view {
+				animation: fade 0.15s ease;
+			}
+			.page > h1 {
+				font-size: clamp(28px, 3.4vw, 40px);
+				font-weight: 600;
+				letter-spacing: -0.035em;
+				line-height: 1.08;
+			}
+			.page > h1 em {
+				font-style: normal;
+				color: var(--accent);
+			}
+			.lede {
+				color: var(--muted);
+				max-width: 620px;
+				margin-top: 8px;
+				font-size: 15.5px;
+			}
+			.stack {
+				display: grid;
+				gap: 16px;
+				margin-top: 28px;
+			}
+			.two {
+				display: grid;
+				grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+				gap: 16px;
+				align-items: start;
+			}
+			.eyebrow {
+				font-family: var(--mono);
+				font-size: 11px;
+				letter-spacing: 0.1em;
+				text-transform: uppercase;
+				color: var(--accent);
+				margin-bottom: 6px;
+			}
+			.chips {
+				display: flex;
+				flex-wrap: wrap;
+				gap: 6px;
+				margin-top: 12px;
+			}
+			.chip {
+				font-size: 12.5px;
+				border: 1px solid var(--line2);
+				border-radius: 6px;
+				padding: 3px 9px;
+				color: var(--muted);
+			}
+			.okc {
+				color: #4ade80;
+				font-size: 13px;
+				display: inline-flex;
+				align-items: center;
+				gap: 6px;
+			}
+			.okc:before {
+				content: '';
+				width: 7px;
+				height: 7px;
+				border-radius: 50%;
+				background: #4ade80;
+			}
+			.file {
+				display: flex;
+				align-items: center;
+				gap: 14px 28px;
+				flex-wrap: wrap;
+			}
+			.file .fn {
+				font-family: var(--mono);
+				font-size: 14px;
+			}
+			.file small {
+				display: block;
+				color: var(--dim);
+				font-size: 12.5px;
+				font-family: var(--sans);
+			}
+			.stat span {
+				display: block;
+				font-size: 12.5px;
+				color: var(--muted);
+			}
+			.stat b {
+				font-family: var(--mono);
+				font-size: 22px;
+				font-weight: 500;
+				font-variant-numeric: tabular-nums;
+			}
+			.stats {
+				display: grid;
+				grid-template-columns: repeat(4, 1fr);
+				gap: 16px;
+				margin-top: 18px;
+				padding-top: 18px;
+				border-top: 1px solid var(--line);
+			}
+			table {
+				width: 100%;
+				border-collapse: collapse;
+				font-size: 14px;
+			}
+			th {
+				font-family: var(--mono);
+				font-size: 10.5px;
+				letter-spacing: 0.08em;
+				text-transform: uppercase;
+				color: var(--dim);
+				font-weight: 500;
+				text-align: left;
+				padding: 10px 16px;
+				background: var(--surface);
+				border-bottom: 1px solid var(--line);
+			}
+			td {
+				padding: 11px 16px;
+				border-top: 1px solid var(--line);
+			}
+			td.num,
+			th.num {
+				text-align: right;
+				font-family: var(--mono);
+				font-variant-numeric: tabular-nums;
+			}
+			tbody tr.link {
+				cursor: pointer;
+			}
+			tbody tr.link:hover {
+				background: var(--surface2);
+			}
+			td small {
+				display: block;
+				color: var(--dim);
+				font-size: 12.5px;
+			}
+			.tw {
+				border: 1px solid var(--line);
+				border-radius: 14px;
+				background: var(--surface);
+				overflow: hidden;
+				overflow-x: auto;
+			}
+			label.f {
+				display: block;
+				font-size: 13.5px;
+				font-weight: 500;
+				margin: 18px 0 6px;
+			}
+			textarea,
+			input[type='text'],
+			select {
+				width: 100%;
+				background: var(--bg);
+				border: 1px solid var(--line2);
+				border-radius: 8px;
+				color: var(--text);
+				font: inherit;
+				padding: 10px 12px;
+				resize: vertical;
+			}
+			textarea {
+				min-height: 76px;
+			}
+			.checks {
+				display: grid;
+				grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+				gap: 8px;
+				margin-top: 10px;
+			}
+			.checks label,
+			.rule {
+				display: flex;
+				align-items: center;
+				gap: 10px;
+				font-size: 14px;
+			}
+			input[type='checkbox'] {
+				accent-color: var(--accent);
+				width: 16px;
+				height: 16px;
+			}
+			.rule {
+				justify-content: space-between;
+				padding: 12px 0;
+				border-top: 1px solid var(--line);
+			}
+			.rule small {
+				color: var(--dim);
+				font-family: var(--mono);
+				font-size: 12px;
+			}
+			.segc {
+				display: inline-flex;
+				border: 1px solid var(--line);
+				border-radius: 10px;
+				padding: 3px;
+				background: var(--bg);
+				margin-top: 14px;
+				flex-wrap: wrap;
+			}
+			.segc button {
+				padding: 8px 14px;
+				border-radius: 7px;
+				font-size: 14px;
+				color: var(--muted);
+			}
+			.segc button b {
+				font-family: var(--mono);
+				font-weight: 500;
+				margin-left: 6px;
+			}
+			.segc button[aria-pressed='true'] {
+				background: var(--surface2);
+				color: var(--text);
+				box-shadow: inset 0 -2px 0 var(--accent);
+			}
+			.hero-num {
+				font-family: var(--mono);
+				font-size: 64px;
+				font-weight: 500;
+				letter-spacing: -0.05em;
+				line-height: 1;
+				font-variant-numeric: tabular-nums;
+			}
+			.hero-num small {
+				font-family: var(--sans);
+				font-size: 14px;
+				color: var(--muted);
+				letter-spacing: 0;
+				margin-left: 10px;
+			}
+			.funnel {
+				height: 10px;
+				border-radius: 10px;
+				background: var(--line);
+				margin: 16px 0 6px;
+				overflow: hidden;
+			}
+			.funnel i {
+				display: block;
+				height: 100%;
+				width: 4.7%;
+				min-width: 10px;
+				background: var(--accent);
+				border-radius: 10px;
+			}
+			.vlist {
+				display: grid;
+				gap: 4px;
+				align-content: start;
+			}
+			.vlist button {
+				text-align: left;
+				padding: 12px 14px;
+				border-radius: 10px;
+				border: 1px solid transparent;
+				font-size: 14.5px;
+				font-weight: 500;
+			}
+			.vlist button small {
+				display: block;
+				font-weight: 400;
+				color: var(--dim);
+				font-size: 12.5px;
+			}
+			.vlist button[aria-pressed='true'] {
+				background: var(--surface);
+				border-color: var(--line);
+				box-shadow: inset 2px 0 0 var(--accent);
+			}
+			.vlist .add {
+				color: var(--dim);
+				font-weight: 400;
+			}
+			.vcols {
+				display: grid;
+				grid-template-columns: 260px minmax(0, 1fr);
+				gap: 16px;
+				margin-top: 28px;
+				align-items: start;
+			}
+			.actions {
+				position: sticky;
+				bottom: 0;
+				z-index: 15;
+				background: var(--bg);
+				border-top: 1px solid var(--line);
+				padding: 12px 28px;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				gap: 12px;
+			}
+			.actions .btn,
+			.actions .ghost {
+				height: 40px;
+				padding: 0 16px;
+			}
+			.verdict-card {
+				display: flex;
+				justify-content: space-between;
+				align-items: flex-end;
+				gap: 24px;
+				flex-wrap: wrap;
+			}
+			.verdict-card .verdict {
+				font-size: clamp(24px, 3vw, 36px);
+				margin: 6px 0 0;
+			}
+			.inline-meta {
+				display: flex;
+				gap: 8px 28px;
+				flex-wrap: wrap;
+				margin-top: 18px;
+			}
+			@media (max-width: 960px) {
+				.app {
+					grid-template-columns: 1fr;
+				}
+				.side {
+					position: static;
+					height: auto;
+					border-right: 0;
+					border-bottom: 1px solid var(--line);
+					min-width: 0;
+					overflow: hidden;
+				}
+				.top {
+					flex-wrap: wrap;
+					height: auto;
+					padding: 10px 16px;
+				}
+				.crumbs {
+					white-space: normal;
+				}
+				.side h6,
+				.side .ev,
+				.side-foot {
+					display: none;
+				}
+				.steps {
+					grid-auto-flow: column;
+					grid-auto-columns: max-content;
+					overflow-x: auto;
+				}
+				.steps small {
+					display: none;
+				}
+				.two,
+				.vcols {
+					grid-template-columns: 1fr;
+				}
+				.stats {
+					grid-template-columns: 1fr 1fr;
+				}
+				.page {
+					padding: 28px 16px 90px;
+				}
+				.actions {
+					padding: 10px 16px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="app">
+			<aside class="side">
+				<div class="brand">
+					<span class="logo"><i></i><i></i></span>PairSight
+				</div>
+				<a class="home" href="#home" data-nav="home">All evaluations</a>
+				<h6>Current evaluation</h6>
+				<div class="ev">Product catalogue — vendor check</div>
+				<nav class="steps" aria-label="Steps">
+					<a href="#records" data-nav="records"
+						><i>1</i><span>Records<small>24 records</small></span></a
+					>
+					<a href="#vendors" data-nav="vendors"
+						><i>2</i><span>Vendors<small>2 vendors · 12 pairs</small></span></a
+					>
+					<a href="#rules" data-nav="rules"
+						><i>3</i><span>Rules<small>3 rules on</small></span></a
+					>
+					<a href="#plan" data-nav="plan"
+						><i>4</i><span>Check and start<small>13 pairs</small></span></a
+					>
+					<a href="#results" data-nav="results"
+						><i>5</i><span>Results<small>Run 1</small></span></a
+					>
+				</nav>
+				<div class="side-foot">
+					<button class="btn">Sign up</button
+					><button class="ghost" style="justify-content: center">Sign in</button>
+				</div>
+			</aside>
+			<main>
+				<header class="top">
+					<div class="crumbs">
+						Demo <span>›</span> Product catalogue — vendor check <span>›</span>
+						<b id="crumb">Evaluations</b>
+					</div>
+					<div class="demo">
+						<span>Demo</span><em style="font-style: normal">Sample data, read-only</em>
+					</div>
+				</header>
+
+				<section class="view" data-view="home" data-crumb="Evaluations">
+					<div class="page">
+						<h1>Evaluations</h1>
+						<div class="inline-meta">
+							<div class="stat"><span>Evaluations</span><b>3</b></div>
+							<div class="stat"><span>With results</span><b>3</b></div>
+							<div class="stat"><span>In setup</span><b>0</b></div>
+							<div class="stat"><span>Pairs checked</span><b>34</b></div>
+						</div>
+						<div class="stack">
+							<div class="card verdict-card">
+								<div>
+									<div class="eyebrow">Latest result · Product catalogue</div>
+									<p class="verdict">
+										<em>Atlas Resolve</em> agreed with Jev on 9 of 13 pairs.
+										<span>Meridian Match on 5.</span>
+									</p>
+									<p class="caveat" style="margin-top: 8px">
+										Run 1 · Oct 3, 2026 · cut-off <span class="mono">0.50</span> · 8 and 4
+										disagreements to look at
+									</p>
+								</div>
+								<a class="btn" href="#results">Open results →</a>
+							</div>
+							<div class="tw">
+								<table>
+									<thead>
+										<tr>
+											<th>Evaluation</th>
+											<th>Status</th>
+											<th class="num">Records</th>
+											<th class="num">Vendors</th>
+											<th>Last run</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr class="link" data-go="results">
+											<td>Product catalogue — vendor check<small>Products</small></td>
+											<td><span class="okc">Complete</span></td>
+											<td class="num">24</td>
+											<td class="num">2</td>
+											<td>Oct 3, 2026</td>
+										</tr>
+										<tr class="link" data-go="results">
+											<td>Supplier master — vendor check<small>Organisations</small></td>
+											<td><span class="okc">Complete</span></td>
+											<td class="num">24</td>
+											<td class="num">2</td>
+											<td>Oct 3, 2026</td>
+										</tr>
+										<tr class="link" data-go="results">
+											<td>Customer master — vendor check<small>People</small></td>
+											<td><span class="okc">Complete</span></td>
+											<td class="num">24</td>
+											<td class="num">2</td>
+											<td>Oct 2, 2026</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+							<div><a class="ghost" href="#records">+ Start your own evaluation</a></div>
+						</div>
+					</div>
+				</section>
+
+				<section class="view" data-view="records" data-crumb="Records" hidden>
+					<div class="page">
+						<h1>Which records should we check?</h1>
+						<p class="lede">
+							Upload the file your vendors matched. Jev compares these records two at a time.
+						</p>
+						<div class="stack">
+							<div class="card">
+								<div class="file">
+									<div class="fn">sandbox-products.csv<small>Saved Oct 3, 2026 · CSV</small></div>
+									<div class="stat"><span>Rows</span><b>24</b></div>
+									<div class="stat"><span>Columns</span><b>8</b></div>
+									<span class="okc">All 24 IDs fine</span>
+									<button class="ghost" style="margin-left: auto" disabled>Replace file</button>
+								</div>
+								<div style="border-top: 1px solid var(--line); margin-top: 18px; padding-top: 16px">
+									<h2>We matched 8 fields to your 8 columns</h2>
+									<div class="chips">
+										<span class="chip">Record ID</span><span class="chip">Product name</span
+										><span class="chip">Brand</span><span class="chip">Barcode (GTIN)</span
+										><span class="chip">Part number (MPN)</span><span class="chip">Category</span
+										><span class="chip">Colour</span><span class="chip">Size</span>
+									</div>
+								</div>
+							</div>
+							<div class="tw">
+								<table>
+									<thead>
+										<tr>
+											<th>Record ID</th>
+											<th>Product name</th>
+											<th>Brand</th>
+											<th>Size</th>
+										</tr>
+									</thead>
+									<tbody>
+										<tr>
+											<td class="mono">P01</td>
+											<td>Trailrunner 2 Running Shoe - Red, Size 42</td>
+											<td>Northpeak</td>
+											<td>42</td>
+										</tr>
+										<tr>
+											<td class="mono">P03</td>
+											<td>Trailrunner 2 Running Shoe - Red, Size 44</td>
+											<td>Northpeak</td>
+											<td>44</td>
+										</tr>
+										<tr>
+											<td class="mono">P04</td>
+											<td>Steel Bottle 750ml</td>
+											<td>Halcyon</td>
+											<td>750 ml</td>
+										</tr>
+										<tr>
+											<td class="mono">P05</td>
+											<td>Insulated Bottle, 0.75 L</td>
+											<td>Halcyon</td>
+											<td>0.75 L</td>
+										</tr>
+										<tr>
+											<td class="mono">P06</td>
+											<td>Steel Bottle 500ml</td>
+											<td>Halcyon</td>
+											<td>500 ml</td>
+										</tr>
+										<tr>
+											<td colspan="4" style="color: var(--dim)">
+												Showing 5 of 24 rows · 4 of 8 columns
+											</td>
+										</tr>
+									</tbody>
+								</table>
+							</div>
+						</div>
+					</div>
+					<div class="actions">
+						<a class="ghost" href="#home">← Evaluations</a
+						><span style="display: flex; gap: 8px"
+							><a class="btn" href="#vendors">Next: vendors →</a></span
+						>
+					</div>
+				</section>
+
+				<section class="view" data-view="vendors" data-crumb="Vendors" hidden>
+					<div class="page">
+						<h1>Which vendors are you comparing?</h1>
+						<p class="lede">
+							Upload the matches each vendor found. Jev never sees vendor names or what they
+							decided.
+						</p>
+						<div class="vcols">
+							<div class="vlist">
+								<button aria-pressed="true">
+									Meridian Match<small>List of pairs · ready</small>
+								</button>
+								<button aria-pressed="false">
+									Atlas Resolve<small>List of groups · ready</small>
+								</button>
+								<button class="add" disabled>+ Add vendor</button>
+							</div>
+							<div class="stack" style="margin-top: 0">
+								<div class="card">
+									<label class="f" style="margin-top: 0" for="vn">What's this vendor called?</label
+									><input id="vn" type="text" value="Meridian Match" readonly />
+								</div>
+								<div class="card">
+									<h2>What did this vendor match?</h2>
+									<div class="file" style="margin-top: 14px">
+										<div class="fn">
+											sandbox-products-vendor-a.csv<small
+												>7 rows · CSV · one pair per row, IDs in record_a and record_b</small
+											>
+										</div>
+									</div>
+									<div class="stats">
+										<div class="stat"><span>Matched pairs</span><b>7</b></div>
+										<div class="stat"><span>Duplicates removed</span><b>0</b></div>
+										<div class="stat"><span>Matched to themselves</span><b>0</b></div>
+										<div class="stat"><span>IDs not in your records</span><b>0</b></div>
+									</div>
+									<p style="margin-top: 18px">
+										<span class="okc"
+											>This file has all of Meridian Match's matches · confirmed Oct 3, 2026</span
+										>
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="actions">
+						<a class="ghost" href="#records">← Records</a
+						><span style="display: flex; gap: 8px"
+							><a class="btn" href="#rules">Next: rules →</a></span
+						>
+					</div>
+				</section>
+
+				<section class="view" data-view="rules" data-crumb="Rules" hidden>
+					<div class="page">
+						<h1>What should Jev compare?</h1>
+						<p class="lede">
+							Say what counts as the same, how sure Jev must be, and which pairs to check.
+						</p>
+						<div class="two" style="margin-top: 28px">
+							<div class="stack" style="margin-top: 0">
+								<div class="card">
+									<div class="eyebrow">What counts as the same</div>
+									<h2>Write it as you'd explain it to a colleague</h2>
+									<label class="f" for="r1">When are two records the same?</label>
+									<textarea id="r1" readonly>
+Both records describe the same product (the same item in the same variant), even if the name, description or formatting differs.</textarea>
+									<label class="f" for="r2">And when aren't they?</label>
+									<textarea id="r2" readonly>
+The records describe different products, including different variants (size, colour, capacity or edition), bundles or multipacks of the item, or similarly named products from different brands.</textarea>
+									<label class="f" for="r3">Where are these records from?</label>
+									<select id="r3">
+										<option>United States</option>
+									</select>
+								</div>
+								<div class="card">
+									<div class="eyebrow">Which pairs to check</div>
+									<h2>3 rules on</h2>
+									<div style="margin-top: 12px">
+										<label class="rule"
+											><span>Same part number and brand</span
+											><span style="display: flex; gap: 14px; align-items: center"
+												><small>4 pairs</small><input type="checkbox" checked /></span
+										></label>
+										<label class="rule"
+											><span>Same barcode (GTIN)</span
+											><span style="display: flex; gap: 14px; align-items: center"
+												><small>2 pairs</small><input type="checkbox" checked /></span
+										></label>
+										<label class="rule"
+											><span>Same name and brand</span
+											><span style="display: flex; gap: 14px; align-items: center"
+												><small>1 pair</small><input type="checkbox" checked /></span
+										></label>
+									</div>
+								</div>
+							</div>
+							<div class="stack" style="margin-top: 0">
+								<div class="card">
+									<div class="eyebrow">Match cut-off</div>
+									<h2>How sure must Jev be?</h2>
+									<div class="hero-num" style="margin-top: 16px" id="rc">
+										0.50<small>Balanced</small>
+									</div>
+									<div class="segc" id="segc">
+										<button data-c="0.35" data-n="Lenient" aria-pressed="false">
+											Lenient<b>0.35</b>
+										</button>
+										<button data-c="0.50" data-n="Balanced" aria-pressed="true">
+											Balanced<b>0.50</b>
+										</button>
+										<button data-c="0.70" data-n="Strict" aria-pressed="false">
+											Strict<b>0.70</b>
+										</button>
+									</div>
+									<p style="margin-top: 14px">
+										Pairs at or above this count as a match. You choose it before seeing results, so
+										they can't sway you.
+									</p>
+								</div>
+								<div class="card">
+									<div class="eyebrow">What Jev gets to see</div>
+									<h2>Only these values are sent</h2>
+									<div class="checks">
+										<label><input type="checkbox" checked />Product name</label
+										><label><input type="checkbox" checked />Brand</label
+										><label><input type="checkbox" checked />Barcode (GTIN)</label
+										><label><input type="checkbox" checked />Part number (MPN)</label
+										><label><input type="checkbox" checked />Category</label
+										><label><input type="checkbox" checked />Colour</label
+										><label><input type="checkbox" checked />Size</label>
+									</div>
+									<p style="margin-top: 14px">Jev never sees what the vendors decided.</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="actions">
+						<a class="ghost" href="#vendors">← Vendors</a
+						><span style="display: flex; gap: 8px"
+							><a class="btn" href="#plan">Check and start →</a></span
+						>
+					</div>
+				</section>
+
+				<section class="view" data-view="plan" data-crumb="Check and start" hidden>
+					<div class="page">
+						<h1>Jev will check <em>13 pairs</em>.</h1>
+						<p class="lede">Nothing is sent until you press Start run.</p>
+						<div class="two" style="margin-top: 28px">
+							<div class="card">
+								<h2>From records to pairs</h2>
+								<div class="funnel"><i></i></div>
+								<p>
+									13 of 276 possible pairs (5%) will be checked. Duplicates among the other 263
+									won't show up.
+								</p>
+								<div class="kv">
+									<div><span>Your records</span><b class="mono">24</b></div>
+									<div><span>Possible pairs</span><b class="mono">276</b></div>
+									<div><span>Pairs your rules pick</span><b class="mono">7</b></div>
+									<div><span>Pairs your vendors matched</span><b class="mono">+12</b></div>
+									<div><span>Pairs picked more than once</span><b class="mono">−6</b></div>
+									<div>
+										<span style="color: var(--text); font-weight: 500">Pairs Jev will check</span
+										><b class="mono" style="color: var(--accent)">13</b>
+									</div>
+									<div><span>Already checked in an earlier run</span><b class="mono">13</b></div>
+									<div><span>New checks by Jev</span><b class="mono">0</b></div>
+								</div>
+							</div>
+							<div class="stack" style="margin-top: 0">
+								<div class="card">
+									<div class="eyebrow">Cost</div>
+									<div class="hero-num">$0.00<small>about, for 0 new checks</small></div>
+								</div>
+								<div class="card">
+									<div class="eyebrow">Match cut-off</div>
+									<div class="hero-num">0.50<small>Balanced</small></div>
+									<p style="margin-top: 12px">
+										This run keeps it. A different cut-off means a new run.
+										<a href="#rules" style="color: var(--accent)">Change</a>
+									</p>
+								</div>
+								<div class="card">
+									<div class="eyebrow">What Jev will see</div>
+									<h2>7 values per record</h2>
+									<div class="chips">
+										<span class="chip">Product name</span><span class="chip">Brand</span
+										><span class="chip">Barcode (GTIN)</span
+										><span class="chip">Part number (MPN)</span><span class="chip">Category</span
+										><span class="chip">Colour</span><span class="chip">Size</span>
+									</div>
+									<p style="margin-top: 12px">
+										Never your record IDs, vendor names or what any vendor decided.
+									</p>
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="actions">
+						<a class="ghost" href="#rules">← Rules</a
+						><span style="display: flex; gap: 8px"
+							><button class="ghost" disabled>Start run</button
+							><a class="btn" href="#results">See the run →</a></span
+						>
+					</div>
+				</section>
+
+				<section class="view" data-view="results" data-crumb="Results" hidden>
+					<div class="page">
+						<div class="meta">
+							<span class="ok">Run complete</span><span>Run 1 · Oct 3, 2026, 1:44 PM</span
+							><span class="mono">jev-1.13.0</span
+							><span
+								><span class="mono">13</span> of <span class="mono">13</span> pairs checked</span
+							>
+						</div>
+
+						<h1 class="verdict" id="verdict"></h1>
+						<p class="caveat">
+							Agreement with an AI, not proof. Jev can be wrong, so open any pair and judge for
+							yourself.
+						</p>
+
+						<div class="cut">
+							<label for="cut">Match cut-off</label>
+							<output id="cutOut">0.50</output>
+							<input
+								id="cut"
+								type="range"
+								min="0.05"
+								max="0.95"
+								step="0.01"
+								value="0.5"
+								aria-describedby="cutHelp"
+							/>
+							<small id="cutHelp"
+								>Drag to see how the numbers would move. The run itself used 0.50.</small
+							>
+							<button id="reset">Reset</button>
+						</div>
+
+						<div class="views" role="tablist" id="views">
+							<button role="tab" data-view="overview" aria-selected="true">Overview</button>
+							<button role="tab" data-view="detail" aria-selected="false">
+								Detailed analysis <span class="n" id="disN">0</span>
+							</button>
+						</div>
+
+						<div id="overview" role="tabpanel">
+							<div class="h2h" id="h2h"></div>
+							<div class="ov">
+								<div class="card">
+									<h2>What did Jev check?</h2>
+									<p><span class="mono">13</span> of <span class="mono">13</span> pairs checked</p>
+									<div class="kv">
+										<div><span>Picked by your rules</span><b class="mono">6</b></div>
+										<div><span>Added because a vendor matched it</span><b class="mono">7</b></div>
+										<div><span>Possible pairs not checked</span><b class="mono">263</b></div>
+									</div>
+									<p style="margin-top: 12px">
+										Duplicates among pairs nobody picked can't be seen.
+									</p>
+								</div>
+								<div class="card">
+									<h2>What if the cut-off changed?</h2>
+									<p>Overall score at every cut-off, from the scores Jev already gave.</p>
+									<div class="lg" id="lg"></div>
+									<svg
+										class="chart"
+										id="chart"
+										viewBox="0 0 600 190"
+										role="img"
+										aria-label="Overall score by cut-off for each vendor"
+									></svg>
+								</div>
+							</div>
+							<button class="go" id="go"></button>
+						</div>
+
+						<div class="work" id="detail" role="tabpanel" hidden>
+							<section>
+								<div class="bar">
+									<h2 id="listTitle"></h2>
+									<div class="tabs" id="vtabs"></div>
+									<div class="tabs" id="tabs">
+										<button data-f="dis" aria-pressed="true">Disagreements</button>
+										<button data-f="all" aria-pressed="false">All pairs</button>
+									</div>
+								</div>
+								<div class="table" id="table" role="listbox" aria-label="Pairs"></div>
+								<p class="keys"><kbd>↑</kbd> <kbd>↓</kbd> move between pairs</p>
+							</section>
+							<aside class="pair" id="pair" aria-live="polite"></aside>
+						</div>
+					</div>
+				</section>
+			</main>
+		</div>
+		<script>
+			;(function () {
+				// Sample data shaped to match the demo run's totals at cut-off 0.50. m / a = vendor said "same".
+				var P = [
+					[
+						'P19',
+						'P20',
+						'Summit Trekking Pole 120cm',
+						'Summit Trekking Pole, 120 cm',
+						'120cm',
+						'120 cm',
+						0.67,
+						0,
+						1
+					],
+					[
+						'P15',
+						'P16',
+						'Lumen LED Desk Lamp',
+						'LUMEN LED DESK LAMP (Black)',
+						'Black',
+						'Black',
+						0.58,
+						0,
+						1
+					],
+					[
+						'P04',
+						'P05',
+						'Halcyon Steel Bottle 750ml',
+						'Halcyon Insulated Bottle, 0.75 L',
+						'750 ml',
+						'0.75 L',
+						0.86,
+						0,
+						1
+					],
+					[
+						'P07',
+						'P08',
+						'Orbit Wireless Mouse',
+						'Orbit Mouse, Wireless',
+						'One size',
+						'One size',
+						0.94,
+						1,
+						0
+					],
+					['P09', 'P10', 'Tarn Notebook A5', 'Tarn A5 Notebook', 'A5', 'A5', 0.97, 1, 0],
+					[
+						'P13',
+						'P14',
+						'Fjell Sparkling Water 330ml',
+						'Fjell Sparkling Water 500ml',
+						'330 ml',
+						'500 ml',
+						0.08,
+						1,
+						1
+					],
+					[
+						'P17',
+						'P18',
+						'Copperleaf Notebook A5',
+						'Copperleaf Notebook A4',
+						'A5',
+						'A4',
+						0.11,
+						1,
+						0
+					],
+					[
+						'P23',
+						'P24',
+						'Riverside Coffee Beans 250g',
+						'Riverside Coffee Beans 1kg',
+						'250 g',
+						'1 kg',
+						0.06,
+						1,
+						0
+					],
+					[
+						'P01',
+						'P03',
+						'Northpeak Trailrunner 2 Blue',
+						'Northpeak Trailrunner 2 Red',
+						'Blue',
+						'Red',
+						0.09,
+						1,
+						0
+					],
+					[
+						'P04',
+						'P06',
+						'Halcyon Steel Bottle 750ml',
+						'Halcyon Steel Bottle 500ml',
+						'750 ml',
+						'500 ml',
+						0.1,
+						1,
+						0
+					],
+					['P21', 'P22', 'Kestrel Headphones', 'Kestrel Earbuds', 'Over-ear', 'In-ear', 0.46, 0, 1],
+					['P11', 'P12', 'Alder Desk Oak', 'Alder Desk Walnut', 'Oak', 'Walnut', 0.22, 0, 0],
+					[
+						'P02',
+						'P03',
+						'Northpeak Trailrunner 3 Red',
+						'Northpeak Trailrunner 2 Red',
+						'Red',
+						'Red',
+						0.18,
+						0,
+						0
+					]
+				].map(function (r) {
+					return {
+						ia: r[0],
+						ib: r[1],
+						a: r[2],
+						b: r[3],
+						fa: r[4],
+						fb: r[5],
+						s: r[6],
+						v: [r[7], r[8]]
+					}
+				})
+				var V = ['Meridian Match', 'Atlas Resolve'],
+					RUN = 0.5
+				var $ = function (id) {
+						return document.getElementById(id)
+					},
+					cut = $('cut'),
+					vi = 0,
+					filter = 'dis',
+					sel = null
+				var esc = function (t) {
+					return t.replace(/&/g, '&amp;').replace(/</g, '&lt;')
+				}
+				var norm = function (w) {
+					return w.toLowerCase().replace(/[^a-z0-9.]/g, '')
+				}
+				function diff(x, y) {
+					var set = {}
+					y.split(/\s+/).forEach(function (w) {
+						set[norm(w)] = 1
+					})
+					return x
+						.split(/\s+/)
+						.map(function (w) {
+							return set[norm(w)] ? esc(w) : '<mark>' + esc(w) + '</mark>'
+						})
+						.join(' ')
+				}
+				function cat(p, v, c) {
+					var j = p.s >= c,
+						s = !!p.v[v]
+					return j && s
+						? ['', 'Both say same']
+						: j
+							? ['j', 'Only Jev says same']
+							: s
+								? ['v', 'Only vendor says same']
+								: ['', 'Both say different']
+				}
+				function stats(v, c) {
+					var b = 0,
+						j = 0,
+						o = 0,
+						n = 0
+					P.forEach(function (p) {
+						var J = p.s >= c,
+							S = !!p.v[v]
+						if (J && S) b++
+						else if (J) j++
+						else if (S) o++
+						else n++
+					})
+					var pm = b + o ? b / (b + o) : 0,
+						pd = b + j ? b / (b + j) : 0
+					return {
+						b: b,
+						j: j,
+						o: o,
+						n: n,
+						pm: pm,
+						pd: pd,
+						all: pm + pd ? (2 * pm * pd) / (pm + pd) : 0,
+						agree: b + n
+					}
+				}
+				var pct = function (x) {
+					return (x * 100).toFixed(1) + '%'
+				}
+
+				function render() {
+					var c = +cut.value,
+						S = [stats(0, c), stats(1, c)]
+					$('cutOut').textContent = c.toFixed(2)
+					var lead = S[0].agree === S[1].agree ? -1 : S[0].agree > S[1].agree ? 0 : 1
+					$('verdict').innerHTML =
+						lead < 0
+							? 'Both vendors agreed with Jev on <em>' + S[0].agree + ' of 13</em> pairs.'
+							: '<em>' +
+								V[lead] +
+								'</em> agreed with Jev on ' +
+								S[lead].agree +
+								' of 13 pairs. <span>' +
+								V[1 - lead] +
+								' on ' +
+								S[1 - lead].agree +
+								'.</span>'
+
+					$('h2h').innerHTML = S.map(function (s, i) {
+						var t = P.length
+						return (
+							'<button class="vend" data-v="' +
+							i +
+							'" aria-pressed="' +
+							(i === vi) +
+							'"><div class="vend-top"><h3>' +
+							V[i] +
+							'</h3>' +
+							(i === lead ? '<span class="lead">Closer to Jev</span>' : '') +
+							'</div>' +
+							'<div class="big">' +
+							pct(s.all) +
+							'<small>overall score</small></div>' +
+							'<div class="sub"><div><span>Correct merges</span><b>' +
+							pct(s.pm) +
+							'</b><div class="track"><i style="width:' +
+							s.pm * 100 +
+							'%"></i></div></div>' +
+							'<div><span>Duplicates found</span><b>' +
+							pct(s.pd) +
+							'</b><div class="track"><i style="width:' +
+							s.pd * 100 +
+							'%"></i></div></div></div>' +
+							'<div class="seg"><i class="s1" style="flex-grow:' +
+							s.b +
+							'"></i><i class="s2" style="flex-grow:' +
+							s.j +
+							'"></i><i class="s3" style="flex-grow:' +
+							s.o +
+							'"></i><i class="s4" style="flex-grow:' +
+							s.n +
+							'"></i></div>' +
+							'<div class="legend"><span style="--c:var(--text)">Both same<b>' +
+							s.b +
+							'</b></span><span style="--c:var(--jev)">Only Jev<b>' +
+							s.j +
+							'</b></span><span style="--c:var(--vendor)">Only vendor<b>' +
+							s.o +
+							'</b></span><span style="--c:var(--line2)">Both different<b>' +
+							s.n +
+							'</b></span></div></button>'
+						)
+					}).join('')
+
+					// overview extras
+					$('disN').textContent = S[vi].j + S[vi].o
+					$('go').innerHTML = 'Look at ' + V[vi] + "'s " + (S[vi].j + S[vi].o) + ' disagreements →'
+					$('vtabs').innerHTML = V.map(function (n, i) {
+						return '<button data-v="' + i + '" aria-pressed="' + (i === vi) + '">' + n + '</button>'
+					}).join('')
+					var X = function (c) {
+							return 34 + ((c - 0.05) / 0.9) * 540
+						},
+						Y = function (v) {
+							return 160 - v * 140
+						},
+						col = ['var(--text)', 'var(--dim)']
+					var svg = [0, 0.5, 1]
+						.map(function (g) {
+							return (
+								'<line x1="34" x2="574" y1="' +
+								Y(g) +
+								'" y2="' +
+								Y(g) +
+								'" stroke="var(--line)"/><text x="28" y="' +
+								(Y(g) + 3) +
+								'" text-anchor="end">' +
+								g * 100 +
+								'%</text>'
+							)
+						})
+						.join('')
+					;[0.05, 0.25, 0.5, 0.75, 0.95].forEach(function (t) {
+						svg += '<text x="' + X(t) + '" y="182" text-anchor="middle">' + t.toFixed(2) + '</text>'
+					})
+					;[1 - vi, vi].forEach(function (v) {
+						var d = ''
+						for (var k = 5; k <= 95; k++) {
+							var cc = k / 100,
+								y = Y(stats(v, cc).all)
+							d += (k === 5 ? 'M' : 'H') + X(cc) + (k === 5 ? ',' + y : '') + 'V' + y
+						}
+						svg +=
+							'<path d="' +
+							d +
+							'" fill="none" stroke="' +
+							col[v === vi ? 0 : 1] +
+							'" stroke-width="' +
+							(v === vi ? 2 : 1.5) +
+							'"/>'
+					})
+					svg +=
+						'<line x1="' +
+						X(c) +
+						'" x2="' +
+						X(c) +
+						'" y1="14" y2="160" stroke="var(--accent)" stroke-width="2"/>'
+					;[0, 1].forEach(function (v) {
+						svg +=
+							'<circle cx="' +
+							X(c) +
+							'" cy="' +
+							Y(S[v].all) +
+							'" r="4" fill="var(--bg)" stroke="' +
+							col[v === vi ? 0 : 1] +
+							'" stroke-width="2"/>'
+					})
+					$('chart').innerHTML = svg
+					$('lg').innerHTML =
+						'<span style="--c:var(--text)">' +
+						V[vi] +
+						'</span><span style="--c:var(--dim)">' +
+						V[1 - vi] +
+						'</span><span style="--c:var(--accent)">Cut-off ' +
+						c.toFixed(2) +
+						'</span>'
+
+					var list = P.filter(function (p) {
+						var k = cat(p, vi, c)[0]
+						return filter === 'all' || k
+					})
+					list.sort(function (x, y) {
+						return y.s - x.s
+					})
+					if (list.indexOf(sel) < 0) sel = list[0] || null
+					$('listTitle').textContent =
+						(filter === 'all' ? 'All pairs' : 'Disagreements') +
+						' · ' +
+						V[vi] +
+						' (' +
+						list.length +
+						')'
+					$('table').innerHTML = list.length
+						? list
+								.map(function (p) {
+									var k = cat(p, vi, c)
+									return (
+										'<button class="row" role="option" aria-selected="' +
+										(p === sel) +
+										'" data-i="' +
+										P.indexOf(p) +
+										'"><span class="tag ' +
+										k[0] +
+										'">' +
+										k[1] +
+										'</span>' +
+										'<span class="names"><div><span class="id">' +
+										p.ia +
+										'</span><span>' +
+										diff(p.a, p.b) +
+										'</span></div><div><span class="id">' +
+										p.ib +
+										'</span><span>' +
+										diff(p.b, p.a) +
+										'</span></div></span>' +
+										'<span class="sc"><span class="meter"><i style="width:' +
+										p.s * 100 +
+										'%"></i><u style="left:' +
+										c * 100 +
+										'%"></u></span>' +
+										p.s.toFixed(2) +
+										'</span></button>'
+									)
+								})
+								.join('')
+						: '<div class="empty">No disagreements at this cut-off. ' +
+							V[vi] +
+							' and Jev agree on every checked pair.</div>'
+					renderPair(c, false)
+				}
+
+				var lastSel = null
+				function renderPair(c) {
+					var el = $('pair')
+					if (!sel) {
+						el.innerHTML =
+							'<p class="empty" style="padding:0">Select a pair to compare its two records.</p>'
+						lastSel = null
+						return
+					}
+					var p = sel,
+						k = cat(p, vi, c),
+						same = p.s >= c,
+						d = p.fa !== p.fb
+					el.innerHTML =
+						'<div class="pair-top"><span class="mono" style="color:var(--dim);font-size:12px">' +
+						p.ia +
+						' ⇄ ' +
+						p.ib +
+						'</span><span class="tag ' +
+						k[0] +
+						'">' +
+						k[1] +
+						'</span></div>' +
+						'<div class="score"><span id="num">' +
+						p.s.toFixed(2) +
+						'</span><small>Jev says ' +
+						(same ? 'same' : 'different') +
+						' at cut-off ' +
+						c.toFixed(2) +
+						'</small></div>' +
+						'<div class="meter"><i style="width:' +
+						p.s * 100 +
+						'%"></i><u style="left:' +
+						c * 100 +
+						'%"></u></div>' +
+						'<div class="cols"><span class="h"></span><span class="h">Record A</span><span class="h">Record B</span>' +
+						'<span class="k">Name</span><span>' +
+						diff(p.a, p.b) +
+						'</span><span>' +
+						diff(p.b, p.a) +
+						'</span>' +
+						'<span class="k">Brand</span><span>' +
+						esc(p.a.split(' ')[0]) +
+						'</span><span>' +
+						esc(p.b.split(' ')[0].replace(/^LUMEN$/, 'Lumen')) +
+						'</span>' +
+						'<span class="k">Variant</span><span>' +
+						(d ? '<mark>' + esc(p.fa) + '</mark>' : esc(p.fa)) +
+						'</span><span>' +
+						(d ? '<mark>' + esc(p.fb) + '</mark>' : esc(p.fb)) +
+						'</span></div>' +
+						'<div class="says">' +
+						V.map(function (n, i) {
+							return (
+								'<div><span>' +
+								n +
+								'</span><b style="font-weight:500">' +
+								(p.v[i] ? 'Same' : 'Different') +
+								'</b></div>'
+							)
+						}).join('') +
+						'</div>' +
+						'<p class="note">Jev gave a score only, with no explanation for this pair.</p>'
+					if (lastSel !== p) {
+						lastSel = p
+						el.classList.remove('fade')
+						void el.offsetWidth
+						el.classList.add('fade')
+						countUp(p.s)
+					}
+				}
+				function countUp(to) {
+					var n = $('num')
+					if (!n || matchMedia('(prefers-reduced-motion:reduce)').matches) return
+					var t0 = performance.now()
+					;(function f(t) {
+						var k = Math.min(1, (t - t0) / 350)
+						k = 1 - Math.pow(1 - k, 3)
+						if (!$('num')) return
+						$('num').textContent = (to * k).toFixed(2)
+						if (k < 1) requestAnimationFrame(f)
+					})(t0)
+				}
+
+				cut.addEventListener('input', render)
+				$('reset').addEventListener('click', function () {
+					cut.value = RUN
+					render()
+				})
+				$('h2h').addEventListener('click', function (e) {
+					var b = e.target.closest('.vend')
+					if (b) {
+						vi = +b.dataset.v
+						render()
+					}
+				})
+				function show(view) {
+					;[].forEach.call($('views').children, function (b) {
+						b.setAttribute('aria-selected', b.dataset.view === view)
+					})
+					$('overview').hidden = view !== 'overview'
+					$('detail').hidden = view !== 'detail'
+				}
+				$('views').addEventListener('click', function (e) {
+					var b = e.target.closest('button')
+					if (b) show(b.dataset.view)
+				})
+				$('go').addEventListener('click', function () {
+					show('detail')
+					$('views').scrollIntoView({ block: 'start' })
+				})
+				$('vtabs').addEventListener('click', function (e) {
+					var b = e.target.closest('button')
+					if (b) {
+						vi = +b.dataset.v
+						render()
+					}
+				})
+				$('tabs').addEventListener('click', function (e) {
+					var b = e.target.closest('button')
+					if (!b) return
+					filter = b.dataset.f
+					;[].forEach.call($('tabs').children, function (x) {
+						x.setAttribute('aria-pressed', x === b)
+					})
+					render()
+				})
+				$('table').addEventListener('click', function (e) {
+					var r = e.target.closest('.row')
+					if (r) {
+						sel = P[+r.dataset.i]
+						render()
+					}
+				})
+				document.addEventListener('keydown', function (e) {
+					if (e.key !== 'ArrowDown' && e.key !== 'ArrowUp') return
+					if (e.target === cut || $('detail').hidden) return
+					var rows = [].slice.call(document.querySelectorAll('.row'))
+					if (!rows.length) return
+					var i = rows.findIndex(function (r) {
+						return r.getAttribute('aria-selected') === 'true'
+					})
+					i = Math.max(0, Math.min(rows.length - 1, i + (e.key === 'ArrowDown' ? 1 : -1)))
+					e.preventDefault()
+					sel = P[+rows[i].dataset.i]
+					render()
+					var n = document.querySelector('.row[aria-selected="true"]')
+					if (n) n.scrollIntoView({ block: 'nearest' })
+				})
+				render()
+			})()
+		</script>
+		<script>
+			;(function () {
+				var views = [].slice.call(document.querySelectorAll('.view'))
+				function route() {
+					var v = (location.hash || '#home').slice(1)
+					if (
+						!views.some(function (x) {
+							return x.dataset.view === v
+						})
+					)
+						v = 'home'
+					views.forEach(function (x) {
+						x.hidden = x.dataset.view !== v
+						if (!x.hidden) document.getElementById('crumb').textContent = x.dataset.crumb
+					})
+					;[].forEach.call(document.querySelectorAll('[data-nav]'), function (a) {
+						a.classList.toggle('on', a.dataset.nav === v)
+					})
+					scrollTo(0, 0)
+				}
+				addEventListener('hashchange', route)
+				route()
+				document.addEventListener('click', function (e) {
+					var t = e.target.closest('[data-go]')
+					if (t) location.hash = t.dataset.go
+					var s = e.target.closest('#segc button')
+					if (s) {
+						;[].forEach.call(s.parentNode.children, function (b) {
+							b.setAttribute('aria-pressed', b === s)
+						})
+						document.getElementById('rc').innerHTML =
+							s.dataset.c + '<small>' + s.dataset.n + '</small>'
+					}
+					var v = e.target.closest('.vlist button:not(.add)')
+					if (v)
+						[].forEach.call(v.parentNode.children, function (b) {
+							if (!b.classList.contains('add')) b.setAttribute('aria-pressed', b === v)
+						})
+				})
+			})()
+		</script>
+	</body>
+</html>

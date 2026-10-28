@@ -1,0 +1,46 @@
+/* PairSight design tokens. Source of truth for colour, type, radius, spacing.
+   Light is the default inside the product; dark is the default on the landing page. */
+:root, [data-theme="light"] {
+  --bg: #F7F6F3;        /* page ground */
+  --bg-2: #EEEDE8;      /* alternate band, quiet fills */
+  --surface: #FFFFFF;   /* cards */
+  --line: #DDDBD4;      /* hairlines, empty mosaic tiles */
+  --line-2: #B9B7AE;    /* input and outline-button borders */
+  --text: #0D0D0E;
+  --text-2: #3D3D40;    /* body */
+  --text-3: #66666B;    /* labels, notes */
+  --brand: #FF4A1C;     /* vermilion: the vendor, primary button fill (text on it: #0D0D0E) */
+  --brand-text: #CC3A12;/* vermilion as text or link on light */
+  --ice: #A9CADB;       /* the checker: fills */
+  --ice-text: #2F5C73;  /* ice as text, focus rings */
+  --vendor-a: #2F55E0;  /* data colour, first vendor */
+  --vendor-b: #9A3FB5;  /* data colour, second vendor */
+  --attention: #8A5A00;
+  --inverse: #0D0D0E;   /* dock, verdict bar, inverted cards */
+  --on-inverse: #F7F6F3;
+  --shadow: 0 20px 48px -20px rgba(13,13,14,.35);
+}
+[data-theme="dark"] {
+  --bg: #0D0D0E; --bg-2: #141415; --surface: #1A1A1C;
+  --line: #2A2A2E; --line-2: #45454B;
+  --text: #F4F3F0; --text-2: #B9B8B4; --text-3: #8A8A90;
+  --brand: #FF4A1C; --brand-text: #FF6A45;
+  --ice: #BFD9E6; --ice-text: #BFD9E6;
+  --vendor-a: #7C9BFF; --vendor-b: #D08BE8; --attention: #F2B84B;
+  --inverse: #F4F3F0; --on-inverse: #0D0D0E;
+  --shadow: 0 20px 48px -16px rgba(0,0,0,.7);
+}
+:root {
+  --font-display: 'Bricolage Grotesque', system-ui, sans-serif; /* 600, -0.03em (landing) / -0.025em (product), line-height .98 to 1.05 */
+  --font-body: 'Instrument Sans', system-ui, sans-serif;        /* 400, 500, 600 */
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;       /* data, figures, labels (13px caps, +0.06em) */
+  --radius-tile: 3px;      /* mosaic tiles (4px on the landing hero) */
+  --radius-chip: 8px;      /* glyph tiles, chips, tags */
+  --radius-control: 12px;  /* buttons, inputs (14px for 54px landing buttons) */
+  --radius-card: 20px;     /* cards; 22px dock; 28px landing hero panel */
+  --space-unit: 4px;       /* all spacing is a multiple of 4 */
+  --content-width: 1280px; /* with 32px gutters (20px under 900px) */
+  --section-gap: 136px;    /* landing sections; 88px under 820px */
+  --ease-arrive: cubic-bezier(.2, 0, 0, 1);
+  --ease-slide: cubic-bezier(.3, 0, .1, 1);
+}

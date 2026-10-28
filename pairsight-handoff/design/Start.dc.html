@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Check and start step</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+a{color:inherit}a:hover{color:inherit}
+.ps{--bg:#F7F6F3;--s1:#EEEDE8;--sf:#FFFFFF;--line:#DDDBD4;--line2:#B9B7AE;--tx:#0D0D0E;--tx2:#3D3D40;--tx3:#66666B;--brand:#FF4A1C;--brandt:#CC3A12;--ice:#A9CADB;--icet:#2F5C73;--va:#2F55E0;--vb:#9A3FB5;--attn:#8A5A00;--inv:#0D0D0E;--oninv:#F7F6F3;--shadow:0 20px 48px -20px rgba(13,13,14,.35);background:var(--bg);color:var(--tx);font-family:'Instrument Sans',system-ui,sans-serif;font-size:16px;line-height:1.5;display:flex;flex-direction:column;transition:background-color .3s,color .3s}
+.ps[data-theme="dark"]{--bg:#0D0D0E;--s1:#141415;--sf:#1A1A1C;--line:#2A2A2E;--line2:#45454B;--tx:#F4F3F0;--tx2:#B9B8B4;--tx3:#8A8A90;--brandt:#FF6A45;--ice:#BFD9E6;--icet:#BFD9E6;--va:#7C9BFF;--vb:#D08BE8;--attn:#F2B84B;--inv:#F4F3F0;--oninv:#0D0D0E;--shadow:0 20px 48px -16px rgba(0,0,0,.7)}
+.ps *{box-sizing:border-box}
+.wrap{max-width:1280px;width:100%;margin:0 auto;padding:0 32px}
+.h{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;letter-spacing:-.025em;line-height:1.05;margin:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.lab{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;line-height:18px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin:0}
+.t14{font-size:14px;line-height:20px;color:var(--tx3);margin:0}
+.p{margin:0;color:var(--tx2)}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:20px;padding:28px}
+.b{display:inline-flex;align-items:stretch;min-height:44px;border-radius:12px;overflow:hidden;font-weight:600;text-decoration:none;background:var(--brand);color:#0D0D0E;border:0;font:inherit;font-weight:600;cursor:pointer;transition:transform .15s cubic-bezier(.2,0,0,1),filter .15s}
+.b:hover{color:#0D0D0E;filter:brightness(1.07)}.b:active{transform:scale(.98)}
+.b span{padding:0 18px;display:flex;align-items:center}
+.b i{width:44px;display:flex;align-items:center;justify-content:center;background:rgba(13,13,14,.12);border-left:1px solid rgba(13,13,14,.22)}
+.b.q{background:transparent;color:var(--tx);box-shadow:inset 0 0 0 1px var(--line2)}.b.q:hover{color:var(--tx);box-shadow:inset 0 0 0 1px var(--tx);filter:none}
+.b:focus-visible,.st:focus-visible,.tg:focus-visible,.lnk:focus-visible,.seg a:focus-visible,.inp:focus-visible,.rowl:focus-visible{outline:2px solid var(--icet);outline-offset:3px}
+.ic{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.lnk{color:var(--tx);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--line2)}
+.chip{display:inline-flex;align-items:center;gap:8px;min-height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--line);background:var(--sf);font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;white-space:nowrap}
+.gl{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;flex:none;font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600;background:var(--s1);color:var(--tx3)}
+.gj{background:color-mix(in srgb,var(--icet) 18%,transparent);color:var(--icet)}.gc{background:color-mix(in srgb,var(--brandt) 16%,transparent);color:var(--brandt)}
+.tg{width:44px;height:44px;border-radius:12px;border:1px solid var(--line);background:transparent;color:var(--tx);display:inline-flex;align-items:center;justify-content:center;cursor:pointer}
+.top{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;min-height:64px;border-bottom:1px solid var(--line)}
+.logo{display:inline-flex;align-items:center;gap:10px;min-height:44px;text-decoration:none}
+.crumb{display:flex;flex-wrap:wrap;align-items:center;gap:8px;flex:1 1 auto;min-width:0;color:var(--tx3)}
+.crumb strong{color:var(--tx)}
+.dock{position:sticky;bottom:20px;z-index:5;margin:56px auto 20px;display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:8px;border-radius:22px;background:var(--inv);color:var(--oninv);box-shadow:var(--shadow);max-width:calc(100% - 32px);width:fit-content}
+.st{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 14px 0 10px;border-radius:14px;text-decoration:none;color:var(--oninv);font-weight:600;font-size:15px;white-space:nowrap;transition:background-color .15s}
+.st:hover{color:var(--oninv);background:color-mix(in srgb,var(--oninv) 12%,transparent)}
+.st .sn{width:28px;height:28px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;background:color-mix(in srgb,var(--oninv) 16%,transparent)}
+.st.todo{color:color-mix(in srgb,var(--oninv) 60%,transparent)}
+.st.todo .sn{background:transparent;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--oninv) 35%,transparent)}
+.st.on,.st.on:hover{background:var(--brand);color:#0D0D0E}
+.st.on .sn{background:rgba(13,13,14,.16)}
+.dsep{width:1px;align-self:stretch;margin:8px 4px;background:color-mix(in srgb,var(--oninv) 22%,transparent)}
+.dact{display:inline-flex;align-items:center;gap:10px;min-height:48px;padding:0 16px;border-radius:14px;background:var(--oninv);color:var(--inv);font-weight:600;text-decoration:none;white-space:nowrap}
+.dact:hover{color:var(--inv)}
+.seg{display:inline-flex;gap:4px;padding:4px;border-radius:14px;background:var(--s1);border:1px solid var(--line)}
+.seg a{display:inline-flex;align-items:center;gap:8px;min-height:36px;padding:0 14px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;color:var(--tx2)}
+.seg a.on{background:var(--sf);color:var(--tx);box-shadow:0 0 0 1px var(--line)}
+.mos{display:grid;grid-template-columns:repeat(22,minmax(0,1fr));gap:3px}
+.tl{display:block;aspect-ratio:1;border-radius:3px;background:var(--line)}
+.kb{background:var(--tx)}.kv{background:var(--brand)}.kj{background:var(--ice)}
+.lg{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:14px;color:var(--tx2)}
+.lg span{display:flex;align-items:center;gap:8px}.lg i{width:12px;height:12px;border-radius:3px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:14px 16px 14px 0;border-top:1px solid var(--line);vertical-align:middle}
+th{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:500;border-top:0;padding-top:0}
+.num{font-family:'JetBrains Mono',ui-monospace,monospace;font-weight:600;letter-spacing:-.03em}
+.dot{width:10px;height:10px;border-radius:3px;display:inline-block;margin-right:8px}
+.miss{color:var(--tx3);font-style:italic;font-family:'Instrument Sans',system-ui,sans-serif}
+.inp{height:44px;padding:0 12px;border-radius:12px;border:1px solid var(--line2);background:var(--sf);color:var(--tx);font:inherit;width:100%}
+.kbd{display:inline-flex;align-items:center;justify-content:center;min-width:26px;height:26px;padding:0 6px;border-radius:7px;border:1px solid var(--line2);border-bottom-width:2px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:12px;color:var(--tx2)}
+@media (max-width:900px){.st .l{display:none}.st.on .l{display:inline}.wrap{padding:0 20px}}
+@media (prefers-reduced-motion:reduce){.ps *{transition:none!important;animation:none!important}}
+.tbl td,.tbl th{font-family:"JetBrains Mono",ui-monospace,monospace;font-size:13px;white-space:nowrap;padding:10px 16px 10px 0}.tbl th{font-size:11px}.drop{border:1.5px dashed var(--line2);border-radius:16px;padding:28px;text-align:center;color:var(--tx3)}.opt{display:flex;gap:12px;align-items:flex-start;padding:14px 16px;border:1px solid var(--line);border-radius:14px;background:var(--bg)}.box{width:22px;height:22px;border-radius:6px;border:1.5px solid var(--line2);flex:none;display:inline-flex;align-items:center;justify-content:center;font-size:13px;font-family:"JetBrains Mono",ui-monospace,monospace}.box.on{background:var(--tx);border-color:var(--tx);color:var(--bg)}.sum{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline;padding:18px 0;border-top:1px solid var(--line)}.sum > span:first-child{flex:0 0 200px;color:var(--tx3)}.sum > span:nth-child(2){flex:1 1 300px}</style>
+</helmet>
+<div class="ps" data-theme="{{theme}}" style="min-height: 1250px">
+<header class="wrap top"><a class="logo" href="Landing.dc.html" aria-label="PairSight home"><svg width="34" height="24" viewBox="0 0 28 20" aria-hidden="true"><rect x="0.5" y="6" width="8" height="8" rx="2" style="fill: var(--brand)"/><rect x="10" y="6" width="8" height="8" rx="2" fill="currentColor"/><rect x="19.5" y="6" width="8" height="8" rx="2" style="fill: var(--ice)"/></svg><span class="h" style="font-size: 21px">PairSight</span></a><div class="crumb"><a class="lnk" href="Home.dc.html">Demo</a><span>/</span><strong>Product catalogue: vendor check</strong><span class="chip">Read-only demo</span></div><a class="lnk" href="Home.dc.html" style="display: inline-flex; align-items: center; min-height: 44px">Evaluations</a><button class="tg" type="button" aria-label="Switch between light and dark" onClick="{{flip}}"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="6.5"/><path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor"/></svg></button><a class="b" href="Auth.dc.html"><span>Sign up to run your own</span></a></header><main class="wrap" style="padding-top: 56px; flex: 1"><p class="lab">Step 04 of 05</p><h1 class="h" style="font-size: clamp(40px, 4.6vw, 60px); margin-top: 14px">Check and start</h1><p class="p" style="font-size: 19px; line-height: 30px; max-width: 680px; margin-top: 16px">Read it through once. After you start, the settings are fixed for this run so the result cannot shift.</p>
+<div style="display: flex; flex-wrap: wrap; gap: 16px; margin-top: 40px; align-items: flex-start">
+<div class="card" style="flex: 2 1 560px; min-width: 0; padding-top: 12px">
+<div class="sum"><span>Records</span><span><strong class="mono">2,000</strong> products from <span class="mono">records.csv</span></span><a class="lnk" href="Records.dc.html">Change</a></div><div class="sum"><span>Vendors</span><span><span class="dot" style="background: var(--va)"></span>Atlas Resolve · <span class="mono">202</span> pairs<br><span class="dot" style="background: var(--vb)"></span>Meridian Match · <span class="mono">133</span> pairs</span><a class="lnk" href="Vendors.dc.html">Change</a></div><div class="sum"><span>What counts as the same</span><span>Both records describe the same product (the same item in the same variant), even if the name, description or formatting differs.</span><a class="lnk" href="Setup.dc.html">Change</a></div><div class="sum"><span>Values Jev sees</span><span><strong class="mono">10</strong> of 11 columns. Record ID is never sent.</span><a class="lnk" href="Setup.dc.html">Change</a></div><div class="sum"><span>Cut-off</span><span><strong class="mono">0.50</strong> · Balanced</span><a class="lnk" href="Setup.dc.html">Change</a></div><div class="sum"><span>Pairs to check</span><span><strong class="mono">286</strong> = <span class="mono">229</span> suggested by PairSight + <span class="mono">57</span> added because a vendor matched them</span><a class="lnk" href="Setup.dc.html">Change</a></div>
+</div>
+<div style="flex: 1 1 320px; min-width: 0; display: flex; flex-direction: column; gap: 16px">
+<div class="card" style="background: var(--inv); color: var(--oninv); border-color: var(--inv)">
+<p class="lab" style="color: inherit; opacity: .7">This run</p>
+<p style="margin: 14px 0 0"><span class="num" style="font-size: 56px; line-height: 1">286</span> pairs</p>
+<div style="margin-top: 16px; border-top: 1px solid color-mix(in srgb, var(--oninv) 22%, transparent)"><div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; border-bottom: 1px solid color-mix(in srgb, var(--oninv) 22%, transparent)"><span>Estimated cost</span><strong class="mono">[ESTIMATED COST]</strong></div><div style="display: flex; justify-content: space-between; gap: 12px; padding: 12px 0"><span>Usually takes</span><strong class="mono">[TYPICAL RUN TIME]</strong></div></div>
+<a class="b" href="Results.dc.html" style="margin-top: 16px; min-height: 52px"><span>Start the run</span><i style="width: 52px"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5"/></svg></i></a>
+<p style="margin: 12px 0 0; font-size: 14px; opacity: .75">It carries on in the background if you close the tab.</p>
+</div>
+<div class="card"><p class="lab">What gets sent</p><div style="margin-top: 12px"><div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line)"><span class="gl gj" style="width: 24px; height: 24px; border-radius: 7px; font-size: 13px">✓</span><span>The 10 ticked values for each record in a pair</span></div><div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line)"><span class="gl gj" style="width: 24px; height: 24px; border-radius: 7px; font-size: 13px">✓</span><span>Your two answers about what counts as the same</span></div><div style="display: flex; gap: 12px; align-items: flex-start; padding: 12px 0; border-top: 1px solid var(--line)"><span class="gl gc" style="width: 24px; height: 24px; border-radius: 7px; font-size: 13px">≠</span><span>Never: record IDs, vendor names, or what any vendor decided</span></div></div></div>
+</div>
+</div>
+<p class="t14" style="margin-top: 20px">In the demo this run already finished on 7 Oct 2026. Starting takes you to its results.</p>
+</main><nav class="dock" aria-label="Evaluation steps"><a class="st " href="Records.dc.html"><span class="sn">✓</span><span class="l">Records</span></a><a class="st " href="Vendors.dc.html"><span class="sn">✓</span><span class="l">Vendors</span></a><a class="st " href="Setup.dc.html"><span class="sn">✓</span><span class="l">What Jev checks</span></a><a class="st on" href="Start.dc.html" aria-current="step"><span class="sn">04</span><span class="l">Check and start</span></a><a class="st todo" href="Results.dc.html"><span class="sn">05</span><span class="l">Results</span></a><span class="dsep" aria-hidden="true"></span><a class="st" href="Setup.dc.html" aria-label="Back"><svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M16 10H4M9 5l-5 5 5 5"/></svg></a><a class="dact" href="Results.dc.html">Start the run<svg class="ic" viewBox="0 0 20 20" aria-hidden="true"><path d="M4 10h12M11 5l5 5-5 5"/></svg></a></nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"theme":{"editor":"enum","options":["light","dark"],"default":"light"},"$preview":{"width":1440,"height":1250}}'>
+class Component extends DCLogic {
+renderVals() {
+const s = this.state || {};
+const theme = s.theme || this.props.theme || 'light';
+const extra = {};
+return Object.assign({ theme: theme, flip: () => this.setState({ theme: theme === 'dark' ? 'light' : 'dark' }) }, extra);
+}
+}
+</script>
+</body>
+</html>

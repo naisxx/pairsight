@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Foundations</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400..700&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+body{margin:0}
+.ps{--bg:#F7F6F3;--bg2:#EEEDE8;--sf:#FFFFFF;--line:#DDDBD4;--tx:#0D0D0E;--tx2:#3D3D40;--tx3:#66666B;--coral:#FF4A1C;--coralt:#CC3A12;--ice:#A9CADB;--icet:#2F5C73;background:var(--bg);color:var(--tx);font-family:'Instrument Sans',system-ui,sans-serif;font-size:16px;line-height:1.5;padding:72px 64px 96px}
+.ps *{box-sizing:border-box}
+.h{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-weight:600;letter-spacing:-.03em;line-height:.98;margin:0}
+.lab{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);margin:0}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+.sec{margin-top:88px;padding-top:32px;border-top:2px solid var(--tx)}
+.sec h2{font-size:44px}
+.sec > p{max-width:680px;color:var(--tx2);margin:14px 0 0;font-size:17px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-top:36px}
+.card{background:var(--sf);border:1px solid var(--line);border-radius:20px;padding:24px}
+.card h3{font-family:'Bricolage Grotesque',system-ui,sans-serif;font-size:22px;letter-spacing:-.02em;margin:18px 0 6px}
+.card p{margin:0;color:var(--tx2);font-size:15px}
+.sw{border-radius:16px;border:1px solid var(--line);overflow:hidden;background:var(--sf)}
+.sw i{display:block;height:84px}
+.sw div{padding:12px 14px;font-size:14px}
+.sw div b{display:block}
+.sw div span{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;color:var(--tx3)}
+.mos{display:grid;grid-template-columns:repeat(8,18px);gap:4px}
+.mos i{width:18px;height:18px;border-radius:4px;background:var(--line)}
+.kb{background:var(--tx)!important}.kv{background:var(--coral)!important}.kj{background:var(--ice)!important}
+.gridbg{height:150px;border-radius:12px;background-color:#0D0D0E;background-image:radial-gradient(circle at .5px .5px,#3a3a3f 2px,transparent 2.5px),linear-gradient(to right,#1c1c1f 1px,transparent 1px),linear-gradient(to bottom,#1c1c1f 1px,transparent 1px);background-size:48px 48px;position:relative;overflow:hidden}
+.gridbg::after{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at .5px .5px,#FF4A1C 2px,transparent 2.5px),linear-gradient(to right,rgba(255,74,28,.4) 1px,transparent 1px),linear-gradient(to bottom,rgba(255,74,28,.4) 1px,transparent 1px);background-size:48px 48px;opacity:.6;-webkit-mask-image:radial-gradient(circle 110px at 60% 50%,#000,transparent);mask-image:radial-gradient(circle 110px at 60% 50%,#000,transparent)}
+table{width:100%;border-collapse:collapse;margin-top:28px;font-size:15px}
+th,td{text-align:left;padding:12px 16px 12px 0;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--tx3);font-weight:500}
+</style>
+</helmet>
+<div class="ps">
+<p class="lab">Design system · 01 · Foundations</p>
+<h1 class="h" style="font-size: 96px; margin-top: 20px">One tile,<br><span style="color: var(--tx3)">one pair.</span></h1>
+<p style="max-width: 720px; font-size: 19px; line-height: 30px; color: var(--tx2); margin: 28px 0 0">PairSight lays a vendor's answers over an independent checker's and shows where they agree. The identity is built from that: every checked pair is a tile, and its colour says who called it the same. Charcoal and paper carry the page; vermilion and ice are the only two colours with a job.</p>
+
+<div class="sec">
+<h2 class="h">The idea, in four marks</h2>
+<div class="grid">
+<div class="card"><div class="mos" aria-hidden="true"><i></i><i class="kv"></i><i class="kv"></i><i class="kb"></i><i class="kb"></i><i class="kj"></i><i class="kj"></i><i></i><i class="kv"></i><i class="kv"></i><i class="kb"></i><i class="kb"></i><i class="kb"></i><i class="kb"></i><i class="kj"></i><i class="kj"></i><i class="kv"></i><i class="kb"></i><i class="kb"></i><i class="kb"></i><i class="kb"></i><i class="kb"></i><i class="kb"></i><i class="kj"></i><i></i><i class="kv"></i><i class="kv"></i><i class="kb"></i><i class="kb"></i><i class="kj"></i><i class="kj"></i><i></i></div><h3>The mosaic</h3><p>One tile per checked pair, 22 across. Ink: both say same. Vermilion: only the vendor. Ice: only the checker. Rule grey: both say different. It is the hero, the footer mark and a true chart.</p></div>
+<div class="card"><svg width="98" height="28" viewBox="0 0 28 8" aria-hidden="true"><rect x="0" y="0" width="8" height="8" rx="2" fill="#FF4A1C"/><rect x="10" y="0" width="8" height="8" rx="2" fill="#0D0D0E"/><rect x="20" y="0" width="8" height="8" rx="2" fill="#A9CADB"/></svg><h3>The mark</h3><p>Three tiles in a row: vendor, agreement, checker. The middle tile takes the text colour, so it is ink on paper and paper on charcoal. Minimum height 16px.</p></div>
+<div class="card"><p class="h" style="font-size: 40px; color: var(--coralt); position: relative; display: inline-block">Different<span aria-hidden="true" style="position: absolute; left: 3px; top: 3px; color: transparent; -webkit-text-stroke: 1.5px var(--icet)">Different</span></p><h3>The doubled word</h3><p>One word in the hero is set twice: solid vermilion and an ice outline that stops slightly out of register. Used once per page.</p></div>
+<div class="card"><p style="display: flex; gap: 8px; margin: 0"><span class="mono" style="width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: rgba(47,92,115,.16); color: var(--icet); font-weight: 600">=</span><span class="mono" style="width: 40px; height: 40px; border-radius: 12px; display: inline-flex; align-items: center; justify-content: center; background: rgba(204,58,18,.16); color: var(--coralt); font-weight: 600">≠</span></p><h3>Same and different</h3><p>Equals and not-equals tiles label sections and rows. Ice equals for things that hold, vermilion not-equals for caveats and disagreements.</p></div>
+</div>
+</div>
+
+<div class="sec">
+<h2 class="h">Colour</h2>
+<p>Dark is the default theme on the landing page; light is the default inside the product. Every text pairing is 4.5 to 1 or better. Vermilion fills take near-black text; on paper, text and links use the darker vermilion.</p>
+<div class="grid" style="grid-template-columns: repeat(6, minmax(0, 1fr))">
+<div class="sw"><i style="background: #0D0D0E"></i><div><b>Charcoal</b><span>#0D0D0E · dark ground</span></div></div>
+<div class="sw"><i style="background: #141415"></i><div><b>Charcoal 2</b><span>#141415 · alt band</span></div></div>
+<div class="sw"><i style="background: #1A1A1C"></i><div><b>Dark surface</b><span>#1A1A1C · cards</span></div></div>
+<div class="sw"><i style="background: #2A2A2E"></i><div><b>Dark rule</b><span>#2A2A2E</span></div></div>
+<div class="sw"><i style="background: #F4F3F0"></i><div><b>Dark text</b><span>#F4F3F0</span></div></div>
+<div class="sw"><i style="background: #8A8A90"></i><div><b>Dark label</b><span>#8A8A90 · body #B9B8B4</span></div></div>
+<div class="sw"><i style="background: #F7F6F3"></i><div><b>Paper</b><span>#F7F6F3 · light ground</span></div></div>
+<div class="sw"><i style="background: #EEEDE8"></i><div><b>Paper 2</b><span>#EEEDE8 · alt band</span></div></div>
+<div class="sw"><i style="background: #FFFFFF"></i><div><b>Light surface</b><span>#FFFFFF · cards</span></div></div>
+<div class="sw"><i style="background: #DDDBD4"></i><div><b>Light rule</b><span>#DDDBD4</span></div></div>
+<div class="sw"><i style="background: #3D3D40"></i><div><b>Light body</b><span>#3D3D40 · text #0D0D0E</span></div></div>
+<div class="sw"><i style="background: #66666B"></i><div><b>Light label</b><span>#66666B</span></div></div>
+<div class="sw"><i style="background: #FF4A1C"></i><div><b>Vermilion</b><span>#FF4A1C · the vendor, main button</span></div></div>
+<div class="sw"><i style="background: #FF6A45"></i><div><b>Vermilion text, dark</b><span>#FF6A45</span></div></div>
+<div class="sw"><i style="background: #CC3A12"></i><div><b>Vermilion text, light</b><span>#CC3A12</span></div></div>
+<div class="sw"><i style="background: #BFD9E6"></i><div><b>Ice, dark theme</b><span>#BFD9E6 · the checker</span></div></div>
+<div class="sw"><i style="background: #A9CADB"></i><div><b>Ice, light theme</b><span>#A9CADB · fills</span></div></div>
+<div class="sw"><i style="background: #2F5C73"></i><div><b>Ice text, light</b><span>#2F5C73 · focus rings</span></div></div>
+</div>
+<p>Inside the product, where two vendors sit side by side, they take blue and plum so neither looks like the brand's favourite. Success, warning and error keep their own semantic colours.</p>
+</div>
+
+<div class="sec">
+<h2 class="h">Typography</h2>
+<table>
+<tr><th>Face</th><th>Job</th><th>Settings</th><th>Sample</th></tr>
+<tr><td><b>Bricolage Grotesque 600</b></td><td>Headlines</td><td class="mono">-3% · 0.98</td><td class="h" style="font-size: 34px">Two views. One decision.</td></tr>
+<tr><td><b>Instrument Sans 400, 600</b></td><td>Body and controls</td><td class="mono">19/30 lead · 16/24 body</td><td>PairSight shows how far each vendor's matches overlap with an independent AI checker.</td></tr>
+<tr><td><b>JetBrains Mono 400, 600</b></td><td>Data, figures, labels</td><td class="mono">13 caps +6% for labels</td><td class="mono">G001304 · 0.98 · 78.6% · Il1 O0</td></tr>
+</table>
+<p>Sizes: 96 hero, 80 section, up to 136 for the three scroll words, 58 statement, 26 card title, 24 question, 19 lead, 16 body, 14 note, 13 label. Headlines scale with the window down to 54 and 44. A second headline line may drop to label grey. Anything compared character by character is always in the Mono.</p>
+</div>
+
+<div class="sec">
+<h2 class="h">Shape, space and ground</h2>
+<div class="grid">
+<div class="card"><h3 style="margin-top: 0">Corners</h3><p>Nothing is a circle except knobs and dots. 4 for mosaic tiles, 8 for glyph tiles and tags, 12 to 14 for buttons and inputs, 20 to 28 for cards and the hero panel.</p></div>
+<div class="card"><h3 style="margin-top: 0">The two-part button</h3><p>A label and an end-cap divided by a seam, 14px corners, 54px tall on the landing page and 44px in the product. Secondary buttons are a 1px outline with no cap.</p></div>
+<div class="card"><h3 style="margin-top: 0">Spacing</h3><p>A 4px grid. Landing sections sit 136px apart, 88px on a phone. Content is 1,216px wide with 32px gutters. Bento cards have 16px gaps and 28px padding.</p></div>
+<div class="card"><div class="gridbg" aria-hidden="true"></div><h3>The ground</h3><p>A 48px hairline grid with a dot at each crossing, barely above the page colour. It is absent from the header, the pair ticker and the footer. See Motion for how it lights.</p></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":2600}}'>
+class Component extends DCLogic {
+renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
